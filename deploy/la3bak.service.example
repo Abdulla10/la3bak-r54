@@ -1,0 +1,19 @@
+# EXAMPLE ONLY. Review paths, Unix user, database and TLS before use.
+[Unit]
+Description=LA3BAK application (example)
+After=network.target mariadb.service
+
+[Service]
+Type=simple
+User=REPLACE_WITH_SERVICE_USER
+WorkingDirectory=/REPLACE_WITH_APP_DIRECTORY
+EnvironmentFile=/REPLACE_WITH_PRIVATE_ENV_FILE
+ExecStart=/usr/bin/node dist/server/index.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

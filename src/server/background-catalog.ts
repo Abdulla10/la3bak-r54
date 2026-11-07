@@ -1,0 +1,66 @@
+import type { ShopItem } from './catalog.js';
+import type { Cur } from './wallet.js';
+
+export const BACKGROUND_CATEGORIES = ['royal', 'beasts', 'space', 'nature', 'fantasy', 'neon'] as const;
+export type BackgroundCategory = (typeof BACKGROUND_CATEGORIES)[number];
+type BackgroundRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+/** Supplied previews are temporary gradients, NOT approved artwork. Keep IDs when art is supplied. */
+const PREVIEW: Record<BackgroundCategory, string> = {
+  royal: 'linear-gradient(135deg,#211331,#79519a,#d8ad60)',
+  beasts: 'linear-gradient(135deg,#160f20,#8b3d39,#e7a04a)',
+  space: 'linear-gradient(135deg,#090d28,#55368c,#d477d6)',
+  nature: 'linear-gradient(135deg,#10352e,#388a77,#d0dca4)',
+  fantasy: 'linear-gradient(135deg,#21152e,#76528a,#dfb879)',
+  neon: 'linear-gradient(135deg,#0b102a,#6235a8,#ed55bd)',
+};
+const background = (id: string, backgroundCategory: BackgroundCategory, name: string, rarity: BackgroundRarity, price: number, currency: Cur, preview = PREVIEW[backgroundCategory]): ShopItem => ({
+  id, slot: 'bg', name, icon: '', desc: 'معاينة بتدرج مؤقت وليست رسماً نهائياً؛ السعر مقترح بانتظار الاعتماد.',
+  rarity, price, currency, permanent: true, css: id, backgroundCategory,
+  preview, previewPlaceholder: true, proposalOnly: true, priceApproved: false,
+  // Existing optional ShopItem.art is reserved for a supplied, approved image path; none exists yet.
+});
+
+/** Proposal amounts are copied verbatim, including both zero-price products. ShopCatalog gates sales. */
+export const BACKGROUND_ITEMS: ShopItem[] = [
+  background('bg_01', 'royal', 'العرش الذهبي', 'legendary', 1800, 'gems'),
+  background('bg_02', 'royal', 'قصر الملوك', 'epic', 650, 'gems'),
+  background('bg_03', 'royal', 'ليلة القصر', 'rare', 12000, 'coins'),
+  background('bg_04', 'royal', 'الحدائق الملكية', 'rare', 10000, 'coins'),
+  background('bg_05', 'royal', 'قاعة الكريستال', 'epic', 500, 'gems'),
+  background('bg_06', 'royal', 'بوابة العرش', 'rare', 9000, 'coins'),
+  background('bg_07', 'royal', 'القصر العائم', 'legendary', 2200, 'gems'),
+  background('bg_08', 'royal', 'ليلة التاج', 'epic', 700, 'gems'),
+  background('bg_09', 'beasts', 'عرين التنين', 'legendary', 2400, 'gems'),
+  background('bg_10', 'beasts', 'الفينيق الناري', 'legendary', 2500, 'gems'),
+  background('bg_11', 'beasts', 'الذئب الملكي', 'epic', 800, 'gems'),
+  background('bg_12', 'beasts', 'الأسد الذهبي', 'epic', 750, 'gems'),
+  background('bg_13', 'beasts', 'النمر الليلي', 'rare', 14000, 'coins'),
+  background('bg_14', 'beasts', 'جناح العنقاء', 'epic', 600, 'gems'),
+  background('bg_15', 'beasts', 'تنين الجليد', 'legendary', 2300, 'gems'),
+  background('bg_16', 'beasts', 'حارس الغابة', 'rare', 11000, 'coins'),
+  background('bg_17', 'space', 'مجرة بنفسجية', 'epic', 700, 'gems'),
+  background('bg_18', 'space', 'بوابة النجوم', 'rare', 13000, 'coins'),
+  background('bg_19', 'space', 'كسوف الشمس', 'legendary', 2100, 'gems'),
+  background('bg_20', 'space', 'سديم الأحلام', 'rare', 10000, 'coins'),
+  background('bg_21', 'space', 'كوكب الياقوت', 'epic', 550, 'gems'),
+  background('bg_22', 'space', 'مدار المجرة', 'rare', 12000, 'coins'),
+  background('bg_23', 'nature', 'شلال القمر', 'rare', 9000, 'coins'),
+  background('bg_24', 'nature', 'غابة الجنيات', 'epic', 600, 'gems'),
+  background('bg_25', 'nature', 'بحيرة الزمرد', 'rare', 11000, 'coins'),
+  background('bg_26', 'nature', 'حديقة الكرز', 'rare', 10000, 'coins'),
+  background('bg_27', 'nature', 'قمة الثلج', 'epic', 500, 'gems'),
+  background('bg_28', 'nature', 'وادي الشفق', 'legendary', 1900, 'gems'),
+  background('bg_29', 'fantasy', 'مكتبة السحر', 'rare', 12000, 'coins'),
+  background('bg_30', 'fantasy', 'قلعة التنين', 'epic', 750, 'gems'),
+  background('bg_31', 'fantasy', 'مدينة الغيوم', 'epic', 650, 'gems'),
+  background('bg_32', 'fantasy', 'غابة الأقزام', 'common', 0, 'coins'),
+  background('bg_33', 'fantasy', 'بوابة العوالم', 'legendary', 2000, 'gems'),
+  background('bg_34', 'fantasy', 'مملكة البلور', 'rare', 13000, 'coins'),
+  background('bg_35', 'neon', 'نيون بنفسجي', 'epic', 700, 'gems'),
+  background('bg_36', 'neon', 'ساحة الأبطال', 'rare', 14000, 'coins'),
+  background('bg_37', 'neon', 'شبكة الليزر', 'rare', 10000, 'coins'),
+  background('bg_38', 'neon', 'مدينة سايبربنك', 'legendary', 2200, 'gems'),
+  background('bg_39', 'neon', 'مدار إلكتروني', 'common', 0, 'coins'),
+  background('bg_40', 'neon', 'نبض المجرة', 'epic', 650, 'gems', 'linear-gradient(135deg,#10102e,#3657a6,#ed55bd)'),
+];

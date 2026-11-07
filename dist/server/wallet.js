@@ -1,0 +1,1967 @@
+import { randomUUID } from 'node:crypto';
+import { splitGift } from './gifts.js';
+import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
+import { MANUAL_CONVERSION_DISABLED } from './economy.js';
+import { loadJsonFile, Persister, StorageMonitor, isObj } from './datafile.js';
+import { canonicalGiftBatchTargets, quoteGiftBatch, GIFT_BATCH_QUANTITY_MAX } from './social-gift-batch-r27.js';
+import { AUCTION_R47_LIMITS, approvedAuctionItemR47, auctionFingerprintR47, auctionKeyR47, auctionViewR47, validAuctionKeyR47, validAuctionRequestR47, validAuctionWalletR47 } from './auction-r47.js';
+/** سقف سعر أي عنصر بالمتجر لكل عملة: مصدر واحد يُستخدم عند الإنشاء والتعديل وعند تنفيذ الشراء */
+export const PRICE_MAX = { coins: 1_000_000, gems: 100_000 };
+export const START_COINS = 1000;
+/** Historical coin→gem offers, retained for receipt identification only; new conversions are closed. */
+export const GEM_PACKS = [{ id: 'gems-10', gems: 10, coins: 1_000 }, { id: 'gems-50', gems: 50, coins: 5_000 }, { id: 'gems-100', gems: 100, coins: 10_000 }, { id: 'gems-500', gems: 500, coins: 50_000 }];
+export const DAILY_COINS = 200;
+export const STAKES = [0, 100, 500];
+const GULF = 4 * 3600_000;
+const dayOf = (t) => new Date(t + GULF).toISOString().slice(0, 10);
+const HOUSE_LEDGER_CAP = 5000;
+const GIFTS_CAP = 300;
+/** مفاتيح العمليات المالية أدلة دائمة، وليست كاش عرض؛ لا تُحذف عند تجاوز عدد ثابت. */
+export const GIFT_GEMS_MAX = 1_000_000;
+const nat = (v) => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
+const pos = (v) => nat(v) && v > 0;
+const signed = (v) => typeof v === 'number' && Number.isSafeInteger(v);
+const str = (v) => typeof v === 'string';
+const currency = (v) => v === 'coins' || v === 'gems';
+const optional = (v, check) => v === undefined || check(v);
+const array = (v, check) => Array.isArray(v) && v.every(check);
+const record = (v, check) => isObj(v) && Object.values(v).every(check);
+const strs = (v) => array(v, str);
+const fields = (v, keys, check) => keys.every((k) => check(v[k]));
+const arithmetic = (v) => nat(v.before) && nat(v.after) && signed(v.delta) && Number.isSafeInteger(v.before + v.delta) && v.before + v.delta === v.after;
+const validLedger = (v) => isObj(v) && fields(v, ['id', 'reason', 'ref'], str) && nat(v.ts) && currency(v.cur)
+    && ['start', 'daily', 'entry_fee', 'prize', 'refund', 'purchase', 'reward', 'admin', 'gift', 'transfer'].includes(String(v.kind)) && arithmetic(v) && optional(v.giftTx, str);
+const validGift = (v) => {
+    if (!isObj(v) || !fields(v, ['id', 'from', 'fromName', 'to', 'toName', 'gift', 'name', 'icon'], str)
+        || !nat(v.ts) || !pos(v.price) || (v.dir !== 'in' && v.dir !== 'out') || !optional(v.qty, pos)
+        || !['total', 'recv', 'house'].every((k) => optional(v[k], nat)) || !optional(v.room, str) || !optional(v.status, (x) => x === 'done')
+        || !optional(v.cur, currency) || !optional(v.prepaid, (x) => x === true) || !optional(v.creditId, str)
+        || (v.prepaid === undefined ? v.creditId !== undefined : v.cur !== 'gems' || v.qty !== 1 || !str(v.creditId)))
+        return false;
+    if (v.rewardPolicy !== undefined) {
+        const q = quoteGiftRewards(v.price, (v.qty ?? 1));
+        return !!q && v.rewardPolicy === q.policy && v.cur === q.cur && v.rewardCur === q.rewardCur && v.qty !== undefined && v.status === 'done'
+            && v.from !== v.to && v.total === q.total && v.recv === q.recv && v.senderBonus === q.senderBonus && v.house === q.house
+            && v.price <= (v.prepaid ? PRICE_MAX.gems : GIFT_GEMS_MAX) && q.total <= (v.prepaid ? PRICE_MAX.gems : GIFT_GEMS_MAX);
+    }
+    // Absence of a policy is historical, never infer or stamp R13 from the currency.
+    const total = v.price * (v.qty ?? 1), old = splitGift(total);
+    return pos(total) && v.rewardCur === undefined && v.senderBonus === undefined
+        && (v.total === undefined || v.total === total) && (v.recv === undefined || v.recv === old.recv) && (v.house === undefined || v.house === old.house)
+        && (v.prepaid === undefined || v.total === total && v.recv === old.recv && v.house === old.house);
+};
+const validAcc = (v) => isObj(v) && nat(v.coins) && optional(v.gems, nat) && optional(v.daily, str)
+    && optional(v.owned, strs) && optional(v.claimed, strs) && optional(v.equipped, (x) => record(x, str))
+    && optional(v.ledger, (x) => array(x, validLedger)) && optional(v.gifts, (x) => array(x, validGift)) && optional(v.gSent, nat) && optional(v.gRecv, nat)
+    && optional(v.prepaidGifts, (x) => record(x, validCredit));
+const validBuyOp = (v) => {
+    if (!isObj(v) || !str(v.itemId))
+        return false;
+    if (v.kind === 'item')
+        return currency(v.cur) && nat(v.price) && v.price <= PRICE_MAX[v.cur];
+    if (v.kind === 'gems')
+        return pos(v.coins) && pos(v.gems);
+    return v.kind === 'conversion' && pos(v.gems) && pos(v.rate) && pos(v.coins) && Number.isSafeInteger(v.gems * v.rate)
+        && v.coins === v.gems * v.rate && v.itemId === JSON.stringify([v.gems, v.rate]);
+};
+const validAdm = (v) => isObj(v) && str(v.id) && currency(v.cur) && nat(v.at) && arithmetic(v);
+const validGiftKey = (v) => isObj(v) && fields(v, ['to', 'gift', 'rid'], str) && optional(v.qty, pos) && optional(v.room, str)
+    && (v.rec === undefined || validGift(v.rec) && v.rec.dir === 'out' && v.rec.prepaid === undefined && v.rec.id === v.rid && v.rec.to === v.to
+        && v.rec.gift === v.gift && (v.rec.qty ?? 1) === (v.qty ?? 1) && (v.rec.room ?? '') === (v.room ?? ''));
+const validHouseEntry = (v) => isObj(v) && fields(v, ['id', 'tx', 'from', 'to', 'gift', 'room'], str)
+    && v.kind === 'gift_share' && fields(v, ['ts', 'delta', 'after', 'total'], nat) && pos(v.qty) && v.delta <= v.after && optional(v.cur, currency)
+    && (v.rewardPolicy === undefined || v.rewardPolicy === GIFT_REWARD_POLICY.id && v.cur === 'gems' && v.delta === v.total);
+const validHouse = (v) => isObj(v) && nat(v.coins) && optional(v.gems, nat) && nat(v.count) && array(v.ledger, validHouseEntry);
+const uuid = (v) => str(v) && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(v);
+const fingerprint = (v) => str(v) && /^[0-9a-f]{64}$/.test(v);
+const itemId = (v) => str(v) && v.length <= 64 && v.trim().length > 0;
+const itemIds = (v) => Array.isArray(v) && v.length <= 30 && Array.from(v).every(itemId) && new Set(v).size === v.length;
+const exactKeys = (v, keys) => Object.keys(v).length === keys.length && keys.every((k) => Object.hasOwn(v, k));
+const validCampaignReceipt = (v) => isObj(v) && exactKeys(v, ['addedItems', 'alreadyOwned'])
+    && itemIds(v.addedItems) && itemIds(v.alreadyOwned) && itemIds([...v.addedItems, ...v.alreadyOwned]);
+const validCampaignGrants = (v) => isObj(v) && Object.entries(v).every(([id, campaign]) => uuid(id) && isObj(campaign)
+    && exactKeys(campaign, ['fingerprint', 'receipts']) && fingerprint(campaign.fingerprint) && isObj(campaign.receipts)
+    && Object.entries(campaign.receipts).every(([recipient, receipt]) => uuid(recipient) && validCampaignReceipt(receipt)));
+const internalId = (v) => str(v) && v.length > 0 && v.length <= 160;
+const bagUnit = (offer) => offer.type === 'coins' ? offer.perRecipient : offer.price;
+const bagCur = (offer) => offer.type === 'coins' ? 'coins' : 'gems';
+const validOffer = (v) => {
+    if (!isObj(v))
+        return false;
+    if (v.type === 'coins')
+        return exactKeys(v, ['type', 'perRecipient']) && pos(v.perRecipient) && v.perRecipient <= PRICE_MAX.coins;
+    if (!itemId(v.id) || !pos(v.price) || v.price > PRICE_MAX.gems || v.currency !== 'gems')
+        return false;
+    if (v.type === 'item')
+        return exactKeys(v, ['type', 'id', 'slot', 'price', 'currency', 'permanent', 'available']) && itemId(v.slot) && v.permanent === true && v.available === true;
+    return v.type === 'gift' && exactKeys(v, ['type', 'id', 'name', 'icon', 'price', 'currency', 'active']) && str(v.name) && !!v.name && v.name.length <= 200 && str(v.icon) && v.icon.length <= 200 && v.active === true;
+};
+/** Exact canonical tuple, not a truncated hash or delimiter join; all validated numeric inputs are integers. */
+const luckyFingerprint = (r) => {
+    if (r.op === 'claim')
+        return JSON.stringify(['claim', r.actor, r.bagId]);
+    if (r.op === 'redeem')
+        return JSON.stringify(['redeem', r.actor, r.to, r.creditId, r.fromName, r.toName, r.room]);
+    if (r.op === 'roomReward')
+        return JSON.stringify(['roomReward', r.actor, r.to, r.amount, r.room]);
+    const o = r.offer;
+    const offer = o.type === 'coins' ? [o.type, o.perRecipient] : o.type === 'item'
+        ? [o.type, o.id, o.slot, o.price, o.currency, o.permanent, o.available] : [o.type, o.id, o.name, o.icon, o.price, o.currency, o.active];
+    return JSON.stringify(['create', r.actor, r.room, offer, r.count, r.delay]);
+};
+const validLuckyRequest = (v) => {
+    if (!isObj(v) || !internalId(v.actor))
+        return false;
+    if (v.op === 'claim')
+        return exactKeys(v, ['op', 'actor', 'bagId']) && uuid(v.bagId);
+    if (v.op === 'roomReward')
+        return exactKeys(v, ['op', 'actor', 'to', 'amount', 'room']) && internalId(v.to) && v.actor !== v.to && pos(v.amount) && v.amount <= PRICE_MAX.gems && internalId(v.room);
+    if (v.op === 'redeem')
+        return exactKeys(v, ['op', 'actor', 'to', 'creditId', 'fromName', 'toName', 'room']) && internalId(v.to) && v.actor !== v.to
+            && uuid(v.creditId) && str(v.fromName) && v.fromName.length <= 200 && str(v.toName) && v.toName.length <= 200 && str(v.room) && v.room.length <= 160;
+    return v.op === 'create' && exactKeys(v, ['op', 'actor', 'room', 'offer', 'count', 'delay']) && internalId(v.room) && validOffer(v.offer)
+        && pos(v.count) && v.count <= 49 && (v.delay === 0 || v.delay === 300) && !Object.is(v.delay, -0)
+        && pos(bagUnit(v.offer) * v.count) && bagUnit(v.offer) * v.count <= PRICE_MAX[bagCur(v.offer)];
+};
+const validCredit = (v) => isObj(v) && exactKeys(v, ['id', 'bagId', 'gift', 'qty', 'remaining', 'value'])
+    && uuid(v.id) && uuid(v.bagId) && isObj(v.gift) && exactKeys(v.gift, ['id', 'name', 'icon', 'price']) && itemId(v.gift.id)
+    && str(v.gift.name) && !!v.gift.name && v.gift.name.length <= 200 && str(v.gift.icon) && v.gift.icon.length <= 200
+    && pos(v.gift.price) && v.gift.price <= PRICE_MAX.gems && v.qty === 1 && (v.remaining === 0 || v.remaining === 1)
+    && nat(v.value) && v.value === v.gift.price * v.remaining;
+const validLuckyBag = (v) => {
+    if (!isObj(v) || !exactKeys(v, ['id', 'senderId', 'room', 'offer', 'count', 'total', 'reserve', 'createdAt', 'opensAt', 'expiresAt', 'claims', ...(v.refund === undefined ? [] : ['refund'])])
+        || !uuid(v.id) || !internalId(v.senderId) || !internalId(v.room) || !validOffer(v.offer) || !pos(v.count) || v.count > 49
+        || !pos(v.total) || v.total !== bagUnit(v.offer) * v.count || v.total > PRICE_MAX[bagCur(v.offer)] || !nat(v.reserve)
+        || !nat(v.createdAt) || !nat(v.opensAt) || !nat(v.expiresAt) || ![0, 300_000].includes(v.opensAt - v.createdAt) || v.expiresAt - v.opensAt !== 600_000
+        || !array(v.claims, (c) => isObj(c) && exactKeys(c, ['id', 'recipient', 'at', ...(v.offer && v.offer.type === 'gift' ? ['creditId'] : [])])
+            && uuid(c.id) && internalId(c.recipient) && c.recipient !== v.senderId && nat(c.at) && c.at >= v.opensAt && c.at < v.expiresAt
+            && (v.offer.type !== 'gift' || uuid(c.creditId))))
+        return false;
+    const b = v;
+    if (b.claims.length > b.count || new Set(b.claims.map((c) => c.recipient)).size !== b.claims.length || new Set(b.claims.map((c) => c.id)).size !== b.claims.length)
+        return false;
+    const remaining = b.total - b.claims.length * bagUnit(b.offer);
+    return b.refund === undefined ? b.reserve === remaining : isObj(b.refund) && exactKeys(b.refund, ['id', 'at', 'amount'])
+        && b.refund.id === JSON.stringify(['refund', b.id]) && nat(b.refund.at) && b.refund.at >= b.expiresAt && pos(b.refund.amount) && b.refund.amount === remaining && b.reserve === 0;
+};
+const validLuckyOp = (v) => {
+    if (!isObj(v) || !exactKeys(v, ['fingerprint', 'request', 'result']) || !validLuckyRequest(v.request) || v.fingerprint !== luckyFingerprint(v.request)
+        || !isObj(v.result) || v.result.ok !== true || v.result.dup !== false || !nat(v.result.coins) || !nat(v.result.gems))
+        return false;
+    const r = v.result;
+    if (v.request.op === 'roomReward')
+        return exactKeys(r, ['ok', 'dup', 'rewardId', 'coins', 'gems', 'toGems']) && uuid(r.rewardId) && nat(r.toGems);
+    if (v.request.op === 'create')
+        return exactKeys(r, ['ok', 'dup', 'bagId', 'coins', 'gems']) && uuid(r.bagId);
+    if (v.request.op === 'claim')
+        return exactKeys(r, ['ok', 'dup', 'bagId', 'coins', 'gems', 'claimId', 'type', 'amount', 'cur', ...(r.type === 'item' ? ['itemId'] : r.type === 'gift' ? ['creditId'] : [])])
+            && r.bagId === v.request.bagId && uuid(r.claimId) && pos(r.amount) && (r.type === 'coins' ? r.cur === 'coins' : r.cur === 'gems' && (r.type === 'item' ? itemId(r.itemId) : r.type === 'gift' && uuid(r.creditId)));
+    const versioned = isObj(r.rec) && r.rec.rewardPolicy === GIFT_REWARD_POLICY.id;
+    return exactKeys(r, ['ok', 'dup', 'creditId', 'coins', 'gems', 'toGems', 'rec', ...(versioned ? ['toCoins'] : [])])
+        && r.creditId === v.request.creditId && nat(r.toGems) && (!versioned || nat(r.toCoins)) && validGift(r.rec)
+        && isObj(r.rec) && exactKeys(r.rec, ['id', 'ts', 'from', 'fromName', 'to', 'toName', 'gift', 'name', 'icon', 'price', 'qty', 'total', 'recv', 'house', ...(v.request.room ? ['room'] : []), 'status', 'cur', 'prepaid', 'creditId', 'dir', ...(versioned ? ['rewardCur', 'senderBonus', 'rewardPolicy'] : [])])
+        && uuid(r.rec.id) && r.rec.from === v.request.actor && r.rec.to === v.request.to && r.rec.fromName === v.request.fromName && r.rec.toName === v.request.toName
+        && (r.rec.room ?? '') === v.request.room && r.rec.dir === 'out' && r.rec.creditId === v.request.creditId && r.rec.prepaid === true;
+};
+/** Permanent accounting evidence; display gift/house rows can be capped independently. */
+const giftLedgerProof = (accounts, rec) => {
+    const source = (accounts[rec.from]?.ledger ?? []).filter((l) => l.giftTx === rec.id);
+    const target = (accounts[rec.to]?.ledger ?? []).filter((l) => l.giftTx === rec.id);
+    const matches = (l, cur, delta) => l.kind === 'gift' && l.cur === cur && l.delta === delta && l.ts === rec.ts && l.ref === rec.gift;
+    const total = rec.total ?? rec.price * (rec.qty ?? 1), recv = rec.recv ?? splitGift(total).recv;
+    if (rec.rewardPolicy === GIFT_REWARD_POLICY.id)
+        return source.length === 2 && target.length === 1
+            && source.some((l) => matches(l, 'gems', rec.prepaid ? 0 : -total))
+            && source.some((l) => matches(l, 'coins', rec.senderBonus)) && target.some((l) => matches(l, 'coins', recv));
+    const cur = rec.cur ?? 'coins';
+    return source.some((l) => matches(l, cur, rec.prepaid ? 0 : -total)) && target.some((l) => matches(l, cur, recv));
+};
+/** Relational checks stop orphan/mutated reserves, receipts or reusable credits on restart. */
+const validLuckyState = (d) => {
+    if (!optional(d.luckyBags, (x) => record(x, validLuckyBag)) || !optional(d.luckyOps, (x) => record(x, validLuckyOp)))
+        return false;
+    const data = d, bags = data.luckyBags ?? {}, ops = data.luckyOps ?? {}, accounts = data.acc ?? {};
+    const creates = new Map(), claims = new Map(), redemptions = new Map();
+    for (const [key, op] of Object.entries(ops)) {
+        let parts;
+        try {
+            parts = JSON.parse(key);
+        }
+        catch {
+            return false;
+        }
+        if (!Array.isArray(parts) || parts.length !== 2 || parts[0] !== op.request.actor || !str(parts[1]) || !parts[1] || parts[1].length > 80 || key !== JSON.stringify(parts)
+            || !Object.hasOwn(accounts, op.request.actor))
+            return false;
+        const result = op.result;
+        if (op.request.op === 'create') {
+            if (creates.has(result.bagId))
+                return false;
+            creates.set(result.bagId, op);
+        }
+        else if (op.request.op === 'claim') {
+            const id = result.claimId;
+            if (claims.has(id))
+                return false;
+            claims.set(id, op);
+        }
+        else if (op.request.op === 'roomReward') {
+            const req = op.request, r = result, ref = `roomReward:${r.rewardId}`;
+            if (!Object.hasOwn(accounts, req.to) || !(accounts[req.actor].ledger ?? []).some((l) => l.ref === ref && l.kind === 'transfer' && l.cur === 'gems' && l.delta === -req.amount && l.after === r.gems)
+                || !(accounts[req.to].ledger ?? []).some((l) => l.ref === ref && l.kind === 'transfer' && l.cur === 'gems' && l.delta === req.amount && l.after === r.toGems))
+                return false;
+        }
+        else {
+            if (!Object.hasOwn(accounts, op.request.to) || redemptions.has(op.request.creditId))
+                return false;
+            redemptions.set(op.request.creditId, op);
+        }
+    }
+    const credits = new Set();
+    for (const [id, b] of Object.entries(bags)) {
+        const created = creates.get(id);
+        if (id !== b.id || !Object.hasOwn(accounts, b.senderId) || !created || created.request.op !== 'create'
+            || luckyFingerprint(created.request) !== luckyFingerprint({ op: 'create', actor: b.senderId, room: b.room, offer: b.offer, count: b.count, delay: (b.opensAt - b.createdAt) / 1000 }))
+            return false;
+        creates.delete(id);
+        const source = accounts[b.senderId].ledger ?? [];
+        if (!source.some((l) => l.ref === `lucky:${id}:create` && l.cur === bagCur(b.offer) && l.kind === 'transfer' && l.delta === -b.total && l.ts === b.createdAt
+            && l.after === (bagCur(b.offer) === 'coins' ? created.result.coins : created.result.gems)))
+            return false;
+        if (b.refund && !source.some((l) => l.ref === b.refund.id && l.kind === 'refund' && l.cur === bagCur(b.offer) && l.delta === b.refund.amount && l.ts === b.refund.at))
+            return false;
+        for (const c of b.claims) {
+            const proof = claims.get(c.id), a = accounts[c.recipient];
+            if (!Object.hasOwn(accounts, c.recipient) || !proof || proof.request.op !== 'claim' || proof.request.actor !== c.recipient || proof.request.bagId !== id)
+                return false;
+            const r = proof.result;
+            if (r.type !== b.offer.type || r.cur !== bagCur(b.offer) || r.amount !== bagUnit(b.offer) || r.creditId !== c.creditId
+                || (b.offer.type === 'item' && (r.itemId !== b.offer.id || !(a.owned ?? []).includes(b.offer.id)))
+                || !(a.ledger ?? []).some((l) => l.ref === `lucky:${id}:claim:${c.id}` && l.cur === r.cur && l.kind === 'transfer' && l.delta === (r.type === 'coins' ? r.amount : 0) && l.ts === c.at
+                    && l.after === (r.cur === 'coins' ? r.coins : r.gems)))
+                return false;
+            claims.delete(c.id);
+            if (b.offer.type === 'gift') {
+                const credit = a.prepaidGifts?.[c.creditId];
+                if (!credit || credits.has(credit.id) || credit.id !== c.creditId || credit.bagId !== id || JSON.stringify([credit.gift.id, credit.gift.name, credit.gift.icon, credit.gift.price]) !== JSON.stringify([b.offer.id, b.offer.name, b.offer.icon, b.offer.price]))
+                    return false;
+                credits.add(credit.id);
+                const used = redemptions.get(credit.id);
+                if ((credit.remaining === 0) !== !!used)
+                    return false;
+                if (used) {
+                    const req = used.request, receipt = used.result, rec = receipt.rec;
+                    if (req.op !== 'redeem' || req.actor !== c.recipient || rec.ts < c.at || rec.gift !== credit.gift.id || rec.price !== credit.gift.price || rec.name !== credit.gift.name || rec.icon !== credit.gift.icon
+                        || !giftLedgerProof(accounts, rec)
+                        || !(a.ledger ?? []).some((l) => l.giftTx === rec.id && l.cur === 'gems' && l.after === receipt.gems)
+                        || !(accounts[req.to].ledger ?? []).some((l) => l.giftTx === rec.id && l.cur === (rec.rewardCur ?? 'gems') && l.after === (rec.rewardPolicy ? receipt.toCoins : receipt.toGems))
+                        || (rec.rewardPolicy && !(a.ledger ?? []).some((l) => l.giftTx === rec.id && l.cur === 'coins' && l.after === receipt.coins)))
+                        return false;
+                    const h = (data.house?.ledger ?? []).find((l) => l.tx === rec.id);
+                    if (h && (h.cur !== 'gems' || h.delta !== rec.house || h.total !== rec.total || h.from !== rec.from || h.to !== rec.to
+                        || h.gift !== rec.gift || h.qty !== 1 || h.ts !== rec.ts || h.room !== (rec.room ?? '') || h.rewardPolicy !== rec.rewardPolicy))
+                        return false;
+                    redemptions.delete(credit.id);
+                }
+            }
+        }
+    }
+    for (const a of Object.values(accounts))
+        for (const [id, credit] of Object.entries(a.prepaidGifts ?? {}))
+            if (id !== credit.id || !credits.has(id))
+                return false;
+    return !creates.size && !claims.size && !redemptions.size;
+};
+const validGiftProofs = (d) => {
+    const data = d;
+    for (const [key, proof] of Object.entries(data.giftKeys ?? {})) {
+        if (!proof.rec)
+            continue; // Old permanent keys may legitimately outlive their display receipt.
+        const rec = proof.rec;
+        if (rec.rewardPolicy) {
+            let parts;
+            try {
+                parts = JSON.parse(key);
+            }
+            catch {
+                return false;
+            }
+            if (!Array.isArray(parts) || parts.length !== 2 || parts[0] !== rec.from || !str(parts[1]) || !parts[1] || parts[1].length > 80 || key !== JSON.stringify(parts))
+                return false;
+        }
+        else if (!key.startsWith(rec.from + ':'))
+            return false;
+        if (!giftLedgerProof(data.acc ?? {}, rec))
+            return false;
+        const h = (data.house?.ledger ?? []).find((l) => l.tx === rec.id);
+        if (h && (h.delta !== rec.house || h.total !== rec.total || (h.cur ?? 'coins') !== (rec.cur ?? 'coins') || h.rewardPolicy !== rec.rewardPolicy
+            || h.from !== rec.from || h.to !== rec.to || h.gift !== rec.gift || h.qty !== rec.qty || h.ts !== rec.ts || h.room !== (rec.room ?? '')))
+            return false;
+    }
+    return true;
+};
+/** Permanent parent/child relational evidence. No migration or policy relabeling of single gifts. */
+const validGiftBatches = (d) => {
+    if (d.giftBatches === undefined)
+        return true;
+    if (!isObj(d.giftBatches))
+        return false;
+    const data = d, accounts = data.acc ?? {};
+    const receiptIds = new Set(Object.values(data.giftKeys ?? {}).map(p => p.rid));
+    for (const op of Object.values(data.luckyOps ?? {}))
+        if ('rec' in op.result)
+            receiptIds.add(op.result.rec.id);
+    const batchIds = new Set();
+    for (const [key, value] of Object.entries(d.giftBatches)) {
+        if (!isObj(value) || !exactKeys(value, ['request', 'result']) || !isObj(value.request) || !isObj(value.result))
+            return false;
+        const req = value.request, r = value.result;
+        if (!exactKeys(req, ['from', 'targets', 'gift', 'qty', 'room']) || !internalId(req.from) || !internalId(req.gift)
+            || !pos(req.qty) || req.qty > GIFT_BATCH_QUANTITY_MAX || !str(req.room) || req.room.length > 160)
+            return false;
+        const targets = canonicalGiftBatchTargets(req.from, req.targets);
+        if (!Array.isArray(targets) || JSON.stringify(targets) !== JSON.stringify(req.targets))
+            return false;
+        let parts;
+        try {
+            parts = JSON.parse(key);
+        }
+        catch {
+            return false;
+        }
+        if (!Array.isArray(parts) || parts.length !== 2 || parts[0] !== req.from || !str(parts[1]) || !parts[1] || parts[1].length > 80
+            || key !== JSON.stringify(parts) || data.giftKeys?.[key] || data.giftKeys?.[req.from + ':' + parts[1]] || !Object.hasOwn(accounts, req.from))
+            return false;
+        if (!exactKeys(r, ['ok', 'dup', 'batchId', 'targets', 'qty', 'room', 'coins', 'gems', 'quote', 'receipts']) || r.ok !== true || r.dup !== false
+            || !uuid(r.batchId) || batchIds.has(r.batchId) || !nat(r.coins) || !nat(r.gems) || r.qty !== req.qty || r.room !== req.room
+            || JSON.stringify(r.targets) !== JSON.stringify(targets) || !Array.isArray(r.receipts) || r.receipts.length !== targets.length)
+            return false;
+        batchIds.add(r.batchId);
+        let first, previousCoins, previousGems;
+        for (const [i, child] of r.receipts.entries()) {
+            if (!isObj(child) || !exactKeys(child, ['to', 'toCoins', 'toGems', 'rec']) || child.to !== targets[i] || !nat(child.toCoins) || !nat(child.toGems)
+                || !Object.hasOwn(accounts, targets[i]) || !validGift(child.rec))
+                return false;
+            const rec = child.rec;
+            if (!uuid(rec.id) || receiptIds.has(rec.id) || rec.dir !== 'out' || rec.prepaid !== undefined || rec.rewardPolicy !== GIFT_REWARD_POLICY.id
+                || rec.from !== req.from || rec.to !== child.to || rec.gift !== req.gift || rec.qty !== req.qty || (rec.room ?? '') !== req.room
+                || !giftLedgerProof(accounts, rec))
+                return false;
+            receiptIds.add(rec.id);
+            first ??= rec;
+            if (rec.ts !== first.ts || rec.price !== first.price || rec.name !== first.name || rec.icon !== first.icon || rec.fromName !== first.fromName)
+                return false;
+            const source = accounts[req.from].ledger ?? [], target = accounts[targets[i]].ledger ?? [];
+            const debit = source.find(l => l.giftTx === rec.id && l.cur === 'gems'), bonus = source.find(l => l.giftTx === rec.id && l.cur === 'coins');
+            if (!target.some(l => l.giftTx === rec.id && l.cur === 'coins' && l.after === child.toCoins)
+                || previousCoins !== undefined && bonus.before !== previousCoins || previousGems !== undefined && debit.before !== previousGems)
+                return false;
+            previousCoins = bonus.after;
+            previousGems = debit.after;
+            const h = data.house?.ledger.find(l => l.tx === rec.id);
+            if (h && (h.delta !== rec.house || h.total !== rec.total || h.cur !== 'gems' || h.rewardPolicy !== rec.rewardPolicy || h.from !== rec.from
+                || h.to !== rec.to || h.gift !== rec.gift || h.qty !== rec.qty || h.ts !== rec.ts || h.room !== req.room))
+                return false;
+        }
+        const quote = quoteGiftBatch(first.price, req.qty, targets.length);
+        if (!quote || !isObj(r.quote) || !exactKeys(r.quote, Object.keys(quote)) || !isObj(r.quote.perRecipient)
+            || !exactKeys(r.quote.perRecipient, Object.keys(quote.perRecipient)) || r.coins !== previousCoins || r.gems !== previousGems)
+            return false;
+        const { perRecipient, ...totals } = quote, storedQuote = r.quote, storedPerRecipient = r.quote.perRecipient;
+        if (!Object.entries(totals).every(([k, amount]) => storedQuote[k] === amount)
+            || !Object.entries(perRecipient).every(([k, amount]) => storedPerRecipient[k] === amount))
+            return false;
+    }
+    return true;
+};
+/** الحقول الجذرية الناقصة وdaily القديم اختياريان؛ القيم المالية الموجودة يجب أن تكون أعداداً صحيحة آمنة. */
+export const validWallet = (d) => isObj(d) && optional(d.acc, (x) => record(x, validAcc)) && optional(d.settled, strs)
+    && optional(d.bulkOps, (x) => record(x, (v) => isObj(v) && v.ok === true && str(v.operationId) && nat(v.total) && nat(v.succeeded) && nat(v.failed) && Array.isArray(v.failures)))
+    && optional(d.campaignGrants, validCampaignGrants)
+    && optional(d.buys, (x) => record(x, str)) && optional(d.buyOps, (x) => record(x, validBuyOp))
+    && optional(d.admOps, (x) => record(x, validAdm)) && optional(d.giftKeys, (x) => record(x, validGiftKey))
+    && optional(d.house, validHouse) && optional(d.giftStats, (x) => record(x, nat)) && validGiftProofs(d) && validGiftBatches(d) && validLuckyState(d) && validAuctionWalletR47(d);
+/**
+ * المحفظة الموحّدة لكل لاعب (كل الألعاب): عملات وجواهر افتراضية بلا قيمة مالية، لا تُسحب ولا تتحول لمال. الشراء بأموال حقيقية غير مفعّل؛ لما يتفعّل يمر عبر grant() بمفتاح عملية فريد (نفس ضمان عدم التكرار).
+ * الرصيد على الخادم (مربوط بمعرّف الجلسة) عشان ما يتلاعب فيه اللاعب من جواله.
+ */
+export class Wallet {
+    now;
+    d = { acc: {}, settled: [] };
+    disk;
+    persistent;
+    /** جوائز/استرجاعات مستحقة ما انحفظت بعد (بالذاكرة فقط). تُعاد محاولتها ولا تظهر للاعب قبل ما تنحفظ. */
+    pending = [];
+    bulkTail = Promise.resolve();
+    /** يُنادى بعد كل تغيير رصيد عشان نكتب سجل الحركات (بعد نجاح الحفظ فقط) */
+    onTx;
+    onCampaignTxBatch;
+    /** Server balance/event bridge, AFTER commit only; never replayed or called for failed persistence. */
+    onBenefitsChange;
+    /** يُنادى بعد حفظ هدية جديدة فقط؛ إعادة الطلب لا تستدعيه. */
+    onGift;
+    /** Optional durable reservation before any gift mutation; failure prevents the primary commit. */
+    onBeforeGift;
+    /** يُنادى لما جائزة معلّقة تنحفظ أخيراً (مفتاح اللعبة والمبالغ) */
+    onSettled;
+    /** رمز عام فقط؛ لا معرّف لاعب أو مباراة أو محتوى استثناء في السجل. */
+    onPayoutError;
+    settlingLucky = false;
+    preparingGiftBatch = false;
+    auctionGuardsR47;
+    recoveringAuctionsR47 = false;
+    constructor(file = '', now = Date.now, mon = new StorageMonitor()) {
+        this.now = now;
+        this.persistent = !!file;
+        if (file) {
+            // ما فيه ملف = بداية جديدة. ملف تالف = يرمي DataFilesCorruptError (ما نبدأ بفاضي وما نكتب فوقه)
+            const loaded = loadJsonFile(file, validWallet);
+            if (loaded)
+                this.d = loaded;
+            this.d.acc ??= {};
+            this.d.settled ??= [];
+        }
+        this.disk = new Persister('wallet', file, () => this.d, now, mon);
+        this.settleExpiredLuckyBags();
+    }
+    snap(ids) { return new Map(ids.map((id) => [id, structuredClone(this.a(id))])); }
+    restore(m) { for (const [id, a] of m)
+        this.d.acc[id] = a; }
+    rec(id, cur, kind, delta, after, reason, ref = '', giftTx, ts = this.now()) {
+        const a = this.a(id);
+        (a.ledger ??= []).push({ id: randomUUID(), ts, cur, kind, delta, before: after - delta, after, reason, ref, ...(giftTx ? { giftTx } : {}) });
+    }
+    a(id) { return (this.d.acc[id] ??= { coins: START_COINS, daily: '' }); }
+    balance(id) { this.recoverAuctionsR47(); return this.a(id).coins; }
+    gems(id) { this.recoverAuctionsR47(); return this.a(id).gems ?? 0; }
+    owned(id) { this.recoverAuctionsR47(); return [...(this.a(id).owned ?? [])]; }
+    /** الأفاتار المجهّز (معرّف عنصر) أو null؛ قراءة فقط ولا تنشئ حساباً للمعرّف */
+    equippedAvatar(id) { return this.d.acc[id]?.equipped?.avatar ?? null; }
+    equipped(id) { return { ...(this.a(id).equipped ?? {}) }; }
+    /** Existing owned equipment only; never creates/normalizes an account or persists. Catalog slot validation belongs to the caller. */
+    equippedOwnedItem(id, slot) {
+        const a = this.d.acc[id], equipped = a?.equipped;
+        const item = equipped && Object.hasOwn(equipped, slot) ? equipped[slot] : undefined;
+        return typeof item === 'string' && a?.owned?.includes(item) ? item : null;
+    }
+    claimed(id) { return [...(this.a(id).claimed ?? [])]; }
+    /** آخر العمليات (الأحدث أولاً) لعملات وجواهر */
+    ledgerOf(id, n = 50, offset = 0) {
+        if (!nat(n) || !nat(offset) || n === 0)
+            return [];
+        const rows = this.a(id).ledger ?? [];
+        const end = Math.max(0, rows.length - offset);
+        return rows.slice(Math.max(0, end - n), end).reverse().map((row) => ({ ...row }));
+    }
+    ledgerCount(id) { return (this.d.acc[id]?.ledger ?? []).length; }
+    canClaim(id) { return this.a(id).daily !== dayOf(this.now()); }
+    /** جوائز معلّقة بانتظار نجاح الحفظ (للصحة) */
+    pendingCount() { return this.pending.length; }
+    /** تغيير بالمحفظة ما انكتب؟ (العمليات الفاشلة تتراجع فما تُحسب؛ الجوائز المعلّقة تُعدّ لوحدها في pendingCount) */
+    unsaved() { return this.disk.unsaved; }
+    /** المكافأة اليومية. لو الحفظ فشل يتراجع كل شيء ويرمي StorageError (ما انضاف شيء). */
+    claimDaily(id) {
+        const a = this.a(id);
+        if (a.daily === dayOf(this.now()))
+            return 0;
+        if (!this.auctionCanBalanceR47(id, 'coins', a.coins + DAILY_COINS))
+            throw new RangeError('wallet_balance_overflow');
+        const sn = this.snap([id]);
+        a.daily = dayOf(this.now());
+        a.coins += DAILY_COINS;
+        this.rec(id, 'coins', 'daily', DAILY_COINS, a.coins, 'المكافأة اليومية');
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            throw e;
+        }
+        this.onTx?.(id, 'daily', DAILY_COINS, a.coins, '');
+        return DAILY_COINS;
+    }
+    /** يخصم من الكل أو ما يخصم أبداً. يرجّع أرقام الفاشلين (رصيدهم ما يكفي). لو الحفظ فشل يتراجع الخصم ويرمي StorageError. */
+    charge(ids, amount, ref = '') {
+        if (!nat(amount))
+            throw new RangeError('wallet_invalid_amount');
+        if (new Set(ids).size !== ids.length)
+            throw new RangeError('wallet_invalid_payers');
+        if (amount <= 0)
+            return [];
+        const poor = ids.filter((id) => this.a(id).coins < amount);
+        if (poor.length)
+            return poor;
+        const sn = this.snap(ids);
+        for (const id of ids) {
+            this.a(id).coins -= amount;
+            this.rec(id, 'coins', 'entry_fee', -amount, this.a(id).coins, 'رسم دخول مباراة', ref);
+        }
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            throw e;
+        }
+        for (const id of ids)
+            this.onTx?.(id, 'entry_fee', -amount, this.a(id).coins, ref);
+        return [];
+    }
+    /**
+     * توزيع الجائزة مرة وحدة: الفائزون يقتسمون المجموع. لو ما فيه فائز نرجّع الرسوم.
+     * لو الحفظ فشل: نتراجع، وتنحط الجائزة في قائمة معلّقة وتنعاد محاولتها (retryPending). لا ترجع مبالغ حتى تنحفظ فعلاً.
+     */
+    settle(key, payers, fee, winners) {
+        if (!nat(fee))
+            throw new RangeError('wallet_invalid_amount');
+        if (fee <= 0 || this.d.settled.includes(key) || this.pending.some((p) => p.key === key))
+            return {};
+        return this.commit({ key, payers, fee, winners }) ?? {};
+    }
+    commit(p) {
+        const out = {};
+        const pool = p.fee * p.payers.length;
+        if (!nat(pool))
+            throw new RangeError('wallet_balance_overflow');
+        if (new Set(p.payers).size !== p.payers.length || new Set(p.winners).size !== p.winners.length)
+            throw new RangeError('wallet_invalid_payers');
+        const w = p.winners.filter((id) => p.payers.includes(id));
+        const recv = w.length ? w : p.payers;
+        if (!recv.length)
+            return {};
+        const each = Math.floor(pool / recv.length);
+        for (let i = 0; i < recv.length; i++) {
+            const n = each + (i === 0 ? pool - each * recv.length : 0);
+            if (!nat(n) || !this.auctionCanBalanceR47(recv[i], 'coins', (this.d.acc[recv[i]]?.coins ?? START_COINS) + n))
+                throw new RangeError('wallet_balance_overflow');
+        }
+        const sn = this.snap(recv);
+        const settledBefore = this.d.settled;
+        const kind0 = p.key.startsWith('refund:') || !w.length ? 'refund' : 'prize';
+        recv.forEach((id, i) => { const n = each + (i === 0 ? pool - each * recv.length : 0); this.a(id).coins += n; out[id] = n; this.rec(id, 'coins', kind0, n, this.a(id).coins, kind0 === 'prize' ? 'جائزة مباراة' : 'استرجاع رسوم', p.key); });
+        this.d.settled = [...settledBefore, p.key];
+        if (!this.disk.save(true)) {
+            this.restore(sn);
+            this.d.settled = settledBefore;
+            if (!this.pending.some((q) => q.key === p.key))
+                this.pending.push(p);
+            return null;
+        }
+        const kind = p.key.startsWith('refund:') || !w.length ? 'refund' : 'prize';
+        for (const id of recv)
+            this.onTx?.(id, kind, out[id], this.a(id).coins, p.key);
+        return out;
+    }
+    opKey(id, key) { return JSON.stringify([id, key]); }
+    validKey(id, key) { return str(id) && !!id && str(key) && !!key && key.length <= 80; }
+    /** Private server integration view; never expose internal request IDs or keys through HTTP. */
+    luckyReceiptByKey(actor, key) {
+        if (!this.validKey(actor, key))
+            return null;
+        const operation = this.d.luckyOps?.[this.opKey(actor, key)];
+        return operation ? structuredClone({ request: operation.request, result: { ...operation.result, dup: true } }) : null;
+    }
+    luckyReplay(request, key) {
+        if (!this.validKey(request.actor, key) || !validLuckyRequest(request))
+            return { ok: false, code: 'bad' };
+        const op = this.d.luckyOps?.[this.opKey(request.actor, key)];
+        if (!op)
+            return null;
+        return op.fingerprint === luckyFingerprint(request) ? structuredClone({ ...op.result, dup: true }) : { ok: false, code: 'conflict' };
+    }
+    /** Whole Wallet draft, same Persister: no asynchronous window or second store. */
+    luckyCommit(apply) {
+        const before = this.d;
+        this.d = structuredClone(before);
+        try {
+            const result = apply();
+            if (!this.auctionBalancesValidR47())
+                throw new RangeError('wallet_balance_overflow');
+            this.disk.mustSave();
+            return structuredClone(result);
+        }
+        catch (e) {
+            this.d = before;
+            throw e;
+        }
+    }
+    luckyProof(request, key, result) {
+        this.d.luckyOps = { ...this.d.luckyOps, [this.opKey(request.actor, key)]: { fingerprint: luckyFingerprint(request), request: structuredClone(request), result: structuredClone(result) } };
+    }
+    luckyNotify(id, cur, kind, delta, balance, ref) {
+        // Existing TxHook is coins-only; gem and entitlement accounting remains in the canonical ledger.
+        if (cur === 'coins')
+            try {
+                this.onTx?.(id, kind, delta, balance, ref);
+            }
+            catch { /* observation cannot undo a durable payment */ }
+    }
+    benefitsNotify(ids) {
+        try {
+            this.onBenefitsChange?.([...new Set(ids)]);
+        }
+        catch { /* observer failure is not financial failure */ }
+    }
+    /** Existing single Wallet writer only. Configure after current catalog/auth are ready; recovers restart deadlines. */
+    configureAuctionsR47(guards) {
+        if (!guards || typeof guards.item !== 'function' || typeof guards.isAdmin !== 'function' || typeof guards.canBid !== 'function')
+            throw new TypeError('auction_bad_guards');
+        this.auctionGuardsR47 = guards;
+        this.recoverAuctionsR47();
+    }
+    auctionReplayR47(request, key) {
+        if (!validAuctionKeyR47(request.actor, key) || !validAuctionRequestR47(request))
+            return { ok: false, code: 'bad' };
+        const p = this.d.auctionR47?.ops[auctionKeyR47(request.actor, key)];
+        return !p ? null : p.fingerprint === auctionFingerprintR47(request) ? structuredClone({ ...p.result, dup: true }) : { ok: false, code: 'conflict' };
+    }
+    auctionProofR47(request, key, result) {
+        const s = this.d.auctionR47 ??= { v: 1, lots: {}, ops: {} };
+        s.ops[auctionKeyR47(request.actor, key)] = { request: structuredClone(request), fingerprint: auctionFingerprintR47(request), result: structuredClone(result) };
+    }
+    auctionAuthorizedR47(actor, admin = false) {
+        if (!this.auctionGuardsR47)
+            return { ok: false, code: 'unconfigured' };
+        if (!this.has(actor) || (admin && this.auctionGuardsR47.isAdmin(actor) !== true))
+            return { ok: false, code: 'forbidden' };
+        return null;
+    }
+    /** Never evict idempotency evidence. At the finite cap NEW create/bid commands fail closed. */
+    auctionCapacityR47() { return Object.keys(this.d.auctionR47?.ops ?? {}).length < AUCTION_R47_LIMITS.receipts - AUCTION_R47_LIMITS.lots; }
+    auctionHeldR47(actor, cur) {
+        return Object.values(this.d.auctionR47?.lots ?? {}).reduce((sum, lot) => sum + (lot.status === 'open' && lot.item.currency === cur && lot.highest?.actor === actor ? lot.escrow : 0), 0);
+    }
+    auctionCanBalanceR47(actor, cur, after) { return nat(after) && nat(after + this.auctionHeldR47(actor, cur)); }
+    /** Protect the refund headroom as well as the spendable balance when legacy reward/admin code credits. */
+    auctionBalancesValidR47() {
+        const held = new Map();
+        for (const lot of Object.values(this.d.auctionR47?.lots ?? {})) {
+            if (lot.status !== 'open' || !lot.highest)
+                continue;
+            const key = auctionKeyR47(lot.highest.actor, lot.item.currency);
+            held.set(key, (held.get(key) ?? 0) + lot.escrow);
+        }
+        for (const [key, amount] of held) {
+            const [actor, cur] = JSON.parse(key);
+            if (!nat(amount) || !nat((this.d.acc[actor]?.[cur] ?? 0) + amount))
+                return false;
+        }
+        return true;
+    }
+    createAuctionR47(actor, itemId, key, durationMinutes = 5) {
+        const req = { op: 'create', actor, itemId, durationMinutes };
+        const auth = this.auctionAuthorizedR47(actor, true);
+        if (auth)
+            return auth;
+        this.recoverAuctionsR47();
+        const replay = this.auctionReplayR47(req, key);
+        if (replay)
+            return replay;
+        const item = this.auctionGuardsR47.item(itemId);
+        if (!approvedAuctionItemR47(item))
+            return { ok: false, code: 'unavailable' };
+        const ts = this.now(), endsAt = ts + durationMinutes * 60_000;
+        if (!nat(ts) || !nat(endsAt))
+            return { ok: false, code: 'bad' };
+        const lots = Object.values(this.d.auctionR47?.lots ?? {});
+        if (!this.auctionCapacityR47() || lots.length >= AUCTION_R47_LIMITS.lots || lots.filter(l => l.status === 'open').length >= AUCTION_R47_LIMITS.active)
+            return { ok: false, code: 'capacity' };
+        const lotId = randomUUID();
+        return this.luckyCommit(() => {
+            const s = this.d.auctionR47 ??= { v: 1, lots: {}, ops: {} };
+            s.lots[lotId] = { id: lotId, createdBy: actor, item: { id: item.id, slot: item.slot, price: item.price, currency: item.currency, permanent: true },
+                createdAt: ts, endsAt, status: 'open', escrow: 0, bidCount: 0, history: [] };
+            const result = { ok: true, dup: false, op: 'create', lotId, receiptId: lotId, status: 'open' };
+            this.auctionProofR47(req, key, result);
+            return result;
+        });
+    }
+    bidAuctionR47(actor, lotId, amount, key) {
+        const req = { op: 'bid', actor, lotId, amount };
+        const auth = this.auctionAuthorizedR47(actor);
+        if (auth)
+            return auth;
+        this.recoverAuctionsR47();
+        const replay = this.auctionReplayR47(req, key);
+        if (replay)
+            return replay;
+        const lot = this.d.auctionR47?.lots[lotId];
+        if (!lot)
+            return { ok: false, code: 'missing' };
+        const ts = this.now();
+        if (!nat(ts))
+            return { ok: false, code: 'bad' };
+        if (ts >= lot.endsAt)
+            return { ok: false, code: 'ended' };
+        if (lot.status !== 'open')
+            return { ok: false, code: 'terminal' };
+        if (ts < lot.createdAt)
+            return { ok: false, code: 'bad' };
+        if (actor === lot.createdBy)
+            return { ok: false, code: 'forbidden' };
+        const item = this.auctionGuardsR47.item(lot.item.id);
+        if (!approvedAuctionItemR47(item) || item.currency !== lot.item.currency || item.price !== lot.item.price || item.slot !== lot.item.slot)
+            return { ok: false, code: 'unavailable' };
+        if (this.auctionGuardsR47.canBid(actor, item) !== true)
+            return { ok: false, code: 'ineligible' };
+        const a = this.d.acc[actor], cur = lot.item.currency;
+        if ((a.owned ?? []).includes(lot.item.id))
+            return { ok: false, code: 'owned' };
+        if (amount < (lot.highest ? lot.highest.amount + 1 : Math.max(1, lot.item.price)))
+            return { ok: false, code: 'low' };
+        if (!this.auctionCapacityR47())
+            return { ok: false, code: 'capacity' };
+        const have = a[cur] ?? 0, ownHeld = lot.highest?.actor === actor ? lot.escrow : 0;
+        if (have + ownHeld < amount)
+            return { ok: false, code: 'poor' };
+        const previous = lot.highest, receiptId = randomUUID();
+        const previousAfter = previous ? (this.d.acc[previous.actor][cur] ?? 0) + lot.escrow : 0;
+        if (previous && !nat(previousAfter))
+            return { ok: false, code: 'overflow' };
+        // CURRENT authority callbacks may read Wallet and lazily settle other lots. Recheck this lot
+        // and the actual server deadline immediately before the synchronous financial draft.
+        if (this.now() >= lot.endsAt || this.d.auctionR47.lots[lotId].status !== 'open')
+            return { ok: false, code: 'ended' };
+        const result = this.luckyCommit(() => {
+            const l = this.d.auctionR47.lots[lotId];
+            if (l.highest)
+                this.auctionRefundR47(l, ts);
+            const source = this.d.acc[actor];
+            source[cur] = (source[cur] ?? 0) - amount;
+            this.rec(actor, cur, 'transfer', -amount, source[cur], 'حجز أعلى عرض مزاد منصة — غير قابل للصرف', `auction:${lotId}:bid:${receiptId}`, undefined, ts);
+            const bid = { id: receiptId, actor, amount, at: ts, sequence: ++l.bidCount };
+            l.escrow = amount;
+            l.highest = bid;
+            l.history.push(bid);
+            l.history = l.history.slice(-AUCTION_R47_LIMITS.history);
+            const r = { ok: true, dup: false, op: 'bid', lotId, receiptId, status: 'open', amount, sequence: l.bidCount };
+            this.auctionProofR47(req, key, r);
+            return r;
+        });
+        // Balance/event bridge only AFTER the single financial commit. Coins TxHook remains coins-only.
+        if (previous)
+            this.luckyNotify(previous.actor, cur, 'refund', previous.amount, previousAfter, `auction:${lotId}:refund:${previous.id}`);
+        this.luckyNotify(actor, cur, 'purchase', -amount, have + ownHeld - amount, `auction:${lotId}:bid:${receiptId}`);
+        this.benefitsNotify([actor, ...(previous ? [previous.actor] : [])]);
+        return result;
+    }
+    auctionRefundR47(lot, ts) {
+        if (!lot.highest || !lot.escrow)
+            return;
+        const { actor, id } = lot.highest, cur = lot.item.currency, a = this.d.acc[actor];
+        const after = (a[cur] ?? 0) + lot.escrow;
+        if (!nat(after))
+            throw new RangeError('auction_refund_overflow');
+        a[cur] = after;
+        this.rec(actor, cur, 'refund', lot.escrow, after, 'فك حجز عرض مزاد المنصة', `auction:${lot.id}:refund:${id}`, undefined, ts);
+        lot.escrow = 0;
+    }
+    /** Current catalog AND current account eligibility AND ownership are rechecked before granting. */
+    auctionCloseR47(lotId, cancel, request, key) {
+        const previousRecovery = this.recoveringAuctionsR47;
+        this.recoveringAuctionsR47 = true;
+        try {
+            return this.auctionCloseLockedR47(lotId, cancel, request, key);
+        }
+        finally {
+            this.recoveringAuctionsR47 = previousRecovery;
+        }
+    }
+    auctionCloseLockedR47(lotId, cancel, request, key) {
+        const lot = this.d.auctionR47.lots[lotId], ts = this.now(), item = cancel ? undefined : this.auctionGuardsR47.item(lot.item.id);
+        let reason = cancel ? 'cancelled' : !lot.highest ? 'no_bids' : 'winner';
+        if (!cancel && lot.highest) {
+            if (!approvedAuctionItemR47(item) || item.currency !== lot.item.currency || item.price !== lot.item.price || item.slot !== lot.item.slot)
+                reason = 'unavailable';
+            else if (!this.has(lot.highest.actor) || this.auctionGuardsR47.canBid(lot.highest.actor, item) !== true)
+                reason = 'ineligible';
+            else if ((this.d.acc[lot.highest.actor].owned ?? []).includes(lot.item.id))
+                reason = 'owned';
+        }
+        const receiptId = randomUUID();
+        const result = this.luckyCommit(() => {
+            const l = this.d.auctionR47.lots[lotId], high = l.highest;
+            if (reason === 'winner' && high) {
+                (this.d.acc[high.actor].owned ??= []).push(l.item.id);
+                l.status = 'settled';
+                l.escrow = 0;
+                l.close = { id: receiptId, at: ts, reason, paid: high.amount, winner: high.actor };
+                // Funds were deducted into escrow at bid time: consume reserve, NEVER debit spendable twice.
+                this.rec(high.actor, l.item.currency, 'purchase', 0, this.d.acc[high.actor][l.item.currency] ?? 0, 'تسوية الحجز ومنح عنصر المزاد مرة واحدة', `auction:${lotId}:settle:${receiptId}`, undefined, ts);
+            }
+            else {
+                this.auctionRefundR47(l, ts);
+                l.status = cancel ? 'cancelled' : reason === 'no_bids' ? 'expired' : 'refunded';
+                l.close = { id: receiptId, at: ts, reason, paid: 0 };
+            }
+            const r = { ok: true, dup: false, op: cancel ? 'cancel' : 'settle', lotId, receiptId, status: l.status };
+            if (request && key)
+                this.auctionProofR47(request, key, r);
+            return r;
+        });
+        if (lot.highest) {
+            if (reason !== 'winner')
+                this.luckyNotify(lot.highest.actor, lot.item.currency, 'refund', lot.highest.amount, this.d.acc[lot.highest.actor][lot.item.currency] ?? 0, `auction:${lotId}:refund:${lot.highest.id}`);
+            this.benefitsNotify([lot.highest.actor]);
+        }
+        return result;
+    }
+    cancelAuctionR47(actor, lotId, key) {
+        const req = { op: 'cancel', actor, lotId };
+        const auth = this.auctionAuthorizedR47(actor, true);
+        if (auth)
+            return auth;
+        this.recoverAuctionsR47();
+        const replay = this.auctionReplayR47(req, key);
+        if (replay)
+            return replay;
+        const lot = this.d.auctionR47?.lots[lotId];
+        if (!lot)
+            return { ok: false, code: 'missing' };
+        if (lot.status !== 'open')
+            return { ok: false, code: 'terminal' };
+        const ts = this.now();
+        if (!nat(ts) || ts < lot.createdAt)
+            return { ok: false, code: 'bad' };
+        if (ts >= lot.endsAt)
+            return { ok: false, code: 'ended' };
+        return this.auctionCloseR47(lotId, true, req, key);
+    }
+    settleAuctionR47(actor, lotId, key) {
+        const req = { op: 'settle', actor, lotId };
+        const auth = this.auctionAuthorizedR47(actor);
+        if (auth)
+            return auth;
+        const replay = this.auctionReplayR47(req, key);
+        if (replay)
+            return replay;
+        const lot = this.d.auctionR47?.lots[lotId];
+        if (!lot)
+            return { ok: false, code: 'missing' };
+        const ts = this.now();
+        if (!nat(ts) || ts < lot.createdAt)
+            return { ok: false, code: 'bad' };
+        if (ts < lot.endsAt)
+            return { ok: false, code: 'early' };
+        if (lot.status !== 'open') {
+            if (!lot.close)
+                return { ok: false, code: 'terminal' };
+            if (!this.auctionCapacityR47())
+                return { ok: false, code: 'capacity' };
+            return this.luckyCommit(() => {
+                const result = { ok: true, dup: false, op: 'settle', lotId, receiptId: lot.close.id, status: lot.status };
+                this.auctionProofR47(req, key, result);
+                return result;
+            });
+        }
+        return this.auctionCloseR47(lotId, false, req, key);
+    }
+    /** No timer. Deferred until injected CURRENT authorities exist; failure leaves escrow intact and retryable. */
+    recoverAuctionsR47() {
+        const result = { settled: [], pending: [] }, ts = this.now();
+        if (!this.auctionGuardsR47 || this.recoveringAuctionsR47 || !nat(ts))
+            return result;
+        this.recoveringAuctionsR47 = true;
+        try {
+            for (const lot of Object.values(this.d.auctionR47?.lots ?? {}).filter(l => l.status === 'open' && ts >= l.endsAt).slice(0, AUCTION_R47_LIMITS.active)) {
+                try {
+                    this.auctionCloseR47(lot.id, false);
+                    result.settled.push(lot.id);
+                }
+                catch {
+                    result.pending.push(lot.id);
+                }
+            }
+        }
+        finally {
+            this.recoveringAuctionsR47 = false;
+        }
+        return result;
+    }
+    auctionViewR47(actor, lotId) {
+        this.recoverAuctionsR47();
+        if (!uuid(lotId) || !Object.hasOwn(this.d.auctionR47?.lots ?? {}, lotId))
+            return null;
+        const lot = this.d.auctionR47?.lots[lotId];
+        return lot ? { ...auctionViewR47(lot, actor), serverNow: this.now(), settlementPending: lot.status === 'open' && this.now() >= lot.endsAt } : null;
+    }
+    listAuctionsR47(actor, offset = 0, limit = 30) {
+        this.recoverAuctionsR47();
+        if (!nat(offset) || !pos(limit) || limit > AUCTION_R47_LIMITS.page)
+            return { serverNow: this.now(), total: 0, lots: [] };
+        const rows = Object.values(this.d.auctionR47?.lots ?? {}).sort((a, b) => b.createdAt - a.createdAt || a.id.localeCompare(b.id));
+        return { serverNow: this.now(), total: rows.length, lots: rows.slice(offset, offset + limit).map(l => ({ ...auctionViewR47(l, actor), settlementPending: l.status === 'open' && this.now() >= l.endsAt })) };
+    }
+    /** Caller holds SocialRooms authorization lock and supplies only the canonical approved offer. */
+    createLuckyBag(from, room, offer, count, delay, key) {
+        const request = { op: 'create', actor: from, room, offer, count, delay };
+        const replay = this.luckyReplay(request, key);
+        if (replay)
+            return replay;
+        if (!this.has(from))
+            return { ok: false, code: 'noto' };
+        const ts = this.now(), opensAt = ts + delay * 1000, expiresAt = opensAt + 600_000;
+        if (!nat(ts) || !nat(opensAt) || !nat(expiresAt))
+            return { ok: false, code: 'bad' };
+        const total = bagUnit(offer) * count, cur = bagCur(offer), a = this.d.acc[from];
+        const have = cur === 'coins' ? a.coins : a.gems ?? 0;
+        if (have < total)
+            return { ok: false, code: 'poor' };
+        const bagId = randomUUID();
+        const result = this.luckyCommit(() => {
+            const sender = this.d.acc[from];
+            if (cur === 'coins')
+                sender.coins -= total;
+            else
+                sender.gems = (sender.gems ?? 0) - total;
+            this.rec(from, cur, 'transfer', -total, have - total, 'تمويل حقيبة حظ بالتوزيع المتساوي', `lucky:${bagId}:create`, undefined, ts);
+            this.d.luckyBags = { ...this.d.luckyBags, [bagId]: { id: bagId, senderId: from, room, offer: structuredClone(offer), count, total, reserve: total, createdAt: ts, opensAt, expiresAt, claims: [] } };
+            const receipt = { ok: true, dup: false, bagId, coins: sender.coins, gems: sender.gems ?? 0 };
+            this.luckyProof(request, key, receipt);
+            return receipt;
+        });
+        this.luckyNotify(from, cur, 'gift', -total, have - total, `lucky:${bagId}:create`);
+        this.benefitsNotify([from]);
+        return result;
+    }
+    /** Item eligibility (current catalog/level/VIP/NOBLE) MUST be authorized by parent at claim time. */
+    claimLuckyBag(recipient, bagId, key, opt = {}) {
+        const request = { op: 'claim', actor: recipient, bagId };
+        if (!isObj(opt) || Object.keys(opt).some((k) => k !== 'itemEligible') || !optional(opt.itemEligible, (x) => typeof x === 'boolean'))
+            return { ok: false, code: 'bad' };
+        const replay = this.luckyReplay(request, key);
+        if (replay)
+            return replay;
+        if (!this.has(recipient))
+            return { ok: false, code: 'noto' };
+        const bag = this.d.luckyBags?.[bagId];
+        if (!bag)
+            return { ok: false, code: 'missing' };
+        if (recipient === bag.senderId)
+            return { ok: false, code: 'self' };
+        if (bag.claims.some((c) => c.recipient === recipient))
+            return { ok: false, code: 'claimed' };
+        const ts = this.now();
+        if (!nat(ts))
+            return { ok: false, code: 'bad' };
+        if (ts < bag.opensAt)
+            return { ok: false, code: 'early' };
+        if (ts >= bag.expiresAt)
+            return { ok: false, code: 'expired' };
+        if (bag.claims.length >= bag.count || !bag.reserve)
+            return { ok: false, code: 'full' };
+        const offer = bag.offer, unit = bagUnit(offer), cur = bagCur(offer), a = this.d.acc[recipient];
+        if (offer.type === 'item') {
+            if ((a.owned ?? []).includes(offer.id))
+                return { ok: false, code: 'owned' };
+            if (opt.itemEligible !== true)
+                return { ok: false, code: 'ineligible' };
+        }
+        if (offer.type === 'coins' && !nat(a.coins + unit))
+            return { ok: false, code: 'overflow' };
+        const claimId = randomUUID(), creditId = offer.type === 'gift' ? randomUUID() : undefined;
+        const result = this.luckyCommit(() => {
+            const b = this.d.luckyBags[bagId], target = this.d.acc[recipient];
+            b.reserve -= unit;
+            b.claims.push({ id: claimId, recipient, at: ts, ...(creditId ? { creditId } : {}) });
+            if (offer.type === 'coins')
+                target.coins += unit;
+            else if (offer.type === 'item')
+                (target.owned ??= []).push(offer.id);
+            else
+                target.prepaidGifts = { ...target.prepaidGifts, [creditId]: { id: creditId, bagId, gift: { id: offer.id, name: offer.name, icon: offer.icon, price: offer.price }, qty: 1, remaining: 1, value: unit } };
+            this.rec(recipient, cur, 'transfer', offer.type === 'coins' ? unit : 0, cur === 'coins' ? target.coins : target.gems ?? 0, offer.type === 'coins' ? 'حصة عملات حقيبة حظ ممولة' : offer.type === 'item' ? `ملكية غرض ممول من حقيبة حظ: ${offer.id}` : `حق هدية مسبقة الدفع ممول بقيمة ${unit} جوهرة`, `lucky:${bagId}:claim:${claimId}`, undefined, ts);
+            const receipt = { ok: true, dup: false, bagId, claimId, type: offer.type, amount: unit, cur, coins: target.coins, gems: target.gems ?? 0,
+                ...(offer.type === 'item' ? { itemId: offer.id } : {}), ...(creditId ? { creditId } : {}) };
+            this.luckyProof(request, key, receipt);
+            return receipt;
+        });
+        if (offer.type === 'coins')
+            this.luckyNotify(recipient, cur, 'gift', unit, result.coins, `lucky:${bagId}:claim:${claimId}`);
+        this.benefitsNotify([recipient, bag.senderId]);
+        return result;
+    }
+    /** Bounded durable refunds; any failed or overflowing refund leaves its entire reserve retryable. */
+    settleExpiredLuckyBags(limit = 100) {
+        const refunded = [], pending = [];
+        const ts = this.now();
+        if (this.settlingLucky || !nat(limit) || limit < 1 || limit > 1000 || !nat(ts))
+            return { refunded, pending };
+        this.settlingLucky = true;
+        try {
+            const expired = Object.values(this.d.luckyBags ?? {}).filter((b) => b.reserve > 0 && ts >= b.expiresAt).slice(0, limit);
+            for (const candidate of expired) {
+                const bag = this.d.luckyBags?.[candidate.id];
+                if (!bag || !bag.reserve || bag.refund)
+                    continue;
+                const cur = bagCur(bag.offer), sender = this.d.acc[bag.senderId], before = cur === 'coins' ? sender.coins : sender.gems ?? 0;
+                if (!nat(before + bag.reserve)) {
+                    pending.push(bag.id);
+                    continue;
+                }
+                const amount = bag.reserve, ref = JSON.stringify(['refund', bag.id]);
+                try {
+                    this.luckyCommit(() => {
+                        const b = this.d.luckyBags[bag.id], a = this.d.acc[bag.senderId];
+                        if (cur === 'coins')
+                            a.coins += amount;
+                        else
+                            a.gems = (a.gems ?? 0) + amount;
+                        b.reserve = 0;
+                        b.refund = { id: ref, at: ts, amount };
+                        this.rec(bag.senderId, cur, 'refund', amount, before + amount, 'استرجاع الجزء غير المستلم من حقيبة الحظ', ref, undefined, ts);
+                    });
+                    refunded.push(bag.id);
+                    this.luckyNotify(bag.senderId, cur, 'refund', amount, before + amount, ref);
+                    this.benefitsNotify([bag.senderId]);
+                }
+                catch {
+                    pending.push(bag.id);
+                }
+            }
+            return { refunded, pending };
+        }
+        finally {
+            this.settlingLucky = false;
+        }
+    }
+    /** Server-only clones; parent projects internal sender/room identity, never exposes this object raw. */
+    luckyBagView(bagId, viewer) {
+        this.settleExpiredLuckyBags();
+        if (!uuid(bagId))
+            return null;
+        const b = this.d.luckyBags?.[bagId];
+        return b ? this.luckyView(b, viewer) : null;
+    }
+    luckyView(b, viewer) {
+        const ts = this.now();
+        return structuredClone({ id: b.id, senderId: b.senderId, room: b.room, offer: b.offer, count: b.count, total: b.total, reserve: b.reserve,
+            createdAt: b.createdAt, opensAt: b.opensAt, expiresAt: b.expiresAt, remaining: b.count - b.claims.length, claimed: b.claims.some((c) => c.recipient === viewer),
+            status: ts >= b.expiresAt ? 'expired' : b.claims.length === b.count ? 'full' : ts < b.opensAt ? 'scheduled' : 'open', refunded: b.refund?.amount ?? 0 });
+    }
+    listLuckyBags(room, viewer) {
+        this.settleExpiredLuckyBags();
+        return Object.values(this.d.luckyBags ?? {}).filter((b) => b.room === room).sort((a, b) => b.createdAt - a.createdAt).map((b) => this.luckyView(b, viewer));
+    }
+    prepaidGiftInventory(id) {
+        return structuredClone(Object.values(this.d.acc[id]?.prepaidGifts ?? {}).filter((c) => c.remaining > 0));
+    }
+    /** A funded right, not a fresh gem debit. New consumption always uses the R13 coin rewards. */
+    redeemPrepaidGift(from, to, creditId, key, fromName, toName, opt = {}) {
+        if (!isObj(opt) || Object.keys(opt).some((k) => k !== 'room') || !optional(opt.room, (x) => str(x) && x.length <= 160))
+            return { ok: false, code: 'bad' };
+        if (from === to)
+            return { ok: false, code: 'self' };
+        const room = opt.room ?? '', request = { op: 'redeem', actor: from, to, creditId, fromName, toName, room };
+        const replay = this.luckyReplay(request, key);
+        if (replay)
+            return replay;
+        if (!this.has(from) || !this.has(to))
+            return { ok: false, code: 'noto' };
+        const credit = this.d.acc[from].prepaidGifts?.[creditId];
+        if (!credit)
+            return { ok: false, code: 'missing' };
+        if (!credit.remaining)
+            return { ok: false, code: 'empty' };
+        const ts = this.now();
+        if (!nat(ts))
+            return { ok: false, code: 'bad' };
+        const gift = credit.gift, quote = quoteGiftRewards(credit.value);
+        if (!quote)
+            return { ok: false, code: 'overflow' };
+        const { recv, house, senderBonus } = quote, a = this.d.acc[from], b = this.d.acc[to];
+        const sent = a.gSent ?? (a.gifts ?? []).filter((g) => g.dir === 'out').length, received = b.gRecv ?? (b.gifts ?? []).filter((g) => g.dir === 'in').length;
+        if (!nat(a.coins + senderBonus) || !nat(b.coins + recv) || !nat((this.d.house?.gems ?? 0) + house) || !nat((this.d.house?.count ?? 0) + 1)
+            || !nat(sent + 1) || !nat(received + 1) || !nat((this.d.giftStats?.[gift.id] ?? 0) + 1))
+            return { ok: false, code: 'overflow' };
+        const rec = { id: randomUUID(), ts, from, fromName, to, toName, gift: gift.id, name: gift.name, icon: gift.icon, price: gift.price,
+            qty: 1, total: credit.value, recv, house, senderBonus, rewardPolicy: quote.policy, rewardCur: quote.rewardCur,
+            ...(room ? { room } : {}), status: 'done', cur: 'gems', prepaid: true, creditId, dir: 'out' };
+        const release = this.onBeforeGift?.(from, to, rec.id, ts);
+        try {
+            const result = this.luckyCommit(() => {
+                const sender = this.d.acc[from], target = this.d.acc[to], c = sender.prepaidGifts[creditId];
+                c.remaining = 0;
+                c.value = 0;
+                sender.coins += senderBonus;
+                target.coins += recv;
+                this.rec(from, 'gems', 'gift', 0, sender.gems ?? 0, `استهلاك حق هدية مسبقة الدفع بقيمة ${rec.total} جوهرة: ${gift.name}`, gift.id, rec.id, ts);
+                this.rec(from, 'coins', 'gift', senderBonus, sender.coins, 'مكافأة إرسال هدية مسبقة الدفع: ' + gift.name, gift.id, rec.id, ts);
+                this.rec(to, 'coins', 'gift', recv, target.coins, 'عائد هدية مسبقة الدفع مستلمة: ' + gift.name, gift.id, rec.id, ts);
+                (sender.gifts ??= []).push(structuredClone(rec));
+                (target.gifts ??= []).push({ ...rec, dir: 'in' });
+                sender.gSent = sent + 1;
+                target.gRecv = received + 1;
+                for (const acc of [sender, target])
+                    if (acc.gifts.length > GIFTS_CAP)
+                        acc.gifts.splice(0, acc.gifts.length - GIFTS_CAP);
+                const h = (this.d.house ??= { coins: 0, count: 0, ledger: [] });
+                h.gems = (h.gems ?? 0) + house;
+                h.count++;
+                h.ledger.push({ id: randomUUID(), ts, kind: 'gift_share', cur: 'gems', rewardPolicy: quote.policy, delta: house, after: h.gems, tx: rec.id, from, to, gift: gift.id, qty: 1, total: rec.total, room });
+                if (h.ledger.length > HOUSE_LEDGER_CAP)
+                    h.ledger.splice(0, h.ledger.length - HOUSE_LEDGER_CAP);
+                this.d.giftStats = { ...this.d.giftStats, [gift.id]: (this.d.giftStats?.[gift.id] ?? 0) + 1 };
+                const receipt = { ok: true, dup: false, creditId, coins: sender.coins, gems: sender.gems ?? 0, toGems: target.gems ?? 0, toCoins: target.coins, rec };
+                this.luckyProof(request, key, receipt);
+                return receipt;
+            });
+            this.luckyNotify(from, 'coins', 'gift', senderBonus, result.coins, gift.id);
+            this.luckyNotify(to, 'coins', 'gift', recv, result.toCoins, gift.id);
+            try {
+                this.onGift?.(from, to, rec.id);
+            }
+            catch { /* canonical financial proof already committed */ }
+            this.benefitsNotify([from, to]);
+            return result;
+        }
+        finally {
+            release?.();
+        }
+    }
+    /** Explicitly approved manual owner-funded gem reward; parent verifies owner + both room members. */
+    sendRoomReward(from, to, amount, key, roomId) {
+        if (from === to)
+            return { ok: false, code: 'self' };
+        const request = { op: 'roomReward', actor: from, to, amount, room: roomId };
+        const replay = this.luckyReplay(request, key);
+        if (replay)
+            return replay;
+        if (!this.has(from) || !this.has(to))
+            return { ok: false, code: 'noto' };
+        const ts = this.now();
+        if (!nat(ts))
+            return { ok: false, code: 'bad' };
+        const a = this.d.acc[from], b = this.d.acc[to];
+        if ((a.gems ?? 0) < amount)
+            return { ok: false, code: 'poor' };
+        if (!nat((b.gems ?? 0) + amount))
+            return { ok: false, code: 'overflow' };
+        const rewardId = randomUUID(), ref = `roomReward:${rewardId}`;
+        const result = this.luckyCommit(() => {
+            const sender = this.d.acc[from], target = this.d.acc[to];
+            sender.gems = (sender.gems ?? 0) - amount;
+            target.gems = (target.gems ?? 0) + amount;
+            this.rec(from, 'gems', 'transfer', -amount, sender.gems, 'مكافأة غرفة يدوية ممولة من المالك (100%)', ref, undefined, ts);
+            this.rec(to, 'gems', 'transfer', amount, target.gems, 'مكافأة غرفة يدوية مستلمة من المالك (100%)', ref, undefined, ts);
+            const result = { ok: true, dup: false, rewardId, coins: sender.coins, gems: sender.gems, toGems: target.gems };
+            this.luckyProof(request, key, result);
+            return result;
+        });
+        this.benefitsNotify([from, to]);
+        return result;
+    }
+    /**
+     * يُنادى قبل قراءة الكتالوج/فحص السعر: null = طلب جديد، bad = تعارض، dup = نُفّذ سابقاً.
+     * هوية الشراء (kind,itemId) ثابتة؛ تعديل/تعطيل الكتالوج لاحقاً لا يمنع إعادة نتيجة العملية المنفذة.
+     * conversion يستخدم itemId=JSON.stringify([gems,rate])، ولا يُوثق أي معدل مرسل من العميل.
+     * legacy buys لا يحمل نوعاً: gems-* ملتبس ولذلك يرفض استخدام مفتاحه بلا خصم جديد ولا dup كاذب.
+     */
+    replayBuy(id, key, kind, itemId) {
+        if (kind === 'gems' || kind === 'conversion')
+            return this.replayManualConversion(id, key, kind, itemId);
+        if (!this.validKey(id, key) || !str(itemId) || !itemId || !['item', 'gems', 'conversion'].includes(kind))
+            return { ok: false, code: 'bad' };
+        const op = this.d.buyOps?.[this.opKey(id, key)];
+        if (op) {
+            if (op.kind !== kind || op.itemId !== itemId)
+                return { ok: false, code: 'bad' };
+            const a = this.a(id);
+            return { ok: true, dup: true, coins: a.coins, gems: a.gems ?? 0 };
+        }
+        const legacy = this.d.buys?.[id + ':' + key];
+        if (legacy !== undefined) {
+            if (legacy.startsWith('gems-') || kind !== 'item' || legacy !== itemId)
+                return { ok: false, code: 'bad' };
+            const a = this.a(id);
+            return { ok: true, dup: true, coins: a.coins, gems: a.gems ?? 0 };
+        }
+        return null;
+    }
+    /** Read-only durable proof: exact actor/key/kind/request, never this.a(), save(), hooks or migration.
+     * The receipt is the stored operation verbatim; top-level balances are current canonical balances,
+     * not invented historical balances. Untyped old buys remain ambiguous and fail closed.
+     */
+    replayManualConversion(id, key, kind, itemId) {
+        if (!this.validKey(id, key) || !str(itemId) || !itemId || !['gems', 'conversion'].includes(kind))
+            return { ok: false, code: 'bad' };
+        const op = this.d.buyOps?.[this.opKey(id, key)];
+        if (op) {
+            const a = this.d.acc[id];
+            if (op.kind !== kind || op.itemId !== itemId || !Object.hasOwn(this.d.acc, id) || !a)
+                return { ok: false, code: 'bad' };
+            return { ok: true, dup: true, coins: a.coins, gems: a.gems ?? 0, receipt: structuredClone(op) };
+        }
+        if (this.d.buys?.[id + ':' + key] !== undefined)
+            return { ok: false, code: 'bad' };
+        return null;
+    }
+    /**
+     * شراء عنصر من المتجر. الخادم هو اللي يتحقق من السعر (من الكتالوج) والرصيد والملكية.
+     * key = مفتاح طلب فريد من العميل: إعادة إرسال نفس الطلب ما تخصم مرة ثانية. العملية كلها (خصم + ملكية + سجل) تنحفظ بملف واحد أو تتراجع.
+     */
+    buy(id, item, key) {
+        const replay = this.replayBuy(id, key, 'item', item?.id);
+        if (replay)
+            return replay;
+        // عنصر مجاني بسعر صفر يستخدم الملكية والسجل والمفتاح أنفسها، دون منح عملات.
+        if (!nat(item.price))
+            return { ok: false, code: 'bad' };
+        // خط دفاع أخير: عملة معروفة وسعر ضمن السقف حتى لو ملف المتجر تعدّل يدوياً أو بخلل
+        if ((item.currency !== 'coins' && item.currency !== 'gems') || item.price > PRICE_MAX[item.currency])
+            return { ok: false, code: 'bad' };
+        const k = this.opKey(id, key);
+        const a = this.a(id);
+        if (item.permanent && (a.owned ?? []).includes(item.id))
+            return { ok: false, code: 'owned' };
+        const bal = item.currency === 'coins' ? a.coins : (a.gems ?? 0);
+        if (bal < item.price)
+            return { ok: false, code: 'poor' };
+        const sn = this.snap([id]);
+        const opsBefore = this.d.buyOps;
+        if (item.currency === 'coins')
+            a.coins -= item.price;
+        else
+            a.gems = (a.gems ?? 0) - item.price;
+        (a.owned ??= []).push(item.id);
+        this.rec(id, item.currency, 'purchase', -item.price, item.currency === 'coins' ? a.coins : a.gems, 'شراء من المتجر', item.id);
+        this.d.buyOps = { ...opsBefore, [k]: { kind: 'item', itemId: item.id, cur: item.currency, price: item.price } };
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            this.d.buyOps = opsBefore;
+            throw e;
+        }
+        if (item.currency === 'coins')
+            this.onTx?.(id, 'purchase', -item.price, a.coins, item.id);
+        return { ok: true, dup: false, coins: a.coins, gems: a.gems ?? 0 };
+    }
+    /**
+     * Closed manual coins→gems conversion. Only an exact committed receipt may be replayed.
+     * Complimentary/cash packs use Payments + grant(), not this historical API.
+     */
+    buyGems(id, packId, key) {
+        const replay = this.replayManualConversion(id, key, 'gems', packId);
+        if (replay?.ok)
+            return { ...replay, pack: { id: replay.receipt.itemId, gems: replay.receipt.gems, coins: replay.receipt.coins } };
+        return replay ?? { ok: false, code: MANUAL_CONVERSION_DISABLED };
+    }
+    /** Closed manual gems→coins conversion, including trusted/forged explicit rates. */
+    convertGems(id, gems, key, rate) {
+        const replay = this.replayManualConversion(id, key, 'conversion', JSON.stringify([gems, rate]));
+        return replay ?? { ok: false, code: MANUAL_CONVERSION_DISABLED };
+    }
+    /**
+     * إرسال هدية (qty من نفس الهدية) من لاعب للاعب، داخل غرفة أو من المتجر.
+     * R13: debit full gems, credit recipient coins and sender coin bonus, consume full gems into house.
+     * All balances, ledgers, counters and permanent receipt commit in the same existing Wallet store.
+     * Historical keys never become fresh sends, even when their capped display receipt is gone.
+     */
+    sendGift(from, to, gift, key, fromName, toName, opt = {}) {
+        if (this.preparingGiftBatch)
+            return { ok: false, code: 'bad' };
+        if (!isObj(opt) || Object.keys(opt).some((k) => k !== 'qty' && k !== 'room') || !optional(opt.room, str)
+            || !this.validKey(from, key) || !str(to) || !to || !isObj(gift) || !fields(gift, ['id', 'name', 'icon'], str)
+            || !gift.id || !str(fromName) || !str(toName))
+            return { ok: false, code: 'bad' };
+        const qty = opt.qty ?? 1, room = opt.room ?? '';
+        if (!pos(qty))
+            return { ok: false, code: 'bad' };
+        if (from === to)
+            return { ok: false, code: 'self' };
+        if (this.d.giftBatches?.[this.opKey(from, key)])
+            return { ok: false, code: 'bad' };
+        const k = this.opKey(from, key), prev = this.d.giftKeys?.[k] ?? this.d.giftKeys?.[from + ':' + key];
+        if (prev) {
+            const rec = this.giftByKey(from, key);
+            if (!rec || prev.to !== to || prev.gift !== gift.id || (prev.qty ?? 1) !== qty || (prev.room ?? '') !== room
+                || rec.rewardPolicy && (rec.price !== gift.price || rec.name !== gift.name || rec.icon !== gift.icon || rec.fromName !== fromName || rec.toName !== toName))
+                return { ok: false, code: 'bad' };
+            return { ok: true, dup: true, coins: this.balance(from), gems: this.gems(from), toCoins: this.balance(to), toGems: this.gems(to), rec };
+        }
+        const quote = quoteGiftRewards(gift.price, qty);
+        if (!quote || gift.price > GIFT_GEMS_MAX || quote.total > GIFT_GEMS_MAX)
+            return { ok: false, code: 'bad' };
+        if (!this.has(from) || !this.has(to))
+            return { ok: false, code: 'noto' };
+        const a = this.d.acc[from], b = this.d.acc[to], { total, recv, house, senderBonus } = quote;
+        if ((a.gems ?? 0) < total)
+            return { ok: false, code: 'poor' };
+        const ts = this.now();
+        if (!nat(ts))
+            return { ok: false, code: 'bad' };
+        const sent = a.gSent ?? (a.gifts ?? []).filter((g) => g.dir === 'out').length;
+        const received = b.gRecv ?? (b.gifts ?? []).filter((g) => g.dir === 'in').length;
+        if (!nat(a.coins + senderBonus) || !nat(b.coins + recv) || !nat((this.d.house?.gems ?? 0) + house) || !nat((this.d.house?.count ?? 0) + 1)
+            || !nat(sent + 1) || !nat(received + 1) || !nat((this.d.giftStats?.[gift.id] ?? 0) + qty))
+            return { ok: false, code: 'bad' };
+        const out = { id: randomUUID(), ts, from, fromName, to, toName, gift: gift.id, name: gift.name, icon: gift.icon, price: gift.price,
+            qty, total, recv, house, cur: quote.cur, rewardCur: quote.rewardCur, senderBonus, rewardPolicy: quote.policy, ...(room ? { room } : {}), status: 'done', dir: 'out' };
+        const release = this.onBeforeGift?.(from, to, out.id, ts);
+        try {
+            const result = this.luckyCommit(() => {
+                const sender = this.d.acc[from], target = this.d.acc[to], label = qty > 1 ? `${gift.name} ×${qty}` : gift.name;
+                sender.gems = (sender.gems ?? 0) - total;
+                sender.coins += senderBonus;
+                target.coins += recv;
+                this.rec(from, 'gems', 'gift', -total, sender.gems, 'هدية مرسلة: ' + label, gift.id, out.id, ts);
+                this.rec(from, 'coins', 'gift', senderBonus, sender.coins, 'مكافأة إرسال هدية: ' + label, gift.id, out.id, ts);
+                this.rec(to, 'coins', 'gift', recv, target.coins, 'عائد هدية مستلمة: ' + label, gift.id, out.id, ts);
+                (sender.gifts ??= []).push(structuredClone(out));
+                (target.gifts ??= []).push({ ...out, dir: 'in' });
+                sender.gSent = sent + 1;
+                target.gRecv = received + 1;
+                for (const acc of [sender, target])
+                    if (acc.gifts.length > GIFTS_CAP)
+                        acc.gifts.splice(0, acc.gifts.length - GIFTS_CAP);
+                const h = (this.d.house ??= { coins: 0, count: 0, ledger: [] });
+                h.gems = (h.gems ?? 0) + house;
+                h.count++;
+                h.ledger.push({ id: randomUUID(), ts, kind: 'gift_share', cur: 'gems', rewardPolicy: quote.policy, delta: house, after: h.gems, tx: out.id, from, to, gift: gift.id, qty, total, room });
+                if (h.ledger.length > HOUSE_LEDGER_CAP)
+                    h.ledger.splice(0, h.ledger.length - HOUSE_LEDGER_CAP);
+                this.d.giftStats = { ...this.d.giftStats, [gift.id]: (this.d.giftStats?.[gift.id] ?? 0) + qty };
+                this.d.giftKeys = { ...this.d.giftKeys, [k]: { to, gift: gift.id, rid: out.id, qty, ...(room ? { room } : {}), rec: structuredClone(out) } };
+                return { ok: true, dup: false, coins: sender.coins, gems: sender.gems, toCoins: target.coins, toGems: target.gems ?? 0, rec: out };
+            });
+            this.luckyNotify(from, 'coins', 'gift', senderBonus, result.coins, gift.id);
+            this.luckyNotify(to, 'coins', 'gift', recv, result.toCoins, gift.id);
+            this.benefitsNotify([from, to]);
+            this.onGift?.(from, to, out.id);
+            return result;
+        }
+        finally {
+            release?.();
+        }
+    }
+    /** Before current catalogue/price/confirmation lookup: null=new, bad=identity conflict, dup=original full batch.
+     * Identity is actor/key + canonical audience + gift ID + quantity PER recipient + trusted room scope.
+     * No account accessor, save, hook, receipt migration, or current catalogue is involved in replay.
+     */
+    replayGiftBatch(from, targets, giftId, qty, key, room) {
+        const canonical = canonicalGiftBatchTargets(from, targets);
+        if (!Array.isArray(canonical))
+            return canonical;
+        if (!this.validKey(from, key) || !internalId(giftId) || !pos(qty) || qty > GIFT_BATCH_QUANTITY_MAX || !str(room) || room.length > 160)
+            return { ok: false, code: 'bad' };
+        const k = this.opKey(from, key);
+        if (this.d.giftKeys?.[k] || this.d.giftKeys?.[from + ':' + key])
+            return { ok: false, code: 'bad' };
+        const proof = this.d.giftBatches?.[k];
+        if (!proof)
+            return null;
+        const request = { from, targets: canonical, gift: giftId, qty, room };
+        const identity = (r) => JSON.stringify([r.from, r.targets, r.gift, r.qty, r.room]);
+        if (identity(request) !== identity(proof.request))
+            return { ok: false, code: 'bad' };
+        return structuredClone({ ...proof.result, dup: true });
+    }
+    /** Caller holds ONE SocialRooms all-target authorization lock; this synchronous method never takes that lock.
+     * Allocate ordinary child receipts, PREPARE all outbox intents, then use the existing whole-Wallet draft
+     * and Persister exactly once. A failing preparation or persistence leaves no partial financial proof.
+     */
+    sendGiftBatch(from, targets, gift, qty, key, room, fromName, toNames, opt = {}) {
+        if (this.preparingGiftBatch)
+            return { ok: false, code: 'bad' };
+        const replay = this.replayGiftBatch(from, targets, gift?.id, qty, key, room);
+        if (replay)
+            return replay;
+        if (!isObj(gift) || !fields(gift, ['id', 'name', 'icon'], str) || !str(fromName) || fromName.length > 200
+            || gift.name.length > 200 || gift.icon.length > 200 || !isObj(toNames) || !isObj(opt)
+            || Object.keys(opt).some(k => k !== 'beforeCommit') || !optional(opt.beforeCommit, v => typeof v === 'function'))
+            return { ok: false, code: 'bad' };
+        const canonical = canonicalGiftBatchTargets(from, targets);
+        if (!Array.isArray(canonical))
+            return canonical;
+        if (!canonical.every(id => Object.hasOwn(toNames, id) && str(toNames[id]) && toNames[id].length <= 200))
+            return { ok: false, code: 'bad' };
+        const quote = quoteGiftBatch(gift.price, qty, canonical.length);
+        if (!quote)
+            return { ok: false, code: 'bad' };
+        if (!this.has(from) || !canonical.every(id => this.has(id)))
+            return { ok: false, code: 'noto' };
+        const a = this.d.acc[from], count = canonical.length, per = quote.perRecipient;
+        if ((a.gems ?? 0) < quote.total)
+            return { ok: false, code: 'poor' };
+        const ts = this.now();
+        if (!nat(ts))
+            return { ok: false, code: 'bad' };
+        const sent = a.gSent ?? (a.gifts ?? []).filter(g => g.dir === 'out').length;
+        const received = canonical.map(id => this.d.acc[id].gRecv ?? (this.d.acc[id].gifts ?? []).filter(g => g.dir === 'in').length);
+        if (!nat(a.coins + quote.senderBonus) || !nat((this.d.house?.gems ?? 0) + quote.house) || !nat((this.d.house?.count ?? 0) + count)
+            || !nat(sent + count) || !nat((this.d.giftStats?.[gift.id] ?? 0) + qty * count)
+            || !canonical.every((id, i) => nat(this.d.acc[id].coins + per.recv) && nat(received[i] + 1)))
+            return { ok: false, code: 'bad' };
+        const offer = structuredClone(gift), batchId = randomUUID();
+        const outs = canonical.map(to => ({ id: randomUUID(), ts, from, fromName, to, toName: toNames[to], gift: offer.id,
+            name: offer.name, icon: offer.icon, price: offer.price, qty, total: per.total, recv: per.recv, house: per.house,
+            cur: per.cur, rewardCur: per.rewardCur, senderBonus: per.senderBonus, rewardPolicy: per.policy,
+            ...(room ? { room } : {}), status: 'done', dir: 'out' }));
+        const request = { from, targets: canonical, gift: offer.id, qty, room }, releases = [];
+        const prepare = opt.beforeCommit, existingPrepare = this.onBeforeGift;
+        this.preparingGiftBatch = true;
+        let result;
+        try {
+            // Never expose a financial draft to outbox hooks; every child is absent until ALL commit.
+            for (const out of outs) {
+                const release = prepare ? prepare(Object.freeze(structuredClone(out))) : existingPrepare?.(from, out.to, out.id, ts);
+                if (typeof release === 'function')
+                    releases.push(release);
+                else if (release !== undefined)
+                    throw new TypeError('gift_batch_prepare_must_be_synchronous');
+            }
+            result = this.luckyCommit(() => {
+                const sender = this.d.acc[from], label = qty > 1 ? `${offer.name} ×${qty}` : offer.name;
+                const children = [];
+                for (const [i, out] of outs.entries()) {
+                    const target = this.d.acc[out.to];
+                    sender.gems = (sender.gems ?? 0) - per.total;
+                    sender.coins += per.senderBonus;
+                    target.coins += per.recv;
+                    this.rec(from, 'gems', 'gift', -per.total, sender.gems, 'هدية مرسلة: ' + label, offer.id, out.id, ts);
+                    this.rec(from, 'coins', 'gift', per.senderBonus, sender.coins, 'مكافأة إرسال هدية: ' + label, offer.id, out.id, ts);
+                    this.rec(out.to, 'coins', 'gift', per.recv, target.coins, 'عائد هدية مستلمة: ' + label, offer.id, out.id, ts);
+                    (sender.gifts ??= []).push(structuredClone(out));
+                    (target.gifts ??= []).push({ ...out, dir: 'in' });
+                    target.gRecv = received[i] + 1;
+                    for (const acc of [sender, target])
+                        if (acc.gifts.length > GIFTS_CAP)
+                            acc.gifts.splice(0, acc.gifts.length - GIFTS_CAP);
+                    const h = (this.d.house ??= { coins: 0, count: 0, ledger: [] });
+                    h.gems = (h.gems ?? 0) + per.house;
+                    h.count++;
+                    h.ledger.push({ id: randomUUID(), ts, kind: 'gift_share', cur: 'gems', rewardPolicy: per.policy, delta: per.house, after: h.gems,
+                        tx: out.id, from, to: out.to, gift: offer.id, qty, total: per.total, room });
+                    if (h.ledger.length > HOUSE_LEDGER_CAP)
+                        h.ledger.splice(0, h.ledger.length - HOUSE_LEDGER_CAP);
+                    children.push({ to: out.to, toCoins: target.coins, toGems: target.gems ?? 0, rec: structuredClone(out) });
+                }
+                sender.gSent = sent + count;
+                this.d.giftStats = { ...this.d.giftStats, [offer.id]: (this.d.giftStats?.[offer.id] ?? 0) + qty * count };
+                const receipt = { ok: true, dup: false, batchId, targets: [...canonical], qty, room,
+                    coins: sender.coins, gems: sender.gems, quote: structuredClone(quote), receipts: children };
+                this.d.giftBatches = { ...this.d.giftBatches, [this.opKey(from, key)]: { request: structuredClone(request), result: structuredClone(receipt) } };
+                return receipt;
+            });
+        }
+        finally {
+            this.preparingGiftBatch = false;
+            // All previously prepared pins release even if the SECOND preparation throws. Orphan intents
+            // remain safe: parent outbox reconciliation checks each child ledger proof before consuming.
+            for (const release of releases.reverse())
+                try {
+                    release();
+                }
+                catch { /* pin cleanup cannot undo a committed payment */ }
+        }
+        for (const child of result.receipts) {
+            const bonusRow = this.d.acc[from].ledger.find(l => l.giftTx === child.rec.id && l.cur === 'coins');
+            this.luckyNotify(from, 'coins', 'gift', per.senderBonus, bonusRow.after, offer.id);
+            this.luckyNotify(child.to, 'coins', 'gift', per.recv, child.toCoins, offer.id);
+            try {
+                this.onGift?.(from, child.to, child.rec.id);
+            }
+            catch { /* all child sources already committed; outbox retries */ }
+        }
+        this.benefitsNotify([from, ...canonical]);
+        return result;
+    }
+    batchGiftSource(from, to, ref) {
+        for (const proof of Object.values(this.d.giftBatches ?? {})) {
+            if (proof.request.from !== from)
+                continue;
+            const rec = proof.result.receipts.find(c => c.to === to && c.rec.id === ref)?.rec;
+            if (rec)
+                return rec;
+        }
+        return undefined;
+    }
+    /** Server-only primary proof, independent of capped gift receipt/key/house views. Legacy receipts remain valid. */
+    hasGiftSource(from, to, ref) {
+        const proof = Object.values(this.d.giftKeys ?? {}).find((p) => p.rid === ref && p.rec?.from === from && p.to === to)?.rec ?? this.batchGiftSource(from, to, ref);
+        if (proof && giftLedgerProof(this.d.acc, proof))
+            return true;
+        const ledger = (id, outgoing) => (this.d.acc[id]?.ledger ?? []).some((r) => r.kind === 'gift' && r.cur === 'coins'
+            && r.giftTx === ref && (outgoing ? r.delta < 0 : r.delta >= 0));
+        if (ledger(from, true) && ledger(to, false))
+            return true;
+        const gemsDebit = (this.d.acc[from]?.ledger ?? []).find((r) => r.kind === 'gift' && r.cur === 'gems' && r.giftTx === ref && r.delta < 0);
+        const q = gemsDebit ? quoteGiftRewards(-gemsDebit.delta) : null;
+        if (q && (this.d.acc[from]?.ledger ?? []).some((r) => r.kind === 'gift' && r.cur === 'coins' && r.giftTx === ref && r.delta === q.senderBonus)
+            && (this.d.acc[to]?.ledger ?? []).some((r) => r.kind === 'gift' && r.cur === 'coins' && r.giftTx === ref && r.delta === q.recv))
+            return true;
+        const prepaid = Object.values(this.d.luckyOps ?? {}).some((op) => op.request.op === 'redeem' && op.request.actor === from && op.request.to === to
+            && 'rec' in op.result && op.result.rec.id === ref && giftLedgerProof(this.d.acc, op.result.rec));
+        if (prepaid)
+            return true;
+        return (this.d.acc[from]?.gifts ?? []).some((r) => r.id === ref && r.dir === 'out' && r.from === from && r.to === to);
+    }
+    /** Read-only durable R25 source lookup. Never infer amounts from capped displays or coin payouts. */
+    committedGiftReceipt(from, to, ref) {
+        if (this.unsaved())
+            return null;
+        const regular = Object.values(this.d.giftKeys ?? {}).find(p => p.rid === ref && p.to === to && p.rec?.from === from)?.rec;
+        const prepaid = Object.values(this.d.luckyOps ?? {}).find(op => op.request.op === 'redeem' && op.request.actor === from && op.request.to === to && 'rec' in op.result && op.result.rec.id === ref);
+        const rec = regular ?? this.batchGiftSource(from, to, ref) ?? (prepaid && 'rec' in prepaid.result ? prepaid.result.rec : undefined);
+        return rec && rec.id === ref && rec.from === from && rec.to === to && giftLedgerProof(this.d.acc, rec) ? structuredClone(rec) : null;
+    }
+    /** طلب هدية سبق تنفيذه بنفس المفتاح (لإرجاع نفس النتيجة حتى لو تغيّر حال الغرفة بعدها) */
+    giftByKey(from, key) {
+        if (!this.validKey(from, key))
+            return null;
+        if (this.d.giftBatches?.[this.opKey(from, key)])
+            return null;
+        const p = this.d.giftKeys?.[this.opKey(from, key)] ?? this.d.giftKeys?.[from + ':' + key];
+        if (!p)
+            return null;
+        const rec = p.rec ?? (this.d.acc[from]?.gifts ?? []).find((g) => g.id === p.rid);
+        return rec && rec.from === from && rec.to === p.to ? structuredClone(rec) : null;
+    }
+    /** حساب الإدارة (للوحة الإدارة فقط) */
+    houseView(n = 100) { const h = this.d.house ?? { coins: 0, count: 0, ledger: [] }; return { coins: h.coins, ...(h.gems !== undefined ? { gems: h.gems } : {}), count: h.count, ledger: structuredClone(h.ledger.slice(-n).reverse()) }; }
+    /** عدد مرات إرسال كل هدية (للأكثر شعبية — من الإرسال الفعلي فقط) */
+    giftPopularity() { return { ...(this.d.giftStats ?? {}) }; }
+    /** سجل هدايا اللاعب نفسه (الأحدث أولاً). */
+    giftsOf(id, dir, n = 50) { return structuredClone((this.d.acc[id]?.gifts ?? []).filter((g) => !dir || g.dir === dir).slice(-n).reverse()); }
+    /** عدد الهدايا المرسلة والمستلمة (عمليات فعلية، للإنجازات) */
+    giftCounts(id) { const a = this.d.acc[id]; if (!a)
+        return { sent: 0, recv: 0 }; const g = a.gifts ?? []; return { sent: a.gSent ?? g.filter((x) => x.dir === 'out').length, recv: a.gRecv ?? g.filter((x) => x.dir === 'in').length }; }
+    /** تجهيز لقب/شارة مكتسبة (مو مشتراة): الجهة المنادية تتحقق من الاستحقاق بالخادم قبل المناداة */
+    equipEarned(id, slot, achId) {
+        const a = this.a(id);
+        const sn = this.snap([id]);
+        a.equipped ??= {};
+        if (achId === null)
+            delete a.equipped[slot];
+        else
+            a.equipped[slot] = achId;
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            throw e;
+        }
+    }
+    /** تجهيز/إزالة عنصر مملوك لخانة (إطار، خلفية...). null = إزالة. */
+    equip(id, slot, itemId) {
+        const a = this.a(id);
+        if (itemId !== null && !(a.owned ?? []).includes(itemId))
+            return false;
+        const sn = this.snap([id]);
+        a.equipped ??= {};
+        if (itemId === null)
+            delete a.equipped[slot];
+        else
+            a.equipped[slot] = itemId;
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            throw e;
+        }
+        return true;
+    }
+    /**
+     * مكافأة (عملات/جواهر) مرة وحدة لكل مفتاح (إنجاز، فعالية، ولاحقاً عملية دفع موثّقة من الخادم). ترجّع false لو انصرفت قبل.
+     * الجهة المنادية مسؤولة عن التحقق من الاستحقاق بالخادم قبل المناداة.
+     */
+    grant(id, cur, amount, reason, key) {
+        if (!currency(cur) || !pos(amount) || !str(key) || !key)
+            return false;
+        const a = this.a(id);
+        if ((a.claimed ?? []).includes(key))
+            return false;
+        if (!this.auctionCanBalanceR47(id, cur, (cur === 'coins' ? a.coins : (a.gems ?? 0)) + amount))
+            return false;
+        const sn = this.snap([id]);
+        (a.claimed ??= []).push(key);
+        if (cur === 'coins')
+            a.coins += amount;
+        else
+            a.gems = (a.gems ?? 0) + amount;
+        this.rec(id, cur, 'reward', amount, cur === 'coins' ? a.coins : a.gems, reason, key);
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            throw e;
+        }
+        if (cur === 'coins')
+            this.onTx?.(id, 'reward', amount, a.coins, key);
+        return true;
+    }
+    /**
+     * تعديل رصيد من الإدارة (إضافة أو خصم): يُسجَّل بالسجل المالي بنوع «admin» وسببه، ولا ينزل الرصيد تحت صفر، ويتراجع كله لو فشل الحفظ.
+     * opKey (اختياري للتوافق، وإلزامي عند الإدارة): مفتاح عملية يُحفظ **بنفس حفظ الرصيد**، فإعادة المناداة بنفس المفتاح بعد أي انقطاع
+     * ترجّع نفس النتيجة (dup) بدون تعديل ثانٍ. إعادة استخدام المفتاح لحساب/عملة/مقدار مختلف = رفض (bad).
+     * يرجّع before/after لرصيد العملة المعدَّلة.
+     */
+    adminAdjust(id, cur, delta, reason, opKey = '') {
+        if (!currency(cur) || !signed(delta) || delta === 0 || !str(reason) || !reason)
+            return { ok: false, code: 'bad' };
+        if (!str(opKey) || opKey.length > 160)
+            return { ok: false, code: 'bad' };
+        const a = this.a(id);
+        const prev = opKey ? this.d.admOps?.[opKey] : undefined;
+        if (prev)
+            return prev.id === id && prev.cur === cur && prev.delta === delta ? { ok: true, coins: a.coins, gems: a.gems ?? 0, before: prev.before, after: prev.after, dup: true } : { ok: false, code: 'bad' };
+        const have = cur === 'coins' ? a.coins : (a.gems ?? 0);
+        if (have + delta < 0)
+            return { ok: false, code: 'poor' };
+        if (!this.auctionCanBalanceR47(id, cur, have + delta))
+            return { ok: false, code: 'bad' };
+        const sn = this.snap([id]);
+        const opsBefore = this.d.admOps;
+        if (cur === 'coins')
+            a.coins += delta;
+        else
+            a.gems = (a.gems ?? 0) + delta;
+        const after = cur === 'coins' ? a.coins : a.gems;
+        this.rec(id, cur, 'admin', delta, after, reason, 'admin');
+        if (opKey) {
+            const ops = { ...(this.d.admOps ?? {}), [opKey]: { id, cur, delta, before: have, after, at: Date.now() } };
+            this.d.admOps = ops;
+        }
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            this.d.admOps = opsBefore;
+            throw e;
+        }
+        if (cur === 'coins')
+            this.onTx?.(id, 'admin', delta, a.coins, 'admin');
+        return { ok: true, coins: a.coins, gems: a.gems ?? 0, before: have, after, dup: false };
+    }
+    /** خادم الدفع فقط: إثبات العملية ضمن نفس الكاتب والرصيد والسجل؛ لا تقبل هالدالة مبلغًا من المتصفح. */
+    hasPaymentProof(id, cur, delta, key) {
+        const proof = this.d.admOps?.[key];
+        return !!proof && key.startsWith('payment:') && proof.id === id && proof.cur === cur && proof.delta === delta;
+    }
+    paymentAdjust(id, cur, delta, orderId, key) {
+        if (!str(id) || !id || !currency(cur) || !signed(delta) || delta === 0 || !str(orderId)
+            || !/^[A-Za-z0-9_-]{8,100}$/.test(orderId) || !str(key) || !key.startsWith('payment:') || key.length > 160)
+            return { ok: false, code: 'bad' };
+        const a = this.a(id), previous = this.d.admOps?.[key];
+        if (previous)
+            return previous.id === id && previous.cur === cur && previous.delta === delta
+                ? { ok: true, coins: a.coins, gems: a.gems ?? 0, before: previous.before, after: previous.after, dup: true }
+                : { ok: false, code: 'bad' };
+        const before = cur === 'coins' ? a.coins : (a.gems ?? 0), after = before + delta;
+        if (after < 0)
+            return { ok: false, code: 'poor' };
+        if (!this.auctionCanBalanceR47(id, cur, after))
+            return { ok: false, code: 'bad' };
+        const snapshot = this.snap([id]), proofs = this.d.admOps;
+        if (cur === 'coins')
+            a.coins = after;
+        else
+            a.gems = after;
+        const kind = delta > 0 ? 'purchase' : 'refund';
+        this.rec(id, cur, kind, delta, after, delta > 0 ? 'رصيد باقة بتأكيد خادم الدفع' : 'استرجاع باقة أو حجز رصيدها للاسترجاع', orderId);
+        this.d.admOps = { ...proofs, [key]: { id, cur, delta, before, after, at: this.now() } };
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(snapshot);
+            this.d.admOps = proofs;
+            throw e;
+        }
+        // إثبات المحفظة انحفظ أول؛ فشل سجل الحساب الملحق ما يسمح بإصدار الرصيد مرتين.
+        try {
+            if (cur === 'coins')
+                this.onTx?.(id, kind, delta, a.coins, orderId);
+        }
+        catch { /* canonical wallet proof is durable */ }
+        return { ok: true, coins: a.coins, gems: a.gems ?? 0, before, after, dup: false };
+    }
+    /** منح جماعي ذري: تجهيز معزول ثم التزام واحد، بدون إظهار أو حفظ مسودة جزئية. */
+    async grantBulk(operationId, ids, rewards, reason) {
+        // تجميد مدخلات الطلب قبل انتظار عملية أخرى؛ العميل لا يملك مراجع لمسودة الخادم.
+        const targets = [...ids], rewardSet = structuredClone(rewards);
+        const run = this.bulkTail.then(() => this.grantBulkLocked(operationId, targets, rewardSet, reason));
+        this.bulkTail = run.then(() => undefined, () => undefined);
+        return run;
+    }
+    async grantBulkLocked(operationId, ids, rewards, reason) {
+        if (!/^[A-Za-z0-9_-]{8,80}$/.test(operationId) || !ids.length || ids.some(id => !str(id) || !id)
+            || !str(reason) || !reason || !rewards.length)
+            throw new RangeError('bulk_invalid');
+        const previous = this.d.bulkOps?.[operationId];
+        if (previous)
+            return structuredClone({ ...previous, duplicate: true });
+        const unique = [...new Set(ids)];
+        const plans = new Map();
+        const prepare = (id) => {
+            const source = this.d.acc[id];
+            const base = JSON.stringify(source);
+            const next = source ? structuredClone(source) : { coins: START_COINS, daily: '' };
+            let code = '';
+            const record = (cur, kind, delta, after, ref) => {
+                (next.ledger ??= []).push({ id: randomUUID(), ts: this.now(), cur, kind, delta, before: after - delta, after, reason, ref });
+            };
+            // تحقق تراكمي على نسخة المستفيد، وليس على الرصيد الأول لكل مكافأة على حدة.
+            for (const reward of rewards) {
+                if (!reward || typeof reward !== 'object') {
+                    code = 'invalid_reward';
+                    break;
+                }
+                if (reward.type === 'currency') {
+                    if (!currency(reward.cur) || !pos(reward.amount)) {
+                        code = 'invalid_reward';
+                        break;
+                    }
+                    const before = reward.cur === 'coins' ? next.coins : (next.gems ?? 0);
+                    const after = before + reward.amount;
+                    if (!this.auctionCanBalanceR47(id, reward.cur, after)) {
+                        code = 'overflow';
+                        break;
+                    }
+                    if (reward.cur === 'coins')
+                        next.coins = after;
+                    else
+                        next.gems = after;
+                    record(reward.cur, 'reward', reward.amount, after, operationId);
+                }
+                else if (reward.type === 'item') {
+                    if (!str(reward.itemId) || !reward.itemId || (reward.mode !== 'grant' && reward.mode !== 'purchase')) {
+                        code = 'invalid_item';
+                        break;
+                    }
+                    if ((next.owned ?? []).includes(reward.itemId)) {
+                        code = 'already_owned';
+                        break;
+                    }
+                    if (reward.mode === 'purchase') {
+                        if (!currency(reward.currency) || !pos(reward.price) || reward.price > PRICE_MAX[reward.currency]) {
+                            code = 'invalid_item';
+                            break;
+                        }
+                        const have = reward.currency === 'coins' ? next.coins : (next.gems ?? 0);
+                        if (have < reward.price) {
+                            code = 'insufficient_funds';
+                            break;
+                        }
+                        const after = have - reward.price;
+                        if (reward.currency === 'coins')
+                            next.coins = after;
+                        else
+                            next.gems = after;
+                        record(reward.currency, 'purchase', -reward.price, after, reward.itemId);
+                    }
+                    (next.owned ??= []).push(reward.itemId);
+                }
+                else {
+                    code = 'invalid_reward';
+                    break;
+                }
+            }
+            return { base, next, code };
+        };
+        for (let index = 0; index < unique.length; index++) {
+            if (index > 0 && index % 100 === 0)
+                await new Promise(resolve => setImmediate(resolve));
+            plans.set(unique[index], prepare(unique[index]));
+        }
+        // لا يوجد await في نافذة الالتزام. نعيد تجهيز أي حساب تغيّر أثناء التجهيز،
+        // ونضم النتائج إلى أحدث حالة، فيظل الشراء/المنح/السجلات المتزامنة محفوظة.
+        const before = this.d;
+        const accounts = { ...before.acc };
+        const failures = [];
+        const success = [];
+        for (const id of unique) {
+            let plan = plans.get(id);
+            if (JSON.stringify(before.acc[id]) !== plan.base)
+                plan = prepare(id);
+            if (plan.code) {
+                failures.push({ id, code: plan.code });
+                continue;
+            }
+            accounts[id] = plan.next;
+            success.push(id);
+        }
+        const result = { ok: true, duplicate: false, operationId, total: unique.length, succeeded: success.length, failed: failures.length, failures };
+        this.d = { ...before, acc: accounts, bulkOps: { ...before.bulkOps, [operationId]: result } };
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.d = before;
+            throw e;
+        }
+        for (const id of success) {
+            const a = this.a(id);
+            for (const reward of rewards)
+                if (reward.type === 'currency')
+                    this.onTx?.(id, 'reward', reward.amount, reward.cur === 'coins' ? a.coins : a.gems ?? 0, operationId);
+        }
+        return structuredClone(result);
+    }
+    /** Read-only reconciliation: no account creation, save, receipt expiry or pruning. */
+    campaignCommitted(campaignId, id) {
+        return uuid(campaignId) && uuid(id) && !!this.d.campaignGrants?.[campaignId]?.receipts[id];
+    }
+    grantReceipt(campaignId, id) {
+        if (!this.campaignCommitted(campaignId, id))
+            return null;
+        return structuredClone(this.d.campaignGrants[campaignId].receipts[id]);
+    }
+    /**
+     * Trusted owner/campaign-worker primitive; caller authorizes and hashes ALL campaign semantics,
+     * including the complete audience, reward bundle and reason (not just this batch), upstream.
+     * Synchronous single-process batching: one result per unique recipient, in first-seen order.
+     * Every successful bundle and its permanent receipt share ONE wallet JSON commit. Overflow is
+     * recipient-local and leaves no receipt; even an all-overflow first batch binds the fingerprint.
+     * Invalid input throws RangeError('wallet_invalid_campaign'); fingerprint reuse conflicts throw
+     * Error('campaign_conflict'); storage errors throw StorageError with complete in-memory rollback.
+     */
+    grantCampaignBatch(campaignId, fp, ids, rewards, reason) {
+        if (!uuid(campaignId) || !fingerprint(fp))
+            throw new RangeError('wallet_invalid_campaign');
+        const previous = this.d.campaignGrants?.[campaignId];
+        if (previous && previous.fingerprint !== fp)
+            throw new Error('campaign_conflict');
+        if (!Array.isArray(ids) || !ids.length || !Array.from(ids).every(uuid) || new Set(ids).size > 25
+            || !isObj(rewards) || !exactKeys(rewards, ['coins', 'gems', 'itemIds'])
+            || !nat(rewards.coins) || rewards.coins > PRICE_MAX.coins || !nat(rewards.gems) || rewards.gems > PRICE_MAX.gems
+            || !itemIds(rewards.itemIds) || !(rewards.coins || rewards.gems || rewards.itemIds.length)
+            || !str(reason) || !reason.trim())
+            throw new RangeError('wallet_invalid_campaign');
+        const results = [];
+        const accounts = {};
+        const receipts = { ...previous?.receipts };
+        const hooks = [];
+        const ref = `campaign:${campaignId}`;
+        for (const id of new Set(ids)) {
+            const receipt = receipts[id];
+            if (receipt) {
+                results.push({ id, status: 'duplicate', addedItems: [...receipt.addedItems], alreadyOwned: [...receipt.alreadyOwned] });
+                continue;
+            }
+            const existing = this.d.acc[id];
+            const coins = (existing?.coins ?? START_COINS) + rewards.coins;
+            const gems = (existing?.gems ?? 0) + rewards.gems;
+            if (!this.auctionCanBalanceR47(id, 'coins', coins) || !this.auctionCanBalanceR47(id, 'gems', gems)) {
+                results.push({ id, status: 'failed', code: 'BALANCE_OVERFLOW' });
+                continue;
+            }
+            const a = structuredClone(existing ?? { coins: START_COINS, daily: '' });
+            const owned = new Set(a.owned ?? []);
+            const addedItems = rewards.itemIds.filter((item) => !owned.has(item));
+            const alreadyOwned = rewards.itemIds.filter((item) => owned.has(item));
+            const rec = (cur, delta, after, entryRef) => {
+                (a.ledger ??= []).push({ id: randomUUID(), ts: this.now(), cur, kind: 'admin', delta, before: after - delta, after, reason, ref: entryRef });
+            };
+            a.coins = coins;
+            if (rewards.coins) {
+                rec('coins', rewards.coins, coins, ref);
+                hooks.push({ id, delta: rewards.coins, balance: coins, ref });
+            }
+            if (rewards.gems) {
+                a.gems = gems;
+                rec('gems', rewards.gems, gems, ref);
+            }
+            if (addedItems.length) {
+                a.owned = [...new Set([...(a.owned ?? []), ...addedItems])];
+                for (const item of addedItems)
+                    rec('coins', 0, coins, `${ref}:item:${item}`);
+            }
+            accounts[id] = a;
+            receipts[id] = { addedItems, alreadyOwned };
+            results.push({ id, status: 'granted', addedItems: [...addedItems], alreadyOwned: [...alreadyOwned] });
+        }
+        if (!previous || Object.keys(accounts).length) {
+            const before = this.d;
+            this.d = { ...before, acc: { ...before.acc, ...accounts }, campaignGrants: {
+                    ...before.campaignGrants, [campaignId]: { fingerprint: fp, receipts },
+                } };
+            try {
+                this.disk.mustSave();
+            }
+            catch (e) {
+                this.d = before;
+                throw e;
+            }
+            // TxHook follows the existing coins-only convention; gems/items are in the wallet ledger.
+            // Observer failure is AFTER commit, never an award failure and never a reason to grant again.
+            if (hooks.length && this.onCampaignTxBatch) {
+                try {
+                    this.onCampaignTxBatch(structuredClone(hooks));
+                }
+                catch {
+                    try {
+                        this.onPayoutError?.('CAMPAIGN_HOOK_FAILED');
+                    }
+                    catch { /* diagnostics cannot undo a commit */ }
+                }
+            }
+            else
+                for (const hook of hooks) {
+                    try {
+                        this.onTx?.(hook.id, 'admin', hook.delta, hook.balance, hook.ref);
+                    }
+                    catch {
+                        try {
+                            this.onPayoutError?.('CAMPAIGN_HOOK_FAILED');
+                        }
+                        catch { /* diagnostics cannot undo a commit */ }
+                    }
+                }
+        }
+        return results;
+    }
+    /**
+     * تعديل رصيد من الإدارة (إضافة أو خصم): يُسجَّل بالسجل المالي بنوع «admin» وسببه، ولا ينزل الرصيد تحت صفر، ويتراجع كله لو فشل الحفظ.
+     * opKey (اختياري للتوافق، وإلزامي عند الإدارة): مفتاح عملية يُحفظ **بنفس حفظ الرصيد**، فإعادة المناداة بنفس المفتاح بعد أي انقطاع
+     * ترجّع نفس النتيجة (dup) بدون تعديل ثانٍ. إعادة استخدام المفتاح لحساب/عملة/مقدار مختلف = رفض (bad).
+     * يرجّع before/after لرصيد العملة المعدَّلة.
+     */
+    /** قراءة للإدارة فقط (لا تنشئ حساب جديد لو المعرّف غير موجود) */
+    has(id) { return str(id) && Object.hasOwn(this.d.acc, id); }
+    adminView(id) { const a = this.a(id); return { coins: a.coins, gems: a.gems ?? 0, owned: [...(a.owned ?? [])], equipped: { ...(a.equipped ?? {}) }, claimed: [...(a.claimed ?? [])], ledger: this.ledgerOf(id, 100) }; }
+    totals() { let coins = 0, gems = 0; const ids = Object.keys(this.d.acc); for (const id of ids) {
+        coins += this.d.acc[id].coins;
+        gems += this.d.acc[id].gems ?? 0;
+    } return { accounts: ids.length, coins, gems, settledGames: this.d.settled.length }; }
+    /** كم حساب يملك كل عنصر / استلم كل مكافأة (عدّ حقيقي من الحسابات) */
+    countOwned() { const o = {}; for (const a of Object.values(this.d.acc))
+        for (const i of a.owned ?? [])
+            o[i] = (o[i] ?? 0) + 1; return o; }
+    countClaimed() { const o = {}; for (const a of Object.values(this.d.acc))
+        for (const i of a.claimed ?? [])
+            o[i] = (o[i] ?? 0) + 1; return o; }
+    /** إعادة محاولة الجوائز المعلّقة (يناديها الخادم بمؤقت). تنصرف مرة وحدة فقط لأن المفتاح يُسجَّل مع الحفظ. */
+    retryPending() {
+        for (const p of [...this.pending]) {
+            if (this.d.settled.includes(p.key)) {
+                this.pending = this.pending.filter((q) => q !== p);
+                continue;
+            }
+            try {
+                const out = this.commit(p);
+                if (out) {
+                    this.pending = this.pending.filter((q) => q !== p);
+                    this.onSettled?.(p.key, out);
+                }
+            }
+            catch (e) {
+                // استحقاق واحد خارج مجال الأعداد الآمنة لا يُسقط المؤقت ولا يمنع صرف البقية.
+                // يبقى غير المصروف بالقائمة، ولا نسقط حارس الأرصدة ولا نعلن نجاحاً وهمياً.
+                const code = e instanceof RangeError && e.message === 'wallet_balance_overflow' ? 'BALANCE_OVERFLOW' : 'PAYOUT_RETRY_FAILED';
+                try {
+                    this.onPayoutError?.(code);
+                }
+                catch { /* قناة التشخيص لا تُسقط إعادة المحاولة */ }
+            }
+        }
+        this.settleExpiredLuckyBags();
+        this.disk.retry();
+    }
+}
