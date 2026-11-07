@@ -1,0 +1,420 @@
+/* R22: load after profile-head-r20.css. Only the opt-in identity header is styled.
+   Real avatar, equipped frame, rank art, values and unavailable states remain markup-owned. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 {
+  --pvp-avatar-size: 88px;
+  position: relative;
+  display: grid;
+  direction: rtl;
+  grid-template-columns: var(--pvp-avatar-size) minmax(0, 1fr) 32px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 10px;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  margin: 0 0 8px;
+  padding: 10px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: right;
+  overflow: visible;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 > .avatar {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  justify-self: start;
+  width: var(--pvp-avatar-size);
+  height: var(--pvp-avatar-size);
+  margin: 0;
+  overflow: visible;
+}
+
+/* Never clip the equipped frame or alter its established contain/centering rules. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .lpu-portrait {
+  overflow: visible;
+}
+
+/* Frame/portrait wrappers already use this variable in profile-frame-r4.css;
+   the letter fallback also needs to beat its markup-owned inline 88px size. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .lpu-portrait .pvp-fallback {
+  --sz: var(--pvp-avatar-size) !important;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 > .pvp-identity-copy {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-identity-copy > .name {
+  order: 0;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  color: var(--pvp-gold);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pills {
+  order: 1;
+  display: flex;
+  direction: rtl;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* These selectors also defeat the R20/R21 rank button minimum height,
+   without changing any rank controls outside the new pill row. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pills .pvp-head-pill {
+  position: relative;
+  display: inline-flex;
+  direction: rtl;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+  gap: 2px;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  height: 22px;
+  min-height: 22px;
+  margin: 0;
+  padding: 0 5px;
+  border: 1px solid var(--pvp-line);
+  border-radius: 999px;
+  background: var(--pvp-surface);
+  box-shadow: none;
+  color: var(--pvp-muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  appearance: none;
+  overflow: visible;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pills .pvp-head-pill small {
+  min-width: 0;
+  margin: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  direction: ltr;
+  unicode-bidi: isolate;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pills .pvp-head-pill svg {
+  width: 13px !important;
+  height: 13px !important;
+  flex: 0 0 13px;
+  margin: 0;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-age {
+  order: 0;
+  color: var(--pvp-muted);
+}
+
+/* Accent colors stay local to the optional, explicitly supplied gender. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-age:is([data-gender="male"], :has(.pvp-head-gender[data-gender="male"])) {
+  color: #506c5b;
+  border-color: #d4e4d8;
+  background: linear-gradient(110deg, #263451, var(--pvp-surface));
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-age:is([data-gender="female"], :has(.pvp-head-gender[data-gender="female"])) {
+  color: #264d3b;
+  border-color: #d4e4d8;
+  background: linear-gradient(110deg, #fffaf0, var(--pvp-surface));
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill .pvp-head-gender {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 13px;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  color: inherit;
+  line-height: 1;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill :is(.pvp-head-age-number, .pvp-head-support-number) {
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  direction: ltr;
+  unicode-bidi: isolate;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-vip {
+  order: 1;
+  color: var(--pvp-gold);
+  border-color: var(--pvp-gold);
+  background: linear-gradient(110deg, #fffaf0, var(--pvp-surface));
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-level {
+  order: 2;
+  gap: 2px;
+  color: var(--pvp-gold);
+  border-color: #d4e4d8;
+  background: linear-gradient(110deg, #fffaf0, #fffaf0);
+}
+
+/* Compact crown follows the latest reference; the displayed number is canonical LEVEL. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-level-icon { display: inline-flex; width: 13px; height: 13px; flex: 0 0 13px; }
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-support {
+  order: 3;
+  color: var(--pvp-gold);
+  border-color: #b98a3d;
+  background: linear-gradient(110deg, #724329, #fffaf0);
+}
+
+/* Use the existing heart SVG. A markup-provided paint server is optional;
+   its fallback is warm gold, with an orange edge. No replacement artwork. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-support svg {
+  color: #8a641f;
+  stroke: #f0aa57;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-support svg path {
+  fill: url("#pvp-head-support-gradient") #e4c46f;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-support svg linearGradient stop:first-child {
+  stop-color: #f0aa57;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-support svg linearGradient stop:last-child {
+  stop-color: var(--pvp-gold);
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-identity-copy > .id {
+  order: 2;
+  display: flex;
+  direction: rtl;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0 2px;
+  min-width: 0;
+  min-height: 36px;
+  margin: 0;
+  color: var(--pvp-muted);
+  font: 12px/1.35 Arial, Cairo, sans-serif;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .id > span[dir="ltr"] {
+  min-width: 0;
+  max-width: calc(100% - 38px);
+  direction: ltr;
+  unicode-bidi: isolate;
+  overflow-wrap: anywhere;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .lpu-copy {
+  flex: 0 0 36px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  background: transparent;
+}
+
+/* A real 44x44 button extends 6px into each side of its 32px grid track.
+   Only the 32px painted disc and edit icon are visible; aria-label is retained. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 > .pvp-edit-profile {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: center;
+  align-self: start;
+  position: relative;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0 -6px;
+  padding: 0;
+  gap: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pvp-muted);
+  box-shadow: none;
+  font-size: 0;
+  overflow: visible;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 > .pvp-edit-profile::before {
+  inset: 6px;
+  border: 1px solid var(--pvp-line);
+  border-radius: 50%;
+  background: var(--pvp-surface);
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 > .pvp-head-social-statistics {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  direction: rtl;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-social-statistics > .pvp-head-count {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pvp-text);
+  text-align: center;
+  font-family: inherit;
+  font-size: inherit;
+  text-decoration: none;
+  appearance: none;
+}
+
+/* Explicit columns keep RTL order stable even if markup is later rearranged. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-count:has(strong[data-pvp-head-count="friends"]) { grid-column: 1; grid-row: 1; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-count:has(strong[data-pvp-head-count="following"]) { grid-column: 2; grid-row: 1; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-count:has(strong[data-pvp-head-count="followers"]) { grid-column: 3; grid-row: 1; }
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-social-statistics > .pvp-head-count:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 0;
+  top: 50%;
+  width: 1px;
+  height: 24px;
+  transform: translateY(-50%);
+  background: var(--pvp-line);
+  opacity: .65;
+  pointer-events: none;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-count > strong[data-pvp-head-count] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--pvp-text);
+  font-size: 23px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  direction: ltr;
+  unicode-bidi: isolate;
+  overflow-wrap: anywhere;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-count > span {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--pvp-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+/* Keep the truthful equipped-avatar notice, below statistics, not in row two. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 > .pvp-upload-note {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  margin: 0;
+  padding: 0;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 :is(.pvp-head-pill, .pvp-head-count, .lpu-copy, .pvp-edit-profile, .pvp-head-upload):focus-visible {
+  outline: 2px solid var(--pvp-gold);
+  outline-offset: 3px;
+}
+
+/* State comes from real disabled/aria-disabled markup. Never manufacture values. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 :is(.pvp-head-pill, .pvp-head-count, .lpu-copy, .pvp-edit-profile):is(:disabled, [aria-disabled="true"]) {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 :is(.pvp-head-pill, .pvp-head-count, .lpu-copy, .pvp-edit-profile):not(:disabled):not([aria-disabled="true"]):hover {
+    color: var(--pvp-gold);
+  }
+}
+
+@media (max-width: 359px) {
+  .pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 {
+    --pvp-avatar-size: 76px;
+    column-gap: 8px;
+  }
+
+  .pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-identity-copy > .name {
+    font-size: 18px;
+  }
+}

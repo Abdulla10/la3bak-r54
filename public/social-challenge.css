@@ -1,0 +1,73 @@
+/* R32 challenge presentation only. Canonical scores, clock, feed and actions are unchanged. */
+.so-page .so-challenge{--pk-blue: #427ae9;--pk-berry:#e65275;position:relative;display:flex;flex-direction:column;flex:none;min-width:0;min-height:0;max-height:none;border:0;border-radius:0;background:linear-gradient(90deg,#176b50 0%,#d4e4d8 50%,#fffaf0 50%,#d4e4d8 100%);overflow:hidden;box-shadow:none;}
+.so-page .so-challenge-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%);white-space:nowrap!important;border:0!important;}
+.so-page .so-challenge-heading{position:absolute;top:23px;left:4px;z-index:4;min-height:0;padding:0;margin:0;}
+.so-page .so-challenge svg{width:11px;height:11px;flex:none;}
+.so-page .so-challenge-cancel{display:block;min-height:0;height:20px;padding:0 5px;border:0;border-radius:9px;background:#fffaf060;color:#fff;font-size:8px;line-height:20px;cursor:pointer;}
+.so-page .so-challenge-scorebar{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;flex:none;min-width:0;min-height:0;height:18px;direction:ltr;}
+.so-page .so-challenge-meter{position:absolute;inset:0;z-index:-1;border-radius:0;overflow:hidden;background:linear-gradient(90deg,#d4e4d8,#d4e4d8);pointer-events:none;}
+.so-page .so-challenge-blue-fill{display:block;width:100%;height:100%;transform-origin:left center;background:linear-gradient(90deg,#d4e4d8,#d4e4d8);box-shadow:1px 0 0 #ffffff80;transition:transform 240ms cubic-bezier(.23,1,.32,1);}
+.so-page .so-challenge-total{position:relative;display:flex;align-items:center;min-width:0;padding:0 7px;color:#fff;text-shadow:0 1px 2px #264d3b2e;}
+.so-page .so-challenge-total-blue{justify-content:flex-end;background:none;text-align:left;}
+.so-page .so-challenge-total-red{justify-content:flex-start;background:none;text-align:right;}
+.so-page .so-challenge-total>b{font:700 12px/18px Arial,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.so-page .so-challenge-clock{position:relative;display:flex;flex:none;flex-direction:row;align-items:center;justify-content:center;gap:3px;height:21px;min-height:0;background:none;border:0;text-align:center;color:#fff;text-shadow:0 1px 2px #264d3b2e;}
+.so-page .so-challenge-pk{position:static;color:#264d3b;font:900 italic 11px/1 Arial,sans-serif;}
+.so-page .so-challenge-clock time{display:block;font:750 12px/1 Arial,sans-serif;color:#fff;font-variant-numeric:tabular-nums;margin:0;}
+.so-page .so-challenge-teams{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);flex:1 1 auto;direction:ltr;min-width:0;min-height:0;}
+.so-page .so-challenge-team{position:relative;display:grid;grid-template-rows:94px minmax(0,1fr);align-items:start;justify-items:center;gap:8px;min-width:0;min-height:0;padding:10px 7px 8px;direction:ltr;}
+.so-page .so-challenge-team-blue{background:linear-gradient(90deg,#3851c840,#5f8ff326);border-right:1px solid #e8dfff35;}
+.so-page .so-challenge-team-red{background:linear-gradient(90deg,#a32d7726,#ee637e40);}
+.so-page .so-challenge-person{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;width:100%;max-width:86px;direction:rtl;}
+.so-page .so-challenge-person-head{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;}
+.so-page .so-challenge .so-member{display:flex;flex-direction:column;align-items:center;max-width:100%;width:100%;gap:4px;}
+.so-page .so-challenge .so-portrait{width:43px;height:43px;aspect-ratio:1;}
+.so-page .so-challenge .is-leader .so-portrait{width:60px;height:60px;}
+.so-page .so-challenge .so-avatar{border:1px solid #ffffff40;padding:0;overflow:visible;background:#fffaf015;box-shadow:none;aspect-ratio:1;}
+.so-page .so-challenge .so-avatar>img,.so-page .so-challenge .so-avatar>.avatar-wrap{border-radius:50%;overflow:hidden;}
+.so-page .so-challenge .so-member-name,.so-page .so-challenge-name{font-size:9px;max-width:86px;line-height:13px;color:#264d3b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.so-page .so-challenge .so-member-ranks{display:inline-flex;}
+.so-page .so-challenge .so-portrait>.so-member-ranks{bottom:-3px;}
+.so-page .so-challenge .so-rank{font-size:6px;line-height:9px;padding:0 2px;gap:1px;}
+.so-page .so-challenge .so-rank svg{width:6px;height:6px;}
+.so-page .so-challenge .so-seat-mic{width:13px;height:13px;bottom:auto;top:-3px;right:auto;left:-8px;border:0;}
+.so-page .so-challenge .so-seat-mic svg{width:9px;height:9px;}
+.so-page .so-challenge .so-portrait>.so-crown{top:-7px;width:15px;height:11px;}
+.so-page .so-challenge-value{position:absolute;top:-8px;left:calc(50% + 13px);display:flex;align-items:center;justify-content:center;gap:1px;max-width:55px;min-height:0;height:13px;padding:0 3px;border:0;border-radius:7px;background:#d4e4d888;color:#8a641f;font:700 8px/13px Arial,sans-serif;white-space:nowrap;direction:ltr;z-index:3;}
+.so-page .so-challenge-value b{min-width:0;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums;}
+.so-page .so-challenge-value svg{width:8px;height:8px;color:#8a641f;}
+.so-page .so-challenge-team-red .so-challenge-value{background:#f488aaa6;}
+.so-page .so-challenge-support{display:inline-flex;align-items:center;justify-content:center;gap:2px;min-height:0;height:15px;width:34px;max-width:100%;padding:0 2px;border:0;border-radius:9px;background:#fffaf075;color:#fff;cursor:pointer;font-size:8px;line-height:15px;}
+.so-page .so-challenge-support svg{width:9px;height:9px;}
+.so-page .so-challenge-support:hover:not(:disabled){background:#fffaf099;}
+.so-page .so-challenge-support:disabled{cursor:not-allowed;opacity:.5;}
+.so-page .so-challenge-participants{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));justify-items:center;align-items:start;gap:7px 4px;width:100%;min-width:0;min-height:0;height:100%;direction:rtl;}
+.so-page .so-challenge-team-blue>.is-leader{justify-self:end;margin-right:7px;}
+.so-page .so-challenge-team-red>.is-leader{justify-self:start;margin-left:7px;}
+.so-page .so-challenge-unassigned{display:flex;justify-content:center;align-items:flex-start;width:100%;max-width:86px;min-height:0;}
+.so-page .so-challenge-formation-circle{display:grid;place-items:center;flex:none;width:43px;height:43px;aspect-ratio:1;border-radius:50%;background:#fffaf025;color:#264d3baa;}
+.so-page .so-challenge-formation-circle svg{width:20px;height:20px;}
+.so-page .so-challenge-unassigned.is-leader .so-challenge-formation-circle{width:60px;height:60px;}
+.so-page .so-challenge-result{flex:none;margin:0;padding:3px 7px;background:#fffaf070;color:#fff;font-size:10px;text-align:center;}
+.so-page .so-challenge-entry{display:inline-flex;align-items:center;gap:4px;min-height:28px;padding:3px 10px;border:1px solid #b98a3d60;border-radius:9px;background:#fffaf01f;color:#8a641f;font-size:10px;cursor:pointer;}
+/* Real cross-room events, a single accessible sentence, no fake repeated activity. */
+.so-page .so-challenge-marquee{display:flex;align-items:center;gap:6px;flex:none;min-width:0;min-height:30px;margin:0 7px 10px;padding:4px 7px;border:1px solid #b98a3d65;border-radius:10px;background:linear-gradient(100deg,#72533c7d,#fffaf096,#fffaf0bd);overflow:hidden;color:#8a641f;direction:rtl;}
+.so-page .so-challenge-marquee[hidden]{display:none;}
+.so-page .so-challenge-marquee-icon{display:grid;place-items:center;flex:none;width:20px;height:20px;border:1px solid #b98a3d60;border-radius:50%;background:#e8c98715;}
+.so-page .so-challenge-marquee-icon svg{width:13px;height:13px;}
+.so-page .so-challenge-marquee-window{display:block;flex:1;min-width:0;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);}
+.so-page .so-challenge-marquee-track{display:inline-block;min-width:100%;padding-inline:12px;font-size:10px;line-height:1.7;white-space:nowrap;animation:so-challenge-scroll 12s linear 1 both;}
+.so-page .so-challenge-marquee:hover .so-challenge-marquee-track,.so-page .so-challenge-marquee:focus-within .so-challenge-marquee-track{animation-play-state:paused;}
+@keyframes so-challenge-scroll{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
+/* Existing chairs remain accessible in a compact, default-closed disclosure. */
+.so-page .so-challenge-chairs{flex:none;min-width:0;min-height:28px;position:relative;}
+.so-page .so-challenge-chairs>summary{display:flex;align-items:center;gap:5px;min-height:28px;cursor:pointer;color:#264d3b;font-size:10px;list-style:none;}
+.so-page .so-challenge-chairs>summary:after{content:"⌄";margin-inline-start:auto;color:#eee;font-size:14px;}
+.so-page .so-challenge-chairs[open]>summary:after{transform:rotate(180deg);}
+.so-page .so-challenge-chairs .so-central-council{max-height:none;}
+.so-page .so-challenge-setup{display:grid;gap:7px;min-width:0;}
+.so-page .so-challenge-pick{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,1fr);align-items:center;gap:10px;padding:7px 8px;border:1px solid #d4e4d835;border-radius:10px;background:#fffaf0;font-size:12px;}
+.so-page .so-challenge-pick>span{overflow-wrap:anywhere;}
+.so-page .so-challenge-pick select{width:100%;min-height:40px;border:1px solid #d4e4d844;border-radius:8px;background:#fffaf0;color:#264d3b;padding:4px 7px;font:inherit;}
+@media(max-width:360px){.so-page .so-challenge-team{padding-inline:4px;}.so-page .so-challenge-value{font-size:7px;max-width:48px;}.so-page .so-challenge-pick{grid-template-columns:minmax(0,1fr) 125px;}}
+@media(prefers-reduced-motion:reduce){.so-page .so-challenge-marquee-track{animation:none;white-space:normal;overflow-wrap:anywhere;}.so-page .so-challenge-marquee-window{mask-image:none;}.so-page .so-challenge *{transition:none!important;scroll-behavior:auto!important;}}

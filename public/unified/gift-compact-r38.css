@@ -1,0 +1,99 @@
+/* R38: compact confirmed room receipts. All settlement values retain server hooks. */
+.so-page .so-room-detail .so-chat-messages .so-gift-receipt{
+  position:relative;display:flex;align-items:stretch;align-self:flex-end;flex:none;
+  width:min(100%,350px);max-width:100%;margin:3px 0;padding:0;border:0;
+  border-radius:16px;background:transparent;box-shadow:none;
+}
+.so-page .so-room-detail .so-chat-messages .so-gift-receipt>div{width:100%;min-width:0;}
+.so-page .so-room-detail .so-chat-messages .so-gift-receipt time{
+  position:absolute;top:9px;inset-inline-end:12px;z-index:1;font-size:9px;color:#264d3b;
+}
+.so-page .so-room-detail .so-chat-messages .gr13-card.is-room-compact,
+.so-page [data-so-panel="gifts"] .gr13-card.is-room-compact{
+  width:100%;margin:0;padding:10px 12px;border:1px solid #d4e4d86b;border-radius:16px;
+  background:linear-gradient(120deg,#fffaf0,#fffaf0);color:#264d3b;
+  box-shadow:0 5px 18px #264d3b25;overflow:hidden;max-height:none;
+}
+.so-page .gr13-card.is-room-compact .gr13-selection{
+  justify-content:flex-start;gap:10px;padding:0;border:0;
+}
+.so-page .gr13-card.is-room-compact .gr13-art{
+  flex:0 0 48px;width:48px;height:48px;border-radius:12px;background:#fffaf038;
+}
+.so-page .gr13-card.is-room-compact .gr13-art>.gift-art{width:48px;height:48px;}
+.so-page .gr13-card.is-room-compact .gr13-quantity{
+  bottom:-3px;inset-inline-end:-4px;padding:1px 5px;border-color:#d4e4d866;
+  background:#fffaf0;color:#264d3b;font-size:10px;line-height:1.5;
+}
+.so-page .gr13-card.is-room-compact .gr13-selection-text{max-width:none;min-width:0;}
+.so-page .gr13-card.is-room-compact .gr13-eyebrow{font-size:9px;color:#264d3b;line-height:1.3;}
+.so-page .so-gift-receipt .gr13-card.is-room-compact .gr13-eyebrow{padding-inline-end:42px;}
+.so-page .gr13-card.is-room-compact h3{margin:2px 0;color:#8a641f;font-size:14px;line-height:1.3;}
+.so-page .so-room-detail .gr13-card.is-room-compact .gr13-selection-text p{
+  margin:0;color:#264d3b;font-size:10px;line-height:1.5;overflow-wrap:anywhere;
+}
+.so-page .gr13-card.is-room-compact .gr13-rewards{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  margin-top:8px;padding:8px 0 7px;border-top:1px solid #d4e4d840;
+}
+.so-page .so-room-detail .gr13-card.is-room-compact .gr13-rewards p,
+.so-page [data-so-panel="gifts"] .gr13-card.is-room-compact .gr13-rewards p{
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;
+  gap:2px;margin:0;padding:0;border:0;border-radius:0;background:transparent;
+  color:#264d3b;font-size:10px;line-height:1.5;
+}
+.so-page .so-room-detail .gr13-card.is-room-compact .gr13-rewards strong,
+.so-page [data-so-panel="gifts"] .gr13-card.is-room-compact .gr13-rewards strong{
+  display:flex;align-items:center;gap:4px;max-width:100%;font-size:12px;
+  line-height:1.5;color:#8a641f;font-weight:700;overflow-wrap:anywhere;
+}
+.so-page .gr13-card.is-room-compact .gr13-currency{width:14px;height:14px;flex-basis:14px;}
+.so-page .gr13-card.is-room-compact .gr13-coin{color:#8a641f;}
+.so-page .gr13-card.is-room-compact .gr13-gem{color:#264d3b;}
+.so-page .gr13-card.is-room-compact .gr13-settlement{
+  display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;
+  padding-top:4px;border-top:1px solid #d4e4d830;
+}
+.so-page .so-room-detail .gr13-card.is-room-compact .gr13-total,
+.so-page [data-so-panel="gifts"] .gr13-card.is-room-compact .gr13-total{
+  display:flex;flex:1 1 160px;align-items:center;justify-content:flex-start;
+  gap:4px 6px;margin:0;padding:0;border:0;color:#264d3b;font-size:9px;line-height:1.5;
+}
+.so-page .so-room-detail .gr13-card.is-room-compact .gr13-total strong,
+.so-page [data-so-panel="gifts"] .gr13-card.is-room-compact .gr13-total strong{
+  color:#264d3b;font-size:10px;line-height:1.5;
+}
+.so-page .gr13-card.is-room-compact .gr13-details{flex:0 0 auto;min-width:0;color:#264d3b;}
+.so-page .gr13-card.is-room-compact .gr13-details summary{
+  display:flex;align-items:center;min-height:28px;padding:2px 4px;
+  color:#264d3b;font-size:10px;cursor:pointer;list-style:none;
+}
+.so-page .gr13-card.is-room-compact .gr13-details summary::-webkit-details-marker{display:none;}
+.so-page .gr13-card.is-room-compact .gr13-details summary::after{content:"⌄";margin-inline-start:5px;font-size:13px;}
+.so-page .gr13-card.is-room-compact .gr13-details[open]{flex-basis:100%;}
+.so-page .gr13-card.is-room-compact .gr13-details[open] summary::after{transform:rotate(180deg);}
+.so-page .so-room-detail .gr13-card.is-room-compact .gr13-caption{
+  margin:3px 0 0;color:#264d3b;font-size:10px;line-height:1.6;
+}
+.so-page .gr13-card.is-room-compact summary:focus-visible{outline:2px solid #b98a3d;outline-offset:2px;border-radius:6px;}
+@media(max-width:350px){
+ .so-page .gr13-card.is-room-compact .gr13-rewards{gap:6px;}
+ .so-page .so-room-detail .gr13-card.is-room-compact .gr13-rewards strong{font-size:11px;}
+}
+
+/* R40: lighter glass background ONLY for the confirmed receipt in the room chat.
+ * Alpha lives on the surface, never opacity on the card or its text. */
+.so-page .so-room-detail .so-chat-messages .gr13-card.is-room-compact{
+  background:linear-gradient(120deg,#fffaf00f,#fffaf01f);
+  border-color:#d4e4d82e;
+  box-shadow:0 3px 12px #264d3b1f;
+  -webkit-backdrop-filter:blur(1px);
+  backdrop-filter:blur(1px);
+  text-shadow:0 1px 3px #264d3b2e;
+}
+
+/* Remove the sender-to-recipient line from the chat receipt only.
+ * The authoritative receipt data and pre-send recipient selection stay intact. */
+.so-page .so-room-detail .so-chat-messages .gr13-card.is-room-compact .gr13-selection-text>p{
+  display:none;
+}

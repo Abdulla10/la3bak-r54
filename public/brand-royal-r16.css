@@ -1,0 +1,171 @@
+/* R16 royal identity. Loaded last by the parent integration.
+ * Color only: no geometry, art filters, gameplay, profile-layout or status rules.
+ * is-brand-site belongs only to NON-game routes. Page skin uses an explicit allowlist. */
+:root {
+  --la3bak-royal-bg: #f6f1e5;
+  --la3bak-royal-surface: #f6f1e5;
+  --la3bak-royal-panel: #f6f1e5;
+  --la3bak-royal-panel-raised: #f6f1e5;
+  --la3bak-royal-violet: #176b50;
+  --la3bak-royal-muted: #506c5b;
+  --la3bak-royal-gold: #b98a3d;
+  --la3bak-royal-gold-dim: #b98a3d;
+  --la3bak-royal-ink: #264d3b;
+  --la3bak-royal-line: #d4e4d840;
+  --la3bak-royal-gold-line: #b98a3d60;
+}
+html.is-brand-site body {
+  background-color: var(--la3bak-royal-bg) !important;
+  background-image: none;
+}
+
+/* Normal unified pages only; no game, lobby, player/profile or board routes. */
+html.is-brand-site .lb-content:is([data-lb-page="store"], [data-lb-page="wallet"], [data-lb-page="payments"], [data-lb-page="notifications"], [data-lb-page="notifications-internal"], [data-lb-page="friends"], [data-lb-page="messages"], [data-lb-page="settings"], [data-lb-page="community"], [data-lb-page="post"], [data-lb-page="about"], [data-lb-page="privacy"], [data-lb-page="terms"], [data-lb-page="agreement"], [data-lb-page="support"], [data-lb-page="contact"], [data-lb-page="missions"], [data-lb-page="verification"], [data-lb-page="rank-rewards"], [data-lb-page="not-found"]) {
+  --surface: var(--la3bak-royal-panel);
+  --surface-2: var(--la3bak-royal-panel-raised);
+  --muted: var(--la3bak-royal-muted);
+  --ink: var(--la3bak-royal-ink);
+  --line: var(--la3bak-royal-line);
+  --border-soft: var(--la3bak-royal-line);
+  color: var(--la3bak-royal-ink);
+}
+html.is-brand-site .lb-content:is([data-lb-page="store"], [data-lb-page="wallet"], [data-lb-page="payments"], [data-lb-page="notifications"], [data-lb-page="notifications-internal"], [data-lb-page="friends"], [data-lb-page="messages"], [data-lb-page="settings"], [data-lb-page="community"], [data-lb-page="post"], [data-lb-page="about"], [data-lb-page="privacy"], [data-lb-page="terms"], [data-lb-page="agreement"], [data-lb-page="support"], [data-lb-page="contact"], [data-lb-page="missions"], [data-lb-page="verification"], [data-lb-page="rank-rewards"], [data-lb-page="not-found"]) :is(.panel, .card):not(.lbw-confirm):not([data-lbp-confirmation]):not([data-lbp-result]):not(.lb-notification-new) {
+  background: var(--la3bak-royal-panel);
+  border-color: var(--la3bak-royal-line);
+  box-shadow: none;
+}
+html.is-brand-site .lb-content:is([data-lb-page="store"], [data-lb-page="wallet"], [data-lb-page="payments"], [data-lb-page="notifications"], [data-lb-page="notifications-internal"], [data-lb-page="friends"], [data-lb-page="messages"], [data-lb-page="settings"], [data-lb-page="community"], [data-lb-page="post"], [data-lb-page="about"], [data-lb-page="privacy"], [data-lb-page="terms"], [data-lb-page="agreement"], [data-lb-page="support"], [data-lb-page="contact"], [data-lb-page="missions"], [data-lb-page="verification"], [data-lb-page="rank-rewards"], [data-lb-page="not-found"]) :is(.hero h1, .panel-title, .section-title, .lb-shop-balance h2) {
+  color: var(--la3bak-royal-gold);
+  text-shadow: none;
+}
+html.is-brand-site .lb-content:is([data-lb-page="store"], [data-lb-page="wallet"], [data-lb-page="payments"], [data-lb-page="notifications"], [data-lb-page="notifications-internal"], [data-lb-page="friends"], [data-lb-page="messages"], [data-lb-page="settings"], [data-lb-page="community"], [data-lb-page="post"], [data-lb-page="about"], [data-lb-page="privacy"], [data-lb-page="terms"], [data-lb-page="agreement"], [data-lb-page="support"], [data-lb-page="contact"], [data-lb-page="missions"], [data-lb-page="verification"], [data-lb-page="rank-rewards"], [data-lb-page="not-found"]) :is(.btn:not(.danger), .gold-btn) {
+  background: var(--la3bak-royal-gold);
+  color: var(--la3bak-royal-surface);
+  border-color: var(--la3bak-royal-gold-dim);
+  box-shadow: none;
+}
+html.is-brand-site .lb-content:is([data-lb-page="store"], [data-lb-page="wallet"], [data-lb-page="payments"], [data-lb-page="notifications"], [data-lb-page="notifications-internal"], [data-lb-page="friends"], [data-lb-page="messages"], [data-lb-page="settings"], [data-lb-page="community"], [data-lb-page="post"], [data-lb-page="about"], [data-lb-page="privacy"], [data-lb-page="terms"], [data-lb-page="agreement"], [data-lb-page="support"], [data-lb-page="contact"], [data-lb-page="missions"], [data-lb-page="verification"], [data-lb-page="rank-rewards"], [data-lb-page="not-found"]) :is(.btn.ghost:not(.danger), .tabs button) {
+  background: var(--la3bak-royal-surface);
+  color: var(--la3bak-royal-muted);
+  border-color: var(--la3bak-royal-line);
+  box-shadow: none;
+}
+html.is-brand-site .lb-content:is([data-lb-page="store"], [data-lb-page="wallet"], [data-lb-page="payments"], [data-lb-page="notifications"], [data-lb-page="notifications-internal"], [data-lb-page="friends"], [data-lb-page="messages"], [data-lb-page="settings"]) :is(.tabs button.active, .tabs button.on, .tabs button[aria-selected="true"]) {
+  background: var(--la3bak-royal-panel-raised);
+  color: var(--la3bak-royal-gold);
+  border-color: var(--la3bak-royal-gold-dim);
+  box-shadow: none;
+}
+html.is-brand-site .lb-content:is([data-lb-page="store"], [data-lb-page="wallet"], [data-lb-page="payments"], [data-lb-page="notifications"], [data-lb-page="notifications-internal"], [data-lb-page="friends"], [data-lb-page="messages"], [data-lb-page="settings"], [data-lb-page="community"], [data-lb-page="post"], [data-lb-page="support"], [data-lb-page="contact"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select) {
+  background: var(--la3bak-royal-surface);
+  color: var(--la3bak-royal-ink);
+  border-color: var(--la3bak-royal-line);
+}
+
+/* Drawer navigation, not account artwork, connection/error states or logout. */
+html.is-brand-site .lb-unified .lb-drawer .lb-drawer-body {
+  background: var(--la3bak-royal-surface);
+  border-color: var(--la3bak-royal-line);
+}
+html.is-brand-site .lb-unified .lb-drawer :is(.lb-drawer-link, .lb-drawer-unavailable) {
+  background: var(--la3bak-royal-panel);
+  color: var(--la3bak-royal-muted);
+  border-color: var(--la3bak-royal-line);
+}
+html.is-brand-site .lb-unified .lb-drawer .lb-drawer-link.active {
+  background: var(--la3bak-royal-panel-raised);
+  color: var(--la3bak-royal-gold);
+  border-color: var(--la3bak-royal-gold-dim);
+}
+html.is-brand-site .lb-unified .lb-drawer .lb-drawer-link.active small { color: var(--la3bak-royal-muted); }
+
+/* Existing store cards: only the opaque surface is shared with rare/owned items. */
+html.is-brand-site .ref-store { --ref-gold: var(--la3bak-royal-gold); --ref-line: var(--la3bak-royal-gold-line); --ref-purple: var(--la3bak-royal-violet); }
+html.is-brand-site .lb-content[data-lb-page="store"] :is(.ref-hero, .sh-tabs, .cx-filters, .cx-pnote) {
+  background: var(--la3bak-royal-surface);
+  border-color: var(--la3bak-royal-line);
+}
+html.is-brand-site .lb-content[data-lb-page="store"] .sh-card { background: var(--la3bak-royal-panel); }
+html.is-brand-site .lb-content[data-lb-page="store"] :is(.sh-tabs button, .ref-worlds button, .cx-chip) {
+  background: var(--la3bak-royal-panel);
+  color: var(--la3bak-royal-muted);
+  border-color: var(--la3bak-royal-line);
+  box-shadow: none;
+}
+html.is-brand-site .lb-content[data-lb-page="store"] :is(.sh-tabs button.on, .ref-worlds button.on, .cx-chip.on) {
+  background: var(--la3bak-royal-panel-raised);
+  color: var(--la3bak-royal-gold);
+  border-color: var(--la3bak-royal-gold-dim);
+}
+html.is-brand-site .lb-content[data-lb-page="store"] :is(.ref-hero h1, .sh-card > b, .lb-store-category-title) { color: var(--la3bak-royal-gold); text-shadow: none; }
+
+/* Wallet/purchase page panels are not the transparent shell currency capsules. */
+html.is-brand-site .lb-content[data-lb-page="wallet"] .lbw-balance,
+html.is-brand-site .lb-content[data-lb-page="payments"] :is(.lbp-pack, .lbp-summary > div, .lbp-history-row),
+html.is-brand-site .lb-content[data-lb-page="notifications"] .lb-notification-summary,
+html.is-brand-site .lb-content[data-lb-page="friends"] .list-row,
+html.is-brand-site .lb-content[data-lb-page="messages"] :is(.lb-message-row, .chat-bubble),
+html.is-brand-site .lb-content[data-lb-page="settings"] .lb-settings-link {
+  background: var(--la3bak-royal-panel);
+  border-color: var(--la3bak-royal-line);
+}
+html.is-brand-site .lb-content[data-lb-page="messages"] :is(.lb-message-row.active, .chat-bubble.mine) {
+  background: var(--la3bak-royal-panel-raised);
+  border-color: var(--la3bak-royal-gold-line);
+}
+html.is-brand-site .lb-content[data-lb-page="wallet"] :is(.lbw-balance h2, .lbw-reference summary),
+html.is-brand-site .lb-content[data-lb-page="payments"] .lbp-pack h3,
+html.is-brand-site .lb-content[data-lb-page="notifications"] .lb-notification-summary strong { color: var(--la3bak-royal-gold); }
+html.is-brand-site :is(.lbw-muted, .lbp-muted, .lb-notification-note, .lb-notification-meta, .lb-friends-page-note, .lb-message-draft-label, .lb-message-limit, .lb-settings-note) { color: var(--la3bak-royal-muted); }
+
+/* Social listing/forms only: entered-room stage is owned by social-room-r7.css. */
+html.is-brand-site .so-page:not(:has(.so-room-detail)) {
+  --so-bg: var(--la3bak-royal-bg);
+  --so-surface: var(--la3bak-royal-panel);
+  --so-gold: var(--la3bak-royal-gold);
+  --so-muted: var(--la3bak-royal-muted);
+  --so-line: var(--la3bak-royal-gold-line);
+}
+html.is-brand-site .so-page:not(:has(.so-room-detail)) :is(.so-panel, .so-room-card, .so-mode-teaser) { background: var(--la3bak-royal-panel); }
+html.is-brand-site .so-page:not(:has(.so-room-detail)) :is(.so-hero h1, .so-section-head h2) { color: var(--la3bak-royal-gold); }
+
+/* Community content, never its avatar/media wrappers, reactions or player page. */
+html.is-brand-site .lb-content:is([data-lb-page="community"], [data-lb-page="post"]) :is(.cm-compose, .cm-post, .cm-comments, .cm-pop, .cm-sheet) {
+  background: var(--la3bak-royal-panel);
+  border-color: var(--la3bak-royal-line);
+}
+html.is-brand-site .lb-content:is([data-lb-page="community"], [data-lb-page="post"]) .cm-reply { color: var(--la3bak-royal-violet); }
+
+/* Existing administrative surface tokens; no action/status/chart recoloring. */
+html.is-brand-site :is(.ad, .ad-royal-login) {
+  --ad-bg: var(--la3bak-royal-bg);
+  --ad-panel: var(--la3bak-royal-panel);
+  --ad-panel2: var(--la3bak-royal-panel-raised);
+  --ad-border: var(--la3bak-royal-line);
+  --ad-text: var(--la3bak-royal-ink);
+  --ad-muted: var(--la3bak-royal-muted);
+  --ad-royal-gold: var(--la3bak-royal-gold);
+  --ad-royal-gold-dim: var(--la3bak-royal-gold-dim);
+  --ad-royal-ink: var(--la3bak-royal-ink);
+  --ad-royal-muted: var(--la3bak-royal-muted);
+  --ad-royal-line: var(--la3bak-royal-line);
+  --ad-royal-panel: var(--la3bak-royal-panel);
+  --surface: var(--la3bak-royal-panel);
+  --line: var(--la3bak-royal-line);
+  --muted: var(--la3bak-royal-muted);
+}
+html.is-brand-site .ad.ad-royal { background: var(--la3bak-royal-bg); }
+html.is-brand-site .ad.ad-royal :is(.ad-side, .ad-head) { background: var(--la3bak-royal-surface); }
+html.is-brand-site .ad.ad-royal :is(.ad-card, .ad-content-card, .ad-royal-panel, .ad-royal-kpi, .ad-royal-welcome) {
+  background: var(--la3bak-royal-panel);
+  border-color: var(--la3bak-royal-line);
+}
+html.is-brand-site .ad.ad-royal :is(.ad-in, .ad-royal-top-search) { background: var(--la3bak-royal-surface); border-color: var(--la3bak-royal-line); }
+html.is-brand-site .pay-admin {
+  --pay-panel: var(--la3bak-royal-panel);
+  --pay-border: var(--la3bak-royal-line);
+  --pay-muted: var(--la3bak-royal-muted);
+  --pay-gold: var(--la3bak-royal-gold);
+}
+html.is-brand-site .pay-admin :is(.pay-pack, .pay-totals .ad-kpi) { background: var(--la3bak-royal-panel); }
+html.is-brand-site .pay-admin :is(.ad-in, .pay-table caption) { background: var(--la3bak-royal-surface); }

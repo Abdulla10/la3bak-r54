@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" width="240" height="240" fill="none">
+  <title>Ruby VIP rank shield</title><desc>Editable gold and burgundy vector rank crest with jeweled crown and feather fans. No text. Label safe area x66–174 y105–140; value safe area x74–166 y148–185.</desc>
+  <defs>
+    <linearGradient id="rv-gold" x1=".05" y1="0" x2=".9" y2="1"><stop stop-color="#713713"/><stop offset=".13" stop-color="#fff1be"/><stop offset=".28" stop-color="#dca33f"/><stop offset=".42" stop-color="#fff3bd"/><stop offset=".57" stop-color="#9e5c1e"/><stop offset=".72" stop-color="#efc574"/><stop offset=".86" stop-color="#ffed9e"/><stop offset="1" stop-color="#723c1b"/></linearGradient>
+    <linearGradient id="rv-light" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff9df"/><stop offset=".35" stop-color="#ffdf8a"/><stop offset=".7" stop-color="#deb04d"/><stop offset="1" stop-color="#ab6d27"/></linearGradient>
+    <linearGradient id="rv-cold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d8cd99"/><stop offset=".3" stop-color="#b48b38"/><stop offset=".63" stop-color="#a16b28"/><stop offset="1" stop-color="#4e2617"/></linearGradient>
+    <linearGradient id="rv-body" x1="49" y1="58" x2="184" y2="215" gradientUnits="userSpaceOnUse"><stop stop-color="#eb4d65"/><stop offset=".16" stop-color="#a71e3d"/><stop offset=".42" stop-color="#4c1024"/><stop offset=".68" stop-color="#60142c"/><stop offset=".86" stop-color="#8f2039"/><stop offset="1" stop-color="#230e1d"/></linearGradient>
+    <radialGradient id="rv-sheen" cx=".25" cy=".12" r=".95"><stop stop-color="#ffb59f" stop-opacity=".3"/><stop offset=".45" stop-color="#fc4065" stop-opacity=".05"/><stop offset="1" stop-color="#8d163f" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rv-ruby" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffc3de"/><stop offset=".28" stop-color="#ef4d9b"/><stop offset=".52" stop-color="#ac184e"/><stop offset=".72" stop-color="#c83180"/><stop offset="1" stop-color="#410d3a"/></linearGradient>
+    <radialGradient id="rv-halo"><stop stop-color="#ff486d" stop-opacity=".58"/><stop offset=".34" stop-color="#e12657" stop-opacity=".24"/><stop offset="1" stop-color="#ef315f" stop-opacity="0"/></radialGradient>
+    <g id="rv-feather"><path d="M0 0C-7-9-11-30-1-55C10-29 9-10 0 0Z" fill="url(#rv-gold)" stroke="#8f4d1b" stroke-width=".8"/><path d="M-1-55L-2-23L0 0C-10-16-8-36-1-55Z" fill="url(#rv-light)"/><path d="M-1-55L-2-23L0 0C9-14 11-31-1-55Z" fill="url(#rv-cold)"/><path d="M-1-55L3-35L-2-23Z" fill="#fff8d1"/><path d="M-2-23L3-35L5-21L0 0Z" fill="#d59637"/><path d="M-1-52L-2-23L0-3" stroke="#ffe7a1" stroke-width=".75"/></g>
+    <g id="rv-fan">
+      <path d="M47 143C13 127 4 91 17 59C29 78 39 107 47 143Z" fill="#7d371f" stroke="#ffb454" stroke-width="1.1"/>
+      <use xlink:href="#rv-feather" transform="translate(46 136) rotate(-33) scale(.83 1.43)"/>
+      <use xlink:href="#rv-feather" transform="translate(47 138) rotate(-21) scale(.92 1.54)"/>
+      <use xlink:href="#rv-feather" transform="translate(48 139) rotate(-8) scale(.93 1.55)"/>
+      <use xlink:href="#rv-feather" transform="translate(49 140) rotate(7) scale(.91 1.44)"/>
+      <use xlink:href="#rv-feather" transform="translate(46 145) rotate(-55) scale(.79 1.06)"/>
+      <use xlink:href="#rv-feather" transform="translate(49 150) rotate(-61) scale(.73 .87)"/>
+      <use xlink:href="#rv-feather" transform="translate(53 155) rotate(-66) scale(.7 .74)"/>
+      <path d="M49 152C33 137 25 114 21 94" stroke="url(#rv-gold)" stroke-width="3.3"/><path d="M48 149C33 135 27 115 22 95" stroke="#fff0b8" stroke-width=".8"/>
+      <path d="M42 138L50 145L43 155L35 148Z" fill="url(#rv-gold)" stroke="#ffdca0" stroke-width=".9"/><path d="M42 141L47 146L43 151L38 147Z" fill="url(#rv-ruby)"/><path d="M42 141L42 146L38 147Z" fill="#ffb0d0"/>
+    </g>
+    <g id="rv-jewel"><path d="M0-5L4 0L0 5L-4 0Z" fill="url(#rv-ruby)" stroke="#ffdfa1" stroke-width="1"/><path d="M0-4L0 0L-3 0Z" fill="#ffb6dd"/></g>
+    <g id="rv-spark"><circle r="8" fill="url(#rv-halo)"/><path d="M0-4.5L1-1L4.5 0L1 1L0 4.5L-1 1L-4.5 0L-1-1Z" fill="#ffa3ae"/><path d="M0-2.5L.5-.5L2.5 0L.5 .5L0 2.5L-.5 .5L-2.5 0L-.5-.5Z" fill="#fff3d5"/></g>
+  </defs>
+  <!-- Crisp gold wing fans with local red glints, no large blur. -->
+  <use xlink:href="#rv-fan"/><use xlink:href="#rv-fan" transform="translate(240 0) scale(-1 1)"/>
+  <path d="M38 65Q38 52 54 52H186Q202 52 202 65L198 132C194 175 170 207 120 224C70 207 46 175 42 132Z" fill="#482418" stroke="#ee365a" stroke-opacity=".35" stroke-width="4"/>
+  <path d="M38 65Q38 52 54 52H186Q202 52 202 65L198 132C194 175 170 207 120 224C70 207 46 175 42 132Z" fill="url(#rv-gold)" stroke="#ffe4a1" stroke-width="1.3"/>
+  <path d="M42 66Q42 56 55 56H185Q198 56 198 66L194 131C190 172 167 203 120 219C73 203 50 172 46 131Z" stroke="#724722" stroke-width="1.4"/>
+  <path d="M45 67Q45 59 56 59H184Q195 59 195 67L191 130C187 170 165 199 120 215C75 199 53 170 49 130Z" fill="url(#rv-body)" stroke="#fff0b6" stroke-width="1.25"/>
+  <path d="M49 69Q49 63 58 63H182Q191 63 191 69L187 130C183 167 162 196 120 211C78 196 57 167 53 130Z" stroke="#b57d36" stroke-width="1"/>
+  <path d="M52 71Q52 66 60 66H180Q188 66 188 71L184 130C180 164 160 193 120 207C80 193 60 164 56 130Z" fill="url(#rv-sheen)" stroke="#efbd72" stroke-opacity=".6" stroke-width=".65"/>
+  <path d="M55 92L58 127C61 157 75 182 93 193" stroke="#fa7189" stroke-opacity=".55" stroke-width="1.1"/><path d="M185 92L182 126C179 154 169 176 154 188" stroke="#310b1b" stroke-width="1.5"/>
+  <path d="M48 68Q49 62 57 62H80M160 62H183Q191 62 192 68M58 166C68 185 87 202 113 213" stroke="#fff7d8" stroke-width="1" stroke-linecap="round"/>
+  <path d="M75 190C83 198 94 203 107 207L100 197L94 199L91 192L85 194L82 188Z" fill="url(#rv-gold)" stroke="#d9a75c" stroke-width=".7"/><path d="M165 190C157 198 146 203 133 207L140 197L146 199L149 192L155 194L158 188Z" fill="url(#rv-gold)" stroke="#d9a75c" stroke-width=".7"/>
+  <path d="M120 197L129 208L120 219L111 208Z" fill="url(#rv-gold)" stroke="#ffedb8" stroke-width=".8"/><path d="M120 201L125 208L120 215L115 208Z" fill="url(#rv-ruby)"/><path d="M120 201L120 208L115 208Z" fill="#ffb4da"/>
+  <!-- Five-prong jeweled crown, same large silhouette as the companion rank. -->
+  <path d="M67 35L86 48L87 23L105 43L120 16L135 43L153 23L154 48L173 35L164 67Q120 79 76 67Z" fill="#653217" stroke="#ffdf92" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M70 36L87 53L89 26L106 49L120 20L134 49L151 26L153 53L170 36L162 64Q120 75 78 64Z" fill="url(#rv-gold)"/>
+  <path d="M70 36L87 53L78 64Z M89 26L99 64L87 53Z M120 20L120 66L106 49Z M151 26L153 53L143 64Z M170 36L162 64L153 53Z" fill="url(#rv-light)"/>
+  <path d="M89 26L106 49L99 64Z M120 20L134 49L120 66Z M151 26L143 64L134 49Z" fill="url(#rv-cold)"/>
+  <path d="M77 61Q120 72 163 61L162 73Q120 85 78 73Z" fill="url(#rv-gold)" stroke="#ffdfa0" stroke-width="1.2"/>
+  <path d="M80 65Q120 75 160 65M80 71Q120 81 160 71" stroke="#633515" stroke-width=".9"/><path d="M81 66Q120 76 159 66" stroke="#fff2b9" stroke-width=".7"/>
+  <path d="M120 30L129 43L120 56L111 43Z" fill="url(#rv-gold)" stroke="#fff0b7" stroke-width="1"/><path d="M120 33L126 43L120 52L114 43Z" fill="url(#rv-ruby)"/><path d="M120 33L120 43L114 43Z" fill="#ffd0e0"/><path d="M120 43L126 43L120 52Z" fill="#741448"/>
+  <use xlink:href="#rv-jewel" transform="translate(91 47) rotate(-12)"/><use xlink:href="#rv-jewel" transform="translate(149 47) rotate(12)"/><use xlink:href="#rv-jewel" transform="translate(78 48) rotate(-20) scale(.65)"/><use xlink:href="#rv-jewel" transform="translate(162 48) rotate(20) scale(.65)"/>
+  <path d="M104 68L107 72L104 76L101 72Z M136 68L139 72L136 76L133 72Z" fill="url(#rv-ruby)" stroke="#ffe6a7" stroke-width=".8"/>
+  <g fill="url(#rv-light)" stroke="#a86c27" stroke-width=".7"><circle cx="67" cy="35" r="2.6"/><circle cx="87" cy="23" r="2.3"/><circle cx="120" cy="16" r="2.8"/><circle cx="153" cy="23" r="2.3"/><circle cx="173" cy="35" r="2.6"/></g>
+  <path d="M108 61Q120 55 132 61" stroke="#ffefb1" stroke-width="1"/>
+  <use xlink:href="#rv-spark" transform="translate(15 69) scale(.8)"/><use xlink:href="#rv-spark" transform="translate(225 69) scale(.8)"/><use xlink:href="#rv-spark" transform="translate(19 127) scale(.68)"/><use xlink:href="#rv-spark" transform="translate(221 127) scale(.68)"/><use xlink:href="#rv-spark" transform="translate(48 174) scale(.7)"/><use xlink:href="#rv-spark" transform="translate(192 174) scale(.7)"/>
+</svg>

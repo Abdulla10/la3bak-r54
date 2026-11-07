@@ -1,0 +1,4 @@
+/* Host integration only: the preserved game routes never receive this class. */
+.is-reference-profile #top,.is-reference-profile #bnav{display:none!important;}
+.is-reference-profile #view{width:100%;max-width:1080px;margin:0 auto;padding:0;min-height:100dvh;}
+.is-reference-profile body{padding:0;}

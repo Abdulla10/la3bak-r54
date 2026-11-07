@@ -1,0 +1,167 @@
+/* Additive friends-only styles; common supplied panel/tabs styles belong to unified.css. */
+.lb-unified [data-lb-page="friends"] .hero-symbol {
+  color: #8a641f;
+  display: flex;
+  justify-content: center;
+  filter: drop-shadow(0 0 12px #b98a3d2e);
+}
+.lb-unified [data-lb-page="friends"] .hero-symbol svg {
+  width: 72px;
+  height: 72px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lb-unified [data-lb-page="friends"] .list-row {
+  flex-wrap: wrap;
+}
+.lb-unified [data-lb-page="friends"] .list-row .grow {
+  flex: 1 1 120px;
+  overflow-wrap: anywhere;
+}
+.lb-unified [data-lb-page="friends"] .avatar {
+  background: radial-gradient(circle at 35% 25%, #fffaf0, #fffaf0);
+  color: #8a641f;
+  border-color: #b98a3d;
+  overflow: hidden;
+}
+.lb-unified [data-lb-page="friends"] .avatar svg {
+  width: 32px;
+  height: 32px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-name {
+  color: #8a641f;
+  font-weight: 800;
+  display: block;
+  text-decoration: none;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-name:hover {
+  text-decoration: underline;
+  color: #8a641f;
+}
+.lb-unified [data-lb-page="friends"] .grow small {
+  display: block;
+  margin-block-start: 5px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-actions,
+.lb-unified [data-lb-page="friends"] .lb-friends-toolbar,
+.lb-unified [data-lb-page="friends"] .lb-friends-page-note {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-toolbar {
+  justify-content: flex-end;
+  margin-block: 8px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-page-note {
+  justify-content: space-between;
+  margin-block-start: 14px;
+  color: #264d3b;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-label {
+  display: block;
+  color: #264d3b;
+  font-size: 14px;
+}
+.lb-unified [data-lb-page="friends"] .btn,
+.lb-unified [data-lb-page="friends"] .gold-btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.lb-unified [data-lb-page="friends"] .btn svg,
+.lb-unified [data-lb-page="friends"] .gold-btn svg,
+.lb-unified [data-lb-page="friends"] .panel-title svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-privacy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.8;
+}
+.lb-unified [data-lb-page="friends"] .switch {
+  flex-shrink: 0;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-state,
+.lb-unified [data-lb-page="friends"] .lb-friends-empty {
+  text-align: center;
+  padding-block: 22px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-empty {
+  color: #264d3b;
+  line-height: 1.9;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-presence-note {
+  text-align: center;
+  line-height: 1.8;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-error,
+.lb-unified [data-lb-page="friends"] .lb-friends-notice {
+  border: 1px solid #d4e4d8;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fffaf0;
+  color: #264d3b;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-notice {
+  border-color: #b98a3d;
+  background: #fffaf0;
+  color: #8a641f;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-confirm {
+  width: 100%;
+  padding: 10px;
+  background: #fffaf0;
+  border: 1px solid #b98a3d;
+  border-radius: 12px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-confirm p {
+  margin-block: 0 10px;
+}
+.lb-unified [data-lb-page="friends"] .lb-friends-limits p {
+  color: #264d3b;
+  line-height: 1.9;
+  font-size: 13px;
+}
+.lb-unified [data-lb-page="friends"] button:disabled,
+.lb-unified [data-lb-page="friends"] input:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+.lb-unified [data-lb-page="friends"] a:focus-visible,
+.lb-unified [data-lb-page="friends"] button:focus-visible,
+.lb-unified [data-lb-page="friends"] input:focus-visible {
+  outline: 2px solid #b98a3d;
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .lb-unified [data-lb-page="friends"] .grid2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lb-unified [data-lb-page="friends"] .hero-symbol svg {
+    width: 60px;
+    height: 60px;
+  }
+  .lb-unified [data-lb-page="friends"] .lb-friends-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .lb-unified [data-lb-page="friends"] .lb-friends-actions > * {
+    flex: 1 1 auto;
+  }
+  .lb-unified [data-lb-page="friends"] .lb-friends-page-note {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,197 @@
+/* Optional settings supplement. Every rule stays inside the unified settings body. */
+.lb-unified [data-lb-page="settings"] {
+  color: #fff;
+  min-width: 0;
+}
+.lb-unified [data-lb-page="settings"] .hero-symbol .pvp-icon {
+  width: 64px;
+  height: 64px;
+  color: #8a641f;
+  filter: drop-shadow(0 0 12px #b98a3d2e);
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-title .pvp-icon {
+  flex: none;
+  color: #8a641f;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-link {
+  color: #fff;
+  text-decoration: none;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-link:hover {
+  border-color: #b98a3d;
+  background: linear-gradient(90deg, #fffaf0, #fffaf0);
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-link > .pvp-icon {
+  flex: none;
+  color: #8a641f;
+  transform: rotate(180deg);
+}
+.lb-unified [data-lb-page="settings"] .list-row small {
+  display: block;
+  line-height: 1.7;
+  color: #264d3b;
+}
+.lb-unified [data-lb-page="settings"] .list-row b,
+.lb-unified [data-lb-page="settings"] .lb-settings-note {
+  overflow-wrap: anywhere;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-avatar {
+  overflow: hidden;
+  width: 62px;
+  height: 62px;
+  min-width: 62px;
+  flex: none;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-avatar > .pvp-icon {
+  width: 36px;
+  height: 36px;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-avatar img {
+  max-width: 100%;
+  object-fit: cover;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-user .btn {
+  text-decoration: none;
+  text-align: center;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-unavailable {
+  border-style: dashed;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-unavailable .tag {
+  color: #264d3b;
+  border-color: #d4e4d8;
+  white-space: nowrap;
+  flex: none;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-form {
+  display: block;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-option {
+  cursor: pointer;
+  font-weight: normal;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-option .switch {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  flex: none;
+  position: relative;
+  width: 48px;
+  height: 26px;
+  min-width: 48px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #d4e4d8;
+  border-radius: 20px;
+  background: #fffaf0;
+  box-shadow: none;
+  cursor: pointer;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-option .switch::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fffaf0;
+  transition: transform .15s ease;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-option .switch:checked {
+  background: #e8c987;
+  border-color: #b98a3d;
+  box-shadow: 0 0 8px #b98a3d2e;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-option .switch:checked::before {
+  transform: translateX(-22px);
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-option .switch:disabled,
+.lb-unified [data-lb-page="settings"] button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+.lb-unified [data-lb-page="settings"] a:focus-visible,
+.lb-unified [data-lb-page="settings"] button:focus-visible,
+.lb-unified [data-lb-page="settings"] input:focus-visible {
+  outline: 2px solid #b98a3d;
+  outline-offset: 4px;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-note,
+.lb-unified [data-lb-page="settings"] .lb-settings-save p,
+.lb-unified [data-lb-page="settings"] .lb-settings-footer p {
+  line-height: 1.8;
+  margin: 10px 2px;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-notification-links {
+  margin-top: 12px;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-notification-links .btn {
+  text-align: center;
+  text-decoration: none;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-state {
+  line-height: 1.8;
+}
+.lb-unified [data-lb-page="settings"] [data-lb-settings-tools] > .stack > .hint {
+  margin: 10px 0;
+  padding: 11px 14px;
+  background: #fffaf0;
+  border: 1px solid #d4e4d8;
+  border-radius: 14px;
+  color: #264d3b;
+  line-height: 1.8;
+}
+.lb-unified [data-lb-page="settings"] [data-lb-settings-tools] > .stack > .hint:empty {
+  display: none;
+}
+.lb-unified [data-lb-page="settings"] [data-lb-settings-tools] [role="alert"] {
+  border-color: #d4e4d8;
+  color: #264d3b;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-save .gold-btn,
+.lb-unified [data-lb-page="settings"] .lb-settings-state .gold-btn {
+  display: inline-block;
+  text-decoration: none;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-footer {
+  padding: 14px 0 22px;
+  text-align: center;
+}
+.lb-unified [data-lb-page="settings"] .lb-settings-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 200px;
+}
+@media (max-width: 700px) {
+  .lb-unified [data-lb-page="settings"] .hero-symbol .pvp-icon {
+    width: 52px;
+    height: 52px;
+  }
+  .lb-unified [data-lb-page="settings"] .lb-settings-user {
+    flex-wrap: wrap;
+  }
+  .lb-unified [data-lb-page="settings"] .lb-settings-user > .btn {
+    width: 100%;
+  }
+  .lb-unified [data-lb-page="settings"] .lb-settings-title {
+    gap: 7px;
+  }
+  .lb-unified [data-lb-page="settings"] .lb-settings-unavailable {
+    align-items: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lb-unified [data-lb-page="settings"] .lb-settings-link,
+  .lb-unified [data-lb-page="settings"] .lb-settings-option .switch::before {
+    transition: none;
+  }
+}

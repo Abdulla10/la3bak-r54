@@ -1,0 +1,58 @@
+/* R15 frame centering: genuine equipped frame only; never add a pretend owned frame. */
+.pvp-page .lpu-portrait > .cx-fw {
+  --sz: var(--pvp-avatar-size, 68px) !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: var(--pvp-avatar-size, 68px) !important;
+  height: var(--pvp-avatar-size, 68px) !important;
+  margin: auto !important;
+  display: grid !important;
+  place-items: center;
+  overflow: visible;
+}
+.pvp-page .lpu-portrait .avatar-wrap {
+  --sz: var(--pvp-avatar-size, 68px) !important;
+  position: relative !important;
+  inset: auto !important;
+  width: var(--pvp-avatar-size, 68px) !important;
+  height: var(--pvp-avatar-size, 68px) !important;
+  max-width: 100%;
+  max-height: 100%;
+  transform: none !important;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+}
+.pvp-page .lpu-portrait .avatar-wrap img,
+.pvp-page .lpu-portrait .avatar-wrap svg {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.pvp-page .lpu-portrait > .cx-fw.has > .cx-frame {
+  position: absolute !important;
+  inset: auto !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 136% !important;
+  height: 136% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  border-radius: 0 !important;
+  pointer-events: none !important;
+  z-index: 5;
+}
+.pvp-page .lpu-portrait > .cx-fw.old > .pf-ring {
+  --sz: var(--pvp-avatar-size, 68px) !important;
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  display: inline-grid;
+  place-items: center;
+}
+.pvp-page .pvp-fallback { display: grid; place-items: center; width: var(--sz, var(--pvp-avatar-size, 68px)); height: var(--sz, var(--pvp-avatar-size, 68px)); border-radius: 50%; background: #fffaf0; color: #264d3b; font-size: 24px; }

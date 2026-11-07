@@ -1,0 +1,457 @@
+/* Retained multiplayer gameplay only. Load after app.css and shared theme CSS.
+   Deliberately exclude card faces, board paths, pieces, legal moves and clocks.
+   Fixed design-unit coordinates remain owned by the existing game renderers. */
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen, .cw-screen) {
+  --rg-deep: #10051e;
+  --rg-surface: #fffaf0;
+  --rg-raised: #261044;
+  --rg-gold: #b98a3d;
+  --rg-purple: #176b50;
+  --rg-text: #264d3b;
+  --rg-muted: #506c5b;
+  --rg-line: #b98a3d61;
+  --rg-chrome: linear-gradient(160deg, #fffaf0, #fffaf0);
+  --rg-width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  --rg-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  color: var(--rg-text);
+}
+
+/* The five fixed v2 canvases stay immersive; no site navigation is added. */
+.jk-screen.v2:is(.jx, .ld2, .bl2, .dm2, .u2), .cr-screen {
+  background: radial-gradient(ellipse at 50% 42%, #fffaf0, #fffaf0 55%, #fffaf0);
+  background-color: #fffaf0;
+}
+.jk-screen.v2.jx::before {
+  background: radial-gradient(ellipse at 50% 42%, transparent 45%, #fffaf099);
+}
+.jk-screen.v2:is(.ld2, .bl2, .dm2, .u2)::before { display: none; }
+
+/* Scale the same fixed boards inside the safe viewport, not new coordinates. */
+.jk-screen.v2.jx .jk-stage {
+  --u: min(calc(var(--rg-width) / 660), calc(var(--rg-height) / 1434));
+  --st: calc(env(safe-area-inset-top, 0px) + (var(--rg-height) - 1434 * var(--u)) / 2);
+  left: calc(env(safe-area-inset-left, 0px) + var(--rg-width) / 2);
+  top: calc(env(safe-area-inset-top, 0px) + var(--rg-height) / 2);
+  container-type: inline-size;
+}
+.jk-screen.v2.ld2 .ld2-stage,
+.jk-screen.v2.bl2 .bl2-stage,
+.jk-screen.v2.dm2 .dm-stage,
+.jk-screen.v2.u2 .u2-stage {
+  --u: min(calc(var(--rg-width) / 921), calc(var(--rg-height) / 2000));
+  left: calc(env(safe-area-inset-left, 0px) + var(--rg-width) / 2);
+  top: calc(env(safe-area-inset-top, 0px) + var(--rg-height) / 2);
+  background-color: var(--rg-surface);
+}
+.jk-screen.v2.ld2 .ld2-stage,
+.jk-screen.v2.bl2 .bl2-stage,
+.jk-screen.v2.u2 .u2-stage { container-type: inline-size; }
+@media (min-aspect-ratio: 1/2) {
+  .jk-screen.v2.dm2 .dm-stage {
+    --u: min(calc(var(--rg-width) / 921), calc(var(--rg-height) / 1700));
+  }
+}
+.jk-screen.v2.u2.wide .u2-stage {
+  --u: min(calc(var(--rg-width) / 2000), calc(var(--rg-height) / 1125));
+}
+
+/* Jackaro: only exterior canvas, name/count badges and tool chrome. */
+.jk-screen.v2.jx :is(.jx-pill, .jx-cnt) {
+  background: var(--rg-surface);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+}
+.jk-screen.v2.jx .jx-sec { background: var(--rg-surface); }
+.jk-screen.v2.jx .jx-conn { border-color: var(--rg-deep); }
+.jk-screen.v2.jx .jx-seat.turn .jx-pill { border-color: var(--rg-gold); color: var(--rg-text); }
+.jk-screen.v2.jx .jk-dock .notice {
+  background: var(--rg-surface);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+}
+.jk-screen.v2.jx .jk-dock .notice.turn { border-color: var(--rg-gold); color: var(--rg-gold); }
+.jk-screen.v2.jx .jk-bb button,
+.jk-screen.v2.jx .jk-menu-btn {
+  background: var(--rg-chrome);
+  border-color: var(--rg-line);
+  color: var(--rg-gold);
+  box-shadow: 0 4px 10px #264d3b2e;
+}
+.jk-screen.v2.jx .jk-bb .say { color: var(--rg-text); }
+.jk-screen.v2.jx :is(.jk-put, .jk-mv),
+.jk-screen.v2.ld2 .jk-mv {
+  background: var(--rg-chrome);
+  border-color: var(--rg-gold);
+  color: var(--rg-text);
+  box-shadow: 0 4px 10px #264d3b2e;
+}
+.jk-screen.v2.jx .jk-help { color: var(--rg-muted); }
+
+/* Ludo: outer SVG colors are in games.js; leave all path/seat/die colors. */
+.jk-screen.v2.ld2 :is(.ld2-sq, .ld2-btns button, .ld2-dice) {
+  background: var(--rg-chrome);
+  border-color: var(--rg-line);
+  color: var(--rg-gold);
+  box-shadow: inset 0 0 0 1px var(--rg-line), 0 4px 10px #264d3b2e;
+}
+.jk-screen.v2.ld2 .ld2-tail { border-right-color: var(--rg-purple); }
+.jk-screen.v2.ld2 :is(.ld2-dice small, .ld2-q) { color: var(--rg-gold); }
+.jk-screen.v2.ld2 .ld2-nm {
+  background: #fffaf0e6;
+  color: var(--rg-text);
+}
+.jk-screen.v2.ld2 .ld2-dock .notice {
+  background: var(--rg-surface);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+}
+.jk-screen.v2.ld2 .ld2-dock .notice.turn { border-color: var(--rg-gold); }
+.jk-screen.v2.ld2 .ld2-last { color: var(--rg-muted); }
+.jk-screen.v2.ld2 .ld2-pop {
+  background: var(--rg-raised);
+  color: var(--rg-text);
+  box-shadow: 0 10px 24px #264d3b2e, inset 0 0 0 1px var(--rg-line);
+}
+.jk-screen.v2.ld2 .ld2-pop .strip { background: var(--rg-surface); color: var(--rg-gold); }
+.jk-screen.v2.ld2 .ld2-pop p { color: var(--rg-text); }
+.jk-screen.v2.ld2 .ld2-pop small { color: var(--rg-muted); }
+
+/* Baloot: name/score plates and pass button; announcement/suit colors stay. */
+.jk-screen.v2.bl2 :is(.bl2-nm, .bl2-co, .bl2-score, .bl2-last, .bl2-sum) {
+  background: var(--rg-chrome);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+}
+.jk-screen.v2.bl2 .bl2-av {
+  background: linear-gradient(160deg, #e8c987, #fffaf0);
+}
+.jk-screen.v2.bl2 .bl2-score :is(.hd, .ft) {
+  background: var(--rg-surface);
+  color: var(--rg-muted);
+}
+.jk-screen.v2.bl2 .bl2-score .hd em { color: var(--rg-gold); }
+.jk-screen.v2.bl2 .bl2-score .bg i { background: var(--rg-line); }
+.jk-screen.v2.bl2 .bl2-sum {
+  box-shadow: 0 18px 40px #264d3b2e, 0 0 0 1px var(--rg-gold);
+}
+.jk-screen.v2.bl2 .bl2-sumrow b { color: var(--rg-gold); }
+.jk-screen.v2.bl2 .bl2-sum .hint { color: var(--rg-muted); }
+.jk-screen.v2.bl2 :is(.bl2-menu-btn, .bl2-bb button) {
+  background: var(--rg-chrome);
+  color: var(--rg-gold);
+  box-shadow: 0 0 0 1px var(--rg-gold), 0 4px 10px #264d3b2e;
+}
+.jk-screen.v2.bl2 .bl2-dock .notice {
+  background: var(--rg-surface);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+}
+.jk-screen.v2.bl2 .bl2-dock .notice.turn { border-color: var(--rg-gold); }
+.jk-screen.v2.bl2 .bl2-btn:not(.bl2-ann) {
+  background: var(--rg-gold);
+  color: var(--rg-deep);
+  border-color: var(--rg-gold);
+}
+.jk-screen.v2.bl2 .bl2-btn.ghost {
+  background: var(--rg-chrome);
+  color: var(--rg-text);
+  border-color: var(--rg-gold);
+}
+
+/* Domino: exact SVG gradient stops, not the turquoise felt or stock artwork. */
+.jk-screen.v2.dm2 .dm-bg #dmWood stop[offset="0"] { stop-color: #261044; }
+.jk-screen.v2.dm2 .dm-bg #dmWood stop[offset="1"] { stop-color: #10051e; }
+.jk-screen.v2.dm2 :is(.dm-av) {
+  background: linear-gradient(145deg, #e8c987, #fffaf0);
+}
+.jk-screen.v2.dm2 :is(.dm-score, .dm-social, .dm-round) {
+  background: var(--rg-surface);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+}
+.jk-screen.v2.dm2 .dm-msg,
+.jk-screen.v2.u2 .u2-msg {
+  color: var(--rg-gold);
+  -webkit-text-stroke-color: var(--rg-deep);
+  text-shadow: 0 2px 4px #264d3b2e;
+}
+.jk-screen.v2.dm2 .dm-msg.turn,
+.jk-screen.v2.u2 .u2-msg.turn { color: var(--rg-text); }
+.jk-screen.v2.dm2 .dm-say {
+  background: var(--rg-chrome);
+  border-color: var(--rg-line);
+  color: var(--rg-muted);
+}
+
+/* UNO: ornamental frame only. Felt, --cc, card colors and actions stay intact. */
+.jk-screen.v2.u2 .u2-bg {
+  background: radial-gradient(ellipse at 50% 44%, #fffaf0, #fffaf0 55%, #fffaf0);
+}
+.jk-screen.v2.u2 .u2-table {
+  background: linear-gradient(160deg, #e8c987, #fffaf0 40%, #fffaf0);
+  box-shadow: 0 calc(30 * var(--u)) calc(60 * var(--u)) #264d3b2e,
+              inset 0 calc(6 * var(--u)) calc(10 * var(--u)) #b98a3d2e;
+}
+.jk-screen.v2.u2 .u2-plate {
+  background: var(--rg-surface);
+  border-color: var(--rg-line);
+}
+.jk-screen.v2.u2 :is(.u2-modal, .u2-panel, .u2-final) {
+  background: var(--rg-chrome);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+}
+.jk-screen.v2.u2 .u2-last { color: var(--rg-muted); }
+
+/* Existing menu/tool families are scoped to the retained renderers only. */
+:is(.jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) .dm-ic {
+  background: var(--rg-chrome);
+  border-color: var(--rg-line);
+  color: var(--rg-gold);
+}
+:is(.jk-screen.v2.dm2, .jk-screen.v2.u2) .dm-round-chip {
+  background: var(--rg-surface);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2) :is(.jk-menu, .bl2-menu, .dm-menu) {
+  background: var(--rg-chrome);
+  border-color: var(--rg-gold);
+  box-shadow: 0 10px 30px #264d3b2e;
+  max-height: min(70dvh, var(--rg-height));
+  max-width: calc(100% - 16px);
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2) :is(.jk-menu, .bl2-menu, .dm-menu) button {
+  color: var(--rg-text);
+  border-color: var(--rg-line);
+  min-height: 44px;
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2) :is(.jk-menu, .bl2-menu) button svg {
+  color: var(--rg-gold);
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2) :is(.jk-menu, .bl2-menu, .dm-menu) button.out {
+  color: #264d3b;
+}
+
+/* Rules are root descendants even when siblings of a stage. No global rules. */
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) .jk-rules-back {
+  background: #fffaf0b8;
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) .jk-rules {
+  background: var(--rg-chrome);
+  color: var(--rg-text);
+  border: 2px solid var(--rg-gold);
+  box-shadow: 0 18px 40px #264d3b2e;
+  border-radius: 16px;
+  box-sizing: border-box;
+  width: min(430px, calc(var(--rg-width) - 24px));
+  max-height: calc(var(--rg-height) - 24px);
+  left: calc(env(safe-area-inset-left, 0px) + var(--rg-width) / 2);
+  top: calc(env(safe-area-inset-top, 0px) + var(--rg-height) / 2);
+  overscroll-behavior: contain;
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) .jk-rules h2 {
+  padding-inline: 38px;
+  min-height: 44px;
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) .jk-rules h2 span {
+  min-width: 0;
+  padding: 6px 10px;
+  background: var(--rg-raised);
+  color: var(--rg-gold);
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) .jk-rules .rn { color: var(--rg-muted); }
+.jk-screen.v2.jx .jk-rules .steps {
+  background: var(--rg-surface);
+  border-color: var(--rg-line);
+  color: var(--rg-text);
+}
+.jk-screen.v2.jx .jk-rules .steps b { color: var(--rg-gold); }
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2) .jk-rx {
+  width: 44px;
+  height: 44px;
+  background: var(--rg-raised);
+  color: var(--rg-text);
+  border: 1px solid var(--rg-gold);
+}
+
+/* Bounded final/action cards; no change to result data or host authorization. */
+.jk-screen.v2:is(.jx, .ld2, .bl2) > .card.form {
+  position: absolute;
+  z-index: 57;
+  left: calc(env(safe-area-inset-left, 0px) + var(--rg-width) / 2);
+  top: calc(env(safe-area-inset-top, 0px) + var(--rg-height) / 2);
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(var(--rg-width) - 24px));
+  box-sizing: border-box;
+  background: var(--rg-chrome);
+  border-color: var(--rg-gold);
+  color: var(--rg-text);
+}
+:is(.jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) .dm-final {
+  background: var(--rg-chrome);
+  border-color: var(--rg-gold);
+  color: var(--rg-text);
+  width: min(420px, calc(var(--rg-width) - 24px));
+  left: calc(env(safe-area-inset-left, 0px) + var(--rg-width) / 2);
+  top: calc(env(safe-area-inset-top, 0px) + var(--rg-height) / 2);
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) :is(.dm-final, .card.form, .u2-modal) {
+  max-height: calc(var(--rg-height) - 24px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.jk-screen.v2.u2 .u2-modal {
+  width: min(400px, calc(var(--rg-width) - 24px));
+  left: calc(env(safe-area-inset-left, 0px) + var(--rg-width) / 2);
+  top: calc(env(safe-area-inset-top, 0px) + var(--rg-height) / 2);
+}
+:is(.jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) .dm-final h3,
+.jk-screen.v2.u2 :is(.u2-modal, .u2-panel) h3 { color: var(--rg-gold); }
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) :is(.card.form, .jk-rules, .dm-final, .u2-modal) .btn,
+.cw-screen .btn {
+  background: var(--rg-chrome);
+  border: 1px solid var(--rg-gold);
+  color: var(--rg-text);
+  min-height: 44px;
+  box-shadow: 0 4px 10px #264d3b2e;
+}
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen) :is(.card.form, .jk-rules, .dm-final, .u2-modal) .hint {
+  color: var(--rg-muted);
+}
+
+/* Enlarge fixed-stage tools only when their existing spacing can fit 44px.
+   The compact landscape stages intentionally do not get oversized hit boxes. */
+@container (min-width: 300px) {
+  .jk-screen.v2.jx .jk-bb button { min-width: 44px; min-height: 44px; }
+  .jk-screen.v2.jx .jk-bb .say { min-width: 44px; }
+  .jk-screen.v2.jx .jk-put { min-height: 44px; }
+}
+@container (max-width: 299px) {
+  .jk-screen.v2.jx .jk-bb button {
+    min-width: min(42px, calc(64 * var(--u)));
+    min-height: min(42px, calc(64 * var(--u)));
+  }
+  .jk-screen.v2.jx .jk-bb .say { min-width: 0; }
+  .jk-screen.v2.jx .jk-bb .say span { display: none; }
+}
+@container (min-width: 380px) {
+  .jk-screen.v2.ld2 .ld2-sq { min-width: 44px; min-height: 44px; }
+  .jk-screen.v2.ld2 .ld2-btns button { min-height: 44px; }
+  .jk-screen.v2.ld2 button.ld2-dice { min-width: 44px; min-height: 44px; }
+}
+@container (min-width: 420px) {
+  .jk-screen.v2.bl2 :is(.bl2-menu-btn, .bl2-bb button) { min-width: 44px; min-height: 44px; }
+}
+:is(.jk-screen.v2.dm2, .jk-screen.v2.u2) .dm-ic {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+@container (max-width: 239px) {
+  :is(.jk-screen.v2.dm2, .jk-screen.v2.u2) .dm-ic {
+    width: min(44px, calc(160 * var(--u)));
+    height: min(44px, calc(160 * var(--u)));
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+/* Carrom has no design-unit --u: give only its HTML tools explicit dimensions.
+   Existing wooden SVG, coins, aim lines, power colors and pointer capture stay. */
+.cr-screen {
+  padding-left: calc(10px + env(safe-area-inset-left, 0px));
+  padding-right: calc(10px + env(safe-area-inset-right, 0px));
+  --bw: min(calc(var(--rg-width) - 20px), calc(var(--rg-height) - 300px), 720px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.cr-screen :is(.cr-counts, .cr-seat) { background: var(--rg-surface); color: var(--rg-text); }
+.cr-screen .cr-seat:not(.turn):not(.won) { border-color: var(--rg-line); }
+.cr-screen :is(.cr-last, .cr-slide) { color: var(--rg-muted); }
+.cr-screen .cr-msg:not(.turn) { color: var(--rg-text); }
+.cr-screen :is(.cr-top, .cr-bar) .dm-ic {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.cr-screen .cr-top { flex-wrap: wrap; width: min(100%, max(var(--bw), 260px)); }
+@media (min-aspect-ratio: 6/5) {
+  .cr-screen {
+    --bw: min(calc(var(--rg-height) - 24px), calc(var(--rg-width) - 380px), 760px);
+  }
+  .cr-screen .cr-side { width: min(340px, calc(var(--rg-width) - var(--bw) - 40px)); }
+  .cr-screen .cr-top { width: 100%; }
+}
+
+/* Codewords is a flowing non-v2 renderer. Isolate semantic team tokens from
+   saved night/royal themes; these are the original pre-theme cyan/pink colors. */
+.cw-screen {
+  --cw-team-blue: #58e1ff;
+  --cw-team-red: #ff68b5;
+  --pink: #264d3b;
+  --ink: #264d3b;
+  --muted: #506c5b;
+  --border-soft: #b98a3d61;
+  --line: #b98a3d61;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  min-width: 0;
+}
+.cw-screen > .card {
+  background: var(--rg-chrome);
+  color: var(--rg-text);
+  border-color: var(--rg-line);
+}
+.cw-screen .notice {
+  background: var(--rg-surface);
+  color: var(--rg-text);
+  border-color: var(--rg-gold);
+}
+.cw-screen :is(.input, .select) {
+  background: var(--rg-surface);
+  color: var(--rg-text);
+  border-color: var(--rg-line);
+  min-height: 44px;
+  color-scheme:light;
+}
+.cw-screen .role { background: var(--rg-surface); color: var(--rg-text); border-color: var(--rg-line); }
+.cw-screen .team.t0 .left { color: var(--cw-team-blue); }
+.cw-screen .team.t1 .left { color: var(--cw-team-red); }
+.cw-screen .cw-card.peek.k0 { box-shadow: inset 0 -4px 0 var(--cw-team-blue); }
+.cw-screen .cw-card.peek.k1 { box-shadow: inset 0 -4px 0 var(--cw-team-red); }
+.cw-screen .cw-card.rev.k0 { border-color: var(--cw-team-blue); }
+.cw-screen .cw-card.rev.k1 { border-color: var(--cw-team-red); }
+/* k2 neutral and k3 assassin backgrounds remain in app.css unchanged. */
+@media (max-width: 420px) {
+  .cw-screen .board-card { padding-inline: 10px; }
+}
+
+/* Visible keyboard focus for existing controls; does not invent new actions. */
+:is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
+    .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen, .cw-screen) :is(button, input, select):focus-visible {
+  outline: 2px solid var(--rg-gold);
+  outline-offset: 2px;
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 64" role="img" aria-label="LA3BAK">
+  <title>LA3BAK</title>
+  <defs><linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a35c9"/><stop offset="1" stop-color="#1c0f4a"/></linearGradient>
+  <linearGradient id="ggold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#f0a22e"/></linearGradient>
+  <linearGradient id="w" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff0c2"/><stop offset="1" stop-color="#ffc25a"/></linearGradient></defs>
+  <rect width="64" height="64" rx="16" fill="url(#t)"/>
+  <g>
+        
+        <path d="M18 21h28a11 11 0 0 1 11 11v4a8.5 8.5 0 0 1-14.5 6L38 37H26l-4.5 5A8.5 8.5 0 0 1 7 36v-4a11 11 0 0 1 11-11z" fill="url(#ggold)"/>
+        <path d="M20.5 27v3.5H17v3.5h3.5v3.5H24V34h3.5v-3.5H24V27z" fill="#2b1670"/>
+        <circle cx="43" cy="28.5" r="3" fill="#19c9bb"/><circle cx="48.5" cy="34" r="3" fill="#2b1670"/><circle cx="37.5" cy="34" r="3" fill="#2b1670" opacity=".55"/>
+        <path d="M50 5l1.9 5.3L57 12l-5.1 1.7L50 19l-1.9-5.3L43 12l5.1-1.7z" fill="#2fe0d0"/>
+      </g>
+  <g transform="translate(78 13) scale(.98)" fill="none" stroke="url(#w)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4V32H20"/><path d="M28 32L40 4L52 32M32.5 22H47.5"/><path d="M60 5H77L68 16C78 15 82 21 81 25C80 31 74 33 60 31"/><path d="M92 4V32M92 4H103Q111 4 111 11Q111 17 103 18H92M103 18Q113 18 113 25Q113 32 103 32H92"/><path d="M120 32L132 4L144 32M124.5 22H139.5"/><path d="M154 4V32M176 4L154 20M162 15L177 32"/></g>
+</svg>

@@ -1,0 +1,64 @@
+/* Legacy editor/inventory presentation, profile-only. Host shell visibility is host-owned. */
+.pvp-page .pvp-modal-backdrop { position: fixed; inset: 0; z-index: 90; background: #264d3b61; display: flex; align-items: center; justify-content: center; padding: calc(12px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px)); overflow-y: auto; }
+.pvp-page .pvp-editor { width: min(550px, 100%); min-width: 0; max-height: calc(100vh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow-y: auto; overscroll-behavior: contain; border: 1px solid #d4e4d8; border-radius: 14px; background: #fffaf0; padding: 16px; color: var(--pvp-text); direction: rtl; box-shadow: none; }
+.pvp-page .pvp-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.pvp-page .pvp-editor-head h2 { margin: 0; font-size: 16px; }
+.pvp-page .pvp-editor-head small { font-size: 11px; color: var(--pvp-muted); }
+.pvp-page .pvp-editor-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.pvp-page .pvp-editor-tab { flex: 1 1 90px; min-width: 0; min-height: 44px; padding: 8px 5px; border: 1px solid var(--pvp-line); border-radius: 8px; background: #fffaf0; color: var(--pvp-muted); font-size: 12px; }
+.pvp-page .pvp-editor-tab[aria-pressed="true"] { border-color: #d4e4d8; color: #264d3b; background: #fffaf0; }
+.pvp-page .pvp-shortcuts { display: flex; gap: 6px; overflow-x: auto; padding: 3px 3px 10px; scrollbar-width: thin; }
+.pvp-page .pvp-shortcut { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 0 0 76px; min-height: 62px; padding: 6px; border: 1px solid var(--pvp-line); border-radius: 8px; background: #fffaf0; color: var(--pvp-muted); font-size: 11px; }
+.pvp-page .pvp-shortcut.is-active { border-color: #d4e4d8; color: #264d3b; }
+.pvp-page .pvp-shortcut img { width: 30px; height: 27px; object-fit: contain; }
+.pvp-page .pvp-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pvp-page .pvp-item { min-width: 0; padding: 10px; border: 1px solid var(--pvp-line); border-radius: 9px; background: #fffaf0; text-align: center; }
+.pvp-page .pvp-item.is-equipped { border-color: #d4e4d8; }
+.pvp-page .pvp-item h3 { margin: 7px 0; font-size: 13px; }
+.pvp-page .pvp-item small { display: block; margin-bottom: 7px; color: var(--pvp-muted); font-size: 11px; }
+.pvp-page .pvp-item-art { height: 84px; display: grid; place-items: center; }
+.pvp-page .pvp-item-art img { max-width: 100%; max-height: 76px; object-fit: contain; }
+.pvp-page .pvp-mini-frame { display: grid; place-items: center; width: 72px; height: 72px; }
+.pvp-page .pvp-mini-frame .cx-fw { position: relative; display: grid; place-items: center; width: 54px; height: 54px; }
+.pvp-page .pvp-mini-bg { position: relative; isolation: isolate; overflow: hidden; width: 100%; height: 85px; border-radius: 7px; }
+.pvp-page .pvp-mini-bg .cx-bg, .pvp-page .pvp-mini-bg .cx-fill { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pvp-page .pvp-mini-bg > img { width: 100%; height: 100%; object-fit: cover; }
+.pvp-page .pvp-achievement { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--pvp-line); }
+.pvp-page .pvp-achievement > span { width: 38px; flex-shrink: 0; }
+.pvp-page .pvp-achievement > div { flex: 1; min-width: 0; }
+.pvp-page .pvp-achievement img { max-width: 100%; max-height: 44px; object-fit: contain; }
+.pvp-page .pvp-achievement p, .pvp-page .pvp-achievement small { font-size: 11px; color: var(--pvp-muted); }
+.pvp-page .pvp-achievement progress { width: 100%; accent-color: #176b50; }
+.pvp-page .pvp-honors-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pvp-page .pvp-honor { min-width: 0; text-align: center; }
+.pvp-page .pvp-honor h3 { font-size: 13px; }
+.pvp-page .pvp-honor img { max-width: 100%; max-height: 86px; object-fit: contain; }
+.pvp-page .pvp-honor p { font-size: 12px; }
+.pvp-page .pvp-favorite-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pvp-page .pvp-favorite-option { min-width: 0; padding: 7px; border: 1px solid var(--pvp-line); border-radius: 8px; text-align: center; font-size: 11px; }
+.pvp-page .pvp-favorite-option input { width: 20px; height: 20px; min-height: 0; margin: 0; accent-color: #176b50; }
+.pvp-page .pvp-favorite-option span { display: block; }
+.pvp-page .pvp-favorite-option img { width: 100%; height: 55px; object-fit: contain; }
+.pvp-page .pvp-favorite-option svg { max-width: 100%; max-height: 55px; }
+.pvp-page .pvp-slot-selectors fieldset, .pvp-page .lpu-personal-editor { min-width: 0; padding: 10px; margin: 10px 0; border: 1px solid var(--pvp-line); border-radius: 9px; }
+.pvp-page .pvp-select-art { display: grid; place-items: center; min-height: 70px; }
+.pvp-page .pvp-select-art img { max-width: 100%; max-height: 84px; object-fit: contain; }
+.pvp-page .lpu-personal-editor label { display: block; }
+.pvp-page .lpu-personal-editor small { color: var(--pvp-muted); font-size: 11px; }
+.pvp-page .lpu-drawer-backdrop { position: fixed; inset: 0; z-index: 65; background: #264d3b61; }
+.pvp-page .lpu-drawer { position: fixed; inset: 0 0 0 auto; z-index: 70; width: min(310px, 88vw); max-width: 100%; padding: calc(14px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) 14px; overflow-y: auto; overscroll-behavior: contain; border-left: 1px solid #d4e4d8; background: #fffaf0; transform: translateX(105%); visibility: hidden; transition: transform 160ms ease-out; direction: rtl; }
+.pvp-page .lpu-drawer.is-open { transform: translateX(0); visibility: visible; }
+.pvp-page .lpu-drawer header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.pvp-page .lpu-drawer nav { display: flex; flex-direction: column; }
+.pvp-page .lpu-drawer nav a, .pvp-page .lpu-drawer-action { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 10px; border: 0; border-bottom: 1px solid var(--pvp-line); background: transparent; color: var(--pvp-text); font-size: 14px; text-align: start; }
+.pvp-page .lpu-google-details, .pvp-page .pvp-guest-start { padding: 12px; margin: 12px 0; border: 1px solid var(--pvp-line); border-radius: 9px; font-size: 13px; }
+.pvp-page .lpu-google-details > summary { min-height: 44px; cursor: pointer; }
+.pvp-page .lpu-login { padding-block: 12px; }
+@media (max-width: 359px) {
+  .pvp-page .pvp-editor { padding: 12px; }
+  .pvp-page .pvp-achievement { flex-wrap: wrap; }
+  .pvp-page .pvp-achievement .pvp-button { margin-inline-start: 46px; }
+}
+
+/* Keep the host's existing keyboard state contract; no other page is selected. */
+.pvp-page.pvp-keyboard-open .pvp-footer { display: none; }

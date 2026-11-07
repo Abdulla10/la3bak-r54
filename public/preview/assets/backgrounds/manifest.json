@@ -1,0 +1,366 @@
+{
+  "version": 1,
+  "artworkApproved": false,
+  "items": [
+    {
+      "id": "bg_01",
+      "name": "العرش الذهبي",
+      "category": "royal",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_01.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_02",
+      "name": "قصر الملوك",
+      "category": "royal",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_02.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_03",
+      "name": "ليلة القصر",
+      "category": "royal",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_03.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_04",
+      "name": "الحدائق الملكية",
+      "category": "royal",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_04.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_05",
+      "name": "قاعة الكريستال",
+      "category": "royal",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_05.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_06",
+      "name": "بوابة العرش",
+      "category": "royal",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_06.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_07",
+      "name": "القصر العائم",
+      "category": "royal",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_07.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_08",
+      "name": "ليلة التاج",
+      "category": "royal",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_08.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_09",
+      "name": "عرين التنين",
+      "category": "beasts",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_09.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_10",
+      "name": "الفينيق الناري",
+      "category": "beasts",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_10.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_11",
+      "name": "الذئب الملكي",
+      "category": "beasts",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_11.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_12",
+      "name": "الأسد الذهبي",
+      "category": "beasts",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_12.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_13",
+      "name": "النمر الليلي",
+      "category": "beasts",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_13.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_14",
+      "name": "جناح العنقاء",
+      "category": "beasts",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_14.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_15",
+      "name": "تنين الجليد",
+      "category": "beasts",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_15.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_16",
+      "name": "حارس الغابة",
+      "category": "beasts",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_16.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_17",
+      "name": "مجرة بنفسجية",
+      "category": "space",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_17.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_18",
+      "name": "بوابة النجوم",
+      "category": "space",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_18.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_19",
+      "name": "كسوف الشمس",
+      "category": "space",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_19.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_20",
+      "name": "سديم الأحلام",
+      "category": "space",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_20.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_21",
+      "name": "كوكب الياقوت",
+      "category": "space",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_21.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_22",
+      "name": "مدار المجرة",
+      "category": "space",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_22.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_23",
+      "name": "شلال القمر",
+      "category": "nature",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_23.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_24",
+      "name": "غابة الجنيات",
+      "category": "nature",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_24.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_25",
+      "name": "بحيرة الزمرد",
+      "category": "nature",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_25.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_26",
+      "name": "حديقة الكرز",
+      "category": "nature",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_26.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_27",
+      "name": "قمة الثلج",
+      "category": "nature",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_27.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_28",
+      "name": "وادي الشفق",
+      "category": "nature",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_28.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_29",
+      "name": "مكتبة السحر",
+      "category": "fantasy",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_29.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_30",
+      "name": "قلعة التنين",
+      "category": "fantasy",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_30.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_31",
+      "name": "مدينة الغيوم",
+      "category": "fantasy",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_31.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_32",
+      "name": "غابة الأقزام",
+      "category": "fantasy",
+      "rarity": "Normal",
+      "assetPath": "/preview/assets/backgrounds/bg_32.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_33",
+      "name": "بوابة العوالم",
+      "category": "fantasy",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_33.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_34",
+      "name": "مملكة البلور",
+      "category": "fantasy",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_34.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_35",
+      "name": "نيون بنفسجي",
+      "category": "neon",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_35.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_36",
+      "name": "ساحة الأبطال",
+      "category": "neon",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_36.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_37",
+      "name": "شبكة الليزر",
+      "category": "neon",
+      "rarity": "Rare",
+      "assetPath": "/preview/assets/backgrounds/bg_37.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_38",
+      "name": "مدينة سايبربنك",
+      "category": "neon",
+      "rarity": "Legendary",
+      "assetPath": "/preview/assets/backgrounds/bg_38.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_39",
+      "name": "مدار إلكتروني",
+      "category": "neon",
+      "rarity": "Normal",
+      "assetPath": "/preview/assets/backgrounds/bg_39.webp",
+      "available": false,
+      "approved": false
+    },
+    {
+      "id": "bg_40",
+      "name": "نبض المجرة",
+      "category": "neon",
+      "rarity": "Epic",
+      "assetPath": "/preview/assets/backgrounds/bg_40.webp",
+      "available": false,
+      "approved": false
+    }
+  ]
+}

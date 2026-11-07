@@ -1,0 +1,57 @@
+/* R15 profile visual milestone. Every selector is confined to the profile root. */
+.pvp-page {
+  --pvp-ink: #506c5b;
+  --pvp-avatar-size: 68px;
+  --pvp-surface: #fffaf0;
+  --pvp-line: #d4e4d8;
+  --pvp-text: #264d3b;
+  --pvp-muted: #506c5b;
+  --pvp-violet: #176b50;
+  --pvp-gold: #b98a3d;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 760px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 0 calc(14px + env(safe-area-inset-right, 0px)) calc(90px + env(safe-area-inset-bottom, 0px)) calc(14px + env(safe-area-inset-left, 0px));
+  background: var(--pvp-ink);
+  color: var(--pvp-text);
+  font: 400 13px/1.6 Cairo, Arial, sans-serif;
+  direction: rtl;
+  overflow-wrap: anywhere;
+}
+.pvp-page *, .pvp-page *::before, .pvp-page *::after { box-sizing: border-box; }
+.pvp-page a { color: inherit; text-decoration: none; }
+.pvp-page button, .pvp-page input, .pvp-page select, .pvp-page textarea { font: inherit; }
+.pvp-page button, .pvp-page a, .pvp-page summary { touch-action: manipulation; }
+.pvp-page button { cursor: pointer; }
+.pvp-page button:disabled { cursor: not-allowed; opacity: .55; }
+.pvp-page [hidden] { display: none !important; }
+.pvp-page :focus-visible { outline: 3px solid var(--pvp-gold); outline-offset: 3px; }
+.pvp-page h1, .pvp-page h2, .pvp-page h3, .pvp-page h4 { line-height: 1.5; }
+.pvp-page h2 { margin: 0 0 10px; font-size: 15px; font-weight: 700; }
+.pvp-page .pvp-icon { display: inline-block; flex: 0 0 auto; width: 20px !important; height: 20px !important; vertical-align: middle; }
+.pvp-page .pvp-button, .pvp-page .pvp-icon-button, .pvp-page .lpu-edit, .pvp-page .pvp-text-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px;
+  padding: 8px 12px; border: 1px solid var(--pvp-line); border-radius: 9px; background: #fffaf0; color: var(--pvp-text);
+}
+.pvp-page .pvp-icon-button, .pvp-page .lpu-edit { padding: 6px; }
+.pvp-page .pvp-text-button { background: transparent; color: var(--pvp-violet); }
+.pvp-page .pvp-button-small { font-size: 12px; padding-inline: 10px; }
+.pvp-page .pvp-text-link { color: var(--pvp-violet); min-height: 44px; display: inline-flex; align-items: center; gap: 5px; }
+.pvp-page .pvp-hint, .pvp-page .lpu-data-note { color: var(--pvp-muted); font-size: 12px; line-height: 1.8; }
+.pvp-page .pvp-error { color: #264d3b; background: #fffaf0; border: 1px solid #d4e4d8; border-radius: 9px; padding: 10px; }
+.pvp-page .pvp-empty, .pvp-page .lpu-empty { color: var(--pvp-muted); padding: 12px 0; line-height: 1.8; }
+.pvp-page .lpu-status:empty { display: none; }
+.pvp-page .lpu-status:not(:empty) { position: static; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; opacity: 1; transform: none; margin: 8px 0; padding: 10px; border: 1px solid #d4e4d8; border-radius: 8px; background: #fffaf0; font-size: 13px; }
+.pvp-page input, .pvp-page select, .pvp-page textarea { width: 100%; max-width: 100%; min-width: 0; min-height: 44px; padding: 10px; margin: 5px 0 10px; border: 1px solid #d4e4d8; border-radius: 8px; background: #fffaf0; color: var(--pvp-text); font-size: 16px; color-scheme:light; }
+.pvp-page textarea { resize: vertical; }
+.pvp-page .pvp-label { display: block; font-size: 13px; }
+.pvp-page .pvp-panel { padding: 10px 0; margin: 0 0 10px; border: 0; box-shadow: none; }
+.pvp-page .pvp-section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.pvp-page .pvp-section-head h2 { margin: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .pvp-page *, .pvp-page *::before, .pvp-page *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

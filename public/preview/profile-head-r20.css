@@ -1,0 +1,105 @@
+/* R20: identity header only; earned badges and equipped frame remain markup-owned. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20 {
+  --pvp-avatar-size: 64px;
+  position: relative; display: grid; direction: rtl;
+  grid-template-columns: 64px minmax(0, 1fr) 60px;
+  align-items: center; gap: 0 10px; min-width: 0; min-height: 108px;
+  height: auto; margin: 0 0 8px; padding: 12px 0;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none;
+  text-align: right; overflow: visible; isolation: isolate;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 > .avatar {
+  grid-column: 1; grid-row: 1; align-self: center; justify-self: end;
+  position: relative; inset: auto; transform: none;
+  width: var(--pvp-avatar-size); height: var(--pvp-avatar-size);
+  margin: 0; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; box-shadow: none; overflow: visible;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .lpu-portrait {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  width: 100%; height: 100%; border: 0; border-radius: 50%;
+  background: var(--pvp-surface, #fffaf0); box-shadow: none; overflow: visible;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-upload { position: absolute; inset: 0; z-index: 8; display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; appearance: none; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-upload:focus-visible { outline: 2px solid var(--pvp-violet, #d4e4d8); outline-offset: 4px; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-upload > span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .lpu-camera { display: none !important; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 > .pvp-identity-copy {
+  grid-column: 2; grid-row: 1; min-width: 0; max-width: 100%; text-align: right;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .name {
+  position: static; inset: auto; margin: 0; max-width: 100%;
+  color: var(--pvp-gold, #8a641f); font-size: 19px; font-weight: 800;
+  line-height: 1.4; text-align: right; text-shadow: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-gender {
+  display: inline-flex; align-items: center; gap: 2px;
+  margin-inline-start: 3px; color: var(--pvp-violet); font-size: 11px; vertical-align: middle;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-gender .pvp-icon { width: 13px !important; height: 13px !important; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .id {
+  position: static; inset: auto; display: flex; direction: rtl;
+  align-items: center; justify-content: flex-start; flex-wrap: wrap;
+  gap: 0 2px; min-width: 0; min-height: 32px; margin: 0;
+  color: var(--pvp-muted); font: 13px/1.35 Arial, Cairo, sans-serif;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .id > span[dir="ltr"] {
+  order: 0; flex: 0 1 auto; min-width: 0; max-width: calc(100% - 42px);
+  direction: ltr; unicode-bidi: isolate; white-space: normal; overflow-wrap: anywhere;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .id .lpu-special-id-label { order: 2; font-size: 10px; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .lpu-copy {
+  order: 1; display: grid; place-items: center; flex: 0 0 40px;
+  width: 40px; min-width: 40px; height: 32px; min-height: 32px;
+  margin: 0; padding: 0; border: 0; border-radius: 8px;
+  background: transparent; color: var(--pvp-muted); box-shadow: none;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .lpu-copy .pvp-icon { width: 18px !important; height: 18px !important; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-badges {
+  display: flex; direction: rtl; align-items: center; justify-content: flex-start;
+  flex-wrap: wrap; gap: 2px 4px; min-width: 0; margin: 0; padding: 0;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-badges:empty { display: none; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-rank {
+  display: inline-flex; align-items: center; justify-content: flex-start; gap: 2px;
+  min-width: 0; min-height: 24px; max-width: 100%; margin: 0; padding: 0;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none;
+  color: var(--pvp-gold); font-size: 9px; line-height: 1.3; text-align: right;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-rank small { font-size: 9px; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-rank svg { width: 18px !important; height: 18px !important; flex: 0 0 18px; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-badges img { width: 22px; height: 22px; object-fit: contain; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-equipped-badge { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; color: var(--pvp-gold); font-size: 9px; line-height: 1.3; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 > .pvp-edit-profile {
+  grid-column: 3; grid-row: 1; align-self: center; justify-self: start;
+  position: relative; isolation: isolate; display: inline-flex; direction: rtl;
+  align-items: center; justify-content: center; gap: 4px;
+  width: 60px; min-width: 0; height: 44px; min-height: 44px;
+  margin: 0; padding: 0; border: 0; border-radius: 18px; background: transparent;
+  color: var(--pvp-text); box-shadow: none; font-size: 11px; white-space: nowrap;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 > .pvp-edit-profile::before {
+  content: ""; position: absolute; inset: 7px 0; z-index: -1;
+  border: 1px solid #d4e4d8; border-radius: 18px; background: #fffaf0;
+}
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-edit-profile .pvp-icon { width: 14px !important; height: 14px !important; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-upload-note { grid-column: 1 / -1; grid-row: 2; margin: 4px 0 0; padding: 0; border: 0; font-size: 10px; line-height: 1.4; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 :is(.lpu-copy, .pvp-edit-profile, .pvp-head-rank):focus-visible { outline: 2px solid var(--pvp-gold); outline-offset: 2px; }
+@media (hover: hover) {
+  .pvp-page.pvp-profile-r15 .pvp-head-r20 :is(.lpu-copy, .pvp-edit-profile, .pvp-head-rank):hover { color: var(--pvp-gold); }
+}
+@media (max-width: 359px) {
+  .pvp-page.pvp-profile-r15 .pvp-head-r20 { grid-template-columns: 64px minmax(0, 1fr) 58px; column-gap: 8px; }
+  .pvp-page.pvp-profile-r15 .pvp-head-r20 .name { font-size: 18px; }
+  .pvp-page.pvp-profile-r15 .pvp-head-r20 .id { font-size: 12px; }
+  .pvp-page.pvp-profile-r15 .pvp-head-r20 > .pvp-edit-profile { width: 58px; }
+}
+@media (min-width: 600px) {
+  .pvp-page.pvp-profile-r15 .pvp-head-r20 .name { font-size: 24px; }
+}
+
+/* R21: original earned LEVEL art only; keep other badges and the header grid unchanged. */
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-rank[data-system="level"] { gap: 4px; min-height: 40px; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-rank[data-system="level"] .pvp-head-level-art { width: 38px; height: 38px; flex: 0 0 38px; object-fit: contain; object-position: center; border: 0; border-radius: 0; background: transparent; mix-blend-mode: screen; -webkit-mask-image: radial-gradient(ellipse at 50% 48%,#000 53%,#000c 65%,transparent 76%); mask-image: radial-gradient(ellipse at 50% 48%,#000 53%,#000c 65%,transparent 76%); }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-rank[data-system="level"] small { font-size: 11px; font-weight: 700; color: var(--pvp-gold); }

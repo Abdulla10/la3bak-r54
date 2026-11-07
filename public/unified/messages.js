@@ -1,0 +1,210 @@
+/* Messages-only adaptation of ../social-private.js. No new backend or persistence.
+ * Caller owns authenticated HTTP, routing and the common shell. */
+const BASE = '/api/social-private/';
+const PUB = /^[A-Za-z0-9_-]{16}$/;
+const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+const positive = value => Number.isSafeInteger(value) && value > 0;
+const pageEmpty = () => ({ list: [], more: false, nextBefore: null });
+const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`;
+const stamp = value => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '';
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toLocaleString('ar-AE', { dateStyle: 'short', timeStyle: 'short' }) : '';
+};
+const hero = () => `<section class="hero"><div class="hero-symbol">${icon('chat')}</div><h1>الرسائل</h1><p class="subtitle">سولف ويا ربعك</p></section>`;
+const limits = () => `<p class="lb-message-limit">الرسائل نصية بين الأصدقاء المقبولين فقط. المجموعات والمرفقات ودعوات اللعب وحالة الاتصال ما تدعمها خدمة الرسائل الحالية. التحديث يدوي.</p>`;
+
+/** Returns the body only; no common header, balances, navigation or drawer. */
+export function render(ctx = {}) {
+  const loggedIn = !!(ctx.user || ctx.me);
+  return `<div data-lb-page="messages" dir="rtl">${hero()}<div data-lb-messages-host>${loggedIn ? '<section class="panel lb-message-empty" role="status">جاري تحميل رسائلك…</section>' : '<section class="panel lb-message-empty"><h2 class="panel-title">سجّل دخولك أول</h2><p>سجّل دخولك عشان تشوف رسائلك وتراسل ربعك.</p><a class="gold-btn" href="#/account">تسجيل الدخول</a></section>'}</div>${limits()}</div>`;
+}
+
+/** Adapts the existing social-private pagination, DM privacy and send/read contracts. */
+export function mount(root, ctx = {}) {
+  const host = root?.querySelector?.('[data-lb-messages-host]');
+  if (!host) return { destroy() {} };
+  if (!(ctx.user || ctx.me)) return { destroy() {} };
+  if (typeof ctx.api !== 'function') {
+    host.innerHTML = '<section class="panel lb-message-empty" role="alert">خدمة الرسائل مب متاحة في هالواجهة الحين. ما تم إرسال أي طلب.</section>';
+    return { destroy() {} };
+  }
+  const state = {
+    tab: 'inbox', query: '', busy: false, error: '', notice: '',
+    settings: null, friends: pageEmpty(), inbox: pageEmpty(), conversation: pageEmpty(),
+    loaded: { friends: false, inbox: false, conversation: false },
+    errors: { friends: '', inbox: '', conversation: '', settings: '' },
+    peer: '', peerName: '', canSend: false, draft: '', draftKey: null
+  };
+  let destroyed = false;
+  const active = () => !destroyed;
+  const call = async (path, method = 'GET', body) => {
+    if (!active()) throw new Error('انتهت جلسة الصفحة.');
+    const result = await ctx.api(BASE + path, method, body);
+    if (!active()) throw new Error('انتهت جلسة الصفحة.');
+    if (!result || result.ok === false) throw new Error(result?.error || 'تعذّر إكمال الطلب. جرّب مرة ثانية.');
+    return result;
+  };
+  const errorText = error => error?.status === 401 ? 'انتهت جلسة الدخول. سجّل دخولك مرة ثانية.' : String(error?.message || 'تعذّر تحميل الرسائل. جرّب مرة ثانية.');
+  const disabled = () => state.busy ? 'disabled aria-busy="true"' : '';
+  const action = (name, text, extra = '', gold = false) => `<button type="button" class="${gold ? 'gold-btn' : 'btn'}" data-lb-msg-action="${name}" ${extra} ${disabled()}>${text}</button>`;
+  const moreButton = kind => state[kind].more ? action('more', kind === 'conversation' ? 'رسائل أقدم' : 'عرض المزيد', `data-kind="${kind}"`) : '';
+  const safeUsers = list => list.filter(item => item?.user && PUB.test(item.user.pub));
+  const filtered = list => {
+    const query = state.query.trim().toLocaleLowerCase('ar-AE');
+    return safeUsers(list).filter(item => !query || String(item.user.name ?? '').toLocaleLowerCase('ar-AE').includes(query) || String(item.last?.body ?? '').toLocaleLowerCase('ar-AE').includes(query));
+  };
+  const listHTML = () => {
+    const kind = state.tab;
+    if (!state.loaded[kind]) return `<p class="lb-message-empty" ${state.errors[kind] ? 'role="alert"' : 'role="status"'}>${esc(state.errors[kind] || 'جاري تحميل القائمة…')}</p>`;
+    const rows = filtered(state[kind].list);
+    const html = rows.map(item => {
+      const user = item.user, selected = state.peer === user.pub;
+      const unread = typeof item.unread === 'number' && Number.isSafeInteger(item.unread) && item.unread > 0 ? `<span class="lb-message-unread" aria-label="${esc(item.unread)} رسالة غير مقروءة">${esc(item.unread)}</span>` : '';
+      return `<button type="button" class="list-row lb-message-row${selected ? ' active' : ''}" data-lb-msg-action="open" data-peer="${esc(user.pub)}" ${selected ? 'aria-current="true"' : ''} ${disabled()}><span class="avatar lb-message-avatar">${icon('user')}</span><span class="grow"><b>${esc(user.name || 'لاعب')}</b><small class="lb-message-preview">${kind === 'inbox' ? esc(item.last?.body || '') : 'صديق مقبول · افتح المحادثة'}</small></span><span class="lb-message-row-end">${unread}${kind === 'inbox' ? `<small>${esc(stamp(item.last?.at))}</small>` : ''}</span></button>`;
+    }).join('');
+    return `${state.errors[kind] ? `<p role="alert" class="lb-message-error">${esc(state.errors[kind])} القائمة المعروضة هي آخر بيانات تم تحميلها.</p>` : ''}${html || `<p class="lb-message-empty">${state.query.trim() ? 'ما لقينا نتيجة في القائمة المحمّلة.' : kind === 'inbox' ? 'ما عندك محادثات للحين. اختَر صديق من تبويب الأصدقاء.' : 'ما عندك أصدقاء مقبولين ظاهرين للحين.'}</p>`}${moreButton(kind)}`;
+  };
+  const conversationHTML = () => {
+    if (!state.peer) return '<div class="lb-message-empty lb-message-pick"><span class="lb-message-empty-icon">' + icon('chat') + '</span><h2>اختَر محادثة</h2><p>اختَر محادثة من القائمة، أو صديق مقبول عشان تبدأ السوالف.</p></div>';
+    const failure = state.errors.conversation ? `<p class="lb-message-error" role="alert">${esc(state.errors.conversation)}</p>` : '';
+    const messages = [...state.conversation.list].reverse().map(message => `<article class="chat-bubble${message.mine === true ? ' mine' : ''}"><b>${message.mine === true ? 'أنت' : esc(state.peerName || 'صديق')}</b><p>${esc(message.body)}</p><small>${esc(stamp(message.at))}${message.mine === true ? (message.read === true ? ' · مقروءة' : ' · مرسلة') : ''}</small></article>`).join('');
+    const canSend = state.canSend && state.loaded.conversation && !state.busy;
+    return `<h2 class="panel-title">المحادثة ويا ${esc(state.peerName || 'صديق')}</h2><a class="lb-message-profile" href="#/u/${esc(state.peer)}">الملف الشخصي</a>${failure}<div class="lb-message-history">${moreButton('conversation')}<div class="lb-message-stream" aria-label="رسائل المحادثة">${state.loaded.conversation ? (messages || '<p class="lb-message-empty">ما بينكم رسائل للحين.</p>') : (!failure ? '<p role="status" class="lb-message-empty">جاري تحميل المحادثة…</p>' : '')}</div></div><form class="chat-compose" data-lb-msg-form="message"><label class="lb-message-draft-label">رسالتك<textarea name="text" rows="3" maxlength="2000" placeholder="اكتب رسالة…" required ${canSend ? '' : 'disabled'}>${esc(state.draft)}</textarea></label><button type="submit" class="gold-btn" ${canSend ? '' : 'disabled'}>إرسال</button></form>${state.loaded.conversation && !state.canSend ? '<p class="lb-message-limit">الإرسال موقوف حسب إعداد الخصوصية عندك أو عند صديقك.</p>' : ''}`;
+  };
+  const paint = () => {
+    if (!active()) return;
+    const unread = state.loaded.inbox && Number.isSafeInteger(state.inbox.unread) && state.inbox.unread >= 0 ? `<span class="tag">${esc(state.inbox.unread)} غير مقروءة</span>` : '';
+    host.innerHTML = `<div class="lb-message-toolbar">${action('refresh', 'تحديث الرسائل')}<a class="btn" href="#/friends">إدارة الأصدقاء</a>${state.busy ? '<span role="status">جاري تنفيذ الطلب…</span>' : ''}</div>${state.error ? `<p class="lb-message-error" role="alert">${esc(state.error)}</p>` : ''}${state.notice ? `<p class="lb-message-notice" role="status">${esc(state.notice)}</p>` : ''}<div class="grid2 lb-message-grid"><section class="panel lb-message-conversation" aria-label="المحادثة">${conversationHTML()}</section><section class="panel lb-message-sidebar" aria-label="قائمة المحادثات"><h2 class="panel-title">رسائلك ${unread}</h2><div class="tabs" role="group" aria-label="قائمة الرسائل"><button type="button" data-lb-msg-action="tab" data-tab="inbox" class="${state.tab === 'inbox' ? 'active' : ''}" aria-pressed="${state.tab === 'inbox'}" ${disabled()}>الكل</button><button type="button" data-lb-msg-action="tab" data-tab="friends" class="${state.tab === 'friends' ? 'active' : ''}" aria-pressed="${state.tab === 'friends'}" ${disabled()}>الأصدقاء</button><button type="button" disabled title="المجموعات غير مدعومة في الخدمة الحالية">المجموعات · غير متاحة</button></div><label class="lb-message-search-label">بحث في القائمة المحمّلة<input class="search" type="search" data-lb-msg-search maxlength="200" value="${esc(state.query)}" placeholder="اسم صديق أو نص رسالة…" ${disabled()}></label><p class="lb-message-limit">البحث محلي في الأسماء وآخر رسالة بالقائمة المحمّلة، مب في كامل السجل. اضغط «عرض المزيد» لتحميل صفحات إضافية.</p><div data-lb-msg-list>${listHTML()}</div></section></div><section class="panel lb-message-privacy"><h2 class="panel-title">خصوصية الرسائل</h2>${state.errors.settings ? `<p class="lb-message-error" role="alert">${esc(state.errors.settings)}</p>` : ''}<label><input type="checkbox" class="switch" data-lb-msg-setting ${state.settings?.dmEnabled === true ? 'checked' : ''} ${state.busy || !state.settings ? 'disabled' : ''}> أسمح بالرسائل الخاصة بيني وبين أصدقائي المقبولين</label><p class="lb-message-limit">إيقافها يمنع الرسائل الجديدة بالاتجاهين، وما يحذف السجل. المتابعة بروحها مب صداقة.</p>${!state.settings && !state.errors.settings ? '<p role="status">جاري تحميل إعداد الخصوصية…</p>' : ''}</section>`;
+  };
+  const loadPage = async (kind, append = false) => {
+    const cursor = append ? state[kind].nextBefore : null;
+    const query = kind === 'conversation' ? `messages?peer=${encodeURIComponent(state.peer)}` : kind;
+    const result = await call(query + (cursor ? `${query.includes('?') ? '&' : '?'}before=${encodeURIComponent(cursor)}` : ''));
+    if (!Array.isArray(result.list) || typeof result.more !== 'boolean' || (result.more && !positive(result.nextBefore))) throw new Error('رد القائمة مب صالح. جرّب التحديث.');
+    if (kind === 'conversation' && (!result.user || !PUB.test(result.user.pub) || result.user.pub !== state.peer || typeof result.canSend !== 'boolean' || result.list.some(message => !positive(message?.id) || typeof message.body !== 'string' || typeof message.mine !== 'boolean' || typeof message.read !== 'boolean'))) throw new Error('رد المحادثة مب صالح.');
+    state[kind] = append ? { ...result, list: [...state[kind].list, ...result.list.filter(item => !state[kind].list.some(old => old.id === item.id))] } : result;
+    state.loaded[kind] = true;
+    state.errors[kind] = '';
+    if (kind === 'conversation') {
+      state.peerName = result.user.name || 'صديق'; state.canSend = result.canSend;
+      // Only loaded incoming messages for this authenticated recipient are marked read.
+      // Paint before marking: never mark a conversation that the user has not opened.
+      paint();
+      for (const message of result.list.filter(message => !message.mine && !message.read)) {
+        if (!active()) return;
+        try {
+          await call(`messages/${encodeURIComponent(String(message.id))}/read`, 'POST', {});
+          message.read = true;
+        } catch (error) {
+          if (active()) state.error = `تم تحميل المحادثة، لكن تعذّر تسجيل قراءة بعض الرسائل: ${errorText(error)}`;
+          break;
+        }
+      }
+    }
+  };
+  const loadSafe = async (kind, append = false) => {
+    try { await loadPage(kind, append); }
+    catch (error) { if (active()) { state.errors[kind] = errorText(error); if (kind === 'conversation') state.canSend = false; } }
+  };
+  const loadSettings = async () => {
+    try {
+      const result = await call('settings');
+      if (typeof result.dmEnabled !== 'boolean') throw new Error('رد الخصوصية مب صالح.');
+      state.settings = result; state.errors.settings = '';
+    } catch (error) { if (active()) { state.settings = null; state.errors.settings = errorText(error); } }
+  };
+  const reload = async () => {
+    await Promise.all([loadSettings(), loadSafe('friends')]);
+    if (!active()) return;
+    if (state.peer) await loadSafe('conversation');
+    if (active()) await loadSafe('inbox');
+  };
+  const run = async operation => {
+    if (!active() || state.busy) return;
+    state.busy = true; state.error = ''; state.notice = ''; paint();
+    try { await operation(); }
+    catch (error) { if (active()) state.error = errorText(error); }
+    finally { if (active()) { state.busy = false; paint(); } }
+  };
+  const click = event => {
+    const target = event.target.closest?.('[data-lb-msg-action]');
+    if (!target || !host.contains(target)) return;
+    event.preventDefault();
+    if (state.busy || !active()) return;
+    const actionName = target.dataset.lbMsgAction;
+    if (actionName === 'tab') {
+      if (!['friends', 'inbox'].includes(target.dataset.tab)) return;
+      state.tab = target.dataset.tab; state.query = ''; paint(); return;
+    }
+    if (actionName === 'refresh') { void run(reload); return; }
+    if (actionName === 'more') {
+      const kind = target.dataset.kind;
+      if (!['friends', 'inbox', 'conversation'].includes(kind) || !state[kind].more || !positive(state[kind].nextBefore)) return;
+      void run(async () => { await loadSafe(kind, true); if (active() && kind === 'conversation') await loadSafe('inbox'); }); return;
+    }
+    if (actionName === 'open') {
+      const peer = target.dataset.peer;
+      const item = [...state.friends.list, ...state.inbox.list].find(item => item.user?.pub === peer);
+      if (!PUB.test(peer) || !item) return;
+      void run(async () => {
+        if (state.peer !== peer) { state.peer = peer; state.peerName = item.user.name || 'صديق'; state.conversation = pageEmpty(); state.loaded.conversation = false; state.errors.conversation = ''; state.canSend = false; state.draft = ''; state.draftKey = null; }
+        await loadSafe('conversation');
+        if (active()) await loadSafe('inbox');
+      });
+    }
+  };
+  const input = event => {
+    if (!host.contains(event.target) || !active()) return;
+    if (event.target.hasAttribute('data-lb-msg-search')) {
+      state.query = event.target.value.slice(0, 200);
+      const list = host.querySelector('[data-lb-msg-list]');
+      if (list) list.innerHTML = listHTML();
+    } else if (event.target.name === 'text') {
+      if (state.draft !== event.target.value) state.draftKey = null;
+      state.draft = event.target.value;
+    }
+  };
+  const change = event => {
+    if (!event.target.hasAttribute?.('data-lb-msg-setting') || !host.contains(event.target) || !state.settings) return;
+    const enabled = event.target.checked;
+    void run(async () => {
+      const result = await call('settings', 'PATCH', { dmEnabled: enabled });
+      if (typeof result.dmEnabled !== 'boolean') throw new Error('تعذّر تأكيد حفظ الخصوصية. حدّث الصفحة.');
+      state.settings = result; state.notice = 'تم حفظ إعداد الخصوصية.';
+      if (state.peer) await loadSafe('conversation');
+    });
+  };
+  const submit = event => {
+    const form = event.target;
+    if (form.dataset?.lbMsgForm !== 'message' || !host.contains(form)) return;
+    event.preventDefault();
+    if (state.busy || !active()) return;
+    const text = form.elements?.text?.value ?? state.draft;
+    if (state.draft !== text) state.draftKey = null;
+    state.draft = text;
+    void run(async () => {
+      if (!PUB.test(state.peer) || !state.canSend) throw new Error('الإرسال مب متاح لهالمحادثة.');
+      if (!text.trim() || text.length > 2000) throw new Error('اكتب رسالة، بحد أقصى 2000 حرف.');
+      if (!state.draftKey) {
+        if (!globalThis.crypto?.randomUUID) throw new Error('تعذّر إنشاء معرّف آمن للرسالة.');
+        state.draftKey = globalThis.crypto.randomUUID();
+      }
+      // Preserve the same idempotency key and draft after an ambiguous send failure.
+      const result = await call('messages', 'POST', { to: state.peer, text, key: state.draftKey });
+      if (!positive(result.message?.id)) throw new Error('تعذّر تأكيد إرسال الرسالة. جرّب بنفس النص أو حدّث المحادثة.');
+      state.draft = ''; state.draftKey = null; state.notice = 'تم إرسال رسالتك.';
+      await loadSafe('conversation');
+      if (active()) await loadSafe('inbox');
+    });
+  };
+  host.addEventListener('click', click); host.addEventListener('input', input);
+  host.addEventListener('change', change); host.addEventListener('submit', submit);
+  const ready = run(reload);
+  return { ready, refresh: () => run(reload), destroy() {
+    destroyed = true;
+    host.removeEventListener('click', click); host.removeEventListener('input', input);
+    host.removeEventListener('change', change); host.removeEventListener('submit', submit);
+    state.draft = ''; state.draftKey = null;
+  } };
+}

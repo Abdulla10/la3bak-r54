@@ -1,0 +1,183 @@
+{
+  "source": "78A971BD-A4A5-43EB-95F2-7F21F735B636.png",
+  "sourceSHA256": "c220e4f95e18b0609adb13ed7ec997a21c1e6e01b12116b7fc6761617d5f3a94",
+  "method": "Direct original badge crops. No new art, no recolouring. Images retain original pixels/background.",
+  "assets": [
+    {
+      "file": "level-silver.png",
+      "sourceRect": [
+        25,
+        204,
+        200,
+        370
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "level-blue.png",
+      "sourceRect": [
+        207,
+        206,
+        375,
+        370
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "level-purple.png",
+      "sourceRect": [
+        382,
+        208,
+        550,
+        370
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "level-gold.png",
+      "sourceRect": [
+        552,
+        205,
+        714,
+        370
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "level-red.png",
+      "sourceRect": [
+        719,
+        204,
+        883,
+        370
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "level-max.png",
+      "sourceRect": [
+        882,
+        197,
+        1043,
+        370
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "vip-silver.png",
+      "sourceRect": [
+        245,
+        504,
+        408,
+        655
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "vip-blue.png",
+      "sourceRect": [
+        412,
+        504,
+        576,
+        655
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "vip-purple.png",
+      "sourceRect": [
+        575,
+        504,
+        743,
+        655
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "vip-gold.png",
+      "sourceRect": [
+        738,
+        504,
+        900,
+        655
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "vip-max.png",
+      "sourceRect": [
+        906,
+        495,
+        1042,
+        655
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "noble-n1.png",
+      "sourceRect": [
+        234,
+        730,
+        398,
+        898
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "noble-n2.png",
+      "sourceRect": [
+        405,
+        731,
+        558,
+        898
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "noble-n3.png",
+      "sourceRect": [
+        568,
+        731,
+        728,
+        898
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "noble-n4.png",
+      "sourceRect": [
+        734,
+        730,
+        887,
+        898
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    },
+    {
+      "file": "noble-n5.png",
+      "sourceRect": [
+        895,
+        729,
+        1038,
+        898
+      ],
+      "approvedReference": true,
+      "standaloneOriginalUnavailable": true
+    }
+  ]
+}

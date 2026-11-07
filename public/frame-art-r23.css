@@ -1,0 +1,113 @@
+/* R23: only the three genuine generated RGBA frames. Stable reference IDs and
+   wrapper dimensions stay markup-owned. No synthetic ring, mask asset, or art.
+   Percentages describe a 120% contain overlay, not a larger portrait/hitbox. */
+:is(.cx-fw.has, .pf-ring.cx-pring):has(> img.cx-frame.ref-frame[src$="/royal-frame.webp"]) {
+  --r23-photo-size: 65.04%;
+  --r23-photo-scale: .6504;
+  --r23-photo-x: 49.84%;
+  --r23-photo-y: 51.96%;
+  --r23-photo-dx: -.16%;
+  --r23-photo-dy: 1.96%;
+}
+:is(.cx-fw.has, .pf-ring.cx-pring):has(> img.cx-frame.ref-frame[src$="/diamond-frame.webp"]) {
+  --r23-photo-size: 68.64%;
+  --r23-photo-scale: .6864;
+  --r23-photo-x: 49.92%;
+  --r23-photo-y: 48.98%;
+  --r23-photo-dx: -.08%;
+  --r23-photo-dy: -1.02%;
+}
+:is(.cx-fw.has, .pf-ring.cx-pring):has(> img.cx-frame.ref-frame[src$="/dragon-frame.webp"]) {
+  --r23-photo-size: 72.12%;
+  --r23-photo-scale: .7212;
+  --r23-photo-x: 49.92%;
+  --r23-photo-y: 48.51%;
+  --r23-photo-dx: -.08%;
+  --r23-photo-dy: -1.49%;
+}
+
+/* :has plus the exact source makes these more specific than profile-frame-r4's
+   !important rules, even if that older stylesheet is loaded after this one. */
+:is(.cx-fw.has, .pf-ring.cx-pring):has(> img.cx-frame.ref-frame:is(
+  [src$="/royal-frame.webp"], [src$="/diamond-frame.webp"], [src$="/dragon-frame.webp"]
+)) {
+  isolation: isolate;
+}
+:is(.cx-fw.has, .pf-ring.cx-pring):has(> img.cx-frame.ref-frame:is(
+  [src$="/royal-frame.webp"], [src$="/diamond-frame.webp"], [src$="/dragon-frame.webp"]
+)) > img.cx-frame.ref-frame {
+  position: absolute !important;
+  inset: auto !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 120% !important;
+  height: 120% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  z-index: 5;
+}
+
+/* Keep the avatar's original layout box, including existing border thickness.
+   Its IMG/SVG is positioned against the unchanged frame wrapper, not its padded
+   inner box. This avoids pf-ring's padding changing the aperture alignment. */
+:is(.cx-fw.has, .pf-ring.cx-pring):has(> img.cx-frame.ref-frame:is(
+  [src$="/royal-frame.webp"], [src$="/diamond-frame.webp"], [src$="/dragon-frame.webp"]
+)) > .avatar-wrap {
+  position: static !important;
+  transform: none !important;
+  clip-path: none !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+:is(.cx-fw.has, .pf-ring.cx-pring):has(> img.cx-frame.ref-frame:is(
+  [src$="/royal-frame.webp"], [src$="/diamond-frame.webp"], [src$="/dragon-frame.webp"]
+)) > .avatar-wrap > :is(img, svg) {
+  position: absolute !important;
+  inset: auto !important;
+  left: var(--r23-photo-x) !important;
+  top: var(--r23-photo-y) !important;
+  width: auto !important;
+  height: var(--r23-photo-size) !important;
+  aspect-ratio: 1 / 1 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 50% !important;
+  clip-path: circle(50%) !important;
+  z-index: 1;
+}
+
+/* The profile's letter fallback has no nested image; scale its painted content
+   without changing its layout width, inherited size, or upload button target. */
+:is(.cx-fw.has, .pf-ring.cx-pring):has(> img.cx-frame.ref-frame:is(
+  [src$="/royal-frame.webp"], [src$="/diamond-frame.webp"], [src$="/dragon-frame.webp"]
+)) > .pvp-fallback {
+  transform: translate(var(--r23-photo-dx), var(--r23-photo-dy)) scale(var(--r23-photo-scale)) !important;
+  transform-origin: center;
+  clip-path: circle(50%) !important;
+  z-index: 1;
+}
+
+/* Do not leave the old full-size profile backing disc behind the smaller photo. */
+.pvp-page .lpu-portrait:has(> .cx-fw.has > img.cx-frame.ref-frame:is(
+  [src$="/royal-frame.webp"], [src$="/diamond-frame.webp"], [src$="/dragon-frame.webp"]
+)) {
+  background: transparent !important;
+}

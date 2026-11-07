@@ -1,0 +1,78 @@
+/* R44 FINAL COLOR LAYER: load LAST; html[data-theme=emerald]. No geometry, filters, room selectors or cosmetic/board repaint. */
+html[data-theme=emerald]{--em-bg:#f6f1e5;--em-jade:#d4e4d8;--em-panel:#fffaf0;--em-raised:#e6eee4;--em-primary:#176b50;--em-hover:#115840;--em-gold:#b98a3d;--em-gold-text:#8a641f;--em-ink:#264d3b;--em-muted:#506c5b;--em-on:#fffaf0;--em-line:#b98a3d59;--em-shadow:0 8px 24px #264d3b12;--em-hero:radial-gradient(ellipse at 86% 12%,#b98a3d18,transparent 58%),linear-gradient(125deg,#d4e4d8,#fffaf0 62%,#e6eee4);--la3bak-royal-bg:var(--em-bg)!important;--la3bak-royal-surface:var(--em-panel)!important;--la3bak-royal-panel:var(--em-panel)!important;--la3bak-royal-panel-raised:var(--em-raised)!important;--la3bak-royal-violet:var(--em-primary)!important;--la3bak-royal-muted:var(--em-muted)!important;--la3bak-royal-gold:var(--em-gold-text)!important;--la3bak-royal-gold-dim:var(--em-gold)!important;--la3bak-royal-ink:var(--em-ink)!important;--la3bak-royal-line:var(--em-line)!important;--la3bak-royal-gold-line:var(--em-line)!important;color-scheme:light!important}
+/* Local + first-paint aliases. --white/--w = ink. Leave semantic pink/cyan/hi/tc/cc tokens unchanged. */
+html[data-theme=emerald],html[data-theme=emerald] :is(.lb-unified,.lb-content,.ad,.ad-royal-login){--bg:var(--em-bg)!important;--bg-main:var(--em-bg)!important;--bg-deep:var(--em-bg)!important;--bg-dark:var(--em-bg)!important;--surface:var(--em-panel)!important;--surface-2:var(--em-raised)!important;--panel:var(--em-panel)!important;--panel2:var(--em-raised)!important;--glass:var(--em-panel)!important;--purple-dark:var(--em-raised)!important;--purple:var(--em-primary)!important;--violet:var(--em-primary)!important;--accent:var(--em-primary)!important;--gold:var(--em-gold-text)!important;--white:var(--em-ink)!important;--ink:var(--em-ink)!important;--text-main:var(--em-ink)!important;--text-soft:var(--em-muted)!important;--muted:var(--em-muted)!important;--line:var(--em-line)!important;--border-soft:var(--em-line)!important;--w:38 77 59!important;--ch:230 238 228!important;--on-grad:var(--em-on)!important;--grad:linear-gradient(135deg,#176b50,#115840)!important;--glow-a:var(--em-jade)!important;--glow-b:var(--em-jade)!important;--page-bg:none!important}
+html[data-theme=emerald],html[data-theme=emerald] body{background-color:var(--em-bg)!important;background-image:none!important;color:var(--em-ink)}
+html[data-theme=emerald] :focus-visible{outline-color:var(--em-primary)!important}
+html[data-theme=emerald] :is(input,textarea){caret-color:var(--em-primary)}
+/* Stable shell, first-visible header and navigation; no geometry changes. */
+html[data-theme=emerald] :is(.lb-unified .lb-topbar.lb-compact-topbar,.lb-unified .lb-bottom.lb-reference-bottom,.pvp-page.pvp-profile-r15 .bottom,#top,#bnav){background:var(--em-panel)!important;border-color:var(--em-line)!important;box-shadow:var(--em-shadow)}
+html[data-theme=emerald] .lb-unified :is(.lb-head-tools a,.lb-head-tools button,.lb-menu-open,.lb-head-account-copy>b,.lb-reference-bottom>a,.lb-reference-bottom>button){color:var(--em-ink)}
+html[data-theme=emerald] .lb-unified .lb-wallet-value b{color:var(--em-ink)}
+html[data-theme=emerald] .lb-unified .lb-wallet-value small{color:var(--em-muted)}
+html[data-theme=emerald] .lb-unified .lb-wallet-plus::before{border-color:var(--em-gold)}
+/* Home: opaque jade/ivory/gold CSS shade, original banner images/icons untouched. */
+html[data-theme=emerald] .lb-unified .lb-home{--home-gold:var(--em-gold-text);--home-muted:var(--em-muted);--home-line:var(--em-line);--home-panel:var(--em-panel);color:var(--em-ink)}
+html[data-theme=emerald] .lb-unified .lb-home :is(.pv-hero,.pv-hero-shade){background:var(--em-hero);border-color:var(--em-line)}
+html[data-theme=emerald] .lb-unified .lb-home :is(.pv-hero h1,.pv-hero h2,.pv-section-heading h2,.pv-panel h2,.pv-panel h3,.pv-game-details h3,.pv-news-card h3,.pv-app-copy h2){color:var(--em-ink)}
+html[data-theme=emerald] .lb-unified .lb-home :is(.pv-hero-copy p,.pv-all-link,.pv-text-link,.pv-text-button,.pv-panel-foot,.pv-parent-note){color:var(--em-muted)}
+html[data-theme=emerald] .lb-unified .lb-home :is(.pv-home-details,.pv-game-search,.pv-home-actions a,.pv-shortcut,.pv-category,.pv-news-card,.pv-app-section,.pv-rank-list li,.pv-store-badge){background:var(--em-panel);color:var(--em-ink);border-color:var(--em-line)}
+/* Explicit UI surfaces only. Never target product art/stages, covers or boards. */
+html[data-theme=emerald] .lb-unified .lb-content :is(.panel,.card):not(.pvp-page .card):not(.cx-preview):not(.sh-prev):not(.pvp-item-art){background:var(--em-panel)!important;color:var(--em-ink);border-color:var(--em-line);box-shadow:var(--em-shadow)}
+html[data-theme=emerald] .lb-unified .lb-content .hero:not(.pvp-page .hero),html[data-theme=emerald] :is(.lb-store-hero,.lbp-hero){background:var(--em-hero)!important}
+html[data-theme=emerald] :is(.toast,.modal,.lb-global-search,.lb-unified .lb-drawer,.lb-unified .lb-drawer .lb-drawer-body,.cm-pop,.cm-sheet,.pvp-page .pvp-editor,.pvp-page .lpu-drawer){background:var(--em-panel)!important;color:var(--em-ink);border-color:var(--em-gold);box-shadow:var(--em-shadow);color-scheme:light}
+html[data-theme=emerald] :is(.modal-back,.lb-backdrop,.pvp-modal-backdrop,.lpu-drawer-backdrop,.sh-modal){background:#264d3b70!important}
+html[data-theme=emerald] .lb-global-search::backdrop{background:#264d3b70}
+html[data-theme=emerald] .lb-unified .lb-drawer :is(.lb-drawer-link,.lb-drawer-unavailable,.lb-drawer-user,.lb-drawer-close){background:var(--em-raised);color:var(--em-ink);border-color:var(--em-line);box-shadow:none}
+/* Neutral fields preserve select arrows; don't apply background shorthands. */
+html[data-theme=emerald] :is(.lb-unified,.pvp-page,.ad,.ad-royal-login,.lb-global-search) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),textarea,select),html[data-theme=emerald] :is(.input,.select){background-color:var(--em-panel)!important;color:var(--em-ink)!important;border-color:var(--em-line)!important;color-scheme:light!important}
+html[data-theme=emerald] :is(.lb-unified,.pvp-page,.ad,.ad-royal-login,.lb-global-search) :is(input,textarea)::placeholder,html[data-theme=emerald] .input::placeholder{color:var(--em-muted)!important;opacity:1}
+/* Action controls are emerald; secondary controls are light with forest ink. */
+html[data-theme=emerald] :is(.btn:not(.ghost):not(.danger):not(.pill),.gold-btn,.play-now,.install-fab),html[data-theme=emerald] .lb-unified .lb-home .pv-button,html[data-theme=emerald] .lb-global-search .lb-gs-submit,html[data-theme=emerald] :is(.ad,.ad-royal-login) .ad-btn:not(.ghost):not(.danger),html[data-theme=emerald] .lbrv-page .lbrv-button.is-gold{background:var(--em-primary)!important;color:var(--em-on)!important;border-color:var(--em-primary)!important;box-shadow:none}
+html[data-theme=emerald] :is(.btn.ghost:not(.danger),.pill-btn,.chip-btn,.icon-btn,.tabs button,.sh-tabs button,.ref-worlds button,.cx-chip,.pv-rank-tabs button,.pvp-button,.pvp-icon-button,.pvp-editor-tab,.lbrv-tabs button,.lbrv-button,.ad-btn.ghost,.ad-tab){background:var(--em-raised)!important;color:var(--em-ink)!important;border-color:var(--em-line)!important;box-shadow:none}
+html[data-theme=emerald] :is(.tabs button.active,.tabs button.on,.tabs button[aria-selected="true"],.chip-btn.on,.sh-tabs button.on,.ref-worlds button.on,.cx-chip.on,.pv-rank-tabs button[aria-pressed="true"],.pvp-editor-tab[aria-pressed="true"],.lbrv-tabs button.is-active,.ad-tab.on),html[data-theme=emerald] .lb-unified .lb-drawer .lb-drawer-link.active,html[data-theme=emerald] .lb-global-search .lb-gs-tabs button[aria-pressed="true"]{background:var(--em-primary)!important;color:var(--em-on)!important;border-color:var(--em-gold)!important}
+html[data-theme=emerald] :is(.btn:not(.ghost):not(.danger),.gold-btn,.pv-button,.ad-btn:not(.ghost):not(.danger),.lb-drawer-link.active,.tabs button.active,.tabs button.on,.sh-tabs button.on,.cx-chip.on) :is(b,span,small){color:inherit!important}
+html[data-theme=emerald] :is(.btn:not(.ghost):not(.danger),.gold-btn,.pv-button,.ad-btn:not(.ghost):not(.danger)):not(:disabled):hover{background:var(--em-hover)!important}
+/* Store chrome only. Exclude sh-prev, cx-stage/bg/fill, frames and owned previews. R23 tabs stay underlined. */
+html[data-theme=emerald] :is(.ref-store,.r23-store){--ref-gold:var(--em-gold-text);--ref-line:var(--em-line);--ref-purple:var(--em-primary);--r23-bg:var(--em-bg);--r23-tile:var(--em-panel);--r23-gold:var(--em-gold-text);--r23-ink:var(--em-ink);--r23-muted:var(--em-muted);--r23-line:var(--em-line);--shop-text:var(--em-ink);--shop-muted:var(--em-muted)}
+html[data-theme=emerald] .r23-store :is(.r23-my-items,.r23-more-panel){background:var(--em-raised)!important;color:var(--em-ink)!important}
+html[data-theme=emerald] .r23-store .ref-worlds button{background:var(--em-raised)!important;color:var(--em-ink)!important}
+html[data-theme=emerald] .r23-store .ref-worlds button.on{background:var(--em-primary)!important;color:var(--em-on)!important}
+html[data-theme=emerald] .lb-unified :is(.lbw-balance,.lbp-pack,.lbp-summary>div,.lbp-history-row,.lb-notification-summary,.lb-settings-link,.lb-message-row,.chat-bubble){background:var(--em-panel);border-color:var(--em-line);color:var(--em-ink);box-shadow:none}
+html[data-theme=emerald] .lb-unified :is(.lb-message-row.active,.chat-bubble.mine){background:var(--em-jade);border-color:var(--em-gold)}
+/* Profile --pvp-ink is a BACKGROUND token. No equipped cover, portrait, item-art, mini-bg or rank-art repaint. */
+html[data-theme=emerald] .pvp-page{--pvp-ink:var(--em-bg);--pvp-surface:var(--em-panel);--pvp-line:var(--em-line);--pvp-text:var(--em-ink);--pvp-muted:var(--em-muted);--pvp-violet:var(--em-primary);--pvp-gold:var(--em-gold-text);background:var(--em-bg);color:var(--em-ink)}
+html[data-theme=emerald] .pvp-page.pvp-profile-r15 :is(.pvp-menu-group,.pvp-rank-overview,.pvp-rank-current,.pvp-rank-reward,.pvp-gift-log,.games a,.rank){background:var(--em-panel);border-color:var(--em-line);color:var(--em-ink)}
+html[data-theme=emerald] .pvp-page .pvp-head-r22 .pvp-head-pills .pvp-head-pill{background:var(--em-raised)!important;color:var(--em-ink)!important;border-color:var(--em-gold)!important}
+html[data-theme=emerald] .lbrv-page{--lbrv-bg:var(--em-bg);--lbrv-panel:var(--em-panel);--lbrv-border:var(--em-line);--lbrv-gold:var(--em-gold-text);--lbrv-ink:var(--em-ink);--lbrv-muted:var(--em-muted);--lbrv-accent:var(--em-primary)}
+/* Administration: shell tokens/actions/axes only; chart series keep their meaning. */
+html[data-theme=emerald] :is(.ad,.ad-royal-login){--ad-bg:var(--em-bg);--ad-panel:var(--em-panel);--ad-panel2:var(--em-raised);--ad-border:var(--em-line);--ad-text:var(--em-ink);--ad-muted:var(--em-muted);--ad-purple:var(--em-primary);--ad-gold:var(--em-gold-text);--ad-royal-gold:var(--em-gold-text);--ad-royal-gold-dim:var(--em-gold);--ad-royal-ink:var(--em-ink);--ad-royal-muted:var(--em-muted);--ad-royal-line:var(--em-line);--ad-royal-panel:var(--em-panel);--ad-royal-shadow:var(--em-shadow);background:var(--em-bg)!important;color:var(--em-ink)}
+html[data-theme=emerald] :is(.ad.ad-royal,.ad-royal-login) :is(.ad-side,.ad-head,.ad-card,.ad-content-card,.ad-stat,.ad-royal-panel,.ad-royal-kpi,.ad-royal-welcome,.ad-royal-login-card,.ad-royal-input-wrap,.ad-royal-top-search){background:var(--em-panel);border-color:var(--em-line);box-shadow:var(--em-shadow);color:var(--em-ink)}
+html[data-theme=emerald] .ad.ad-royal :is(.ad-nav button,.ad-royal-periods button){color:var(--em-ink)}
+html[data-theme=emerald] .ad.ad-royal :is(.ad-nav button.on,.ad-nav button[aria-current="page"],.ad-royal-periods button.on){background:var(--em-primary);color:var(--em-on);border-color:var(--em-gold)}
+html[data-theme=emerald] .ad.ad-royal .ad-nav button.on>span:first-child{color:var(--em-on)}
+html[data-theme=emerald] .ad.ad-royal .ad-royal-growth-svg text{fill:var(--em-muted)}
+html[data-theme=emerald] .ad.ad-royal .ad-royal-chart-grid{stroke:#506c5b40}
+/* Meaningful light-mode states, not flattened into the brand palette. */
+html[data-theme=emerald] :is(.btn.danger,.ad-btn.danger,.lb-drawer-logout){background:#a83c3c!important;color:var(--em-on)!important;border-color:#a83c3c!important}
+html[data-theme=emerald] :is(.lbp-error,.lbw-error,.lb-message-error,.lb-notification-error,.pvp-error,.lb-gs-error,.lbrv-notice.is-error,.ad-note.bad){color:#9a3036!important;background-color:#f8e9e2!important;border-color:#b95d60!important}
+html[data-theme=emerald] :is(.lbp-status[data-lbp-phase="failed"],.lbw-negative,.neg,.ad-royal-change.negative,.pvp-menu-row[data-pvp="logout"]){color:#9a3036!important}
+html[data-theme=emerald] :is(.lbp-status[data-lbp-phase="success"],.lbw-positive,.pos,.ad-royal-change.positive,.ad-note.ok){color:var(--em-primary)!important}
+html[data-theme=emerald] :is(.ad-note.warn,.lbp-test,.lbp-disabled,.lbp-live){background-color:#f1e7cf;color:var(--em-gold-text);border-color:var(--em-gold)}
+/* Game exterior/tool tokens ONLY. No SVG boards, felt, dice, suits, teams or cosmetic avatars. */
+html[data-theme=emerald] :is(.jk-screen.v2,.cr-screen,.cw-screen){--rg-deep:var(--em-bg);--rg-surface:var(--em-panel);--rg-raised:var(--em-raised);--rg-gold:var(--em-gold-text);--rg-purple:var(--em-primary);--rg-text:var(--em-ink);--rg-muted:var(--em-muted);--rg-line:var(--em-line);--rg-chrome:linear-gradient(160deg,#fffaf0,#e6eee4)}
+html[data-theme=emerald] :is(.jk-screen.v2,.cr-screen),html[data-theme=emerald] .jk-screen.v2.u2 .u2-bg{background:var(--em-hero);background-color:var(--em-bg)}
+html[data-theme=emerald] .jk-screen.v2.jx::before{background:radial-gradient(ellipse,transparent 45%,#d4e4d850)}
+html[data-theme=emerald] :is(.jk-screen.v2,.cr-screen,.cw-screen) :is(.jk-menu,.bl2-menu,.dm-menu,.jk-rules,.dm-final,.u2-modal,.u2-panel,.ld2-pop,.ld2-nm){background:var(--rg-chrome);color:var(--em-ink);border-color:var(--em-line);box-shadow:var(--em-shadow)}
+html[data-theme=emerald] .cw-screen{--ink:var(--em-ink);--muted:var(--em-muted);--line:var(--em-line);--border-soft:var(--em-line)}
+/* Assassin remains black; restore its readable label rather than skin its face. */
+html[data-theme=emerald] .cw-screen .cw-card:is(.rev.k3,.peek.k3){color:var(--em-on)}
+html[data-theme=emerald] :is(.jk-menu,.bl2-menu,.dm-menu) button.out{color:#9a3036}
+/* Currency is transparent and home-only via shell JS. */
+html[data-theme=emerald] .lb-unified :is(.lb-home-wallet-header,.lb-wallet-strip,.lb-wallet-capsule,.lb-wallet-plus){background:transparent!important;box-shadow:none!important}
+html[data-theme=emerald] .lb-unified .lb-bottom.lb-reference-bottom>a.lb-selected,html[data-theme=emerald] .pvp-page.pvp-profile-r15 .bottom .selected{background:var(--em-primary)!important;color:var(--em-on)!important;box-shadow:none}
+html[data-theme=emerald] :is(input[type=checkbox],input[type=radio],input[type=range],progress){accent-color:var(--em-primary)}
+
+/* Light-mode active navigation vector labels, no product/portrait filters. */
+html[data-theme=emerald] :is(.lb-selected,.bottom .selected) .pvp-icon :is([fill*="rose"],[stroke*="rose"]){fill:currentColor;stroke:currentColor}
+html[data-theme=emerald] .lb-home .pv-hero{background:var(--em-hero)!important}

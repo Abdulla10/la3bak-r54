@@ -1,0 +1,41 @@
+import { av2Art, AV2_IDS } from './cosmetics.js?v=shell-r6';
+import { referenceOf, referenceImage } from './reference-assets.js?v=shell-r6';
+/* الأفاتارات المدفوعة: 15 تصميم SVG أصلي بهوية لعبك (بنفسجي داكن + ذهبي). الملكية والأسعار من الخادم؛ هنا الرسم والتسميات فقط. */
+export const TIERS = {
+  common: { label: 'عادي', c1: '#4a5bd4', c2: '#241b55' },
+  premium: { label: 'مميز', c1: '#14a39a', c2: '#17304f' },
+  rare: { label: 'نادر', c1: '#9b5cf0', c2: '#2a1758' },
+  legendary: { label: 'أسطوري', c1: '#ff8a3d', c2: '#4a1a3d' },
+  exclusive: { label: 'حصري', c1: '#ffd166', c2: '#3a2208' },
+};
+const G = '#ffd166', W = '#fff';
+/* كل رسم داخل viewBox 64×64 فوق خلفية متدرجة حسب الفئة */
+const ART = {
+  'av-falcon': `<path d="M14 44c2-16 12-26 26-26 6 0 10 3 10 3l-5 5c3 9-4 20-16 22z" fill="#d9a35b"/><path d="M40 18c4 0 8 2 10 3l-5 5z" fill="${G}"/><path d="M26 40c6 0 12-4 14-10" fill="none" stroke="#6b3f17" stroke-width="3" stroke-linecap="round"/><circle cx="41" cy="26" r="3" fill="${W}"/><circle cx="42" cy="26" r="1.5" fill="#241b55"/>`,
+  'av-cat': `<path d="M14 18l10 8h16l10-8v22c0 8-8 14-18 14S14 48 14 40z" fill="#c9c3d9"/><path d="M18 22l5 4h-5zM46 22l-5 4h5z" fill="#f4a6c0"/><ellipse cx="25" cy="36" rx="3" ry="4" fill="#241b55"/><ellipse cx="39" cy="36" rx="3" ry="4" fill="#241b55"/><path d="M30 42l2 2 2-2z" fill="#f4a6c0"/><path d="M10 40h10M10 45l10-2M54 40H44M54 45l-10-2" stroke="${W}" stroke-width="1.6" stroke-linecap="round"/>`,
+  'av-fox': `<path d="M12 16l12 8h16l12-8-2 26c-2 8-10 12-18 12s-16-4-18-12z" fill="#ef7b2e"/><path d="M22 40c4 6 16 6 20 0l-4 12H26z" fill="${W}"/><circle cx="25" cy="34" r="2.6" fill="#241b55"/><circle cx="39" cy="34" r="2.6" fill="#241b55"/><circle cx="32" cy="44" r="2.4" fill="#241b55"/>`,
+  'av-palm': `<circle cx="44" cy="20" r="9" fill="${G}"/><path d="M30 56c1-12 0-22-2-30" stroke="#8a5a2b" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M28 26c-6-10-14-8-18-4 8-2 12 0 18 4zM28 26c4-10 12-12 18-8-8 0-13 3-18 8zM28 26c-8-4-12 2-14 8 5-5 9-7 14-8zM28 26c8-3 14 2 16 8-5-5-10-7-16-8z" fill="#3fbf6a"/><path d="M8 56h48" stroke="#e8c27a" stroke-width="4" stroke-linecap="round"/>`,
+  'av-dallah': `<path d="M24 20h14l3 6c8 2 10 10 8 18-1 5-5 8-10 8H25c-5 0-9-3-10-8-2-8 0-16 8-18z" fill="${G}"/><path d="M41 28c8 0 10 6 8 12" fill="none" stroke="${G}" stroke-width="4" stroke-linecap="round"/><path d="M18 34c4 3 12 3 18 0" fill="none" stroke="#a06a12" stroke-width="2"/><path d="M30 12c-2 3 2 4 0 8M36 11c-2 3 2 4 0 7" stroke="${W}" stroke-width="2" stroke-linecap="round" fill="none" opacity=".8"/>`,
+  'av-knight': `<path d="M14 54V30c0-12 8-20 18-20s18 8 18 20v24z" fill="#cfd6e4"/><path d="M20 30h24v8H20z" fill="#241b55"/><path d="M32 10v20" stroke="#8f9bb3" stroke-width="3"/><path d="M32 8c6-6 14-2 12 4-4-2-8-2-12-4z" fill="#e5484d"/><path d="M14 44h36" stroke="${G}" stroke-width="3"/>`,
+  'av-astro': `<circle cx="32" cy="30" r="20" fill="#e9eefb"/><rect x="16" y="20" width="32" height="22" rx="11" fill="#1e3a8a"/><path d="M22 26q6-4 12 0" stroke="${W}" stroke-width="2.4" stroke-linecap="round" fill="none" opacity=".8"/><path d="M20 52h24l-3-8H23z" fill="#cdd5e6"/><circle cx="49" cy="14" r="2" fill="${G}"/><circle cx="13" cy="46" r="1.5" fill="${W}"/>`,
+  'av-wizard': `<path d="M32 4l16 36H16z" fill="#6d3fd6"/><path d="M10 40h44l-4 6H14z" fill="#4c2a9a"/><circle cx="30" cy="22" r="2.2" fill="${G}"/><path d="M36 28l1.2 2.6 2.8.3-2.1 1.9.6 2.8-2.5-1.5-2.5 1.5.6-2.8-2.1-1.9 2.8-.3z" fill="${G}"/><circle cx="32" cy="50" r="8" fill="#f0c9a0"/><path d="M24 54q8 8 16 0v4H24z" fill="${W}"/>`,
+  'av-ninja': `<circle cx="32" cy="32" r="21" fill="#1c1b2e"/><rect x="12" y="26" width="40" height="11" rx="5" fill="#f0c9a0"/><circle cx="24" cy="31" r="2.6" fill="#241b55"/><circle cx="40" cy="31" r="2.6" fill="#241b55"/><path d="M50 22l10 4-8 4zM50 22l8-6-2 10z" fill="#e5484d"/><path d="M12 24h40" stroke="#e5484d" stroke-width="3"/>`,
+  'av-phoenix': `<path d="M32 8c4 8 12 12 12 22 0 8-6 14-12 14s-12-6-12-14c0-10 8-14 12-22z" fill="#ff6a2b"/><path d="M32 20c3 6 7 8 7 15 0 5-3 8-7 8s-7-3-7-8c0-7 4-9 7-15z" fill="${G}"/><path d="M8 28c6 0 12 6 14 14-8-1-14-6-14-14zM56 28c-6 0-12 6-14 14 8-1 14-6 14-14z" fill="#ff9d42"/><path d="M24 54q8-6 16 0" stroke="${G}" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+  'av-wolf': `<path d="M10 12l12 10h20l12-10-2 28c-2 10-10 14-20 14S12 50 12 40z" fill="#8a93a8"/><path d="M24 40q8 8 16 0l-3 10H27z" fill="#e6e9f2"/><path d="M20 30l8 3-8 2zM44 30l-8 3 8 2z" fill="${G}"/><circle cx="32" cy="42" r="2.6" fill="#241b55"/><path d="M14 18l6 6M50 18l-6 6" stroke="#5c6479" stroke-width="3"/>`,
+  'av-lion': `<circle cx="32" cy="32" r="26" fill="#b7701d"/><circle cx="32" cy="32" r="19" fill="#f2b44f"/><circle cx="25" cy="29" r="2.6" fill="#241b55"/><circle cx="39" cy="29" r="2.6" fill="#241b55"/><path d="M28 36h8l-4 5z" fill="#8a3b1b"/><path d="M32 41v4M27 46q5 4 10 0" stroke="#8a3b1b" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 14l4 6M44 14l-4 6M10 28l6 2M54 28l-6 2" stroke="${G}" stroke-width="3" stroke-linecap="round"/>`,
+  'av-dragonlord': `<path d="M14 18l8 4M50 18l-8 4" stroke="${G}" stroke-width="4" stroke-linecap="round"/><path d="M16 10l6 12M48 10l-6 12" stroke="#f4f0ff" stroke-width="3" stroke-linecap="round"/><path d="M12 28c0-8 8-12 20-12s20 4 20 12v10c0 10-8 18-20 18S12 48 12 38z" fill="#2fbf71"/><path d="M20 26l8 4-8 2zM44 26l-8 4 8 2z" fill="${G}"/><circle cx="26" cy="46" r="2" fill="#17603a"/><circle cx="38" cy="46" r="2" fill="#17603a"/><path d="M22 8h20l-3 7H25z" fill="${G}"/><path d="M26 8v-3M32 8V3M38 8V5" stroke="${G}" stroke-width="2.4" stroke-linecap="round"/>`,
+  'av-icequeen': `<path d="M32 10l5 12 13 1-10 8 4 13-12-7-12 7 4-13-10-8 13-1z" fill="#bfeaff"/><path d="M14 48h36l-4 8H18z" fill="#7cc7f2"/><circle cx="32" cy="32" r="8" fill="#f1fbff"/><path d="M26 30l4 1M38 30l-4 1" stroke="#2c6fa8" stroke-width="2" stroke-linecap="round"/><path d="M29 36q3 3 6 0" stroke="#2c6fa8" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M32 4v6M24 8l3 4M40 8l-3 4" stroke="${W}" stroke-width="2.4" stroke-linecap="round"/>`,
+  'av-emperor': `<path d="M10 52V24l12 10 10-18 10 18 12-10v28z" fill="${G}" stroke="#a06a12" stroke-width="2" stroke-linejoin="round"/><circle cx="10" cy="22" r="3.4" fill="#e5484d"/><circle cx="32" cy="12" r="3.4" fill="#4cc9f0"/><circle cx="54" cy="22" r="3.4" fill="#e5484d"/><rect x="18" y="36" width="28" height="12" rx="6" fill="#241b55"/><circle cx="26" cy="42" r="2.6" fill="${G}"/><circle cx="38" cy="42" r="2.6" fill="${G}"/><path d="M12 52h40" stroke="#a06a12" stroke-width="3"/>`,
+};
+export const ART_IDS = Object.keys(ART);
+let n = 0;
+/** رسم الأفاتار المدفوع؛ id معرّف العنصر، css اسم الفئة (يُستنتج لو غاب) */
+export function avatarArt(id, size = 56, tier) {
+  if (referenceOf(id)?.slot === 'avatar') return `<span class="avatar-wrap ref-avatar" style="--sz:${size}px">${referenceImage(id)}</span>`;
+  if (!ART[id]) return av2Art(id, size);
+  const t = TIERS[tier] ?? TIERS[TIER_OF[id]] ?? TIERS.common; const g = 'pa' + (n++).toString(36);
+  return `<span class="avatar-wrap pa-wrap pa-${tier ?? TIER_OF[id] ?? 'common'}" style="--sz:${size}px"><svg class="avatar-svg" viewBox="0 0 64 64" direction="ltr" role="img" aria-label="أفاتار"><defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${t.c1}"/><stop offset="1" stop-color="${t.c2}"/></linearGradient></defs><rect width="64" height="64" rx="18" fill="url(#${g})"/>${ART[id]}</svg></span>`;
+}
+const TIER_OF = Object.fromEntries(ART_IDS.map((k) => [k, ({ 'av-falcon': 'common', 'av-cat': 'common', 'av-fox': 'common', 'av-palm': 'common', 'av-dallah': 'common', 'av-knight': 'premium', 'av-astro': 'premium', 'av-wizard': 'premium', 'av-ninja': 'premium', 'av-phoenix': 'rare', 'av-wolf': 'rare', 'av-lion': 'rare', 'av-dragonlord': 'legendary', 'av-icequeen': 'legendary', 'av-emperor': 'exclusive' })[k]]));
+/** صورة لاعب صغيرة للقوائم: الأفاتار المدفوع المجهّز (av من الخادم) إن وُجد، وإلا null ليختار المستدعي بديله */
+export function mini(av, size = 28) { return av && (ART[av] || AV2_IDS.includes(av) || referenceOf(av)?.slot === 'avatar') ? avatarArt(av, size) : ''; }

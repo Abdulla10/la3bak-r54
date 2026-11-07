@@ -1,0 +1,71 @@
+/* Room-owned, transparent real-WebGL stage. Never attached to body and never
+   intercepts send/close/microphone controls. All 3D motion lives in Three.js. */
+.gift3d-r27-host { isolation: isolate; }
+.gift3d-r27-host--positioned { position: relative; }
+/* Existing gift sheet is z-index 25. Raise only the room-owned FX layer, not
+   the whole room/dialog. Footer and header have reserved clear scene margins. */
+.so-page[data-so-social-voice="true"] .so-gift-fx-layer.gift3d-r27-host {
+  position: absolute;
+  inset: 0;
+  z-index: 46;
+  pointer-events: none !important;
+  overflow: hidden;
+}
+.gift3d-r27 {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 38px 10px 92px;
+  box-sizing: border-box;
+  overflow: hidden;
+  contain: layout paint;
+  background: transparent;
+  pointer-events: none !important;
+  user-select: none;
+}
+.gift3d-r27 *, .gift3d-r27 canvas { pointer-events: none !important; }
+.gift3d-r27-stage {
+  width: min(100%, 680px);
+  height: 100%;
+  max-height: 580px;
+  min-height: 1px;
+  flex: 1 1 580px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+}
+.gift3d-r27-stage canvas { display: block; width: 100%; height: 100%; background: transparent; }
+.gift3d-r27-stage img, .gift3d-r27-artwork {
+  display: block;
+  max-width: min(65%, 190px);
+  max-height: 80%;
+  object-fit: contain;
+}
+.gift3d-r27-status {
+  flex: 0 0 auto;
+  margin: 0;
+  max-width: 88%;
+  padding: 5px 10px;
+  border: 1px solid #b98a3d3d;
+  border-radius: 10px;
+  color: #8a641f;
+  background: #fffaf0e0;
+  font: 500 12px/1.5 system-ui, sans-serif;
+  direction: rtl;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.gift3d-r27-status:empty { display: none; }
+@media (max-width: 480px) {
+  .gift3d-r27 { padding: 32px 6px 94px; }
+  .gift3d-r27-status { font-size: 11px; padding: 4px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gift3d-r27, .gift3d-r27 * { animation: none !important; transition: none !important; }
+}

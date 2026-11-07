@@ -1,0 +1,120 @@
+.lb-search-icon {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  vertical-align: middle;
+  pointer-events: none;
+}
+
+.lb-global-search {
+  --lb-gs-top: calc(72px + env(safe-area-inset-top, 0px));
+  --lb-gs-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  inset: auto;
+  top: calc(var(--lb-gs-top) + var(--lb-gs-view-top, 0px));
+  left: max(12px, calc((100vw - 520px) / 2));
+  width: min(520px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: calc(var(--lb-gs-view-height, 100dvh) - var(--lb-gs-top) - var(--lb-gs-bottom));
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: #264d3b;
+  background: #fffaf0;
+  border: 1px solid #b98a3d;
+  border-radius: 16px;
+  box-shadow: 0 18px 48px #264d3b2e;
+  font: inherit;
+  text-align: start;
+  color-scheme:light;
+}
+
+.lb-global-search[open] { display: flex; flex-direction: column; }
+.lb-global-search::backdrop { background: #264d3b61; }
+.lb-global-search *, .lb-global-search *::before, .lb-global-search *::after { box-sizing: border-box; }
+.lb-global-search [hidden] { display: none !important; }
+.lb-global-search .lb-gs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px 4px;
+  flex-shrink: 0;
+}
+.lb-global-search h2 { margin: 0; font: inherit; font-size: 18px; font-weight: 700; color: #8a641f; }
+.lb-global-search button {
+  appearance: none;
+  font: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  color: #264d3b;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  margin: 0;
+  box-shadow: none;
+}
+.lb-global-search .lb-gs-close {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  font-size: 26px;
+  color: #8a641f;
+}
+.lb-global-search .lb-gs-form { display: flex; gap: 8px; padding: 0 14px 10px; flex-shrink: 0; }
+.lb-global-search .lb-gs-input {
+  min-width: 0;
+  width: 100%;
+  height: 44px;
+  padding: 9px 12px;
+  border: 1px solid #b98a3d66;
+  border-radius: 10px;
+  background: #fffaf0;
+  color: #fff;
+  font: inherit;
+  font-size: 16px; /* Avoid iPhone focus zoom. The input is never re-created. */
+  line-height: 1.4;
+  text-align: start;
+}
+.lb-global-search .lb-gs-input::placeholder { color: #264d3b; opacity: 1; }
+.lb-global-search .lb-gs-submit { width: 44px; height: 44px; flex: 0 0 44px; background: #e8c987; color: #506c5b; }
+.lb-global-search .lb-gs-tabs { display: flex; gap: 6px; padding: 0 14px 10px; flex-shrink: 0; }
+.lb-global-search .lb-gs-tabs button { min-height: 44px; padding: 8px 14px; border-color: #b98a3d33; }
+.lb-global-search .lb-gs-tabs button[aria-pressed="true"] { background: #e8c987; color: #506c5b; }
+.lb-global-search button:hover { border-color: #b98a3d; }
+.lb-global-search :is(button, input, a):focus-visible { outline: 2px solid #b98a3d; outline-offset: 2px; }
+.lb-global-search .lb-gs-results {
+  padding: 0 14px 14px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.lb-global-search .lb-gs-section + .lb-gs-section { margin-top: 14px; }
+.lb-global-search h3 { margin: 4px 0 8px; font-size: 14px; color: #8a641f; }
+.lb-global-search p { margin: 8px 0; font-size: 14px; line-height: 1.7; color: #264d3b; }
+.lb-global-search .lb-gs-error { color: #264d3b; }
+.lb-global-search a { color: #8a641f; }
+.lb-global-search .lb-gs-list { list-style: none; margin: 0; padding: 0; }
+.lb-global-search .lb-gs-list li + li { border-top: 1px solid #b98a3d22; }
+.lb-global-search .lb-gs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 6px;
+  text-decoration: none;
+  border-radius: 8px;
+  color: #264d3b;
+  background: #fffaf0;
+}
+.lb-global-search .lb-gs-row:hover { background: #fffaf0; }
+.lb-global-search .lb-gs-row bdi { min-width: 0; overflow-wrap: anywhere; line-height: 1.5; }
+.lb-global-search .lb-gs-row small { flex-shrink: 0; color: #264d3b; font-size: 12px; }
+@media (max-height: 440px) {
+  .lb-global-search { --lb-gs-top: calc(12px + env(safe-area-inset-top, 0px)); }
+  .lb-global-search .lb-gs-head { padding-top: 4px; }
+}

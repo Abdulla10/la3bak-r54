@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" width="240" height="240" fill="none">
+  <title>Cobalt star level rank shield</title><desc>Text-free editable vector crest with faceted gold and cyan five-point star, tiny gold crown and gilded laurels. Label safe area x66–174 y105–140; value safe area x74–166 y148–185.</desc>
+  <defs>
+    <linearGradient id="rl-gold" x1=".05" y1="0" x2=".85" y2="1"><stop stop-color="#61411c"/><stop offset=".13" stop-color="#fff1c0"/><stop offset=".28" stop-color="#d9a447"/><stop offset=".43" stop-color="#fff5c8"/><stop offset=".57" stop-color="#977128"/><stop offset=".72" stop-color="#efc870"/><stop offset=".86" stop-color="#fff0a6"/><stop offset="1" stop-color="#704b20"/></linearGradient>
+    <linearGradient id="rl-light" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffbea"/><stop offset=".28" stop-color="#ffeda4"/><stop offset=".68" stop-color="#e6bd58"/><stop offset="1" stop-color="#a58335"/></linearGradient>
+    <linearGradient id="rl-cold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c6dcba"/><stop offset=".26" stop-color="#bfa44e"/><stop offset=".6" stop-color="#8f7b35"/><stop offset="1" stop-color="#33413a"/></linearGradient>
+    <linearGradient id="rl-body" x1="49" y1="59" x2="183" y2="210" gradientUnits="userSpaceOnUse"><stop stop-color="#4aa5e7"/><stop offset=".17" stop-color="#175db1"/><stop offset=".42" stop-color="#10285a"/><stop offset=".67" stop-color="#112e6c"/><stop offset=".85" stop-color="#18519e"/><stop offset="1" stop-color="#0a1734"/></linearGradient>
+    <radialGradient id="rl-sheen" cx=".23" cy=".15" r=".95"><stop stop-color="#92f0ff" stop-opacity=".3"/><stop offset=".45" stop-color="#30b8ef" stop-opacity=".05"/><stop offset="1" stop-color="#115397" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rl-cyan" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e3ffff"/><stop offset=".26" stop-color="#76f3ff"/><stop offset=".51" stop-color="#159dd1"/><stop offset=".74" stop-color="#36cceb"/><stop offset="1" stop-color="#0c315c"/></linearGradient>
+    <radialGradient id="rl-halo"><stop stop-color="#5aecff" stop-opacity=".54"/><stop offset=".3" stop-color="#31c8fa" stop-opacity=".22"/><stop offset="1" stop-color="#219cec" stop-opacity="0"/></radialGradient>
+    <g id="rl-leaf"><path d="M0 0C-8-10-10-27 0-46C10-27 8-10 0 0Z" fill="url(#rl-gold)" stroke="#6e5b29" stroke-width=".75"/><path d="M0-46L-1-19L0 0C-10-16-8-28 0-46Z" fill="url(#rl-light)"/><path d="M0-46L-1-19L0 0C10-16 8-28 0-46Z" fill="url(#rl-cold)"/><path d="M0-46L3-29L-1-19Z" fill="#fff7cd"/><path d="M-1-19L3-29L5-18L0 0Z" fill="#cbb35b"/><path d="M0-44L-1-19L0-3" stroke="#fff0b5" stroke-width=".65"/></g>
+    <g id="rl-wing"><path d="M51 170C27 151 23 123 32 88" stroke="#455538" stroke-width="5"/><path d="M51 170C27 151 23 123 32 88" stroke="url(#rl-gold)" stroke-width="3"/><path d="M49 168C29 149 26 122 34 90" stroke="#ffefb6" stroke-width=".8"/>
+      <use xlink:href="#rl-leaf" transform="translate(30 105) rotate(-24) scale(.73 .81)"/><use xlink:href="#rl-leaf" transform="translate(28 123) rotate(-34) scale(.8 .87)"/><use xlink:href="#rl-leaf" transform="translate(31 141) rotate(-45) scale(.85 .91)"/><use xlink:href="#rl-leaf" transform="translate(39 156) rotate(-59) scale(.79 .82)"/><use xlink:href="#rl-leaf" transform="translate(51 169) rotate(-69) scale(.73 .72)"/>
+      <use xlink:href="#rl-leaf" transform="translate(29 124) rotate(22) scale(.57 .66)"/><use xlink:href="#rl-leaf" transform="translate(32 141) rotate(31) scale(.6 .7)"/><use xlink:href="#rl-leaf" transform="translate(40 157) rotate(42) scale(.65 .72)"/>
+      <path d="M38 150L44 157L39 164L33 157Z" fill="url(#rl-cyan)" stroke="#fff0b0" stroke-width="1.1"/><path d="M38 151L38 157L34 157Z" fill="#daffff"/>
+    </g>
+    <g id="rl-spark"><circle r="8" fill="url(#rl-halo)"/><path d="M0-4.5L.9-.9L4.5 0L.9 .9L0 4.5L-.9 .9L-4.5 0L-.9-.9Z" fill="#9af6ff"/><path d="M0-2L.4-.4L2 0L.4 .4L0 2L-.4 .4L-2 0L-.4-.4Z" fill="#fffadc"/></g>
+  </defs>
+  <use xlink:href="#rl-wing"/><use xlink:href="#rl-wing" transform="translate(240 0) scale(-1 1)"/>
+  <!-- Curved shield shoulders and convex taper; three parallel bright rims. -->
+  <path d="M38 65Q38 52 54 52H186Q202 52 202 65L198 132C194 175 170 207 120 224C70 207 46 175 42 132Z" fill="#354a3c" stroke="#48dfff" stroke-opacity=".3" stroke-width="4"/>
+  <path d="M38 65Q38 52 54 52H186Q202 52 202 65L198 132C194 175 170 207 120 224C70 207 46 175 42 132Z" fill="url(#rl-gold)" stroke="#ffecb4" stroke-width="1.3"/>
+  <path d="M42 66Q42 56 55 56H185Q198 56 198 66L194 131C190 172 167 203 120 219C73 203 50 172 46 131Z" stroke="#6d6230" stroke-width="1.4"/>
+  <path d="M45 67Q45 59 56 59H184Q195 59 195 67L191 130C187 170 165 199 120 215C75 199 53 170 49 130Z" fill="url(#rl-body)" stroke="#fff1be" stroke-width="1.25"/>
+  <path d="M49 69Q49 63 58 63H182Q191 63 191 69L187 130C183 167 162 196 120 211C78 196 57 167 53 130Z" stroke="#b39142" stroke-width="1"/>
+  <path d="M52 71Q52 66 60 66H180Q188 66 188 71L184 130C180 164 160 193 120 207C80 193 60 164 56 130Z" fill="url(#rl-sheen)" stroke="#f1d183" stroke-opacity=".6" stroke-width=".65"/>
+  <path d="M55 91L58 128C61 159 74 182 93 194" stroke="#56d6f8" stroke-opacity=".55" stroke-width="1.1"/><path d="M185 91L182 128C179 156 169 175 154 188" stroke="#0b1e42" stroke-width="1.5"/>
+  <path d="M48 68Q49 62 57 62H80M160 62H183Q191 62 192 68M58 166C68 185 87 202 113 213" stroke="#fff9dd" stroke-width="1" stroke-linecap="round"/>
+  <path d="M75 190C83 198 94 203 107 207L100 197L94 199L91 192L85 194L82 188Z" fill="url(#rl-gold)" stroke="#c8b469" stroke-width=".7"/><path d="M165 190C157 198 146 203 133 207L140 197L146 199L149 192L155 194L158 188Z" fill="url(#rl-gold)" stroke="#c8b469" stroke-width=".7"/>
+  <path d="M120 197L129 208L120 219L111 208Z" fill="url(#rl-gold)" stroke="#fff1c0" stroke-width=".8"/><path d="M120 201L125 208L120 215L115 208Z" fill="url(#rl-cyan)"/><path d="M120 201L120 208L115 208Z" fill="#deffff"/>
+  <!-- Large gold/cyan star: all ten facets are independent editable paths. -->
+  <path d="M120 29L135 53L163 57L143 77L148 101L120 88L92 101L97 77L77 57L105 53Z" stroke="#36d6ff" stroke-opacity=".3" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M120 29L135 53L163 57L143 77L148 101L120 88L92 101L97 77L77 57L105 53Z" fill="url(#rl-gold)" stroke="#fff0b7" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M120 29L120 67L105 53Z M163 57L120 67L135 53Z M148 101L120 67L143 77Z M92 101L120 67L120 88Z M77 57L120 67L97 77Z" fill="url(#rl-light)"/>
+  <path d="M120 29L135 53L120 67Z M163 57L143 77L120 67Z M148 101L120 88L120 67Z M92 101L97 77L120 67Z M77 57L105 53L120 67Z" fill="url(#rl-cold)"/>
+  <path d="M120 40L130 58L150 61L136 74L139 91L120 81L101 91L104 74L90 61L110 58Z" fill="url(#rl-cyan)" stroke="#efffcc" stroke-width=".8"/>
+  <path d="M120 40L120 67L110 58Z M150 61L120 67L130 58Z M139 91L120 67L136 74Z M101 91L120 67L120 81Z M90 61L120 67L104 74Z" fill="#a2f5f3"/>
+  <path d="M120 40L130 58L120 67Z M150 61L136 74L120 67Z M139 91L120 81L120 67Z M101 91L104 74L120 67Z M90 61L110 58L120 67Z" fill="#1681b0"/>
+  <path d="M120 40L120 67L90 61M120 67L139 91" stroke="#e1ffff" stroke-width=".8"/>
+  <path d="M120 58L127 67L120 76L113 67Z" fill="url(#rl-gold)" stroke="#ffeab0" stroke-width=".8"/><path d="M120 61L124 67L120 72L116 67Z" fill="url(#rl-cyan)"/><path d="M120 61L120 67L116 67Z" fill="#f3ffff"/>
+  <!-- Tiny gilded crown sits above, never replacing the five-point star. -->
+  <path d="M102 22L108 28L110 18L117 26L120 13L123 26L130 18L132 28L138 22L135 35Q120 39 105 35Z" fill="url(#rl-gold)" stroke="#ffedaf" stroke-width=".8" stroke-linejoin="round"/>
+  <path d="M103 23L108 28L106 34Z M110 19L117 26L114 34Z M120 14L120 35L117 26Z M130 19L132 28L126 34Z" fill="url(#rl-light)"/>
+  <path d="M106 33Q120 36 134 33L134 37Q120 41 106 37Z" fill="url(#rl-gold)" stroke="#fff1b9" stroke-width=".7"/>
+  <path d="M108 36Q120 39 132 36" stroke="#75672f" stroke-width=".6"/>
+  <path d="M120 22L123 27L120 31L117 27Z" fill="url(#rl-cyan)" stroke="#fff0b2" stroke-width=".65"/>
+  <g fill="#ffe8a0" stroke="#9b8235" stroke-width=".5"><circle cx="102" cy="22" r="1.25"/><circle cx="110" cy="18" r="1.1"/><circle cx="120" cy="13" r="1.4"/><circle cx="130" cy="18" r="1.1"/><circle cx="138" cy="22" r="1.25"/></g>
+  <!-- Electrical ornament remains outside the empty central typography areas. -->
+  <path d="M31 78L26 91L32 89L25 105M209 78L214 91L208 89L215 105M39 173L44 182L40 181L48 192M201 173L196 182L200 181L192 192" stroke="#19afe6" stroke-opacity=".25" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M31 78L26 91L32 89L25 105M209 78L214 91L208 89L215 105M39 173L44 182L40 181L48 192M201 173L196 182L200 181L192 192" stroke="#84f5ff" stroke-width="1" stroke-linejoin="round"/>
+  <use xlink:href="#rl-spark" transform="translate(20 123) scale(.7)"/><use xlink:href="#rl-spark" transform="translate(220 123) scale(.7)"/><use xlink:href="#rl-spark" transform="translate(76 56) scale(.68)"/><use xlink:href="#rl-spark" transform="translate(164 56) scale(.68)"/><use xlink:href="#rl-spark" transform="translate(120 220) scale(.6)"/>
+</svg>

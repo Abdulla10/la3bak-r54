@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="500" viewBox="0 0 600 500" fill="none">
+  <title>Royal gold and amethyst avatar frame</title>
+  <desc>Editable vector ornament. The circular photograph opening at 300,250 with radius 160 is completely transparent; every decorative layer is clipped outside it.</desc>
+  <defs>
+    <linearGradient id="rf-metal" x1="120" y1="80" x2="434" y2="431" gradientUnits="userSpaceOnUse"><stop stop-color="#6a3511"/><stop offset=".12" stop-color="#ffe6a1"/><stop offset=".23" stop-color="#b77d24"/><stop offset=".33" stop-color="#fff7ce"/><stop offset=".43" stop-color="#dba538"/><stop offset=".56" stop-color="#754415"/><stop offset=".69" stop-color="#f5cc69"/><stop offset=".81" stop-color="#fff4bf"/><stop offset=".92" stop-color="#c28a29"/><stop offset="1" stop-color="#5e351a"/></linearGradient>
+    <linearGradient id="rf-gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff2b2"/><stop offset=".25" stop-color="#e8ba57"/><stop offset=".49" stop-color="#a85f18"/><stop offset=".58" stop-color="#fff2b2"/><stop offset=".8" stop-color="#d59a34"/><stop offset="1" stop-color="#805021"/></linearGradient>
+    <linearGradient id="rf-light" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffdeb"/><stop offset=".43" stop-color="#fff0a1"/><stop offset=".7" stop-color="#dfb04a"/><stop offset="1" stop-color="#a3671e"/></linearGradient>
+    <linearGradient id="rf-cold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ded3a0"/><stop offset=".32" stop-color="#c7963e"/><stop offset=".65" stop-color="#98702d"/><stop offset="1" stop-color="#4a2b17"/></linearGradient>
+    <linearGradient id="rf-amber" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff0a7"/><stop offset=".3" stop-color="#ffd468"/><stop offset=".55" stop-color="#99581b"/><stop offset=".7" stop-color="#edb74d"/><stop offset="1" stop-color="#573115"/></linearGradient>
+    <linearGradient id="rf-purple" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#efc6ff"/><stop offset=".26" stop-color="#b361f3"/><stop offset=".51" stop-color="#591790"/><stop offset=".78" stop-color="#8f32d2"/><stop offset="1" stop-color="#200d42"/></linearGradient>
+    <linearGradient id="rf-ruby" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb6e3"/><stop offset=".35" stop-color="#c32381"/><stop offset=".69" stop-color="#681641"/><stop offset="1" stop-color="#2c0c32"/></linearGradient>
+    <radialGradient id="rf-halo"><stop stop-color="#ad56ff" stop-opacity=".44"/><stop offset=".55" stop-color="#772ddd" stop-opacity=".18"/><stop offset="1" stop-color="#722bd7" stop-opacity="0"/></radialGradient>
+    <clipPath id="rf-outside" clipPathUnits="userSpaceOnUse"><path d="M0 0H600V500H0Z M460 250A160 160 0 1 0 140 250A160 160 0 1 0 460 250Z" clip-rule="evenodd" fill-rule="evenodd"/></clipPath>
+    <g id="rf-leaf">
+      <path d="M0 0C-11-19-18-51 0-88C18-52 11-19 0 0Z" fill="url(#rf-gold)" stroke="#804b19" stroke-width="1.15"/>
+      <path d="M0 0L-2-33L0-88C-13-62-14-39 0 0Z" fill="url(#rf-light)"/>
+      <path d="M0-88L-2-33L0 0C13-23 15-51 0-88Z" fill="url(#rf-cold)"/>
+      <path d="M0-88L4-54L-2-33Z" fill="#fff5c3"/>
+      <path d="M-2-33L4-54L8-38L0 0Z" fill="#cf9137"/>
+      <path d="M0-85L-2-34L0-4" stroke="#ffe8a0" stroke-width=".85"/>
+      <path d="M-2-34L-10-43M-2-34L7-24" stroke="#b57927" stroke-width=".7"/>
+    </g>
+    <g id="rf-wing">
+      <path d="M276 429C221 449 134 434 89 387C68 365 56 337 52 306" stroke="#43220f" stroke-width="9" stroke-linecap="round"/>
+      <path d="M276 429C221 449 134 434 89 387C68 365 56 337 52 306" stroke="url(#rf-amber)" stroke-width="6.2" stroke-linecap="round"/>
+      <path d="M273 427C213 443 133 429 92 385C72 363 61 335 56 307" stroke="#ffeda6" stroke-width="1.25"/>
+      <use xlink:href="#rf-leaf" transform="translate(61 326) rotate(-32) scale(.82 .86)"/>
+      <use xlink:href="#rf-leaf" transform="translate(68 347) rotate(-34) scale(.95 1.01)"/>
+      <use xlink:href="#rf-leaf" transform="translate(81 370) rotate(-48) scale(1.02 1.04)"/>
+      <use xlink:href="#rf-leaf" transform="translate(101 391) rotate(-60) scale(1.1 1.06)"/>
+      <use xlink:href="#rf-leaf" transform="translate(127 408) rotate(-72) scale(1.05 1.03)"/>
+      <use xlink:href="#rf-leaf" transform="translate(157 421) rotate(-81) scale(1.04 .95)"/>
+      <use xlink:href="#rf-leaf" transform="translate(190 429) rotate(-87) scale(.94 .87)"/>
+      <use xlink:href="#rf-leaf" transform="translate(224 434) rotate(-91) scale(.77 .72)"/>
+      <use xlink:href="#rf-leaf" transform="translate(70 348) rotate(16) scale(.78 .9)"/>
+      <use xlink:href="#rf-leaf" transform="translate(85 370) rotate(21) scale(.86 1.03)"/>
+      <use xlink:href="#rf-leaf" transform="translate(105 391) rotate(27) scale(.9 1.07)"/>
+      <use xlink:href="#rf-leaf" transform="translate(129 409) rotate(29) scale(.94 1.05)"/>
+      <use xlink:href="#rf-leaf" transform="translate(158 421) rotate(35) scale(.89 1)"/>
+      <use xlink:href="#rf-leaf" transform="translate(190 430) rotate(39) scale(.77 .83)"/>
+      <use xlink:href="#rf-leaf" transform="translate(223 435) rotate(47) scale(.64 .65)"/>
+      <path d="M262 429C232 416 223 406 228 396C243 401 254 413 262 429Z" fill="url(#rf-gold)" stroke="#f3d286" stroke-width=".7"/>
+      <path d="M253 428C217 423 202 433 208 441C227 447 242 440 253 428Z" fill="url(#rf-cold)" stroke="#c99743" stroke-width=".8"/>
+    </g>
+    <g id="rf-small-jewel"><path d="M0-7L5 0L0 7L-5 0Z" fill="url(#rf-ruby)" stroke="#ffe3a0" stroke-width="1.4"/><path d="M0-6L0 1L-4 0Z" fill="#ff97d0"/><path d="M0 1L4 0L0 6Z" fill="#671243"/></g>
+    <g id="rf-spark"><path d="M0-6L1.3-1.3L6 0L1.3 1.3L0 6L-1.3 1.3L-6 0L-1.3-1.3Z" fill="#fff8d0"/></g>
+  </defs>
+  <g clip-path="url(#rf-outside)">
+    <!-- Tight violet edging, not an opaque background or a blurred photograph disk. -->
+    <circle cx="300" cy="250" r="174.6" stroke="#5c237e" stroke-opacity=".28" stroke-width="9"/>
+    <circle cx="300" cy="250" r="174.6" stroke="#bc71fa" stroke-opacity=".3" stroke-width="3.4"/>
+    <use xlink:href="#rf-wing"/>
+    <use xlink:href="#rf-wing" transform="translate(600 0) scale(-1 1)"/>
+    <!-- Narrow polished concentric metallic rim. -->
+    <path d="M474 250A174 174 0 1 1 126 250A174 174 0 1 1 474 250Z M460 250A160 160 0 1 0 140 250A160 160 0 1 0 460 250Z" fill="url(#rf-metal)" fill-rule="evenodd"/>
+    <circle cx="300" cy="250" r="173.25" stroke="#fff1b2" stroke-width="1.5"/>
+    <circle cx="300" cy="250" r="170.6" stroke="#6e4118" stroke-width="1.5"/>
+    <circle cx="300" cy="250" r="168.8" stroke="#ffe3a2" stroke-width=".9"/>
+    <circle cx="300" cy="250" r="164.8" stroke="#51302a" stroke-width="1.2"/>
+    <circle cx="300" cy="250" r="161.2" stroke="#8d31d8" stroke-width="3"/>
+    <circle cx="300" cy="250" r="160.9" stroke="#d38aff" stroke-width=".95"/>
+    <path d="M153 170A169 169 0 0 1 256 87M347 87A169 169 0 0 1 426 138M435 352A170 170 0 0 1 352 413" stroke="#fffbdc" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M144 194A163 163 0 0 0 144 300M373 394A163 163 0 0 0 435 342" stroke="#efc580" stroke-width="1.05"/>
+    <!-- Five-prong crown, central amethyst and four ruby-amethyst settings. -->
+    <path d="M206 49L235 66L244 34L274 57L300 20L326 57L356 34L365 66L394 49L379 82Q300 96 221 82Z" fill="#593117" stroke="#f5ce76" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M211 51L236 71L245 38L275 63L300 24L325 63L355 38L364 71L389 51L376 78Q300 91 224 78Z" fill="url(#rf-amber)"/>
+    <path d="M211 51L236 71L226 78Z M245 38L256 77L236 71Z M300 24L300 80L275 63Z M355 38L364 71L344 77Z M389 51L376 78L365 71Z" fill="url(#rf-light)"/>
+    <path d="M245 38L275 63L256 77Z M300 24L325 63L300 80Z M355 38L344 77L325 63Z M236 71L224 78L211 51Z" fill="url(#rf-cold)"/>
+    <path d="M227 73Q300 86 373 73L372 86Q300 98 228 86Z" fill="url(#rf-amber)" stroke="#ffe6a1" stroke-width="1.3"/>
+    <path d="M230 76Q300 88 370 76M232 84Q300 94 368 84" stroke="#6c3816" stroke-width="1.1"/>
+    <path d="M231 77Q300 89 369 77" stroke="#fff0b0" stroke-width=".7"/>
+    <path d="M300 32L313 49L300 68L287 49Z" fill="url(#rf-gold)" stroke="#ffedb1" stroke-width="1.2"/>
+    <path d="M300 36L309 49L300 63L291 49Z" fill="url(#rf-purple)"/>
+    <path d="M300 36L300 49L291 49Z" fill="#efbeff"/><path d="M300 49L309 49L300 63Z" fill="#4d127c"/><path d="M300 36L309 49L300 49Z" fill="#a756ed"/>
+    <use xlink:href="#rf-small-jewel" transform="translate(249 58) rotate(-13)"/><use xlink:href="#rf-small-jewel" transform="translate(351 58) rotate(13)"/>
+    <use xlink:href="#rf-small-jewel" transform="translate(222 63) rotate(-25) scale(.72)"/><use xlink:href="#rf-small-jewel" transform="translate(378 63) rotate(25) scale(.72)"/>
+    <path d="M270 79L274 83L270 87L266 83Z M330 79L334 83L330 87L326 83Z" fill="#9b3bd5" stroke="#fff0a8" stroke-width=".8"/>
+    <g fill="url(#rf-light)" stroke="#ae7327" stroke-width=".8"><circle cx="206" cy="49" r="3.5"/><circle cx="244" cy="34" r="3.1"/><circle cx="300" cy="20" r="3.6"/><circle cx="356" cy="34" r="3.1"/><circle cx="394" cy="49" r="3.5"/></g>
+    <path d="M276 71Q300 62 324 71M286 77Q300 70 314 77" stroke="#fff0ac" stroke-width="1.3"/>
+    <!-- Four-point gold setting and a faceted, transparent-surround amethyst. -->
+    <ellipse cx="300" cy="445" rx="50" ry="47" fill="url(#rf-halo)"/>
+    <path d="M300 407L313 429L339 445L315 457L300 484L285 457L261 445L287 429Z" fill="url(#rf-gold)" stroke="#5c3419" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M300 408L300 436L263 445L287 429Z M300 436L337 445L314 456Z M300 436L300 482L285 457Z" fill="url(#rf-light)"/>
+    <path d="M300 408L313 429L337 445L300 436Z M300 436L314 456L300 482Z M263 445L300 436L285 457Z" fill="url(#rf-cold)"/>
+    <path d="M300 416L321 444L300 474L279 444Z" fill="url(#rf-amber)" stroke="#fff0bb" stroke-width="1.3"/>
+    <path d="M300 422L316 444L300 467L284 444Z" fill="url(#rf-purple)" stroke="#481263" stroke-width=".8"/>
+    <path d="M300 422L300 442L284 444Z" fill="#e2a1ff"/><path d="M300 422L316 444L300 442Z" fill="#ae5deb"/><path d="M284 444L300 442L300 467Z" fill="#853bc6"/><path d="M300 442L316 444L300 467Z" fill="#3c0d72"/>
+    <path d="M300 424L288 443" stroke="#ffe7ff" stroke-width="1"/>
+    <use xlink:href="#rf-spark" transform="translate(150 170) scale(.85)"/><use xlink:href="#rf-spark" transform="translate(443 151) scale(.7)"/><use xlink:href="#rf-spark" transform="translate(70 363) scale(.7)"/><use xlink:href="#rf-spark" transform="translate(529 363) scale(.7)"/><use xlink:href="#rf-spark" transform="translate(300 423) scale(.65)"/>
+  </g>
+</svg>

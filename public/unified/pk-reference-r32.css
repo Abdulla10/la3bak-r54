@@ -1,0 +1,98 @@
+/* R32: current-video PK stage only. Every rule requires standalone voice + active marker.
+   The saved --so-room-theme and data-so-room-theme remain untouched beneath this tint.
+   No gift sheet, cannon, directory, room-photo or bottom-dock selectors. */
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"]{
+ --so-pk-left-inset:max(10px,env(safe-area-inset-left,0px));
+ --so-pk-right-inset:max(10px,env(safe-area-inset-right,0px));
+ background-color:#fffaf0;
+ background-image:linear-gradient(180deg,#15142500 0%,#fffaf012 46%,#fffaf0bd 76%,#fffaf0f5 100%),linear-gradient(90deg,#fffaf0 0%,#fffaf0 42%,#fffaf0 70%,#fffaf0 100%);
+ background-size:100% 100%;background-position:center;
+}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"]>.so-room-header{margin-bottom:3px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"]>.so-room-workspace{gap:0;overflow:visible;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge{
+ flex:none;width:calc(100% + var(--so-pk-left-inset) + var(--so-pk-right-inset));
+ margin-left:calc(-1 * var(--so-pk-left-inset));margin-right:calc(-1 * var(--so-pk-right-inset));
+ height:clamp(298px,calc(var(--so-viewport-height,100dvh) * .38),336px);
+ min-height:0;max-height:none;padding:0;border:0;border-radius:0;box-shadow:none;
+ overflow:hidden;overscroll-behavior:auto;
+ background:linear-gradient(90deg,#176b50 0%,#d4e4d8 50%,#fffaf0 50%,#d4e4d8 100%);
+}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-heading{position:absolute;top:23px;left:4px;z-index:4;min-height:0;padding:0;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-cancel{height:20px;min-height:0;padding:0 5px;background:#fffaf060;border:0;border-radius:9px;font-size:8px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-scorebar{height:18px;min-height:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-meter{border-radius:0;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-total{flex-direction:row;padding:0 7px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-total-blue{justify-content:flex-end;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-total-red{justify-content:flex-start;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-total>b{font-size:12px;line-height:18px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-clock{flex-direction:row;position:relative;height:21px;gap:3px;border:0;background:none;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-clock time{margin:0;font-size:12px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-pk{position:static;font-size:11px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-team{display:grid;grid-template-rows:94px minmax(0,1fr);gap:8px;padding:10px 7px 8px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-team-blue{background:linear-gradient(90deg,#3851c840,#5f8ff326);border-right:1px solid #e8dfff35;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-team-red{background:linear-gradient(90deg,#a32d7726,#ee637e40);}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-challenge-person{background:transparent;max-width:86px;gap:2px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-participants{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:7px 4px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-portrait{width:43px;height:43px;aspect-ratio:1;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .is-leader .so-portrait{width:60px;height:60px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-member{gap:4px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-member-name{font-size:9px;line-height:13px;max-width:86px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-avatar{aspect-ratio:1;padding:0;background:#fffaf015;border:1px solid #ffffff40;box-shadow:none;overflow:visible;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-avatar:has(.so-owned-seat-frame){border:0;background:transparent;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-owned-seat-frame{display:block;position:relative;aspect-ratio:1;width:100%!important;height:auto!important;min-height:0;padding:0!important;line-height:0;overflow:visible;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-owned-seat-frame>img:first-child{display:block;width:100%!important;height:auto!important;aspect-ratio:1;object-fit:cover;border-radius:50%;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-owned-seat-frame>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-portrait>.so-crown{top:-7px;width:15px;height:11px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-member-ranks{display:inline-flex;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-rank{font-size:6px;line-height:9px;padding:0 2px;gap:1px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-rank svg{width:6px;height:6px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-seat-mic{top:-3px;bottom:auto;right:auto;left:-8px;width:13px;height:13px;border:0;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-unknown,.so-seat-mic-disconnected){background:#fffaf0;color:#176b50;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-server-muted,.so-seat-mic-local-off,.so-seat-mic-remote-off){background:#d4e4d8;color:#fff;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-local-live,.so-seat-mic-remote-live){background:#d4e4d8;color:#fff;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-value{top:-8px;left:calc(50% + 13px);height:13px;min-height:0;padding:0 3px;border:0;font-size:8px;line-height:13px;max-width:55px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-support{height:15px;min-height:0;width:34px;padding:0 2px;border:0;border-radius:9px;background:#fffaf075;font-size:8px;line-height:15px;}
+/* A single real-room member/control strip. Native details is closed by default.
+   Its existing council markup/actions are preserved in a bounded overlay drawer. */
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs{position:relative;flex:none;min-height:32px;margin:0;padding:0;border:0;max-height:none;overflow:visible;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs>summary{direction:ltr;display:flex;align-items:center;gap:6px;height:32px;min-height:32px;list-style:none;font-size:9px;color:#fff;cursor:pointer;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs>summary::-webkit-details-marker{display:none;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs>summary:after{font-size:13px;margin-inline-start:0;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-member-count{display:inline-flex;align-items:center;gap:3px;flex:none;border-radius:14px;background:#fffaf05c;padding:3px 6px;font:700 10px/18px Arial,sans-serif;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-member-count svg{width:12px;height:12px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-room-members{display:flex;align-items:center;gap:5px;flex:1 1 auto;min-width:0;overflow:hidden;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-room-member{display:grid;place-items:center;flex:none;width:25px;height:25px;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#fffaf022;line-height:0;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-room-member>img,.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-room-member>.avatar-wrap{display:block;width:100%!important;height:100%!important;object-fit:cover;border-radius:50%;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-seat-control{display:inline-flex;align-items:center;gap:3px;flex:none;border-radius:14px;background:#fffaf06b;padding:3px 6px;direction:rtl;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-seat-control svg{width:12px;height:12px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs[open]>.so-central-council{position:absolute;left:0;right:0;top:100%;z-index:12;display:flex;max-height:min(280px,calc(var(--so-viewport-height,100dvh) * .4));min-height:0;margin:0;padding:5px 7px 0;overflow:auto;overscroll-behavior:contain;background:#fffaf0f5;border:1px solid #ffffff25;border-radius:0 0 8px 8px;box-shadow:none;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-seat-grid{flex:none;gap:9px 4px;max-height:none;overflow:visible;padding:8px 0 6px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-seat{--so-seat-size:40px;min-height:62px;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-seat:nth-child(-n/**/+2){--so-seat-size:40px;grid-column:auto;min-height:62px;margin-bottom:0;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-central-footer{position:sticky;bottom:0;min-height:27px;background:#fffaf0;}
+/* Short screens keep chat + controls outside the arena. Only very short viewports
+   scroll the bounded arena; ordinary 390×844 portrait has no internal scrolling. */
+@media(max-height:650px){
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge{height:264px;}
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-team{grid-template-rows:79px minmax(0,1fr);padding-top:8px;gap:6px;}
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .is-leader .so-portrait{width:50px;height:50px;}
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-portrait{width:38px;height:38px;}
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-formation-circle{width:38px;height:38px;}
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-unassigned.is-leader .so-challenge-formation-circle{width:50px;height:50px;}
+}
+@media(max-height:520px){
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge{height:calc(var(--so-viewport-height,100dvh) * .44);max-height:210px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;}
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-teams{flex:none;height:218px;}
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs{min-height:29px;}
+ .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs>summary{height:29px;min-height:29px;}
+}
+/* Compact confirmed chat receipts only while this PK tint is active.
+   Financial receipt and rewards stay available in the native disclosure. */
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event{margin:3px 0;border:0;background:#fffaf04a;border-radius:6px;box-shadow:none;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary{display:flex;align-items:center;gap:6px;padding:5px 8px;min-height:26px;color:#fff;font-size:10px;line-height:16px;list-style:none;cursor:pointer;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary::-webkit-details-marker{display:none;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary>span{flex:1;min-width:0;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary>small{flex:none;color:#264d3b;font-size:9px;text-decoration:underline;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event:not([open])>.so-gift-receipt{display:none;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event[open]>.so-gift-receipt{margin:0;padding:5px;max-width:100%;}

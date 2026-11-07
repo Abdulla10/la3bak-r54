@@ -1,0 +1,56 @@
+/* R53: قائمة «الخاص بي» بترتيب المرجع: مجموعات بفواصل، قيمة الحالة يسار الصف، وبطاقة العائلة تحت الهوية. بنفس ألوان LA3BAK */
+.pvp-page .pvp-menu-r53 .pvp-profile-list { display: block; }
+/* المجموعات تستخدم بطاقة .pvp-menu-group الموجودة أصلاً بتصميم LA3BAK */
+.pvp-page .pvp-menu-r53 .pvp-menu-group > .pvp-menu-row:last-child { border-bottom: 0; }
+.pvp-page .pvp-menu-r53 .pvp-menu-row { min-height: 52px; }
+.pvp-page .pvp-menu-r53 .pvp-menu-row > .pvp-menu-label { flex: 1 1 auto; min-width: 0; }
+.pvp-page .pvp-menu-r53 .pvp-menu-row > small.pvp-menu-value { margin-inline-start: auto; padding-inline: 6px 2px; color: #7c8a82; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.pvp-page .pvp-menu-r53 .pvp-menu-row > small.pvp-menu-value[data-pvp-visitors-value] { color: #b4233c; }
+.pvp-page .pvp-menu-r53 .pvp-menu-row > small.pvp-menu-value[data-pvp-visitors-value]::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-inline-end: 5px; border-radius: 50%; background: #e0344f; vertical-align: middle; }
+.pvp-page .pvp-family-card { display: flex; align-items: center; gap: 12px; margin: 10px 14px 4px; padding: 12px 14px; border-radius: 14px; text-decoration: none; color: #1f3d2f;
+  background: linear-gradient(120deg, #f7f1e3 0%, #eef3ea 60%, #e4efe6 100%); border: 1px solid rgba(38, 77, 59, .14); box-shadow: 0 2px 10px rgba(38, 77, 59, .06); }
+.pvp-page .pvp-family-emblem { display: grid; place-items: center; width: 46px; height: 50px; flex: none; clip-path: polygon(50% 0, 100% 18%, 100% 72%, 50% 100%, 0 72%, 0 18%); background: linear-gradient(160deg, #2f6b4f, #1d4a36); }
+.pvp-page .pvp-family-emblem .pvp-icon { width: 26px; height: 26px; }
+.pvp-page .pvp-family-copy { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.pvp-page .pvp-family-copy b { font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pvp-page .pvp-family-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.pvp-page .pvp-family-tags em { font-style: normal; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 6px; }
+.pvp-page .pvp-family-count { background: #2f6b4f; color: #fff; }
+.pvp-page .pvp-family-role { background: #c8344c; color: #fff; }
+.pvp-page .pvp-family-card > .pvp-icon:last-child { width: 18px; height: 18px; opacity: .55; flex: none; }
+/* صفحتا «من الذي رآني» و«ادعُ الأصدقاء» */
+.ps-card h2 { margin: 0 0 8px; font-size: 17px; }
+.ps-card h2 small { font-size: 13px; color: #7c8a82; }
+.ps-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.ps-stats span { display: grid; justify-items: center; padding: 10px; border-radius: 12px; background: rgba(38, 77, 59, .06); }
+.ps-stats b { font-size: 22px; }
+.ps-stats small { color: #6b7a72; font-size: 12px; }
+.ps-hint { text-align: start; line-height: 1.7; }
+.ps-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.ps-row :is(a, .ps-rowbox) { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; color: inherit; text-decoration: none; background: rgba(38, 77, 59, .04); }
+.ps-row.is-fresh :is(a, .ps-rowbox) { background: rgba(224, 52, 79, .07); }
+.ps-av { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; object-fit: cover; flex: none; }
+.ps-av > * { max-width: 46px; max-height: 46px; }
+.ps-initial { background: #2f6b4f; color: #fff; font-weight: 800; font-size: 18px; }
+.ps-who { display: grid; min-width: 0; }
+.ps-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-who small, .ps-side small, .ps-side time { color: #6b7a72; font-size: 12px; }
+.ps-side { display: grid; justify-items: end; gap: 2px; white-space: nowrap; }
+.ps-new { font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: #e0344f; border-radius: 6px; padding: 0 6px; }
+.ps-empty { display: grid; gap: 10px; justify-items: center; padding: 16px 8px; text-align: center; color: #6b7a72; }
+.ps-link { display: flex; gap: 8px; margin: 10px 0; }
+.ps-link input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(38, 77, 59, .2); font: inherit; font-size: 13px; background: #fff; color: #1f3d2f; }
+.ps-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ps-claim { border: 1px solid rgba(224, 52, 79, .3); }
+.ps-claim .btn { margin-inline-end: 8px; margin-top: 6px; }
+[data-ps-status].is-error { color: #b4233c; }
+/* R54: قسم «أصدقائي وتقدّمي» */
+.pvp-page .pvp-menu-r53 .pvp-hub-toggle { width: 100%; text-align: start; }
+.pvp-page .pvp-menu-r53 .pvp-hub-toggle .pvp-menu-label { display: flex; flex-direction: column; gap: 2px; }
+.pvp-page .pvp-menu-r53 .pvp-hub-note { color: #7c8a82; font-size: 12px; font-weight: 500; line-height: 1.4; }
+.pvp-page .pvp-menu-r53 .pvp-hub-toggle > svg:last-child, .pvp-page .pvp-menu-r53 .pvp-hub-toggle > .pvp-icon:last-child { transform: rotate(-90deg); transition: transform .2s; }
+.pvp-page .pvp-menu-r53 .pvp-hub.is-open .pvp-hub-toggle > svg:last-child, .pvp-page .pvp-menu-r53 .pvp-hub.is-open .pvp-hub-toggle > .pvp-icon:last-child { transform: rotate(90deg); }
+.pvp-page .pvp-menu-r53 .pvp-hub.is-open .pvp-hub-toggle { border-bottom: 1px solid rgba(0,0,0,.06); }
+.pvp-page .pvp-menu-r53 .pvp-hub-rows[hidden] { display: none; }
+.pvp-page .pvp-menu-r53 .pvp-hub-sub { margin: 0; padding: 10px 16px 4px; color: #6b7a72; font-size: 12px; font-weight: 700; }
+.pvp-page .pvp-menu-r53 .pvp-hub-rows > .pvp-menu-row:last-child { border-bottom: 0; }

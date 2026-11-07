@@ -1,0 +1,278 @@
+/* R38 gift drawer: royal violet / plum / warm gold. Existing scoped surfaces only.
+ * Load AFTER reference-room-r28.css and reference-gifts-r28.css.
+ * R38 palette and gift-control spacing only; no artwork, economy or behavior changes.
+ * Every selector requires the standalone social-voice page AND actual gift panel.
+ */
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] {
+  --gc29-pearl: #25103d;
+  --gc29-lavender: #351650;
+  --gc29-card: #30144c;
+  --gc29-selected: #542278;
+  --gc29-text: #264d3b;
+  --gc29-muted: #506c5b;
+  --gc29-purple: #176b50;
+  --gc29-purple-hover: #176b50;
+  --gc29-gold: #b98a3d;
+  --gc29-gold-soft: #b98a3d;
+  --gc29-line: #d4e4d8;
+  --gc29-line-strong: #d4e4d8;
+  --gc29-white: #ffffff;
+  --gc29-error-bg: #fffaf0;
+  --gc29-error-text: #264d3b;
+  --gc29-error-line: #d4e4d8;
+  --gc29-success-bg: #fffaf0;
+  --gc29-success-text: #264d3b;
+  --gc29-success-line: #d4e4d8;
+  --so-bg: var(--gc29-pearl);
+  --so-surface: var(--gc29-lavender);
+  --so-muted: var(--gc29-muted);
+  --so-line: var(--gc29-line);
+  --so-gold: var(--gc29-gold);
+  background: var(--gc29-pearl) !important;
+  color: var(--gc29-text) !important;
+  border-color: var(--gc29-line);
+  box-shadow: 0 -8px 26px #264d3b24;
+  color-scheme:light;
+}
+
+/* Explicit important wrappers defeat the more specific R28 room/body colors
+ * (and any inherited important wrapper color), never the room background. */
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] > .so-room-panel-body {
+  background: var(--gc29-pearl) !important;
+  color: var(--gc29-text) !important;
+  color-scheme:light;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] > .so-room-panel-heading {
+  background: transparent !important;
+  color: var(--gc29-text);
+  border-color: transparent;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] > .so-room-panel-heading > .so-button {
+  background: transparent !important;
+  color: var(--gc29-muted) !important;
+  border-color: transparent;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 {
+  --rg28-surface: var(--gc29-pearl);
+  --rg28-pill: var(--gc29-lavender);
+  --rg28-muted: var(--gc29-muted);
+  --rg28-text: var(--gc29-text);
+  --rg28-send: var(--gc29-purple);
+  background: var(--gc29-pearl);
+  color: var(--gc29-text);
+  color-scheme:light;
+}
+
+/* R28 variable-based status, footer, catalog, balance and quantity-bar surfaces
+ * inherit the palette above. Replace the remaining fixed dark/teal colors. */
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-card {
+  background: var(--gc29-card);
+  color: var(--gc29-text);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-card[aria-checked="true"] {
+  background: var(--gc29-selected);
+  color: var(--gc29-text);
+  border-color: var(--gc29-purple);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-avatar {
+  background: var(--gc29-lavender);
+  color: var(--gc29-muted);
+  border-color: var(--gc29-line-strong);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-check {
+  background: var(--gc29-pearl);
+  color: var(--gc29-muted);
+  border-color: var(--gc29-line-strong);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-card[aria-checked="true"] .so-gift-recipient-check {
+  background: var(--gc29-purple);
+  color: var(--gc29-white);
+  border-color: var(--gc29-purple);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-tools button {
+  background: var(--gc29-lavender);
+  color: var(--gc29-text);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-categories {
+  border-bottom-color: var(--gc29-line);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-categories button[aria-pressed="true"] {
+  color: var(--gc29-purple);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-categories button[aria-pressed="true"]::after {
+  background: var(--gc29-purple);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-card.is-picked {
+  background: var(--gc29-selected);
+  border-color: var(--gc29-purple);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-item[aria-pressed="true"] {
+  color: var(--gc29-text);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-picked-label {
+  color: var(--gc29-purple);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .gr13-gem {
+  color: var(--gc29-purple);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .gr13-coin,
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-balance svg {
+  color: var(--gc29-gold);
+}
+
+/* Keep the existing inline send placement and quantity-circle geometry. */
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-send-inline {
+  background: var(--gc29-purple);
+  color: var(--gc29-white);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-quantities > [aria-pressed="true"] {
+  background: var(--gc29-purple);
+  color: var(--gc29-white);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-custom-quantity {
+  background: var(--gc29-pearl);
+  color: var(--gc29-text);
+  border-color: var(--gc29-line-strong);
+  caret-color: var(--gc29-purple);
+  color-scheme:light;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-custom-quantity::placeholder {
+  color: var(--gc29-muted);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 :is(.so-gift-balance strong, .so-gift-total strong, .so-gift-quote-summary strong) {
+  color: var(--gc29-text);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 :is(.so-gift-quote-disclosure, .so-gift-batch-summary, .so-gift-empty) {
+  color: var(--gc29-muted);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 :is([data-so-gift-action="more"], [data-so-gift-action="reload"]) {
+  background: var(--gc29-lavender);
+  color: var(--gc29-text);
+  border-color: var(--gc29-line-strong);
+}
+
+/* Truthful server quote and actual confirmation, including R13 inner badges. */
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 :is(.gr13-card, .so-gift-confirm) {
+  background: var(--gc29-card);
+  color: var(--gc29-text);
+  border-color: var(--gc29-line-strong);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-confirm {
+  background: var(--gc29-pearl);
+  color: var(--gc29-text);
+  border-color: var(--gc29-purple);
+  box-shadow: 0 5px 18px #264d3b1f;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-confirm h3 {
+  color: var(--gc29-text);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-confirm .so-button {
+  background: var(--gc29-lavender);
+  color: var(--gc29-text);
+  border-color: var(--gc29-line-strong);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-confirm [data-so-gift-action="confirm"] {
+  background: var(--gc29-purple);
+  color: var(--gc29-white);
+  border-color: var(--gc29-purple);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .gr13-card :is(.gr13-caption, .gr13-eyebrow, .gr13-art-unavailable) {
+  color: var(--gc29-muted);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .gr13-card .gr13-quantity {
+  background: var(--gc29-gold-soft);
+  color: var(--gc29-gold);
+  border-color: var(--gc29-gold);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .gr13-card .gr13-bonus {
+  background: var(--gc29-gold-soft);
+  color: var(--gc29-text);
+  border-color: var(--gc29-line);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .gr13-card :is(.gr13-selection, .gr13-total) {
+  border-color: var(--gc29-line);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .gr13-card.is-confirmed {
+  border-color: var(--gc29-gold);
+}
+
+/* Preserve visible errors/success, pending content, and all existing state hooks.
+ * Global .so-error is important; override its COLORS locally, not its visibility. */
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-error,
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-error {
+  background: var(--gc29-error-bg) !important;
+  color: var(--gc29-error-text) !important;
+  border-color: var(--gc29-error-line) !important;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-success {
+  background: var(--gc29-success-bg);
+  color: var(--gc29-success-text);
+  border-color: var(--gc29-success-line);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-pending {
+  background: var(--gc29-gold-soft);
+  color: var(--gc29-gold);
+  border-color: var(--gc29-gold);
+}
+
+/* Color-only hover/focus feedback. R28 disabled opacity/cursors stay untouched. */
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-send-inline:hover:not(:disabled),
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-confirm [data-so-gift-action="confirm"]:hover:not(:disabled) {
+  background: var(--gc29-purple-hover);
+  color: var(--gc29-white);
+  border-color: var(--gc29-purple-hover);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] :is(button, input, select, summary, a, [tabindex]):focus-visible {
+  outline-color: var(--gc29-purple) !important;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 :is(.so-gift-send-inline, [data-so-gift-action="confirm"], .so-gift-quantities > [aria-pressed="true"]):focus-visible {
+  outline-color: var(--gc29-white) !important;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 :is(.so-gift-catalog, .so-gift-quote-details, .so-gift-confirm, .so-gift-empty) {
+  scrollbar-color: var(--gc29-line-strong) transparent;
+}
+
+/* R38: local drawer refinements, not a room redesign or a second gift system. */
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-sheet-status{
+  padding-inline-start:42px;padding-inline-end:10px;min-height:24px;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-card{
+  width:124px;min-height:44px;gap:7px;padding:5px 7px;
+  border-color:var(--gc29-line);border-radius:22px;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-card[aria-checked="true"]{
+  border-color:var(--gc29-gold);box-shadow:inset 0 0 0 1px #b98a3d20;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-avatar{
+  width:30px;height:30px;min-width:30px;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-card b{
+  font-size:11px;font-weight:600;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-recipient-card small{
+  font-size:9px;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-categories{
+  padding-block:3px 5px;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-categories button{
+  min-height:38px;font-size:12px;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-categories button[aria-pressed="true"]{
+  color:var(--gc29-gold);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-categories button[aria-pressed="true"]::after{
+  background:var(--gc29-gold);
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-card.is-picked{
+  border-color:var(--gc29-gold);box-shadow:0 0 0 1px #b98a3d15;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-send-inline{
+  min-height:28px;background:linear-gradient(120deg,#fffaf0,#fffaf0);font-weight:600;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-quote-summary{
+  font-size:10px;padding-block:5px;
+}
+.so-page[data-so-social-voice="true"] [data-so-panel="gifts"] .so-gift-reference-r28 .so-gift-quote-summary strong{
+  color:var(--gc29-gold);font-size:11px;font-weight:600;
+}

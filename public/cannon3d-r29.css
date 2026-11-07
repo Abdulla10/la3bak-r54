@@ -1,0 +1,82 @@
+/* R29 real GLB view only. Load AFTER the room/reference CSS. No image backgrounds. */
+.so-room-detail .cannon3d-r29-mount {
+  position:relative;display:block;box-sizing:border-box;isolation:isolate;min-width:0;overflow:hidden;
+}
+.so-room-detail .cannon3d-r29-view {
+  position:absolute;inset:0;display:block;overflow:hidden;
+}
+.so-room-detail .cannon3d-r29-canvas {
+  display:block;width:100%;height:100%;outline-offset:-3px;
+}
+.so-room-detail .cannon3d-r29-status,
+.so-room-detail [data-cannon3d-placeholder] {
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  box-sizing:border-box;padding:6px;text-align:center;font:500 11px/1.65 system-ui,sans-serif;
+  color:inherit;pointer-events:none;overflow-wrap:anywhere;
+}
+.so-room-detail .cannon3d-r29-status[hidden],
+.so-room-detail [data-cannon3d-placeholder][hidden] {display:none;}
+.so-room-detail [data-cannon3d-state="unavailable"] .cannon3d-r29-status,
+.so-room-detail [data-cannon3d-state="unavailable"] > [data-cannon3d-placeholder] {
+  color:#7b253b;background:#d4e4d8;border-radius:8px;
+}
+/* Miniature must never become a second canvas or take the shortcut's tap. */
+.so-room-detail .so-cannon-shortcut .cannon3d-r29-mount {
+  width:38px;height:29px;flex:0 0 29px;pointer-events:none;background:none;
+}
+.so-room-detail .so-cannon-shortcut .cannon3d-r29-mount * {pointer-events:none!important;}
+.so-room-detail .so-cannon-shortcut .cannon3d-r29-status,
+.so-room-detail .so-cannon-shortcut [data-cannon3d-placeholder] {
+  padding:1px;font:500 7px/1.25 system-ui,sans-serif;
+}
+.so-page[data-so-social-voice="true"] .so-room-detail .so-cannon-hero {
+  position:relative;display:block;height:202px;margin:6px auto 10px;padding:0;
+}
+.so-page[data-so-social-voice="true"] .so-room-detail .so-cannon-hero > .cannon3d-r29-mount {
+  position:absolute;inset:0 0 30px;width:100%;height:auto;background:none;border:0;padding:0;
+}
+.so-room-detail [data-cannon3d-mount="hero"] .cannon3d-r29-canvas {
+  cursor:grab;touch-action:none;pointer-events:auto;
+}
+.so-room-detail [data-cannon3d-mount="hero"] .cannon3d-r29-canvas:active {cursor:grabbing;}
+.so-room-detail [data-cannon3d-mount="hero"] .cannon3d-r29-canvas:focus-visible {outline:2px solid #d4e4d8;}
+.so-page[data-so-social-voice="true"] .so-room-detail .so-cannon-hero > .cannon3d-r29-level {
+  position:absolute;inset:auto auto 22px 50%;transform:translateX(-50%);white-space:nowrap;
+  font:700 10px/1.4 system-ui,sans-serif;padding:2px 10px;pointer-events:none;
+}
+.so-room-detail .cannon3d-r29-hint {
+  position:absolute;inset:auto 5px 0;text-align:center;color:#264d3b;
+  font:500 10px/1.6 system-ui,sans-serif;pointer-events:none;
+}
+/* Burst icon is replaced by the SAME live canvas and real 3D particles. */
+.so-page[data-so-social-voice="true"] .so-room-detail .cannon3d-r29-explosion {
+  position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:46;
+  display:flex;flex-direction:column;align-items:center;gap:7px;width:280px;max-width:90%;
+  box-sizing:border-box;padding:14px 12px;pointer-events:none;text-align:center;
+  border:1px solid #b98a3d55;border-radius:20px;color:#8a641f;
+  background:radial-gradient(ellipse at center,#fffaf0f2,#fffaf0d9 65%,#fffaf099);
+}
+.so-room-detail .cannon3d-r29-explosion > [data-cannon3d-mount="explosion"] {
+  flex:none;width:100%;height:175px;background:none;
+}
+.so-room-detail [data-cannon3d-mount="explosion"] .cannon3d-r29-canvas {pointer-events:none;}
+.so-room-detail .cannon3d-r29-explosion > b {font:750 17px/1.6 system-ui,sans-serif;}
+.so-room-detail .cannon3d-r29-explosion > span:not(.cannon3d-r29-mount) {font:500 11px/1.7 system-ui,sans-serif;}
+@media(max-width:360px) {
+  .so-page[data-so-social-voice="true"] .so-room-detail .so-cannon-hero {height:184px;}
+  .so-room-detail .cannon3d-r29-hint {font-size:9px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .so-room-detail .cannon3d-r29-canvas,.so-room-detail .cannon3d-r29-explosion {animation:none!important;transition:none!important;}
+}
+
+/* Short/landscape screens: the cannon is a bounded viewport panel, not a tall
+   workspace child whose bottom is brought into view instead of the model. */
+@media(max-height:520px){
+  .so-page[data-so-social-voice="true"] .so-room-detail [data-so-panel="cannon"]{position:fixed;inset:var(--so-viewport-top,0px) auto auto var(--so-viewport-left,0px);width:var(--so-viewport-width,100vw);height:var(--so-viewport-height,100dvh);max-height:var(--so-viewport-height,100dvh);min-height:0;z-index:45;display:flex;flex-direction:column;overflow:hidden;border-radius:0;box-sizing:border-box;}
+  .so-page[data-so-social-voice="true"] .so-room-detail [data-so-panel="cannon"]>.so-room-panel-heading{flex:none;min-height:40px;}
+  .so-page[data-so-social-voice="true"] .so-room-detail [data-so-panel="cannon"]>.so-room-panel-body{flex:1 1 0%;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
+}
+@media(max-height:520px){
+  .so-page[data-so-social-voice="true"] .so-room-detail .so-room-panel-slot:has([data-so-panel="cannon"]){position:fixed;inset:var(--so-viewport-top,0px) auto auto var(--so-viewport-left,0px);width:var(--so-viewport-width,100vw);height:var(--so-viewport-height,100dvh);max-width:none;max-height:var(--so-viewport-height,100dvh);z-index:45;overflow:visible;}
+}

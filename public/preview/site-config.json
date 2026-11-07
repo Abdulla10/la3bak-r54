@@ -1,0 +1,14 @@
+{
+  "appStoreUrl": null,
+  "googlePlayUrl": null,
+  "socialLinks": [],
+  "banners": [
+    {
+      "image": "/preview/assets/profile/royal-landscape.webp",
+      "title": "لعبنا",
+      "subtitle": "منصة ألعاب اجتماعية تجمع بين المتعة والتنافس والأصدقاء",
+      "href": "#/games",
+      "cta": "ابدأ اللعب الآن"
+    }
+  ]
+}

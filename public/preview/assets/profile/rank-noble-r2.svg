@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" width="240" height="240" fill="none">
+  <title>Amethyst noble rank shield</title><desc>Text-free editable badge with polished gold crown and layered laurel wings. Label safe area x66–174 y105–140; value safe area x74–166 y148–185.</desc>
+  <defs>
+    <linearGradient id="rn-gold" x1=".1" y1="0" x2=".85" y2="1"><stop stop-color="#6f3716"/><stop offset=".12" stop-color="#fff1bd"/><stop offset=".28" stop-color="#d99c37"/><stop offset=".44" stop-color="#fff6c7"/><stop offset=".55" stop-color="#a76b22"/><stop offset=".72" stop-color="#eac26b"/><stop offset=".85" stop-color="#fff0aa"/><stop offset="1" stop-color="#754019"/></linearGradient>
+    <linearGradient id="rn-bright" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffbea"/><stop offset=".3" stop-color="#f6d88c"/><stop offset=".65" stop-color="#e9b64e"/><stop offset="1" stop-color="#a67429"/></linearGradient>
+    <linearGradient id="rn-shadow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ded3a0"/><stop offset=".26" stop-color="#c5923b"/><stop offset=".57" stop-color="#aa7529"/><stop offset="1" stop-color="#4c2b16"/></linearGradient>
+    <linearGradient id="rn-body" x1="50" y1="62" x2="175" y2="207" gradientUnits="userSpaceOnUse"><stop stop-color="#a44ae0"/><stop offset=".2" stop-color="#6929a4"/><stop offset=".43" stop-color="#35124f"/><stop offset=".68" stop-color="#471468"/><stop offset=".84" stop-color="#70279c"/><stop offset="1" stop-color="#190d30"/></linearGradient>
+    <radialGradient id="rn-sheen" cx=".26" cy=".12" r=".9"><stop stop-color="#d995ff" stop-opacity=".38"/><stop offset=".5" stop-color="#a441ef" stop-opacity=".04"/><stop offset="1" stop-color="#5b1383" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rn-gem" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#efbaff"/><stop offset=".27" stop-color="#b95dfa"/><stop offset=".51" stop-color="#691c9c"/><stop offset=".75" stop-color="#993ada"/><stop offset="1" stop-color="#2d0e47"/></linearGradient>
+    <linearGradient id="rn-ruby" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb2e1"/><stop offset=".34" stop-color="#d84aab"/><stop offset=".61" stop-color="#982557"/><stop offset="1" stop-color="#3f103d"/></linearGradient>
+    <g id="rn-leaf"><path d="M0 0C-8-10-11-27 0-46C11-27 8-10 0 0Z" fill="url(#rn-gold)" stroke="#89501f" stroke-width=".75"/><path d="M0-46L-1-19L0 0C-10-15-8-29 0-46Z" fill="url(#rn-bright)"/><path d="M0-46L-1-19L0 0C10-15 8-29 0-46Z" fill="url(#rn-shadow)"/><path d="M0-46L3-29L-1-19Z" fill="#fff8ce"/><path d="M-1-19L3-29L5-18L0 0Z" fill="#dca241"/><path d="M0-44L-1-19L0-3" stroke="#ffedb0" stroke-width=".65"/></g>
+    <g id="rn-wings"><path d="M53 178C27 159 20 122 33 83" stroke="#563017" stroke-width="5"/><path d="M53 178C27 159 20 122 33 83" stroke="url(#rn-gold)" stroke-width="3"/><path d="M51 175C28 157 23 122 34 85" stroke="#ffebb0" stroke-width=".8"/>
+      <use xlink:href="#rn-leaf" transform="translate(30 100) rotate(-17) scale(.68 .76)"/><use xlink:href="#rn-leaf" transform="translate(27 119) rotate(-24) scale(.8 .85)"/><use xlink:href="#rn-leaf" transform="translate(28 137) rotate(-36) scale(.82 .92)"/><use xlink:href="#rn-leaf" transform="translate(34 153) rotate(-47) scale(.82 .91)"/><use xlink:href="#rn-leaf" transform="translate(43 168) rotate(-58) scale(.76 .8)"/><use xlink:href="#rn-leaf" transform="translate(54 179) rotate(-67) scale(.68 .7)"/>
+      <use xlink:href="#rn-leaf" transform="translate(28 117) rotate(24) scale(.57 .66)"/><use xlink:href="#rn-leaf" transform="translate(29 137) rotate(30) scale(.6 .68)"/><use xlink:href="#rn-leaf" transform="translate(35 153) rotate(37) scale(.64 .75)"/><use xlink:href="#rn-leaf" transform="translate(43 168) rotate(44) scale(.7 .76)"/>
+      <path d="M36 160L41 166L36 172L31 166Z" fill="url(#rn-gem)" stroke="#ffe7a8" stroke-width="1.2"/><path d="M36 161L36 166L32 166Z" fill="#f2c5ff"/>
+    </g>
+    <g id="rn-jewel"><path d="M0-5L4 0L0 5L-4 0Z" fill="url(#rn-ruby)" stroke="#ffeab1" stroke-width="1"/><path d="M0-4L0 0L-3 0Z" fill="#ffb5e1"/></g>
+    <g id="rn-spark"><path d="M0-4.5L.9-.9L4.5 0L.9 .9L0 4.5L-.9 .9L-4.5 0L-.9-.9Z" fill="#fff3c2"/></g>
+  </defs>
+  <!-- Layered, wide ornament is separate from the curved shield face. -->
+  <use xlink:href="#rn-wings"/><use xlink:href="#rn-wings" transform="translate(240 0) scale(-1 1)"/>
+  <path d="M38 65Q38 52 54 52H186Q202 52 202 65L198 132C194 175 170 207 120 224C70 207 46 175 42 132Z" fill="#482615" stroke="#9d58d1" stroke-opacity=".38" stroke-width="4"/>
+  <path d="M38 65Q38 52 54 52H186Q202 52 202 65L198 132C194 175 170 207 120 224C70 207 46 175 42 132Z" fill="url(#rn-gold)" stroke="#ffe4a0" stroke-width="1.3"/>
+  <path d="M42 66Q42 56 55 56H185Q198 56 198 66L194 131C190 172 167 203 120 219C73 203 50 172 46 131Z" stroke="#76502a" stroke-width="1.4"/>
+  <path d="M45 67Q45 59 56 59H184Q195 59 195 67L191 130C187 170 165 199 120 215C75 199 53 170 49 130Z" fill="url(#rn-body)" stroke="#fff0b4" stroke-width="1.25"/>
+  <path d="M49 69Q49 63 58 63H182Q191 63 191 69L187 130C183 167 162 196 120 211C78 196 57 167 53 130Z" stroke="#b07b33" stroke-width="1"/>
+  <path d="M52 71Q52 66 60 66H180Q188 66 188 71L184 130C180 164 160 193 120 207C80 193 60 164 56 130Z" fill="url(#rn-sheen)" stroke="#e4b76a" stroke-opacity=".62" stroke-width=".65"/>
+  <path d="M55 91L58 128C61 161 77 186 106 201" stroke="#d391fa" stroke-opacity=".45" stroke-width="1.1"/><path d="M185 89L182 127C179 157 169 176 154 188" stroke="#20102e" stroke-width="1.5"/>
+  <path d="M48 68Q49 62 57 62H80M160 62H183Q191 62 192 68M58 166C68 185 87 202 113 213" stroke="#fff7d8" stroke-width="1" stroke-linecap="round"/>
+  <!-- Low corner scrolls do not enter the label/value zones. -->
+  <path d="M74 189C80 196 92 203 106 207L99 198L93 200L91 192L85 194L83 187Z" fill="url(#rn-gold)" stroke="#d3a252" stroke-width=".7"/><path d="M166 189C160 196 148 203 134 207L141 198L147 200L149 192L155 194L157 187Z" fill="url(#rn-gold)" stroke="#d3a252" stroke-width=".7"/>
+  <path d="M120 197L129 208L120 219L111 208Z" fill="url(#rn-gold)" stroke="#ffedb8" stroke-width=".8"/><path d="M120 201L125 208L120 215L115 208Z" fill="url(#rn-gem)"/><path d="M120 201L120 208L115 208Z" fill="#e8b6ff"/>
+  <!-- Ornate five-prong crown, y15–80. -->
+  <path d="M67 35L86 48L87 23L105 43L120 16L135 43L153 23L154 48L173 35L164 67Q120 79 76 67Z" fill="#653a18" stroke="#ffdf92" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M70 36L87 53L89 26L106 49L120 20L134 49L151 26L153 53L170 36L162 64Q120 75 78 64Z" fill="url(#rn-gold)"/>
+  <path d="M70 36L87 53L78 64Z M89 26L99 64L87 53Z M120 20L120 66L106 49Z M151 26L153 53L143 64Z M170 36L162 64L153 53Z" fill="url(#rn-bright)"/>
+  <path d="M89 26L106 49L99 64Z M120 20L134 49L120 66Z M151 26L143 64L134 49Z" fill="url(#rn-shadow)"/>
+  <path d="M77 61Q120 72 163 61L162 73Q120 85 78 73Z" fill="url(#rn-gold)" stroke="#ffdf9b" stroke-width="1.2"/>
+  <path d="M80 65Q120 75 160 65M80 71Q120 81 160 71" stroke="#673815" stroke-width=".9"/><path d="M81 66Q120 76 159 66" stroke="#fff5c2" stroke-width=".7"/>
+  <path d="M120 30L129 43L120 56L111 43Z" fill="url(#rn-gold)" stroke="#fff0b7" stroke-width="1"/><path d="M120 33L126 43L120 52L114 43Z" fill="url(#rn-gem)"/><path d="M120 33L120 43L114 43Z" fill="#eab7ff"/><path d="M120 43L126 43L120 52Z" fill="#4b0e7b"/>
+  <use xlink:href="#rn-jewel" transform="translate(91 47) rotate(-12)"/><use xlink:href="#rn-jewel" transform="translate(149 47) rotate(12)"/><use xlink:href="#rn-jewel" transform="translate(78 48) rotate(-20) scale(.65)"/><use xlink:href="#rn-jewel" transform="translate(162 48) rotate(20) scale(.65)"/>
+  <path d="M104 68L107 72L104 76L101 72Z M136 68L139 72L136 76L133 72Z" fill="url(#rn-gem)" stroke="#ffe7aa" stroke-width=".8"/>
+  <g fill="url(#rn-bright)" stroke="#a76f2a" stroke-width=".7"><circle cx="67" cy="35" r="2.6"/><circle cx="87" cy="23" r="2.3"/><circle cx="120" cy="16" r="2.8"/><circle cx="153" cy="23" r="2.3"/><circle cx="173" cy="35" r="2.6"/></g>
+  <path d="M108 61Q120 55 132 61" stroke="#fff0b3" stroke-width="1"/>
+  <use xlink:href="#rn-spark" transform="translate(45 79) scale(.75)"/><use xlink:href="#rn-spark" transform="translate(196 79) scale(.75)"/><use xlink:href="#rn-spark" transform="translate(67 181) scale(.6)"/><use xlink:href="#rn-spark" transform="translate(173 181) scale(.6)"/>
+</svg>

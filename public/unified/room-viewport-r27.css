@@ -1,0 +1,56 @@
+/* R27: CSS viewport occupancy, not the browser Fullscreen API.
+ * Only standalone social rooms opt in; game voice/engine wrappers keep their
+ * existing switcher offset. Room header, artwork, sheets and safe-area padding
+ * remain owned by the room styles. No global color/layout skin overrides. */
+html.lb-social-viewport-r27,
+html.lb-social-viewport-r27 body {
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+  overscroll-behavior:none;
+}
+html.lb-social-viewport-r27 #view {
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+}
+.lb-unified.lb-social-entered[data-so-viewport-room="true"] {
+  position:fixed;
+  top:var(--so-viewport-top,0px);
+  left:var(--so-viewport-left,0px);
+  right:auto;
+  bottom:auto;
+  width:var(--so-viewport-width,100%);
+  max-width:none;
+  height:100vh;
+  height:var(--so-viewport-height,100dvh);
+  min-height:0;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  --lb-bottom-space:0px;
+  --so-room-top-offset:0px;
+}
+.lb-unified.lb-social-entered[data-so-viewport-room="true"] > :is(.lb-topbar,.lb-route-meta,.lb-bottom,.lb-wallet-strip) {
+  display:none!important;
+}
+.lb-unified.lb-social-entered[data-so-viewport-room="true"] > .lb-content,
+.lb-unified.lb-social-entered[data-so-viewport-room="true"] .so-page[data-so-viewport-room="true"],
+.lb-unified.lb-social-entered[data-so-viewport-room="true"] .so-page[data-so-viewport-room="true"] > [data-so-host] {
+  box-sizing:border-box;
+  width:100%;
+  max-width:none;
+  height:100%;
+  min-height:0;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+}
+.lb-unified.lb-social-entered[data-so-viewport-room="true"] [data-so-room-detail] {
+  box-sizing:border-box;
+  width:100%;
+  max-width:none;
+  height:100%;
+  min-height:0;
+  margin:0;
+}

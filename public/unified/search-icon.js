@@ -1,0 +1,2 @@
+// Static SVG shared by the header trigger and the search form; no runtime assets.
+export const SEARCH_ICON = '<svg class="lb-search-icon" data-search-icon aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10.75" cy="10.75" r="6.75" stroke="currentColor" stroke-width="1.8"/><path d="m15.75 15.75 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
