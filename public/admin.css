@@ -1,0 +1,45 @@
+/* لوحة الإدارة: جوال أولاً، RTL، بنفس ثيم الموقع الداكن. كل الأصناف تبدأ بـ ad- */
+.ad{max-width:1000px;margin:0 auto;padding:12px 12px 80px;color:var(--ink,#264d3b);font-family:var(--font-body,inherit);}
+.ad *{box-sizing:border-box;}
+.ad h1{margin:0;font:400 24px/1.3 var(--font-display,inherit);}.ad h2{margin:0 0 10px;font:700 17px/1.4 var(--font-body,inherit);}.ad h3{margin:0 0 6px;font:700 15px/1.4 var(--font-body,inherit);}
+.ad-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}.ad-role{display:block;color:var(--muted,#264d3b);font-size:13px;}
+.ad-tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;margin:0 -12px;padding-inline:12px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
+.ad-tab{flex:none;min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--line,#d4e4d840);background:var(--surface,#fffaf0b8);color:inherit;font:600 14px var(--font-body,inherit);cursor:pointer;white-space:nowrap;}
+.ad-tab.on{background:var(--grad,linear-gradient(135deg,#fffaf0,#fffaf0));border-color:transparent;color:#fff;}
+.ad-main{display:grid;gap:12px;min-width:0;}
+.ad-card{padding:14px;border-radius:18px;background:var(--surface,#fffaf0b8);border:1px solid var(--line,#d4e4d840);min-width:0;}
+.ad-login{max-width:420px;margin:30px auto;display:grid;gap:12px;}.ad-login form{display:grid;gap:10px;}
+.ad-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
+.ad-stat{display:grid;gap:2px;padding:12px;border-radius:16px;background:var(--surface,#fffaf0b8);border:1px solid var(--line,#d4e4d840);min-width:0;}
+.ad-stat b{font:800 22px/1.2 var(--font-body,inherit);overflow-wrap:anywhere;}.ad-stat span{color:var(--muted,#264d3b);font-size:13px;}.ad-stat small{color:var(--muted,#264d3b);font-size:12px;}
+.ad-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;}.ad-kv dt{color:var(--muted,#264d3b);font-size:14px;}.ad-kv dd{margin:0;font-weight:600;overflow-wrap:anywhere;min-width:0;}
+.ad-muted{color:var(--muted,#264d3b);font-size:13px;line-height:1.6;margin:0 0 10px;}
+.ad-empty{padding:16px;text-align:center;color:var(--muted,#264d3b);margin:0;}
+.ad-note{padding:10px 12px;border-radius:12px;background:#d4e4d81f;border:1px solid #d4e4d866;font-size:14px;line-height:1.6;}
+.ad-note.warn{background:#e8c98724;border-color:#b98a3d8c;}.ad-note.ok{background:rgba(94,230,168,.12);border-color:rgba(94,230,168,.45);}.ad-note.bad{background:rgba(255,90,90,.14);border-color:rgba(255,90,90,.5);}
+.ad-btn{min-height:44px;padding:0 16px;border-radius:12px;border:0;background:var(--grad,linear-gradient(135deg,#fffaf0,#fffaf0));color:#fff;font:700 15px var(--font-body,inherit);cursor:pointer;}
+.ad-btn.ghost{background:transparent;border:1px solid var(--line,#d4e4d866);color:inherit;}.ad-btn.danger{background:#d4e4d8;}.ad-btn:disabled{opacity:.45;cursor:default;}
+.ad-btn[data-armed="1"]{outline:2px solid #b98a3d;}
+.ad-in{width:100%;min-height:44px;padding:8px 12px;border-radius:12px;border:1px solid var(--line,#d4e4d866);background:#fffaf047;color:inherit;font:500 15px var(--font-body,inherit);}
+textarea.ad-in{resize:vertical;min-height:80px;}
+.ad label{display:grid;gap:4px;font-size:13px;color:var(--muted,#264d3b);}
+.ad-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}.ad-form>*{flex:1 1 150px;min-width:0;}.ad-form .ad-btn{flex:0 0 auto;}.ad-form.col{flex-direction:column;align-items:stretch;}.ad-form.col>*{flex:0 0 auto;}
+.ad-search{display:grid;grid-template-columns:1fr auto auto;gap:8px;}.ad-search .ad-in:nth-child(2){width:auto;}
+.ad-list{display:grid;gap:8px;}
+.ad-row{display:grid;gap:2px;text-align:start;width:100%;padding:12px;border-radius:14px;border:1px solid var(--line,#d4e4d840);background:var(--surface,#fffaf0b8);color:inherit;font:inherit;cursor:pointer;min-height:48px;}
+.ad-nm{font-weight:700;}.ad-sub{color:var(--muted,#264d3b);font-size:13px;overflow-wrap:anywhere;}
+.ad-line{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07);}
+.ad-line:last-child{border-bottom:0;}.ad-line small{display:block;color:var(--muted,#264d3b);font-size:12px;overflow-wrap:anywhere;}.ad-line>span{min-width:0;overflow-wrap:anywhere;}.ad-line>small{grid-column:1/-1;}
+.ad-acts{display:flex;gap:6px;flex-wrap:wrap;}
+.ad-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#fffaf0;vertical-align:middle;}.ad-dot.on{background:#3ddc6a;}
+.ad-tag{display:inline-block;margin-inline-start:6px;padding:1px 8px;border-radius:99px;background:#fffaf04c;font:600 12px var(--font-body,inherit);font-style:normal;}.ad-tag.bad{background:rgba(255,90,90,.35);}
+.ad-pager,.ad-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.pos{color:#506c5b;}.neg{color:#264d3b;}
+.ad-preview{padding:16px;border-radius:16px;background:#fffaf059;text-align:center;}.ad-preview p{margin:6px 0 0;white-space:pre-line;}
+.ad code{font-size:12px;word-break:break-all;}
+@media (min-width:760px){.ad{padding:20px 20px 80px;}.ad-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));}}
+
+.ad-tag.ok{background:rgba(94,230,168,.35);}.ad-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.ad-chk{display:flex;align-items:center;gap:8px;}.ad-chk input{width:20px;height:20px;}
+/* بلاغات المجتمع */
+.ad-quote{margin:8px 0;padding:10px 12px;border-inline-start:3px solid #d4e4d899;background:#fffaf00a;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.ad-link{border:0;background:none;padding:0;color:#264d3b;font:inherit;text-decoration:underline;cursor:pointer;}
