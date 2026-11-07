@@ -1,0 +1,23 @@
+Bundled dependency attribution for official livekit-client 2.23.0 ESM; collected from npm package distributions.
+
+@bufbuild/protobuf@1.10.1: (Apache-2.0 AND BSD-3-Clause); no standalone license file in published package
+@livekit/mutex@1.1.1: Apache-2.0; LICENSE
+@livekit/protocol@1.52.1: Apache-2.0; LICENSE
+@types/dom-mediacapture-record@1.0.22: MIT; LICENSE
+events@3.3.0: MIT; LICENSE
+jose@6.2.15: MIT; LICENSE.md
+livekit-client@2.23.0: Apache-2.0; LICENSE
+loglevel@1.9.2: MIT; LICENSE-MIT
+machina@7.0.1: MIT; LICENSE
+rxjs/ajax@: ; no standalone license file in published package
+rxjs/fetch@: ; no standalone license file in published package
+rxjs/operators@: ; no standalone license file in published package
+rxjs@7.8.2: Apache-2.0; LICENSE.txt
+rxjs/testing@: ; no standalone license file in published package
+rxjs/webSocket@: ; no standalone license file in published package
+sdp@3.2.2: MIT; LICENSE
+sdp-transform@2.15.0: MIT; LICENSE
+unknown@: ; no standalone license file in published package
+tslib@2.8.1: 0BSD; CopyrightNotice.txt, LICENSE.txt
+typed-emitter@2.1.0: MIT; LICENSE
+webrtc-adapter@9.0.6: BSD-3-Clause; LICENSE.md
