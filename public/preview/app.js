@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=profile-r54';
-import * as UNIFIED from '../unified/shell.js?v=profile-r53b';
+import * as PR from './profile.js?v=profile-r55';
+import * as UNIFIED from '../unified/shell.js?v=social-r55';
 import * as REF from '../unified/home.js?v=minaboli-cover-r49';
-import * as SOCIAL from '../unified/social.js?v=root-navigation-r50';
+import * as SOCIAL from '../unified/social.js?v=social-r55';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=purple-r38';
@@ -452,7 +452,8 @@ async function render() {
   if (changed) destroyMinaboliMount();
   if (changed) { cityAnimationGeneration++; CITY.CT.moving = false; if (CITY.CT.data) CITY.CT.shownPos = CITY.CT.data.pos; }
   if (changed) { functionalMount?.destroy?.(); functionalMount = null; }
-  if (!['social-room','room'].includes(r.name) || !S.user || lastSocialIdentity!==S.user.id || isCommunityRestricted()) void leaveSocial();
+  /* R55: «حفظ الغرفة» يخلي الغرفة والصوت شغالين وأنت تتصفح؛ تبديل الحساب أو القيود تطلعك دايمًا */
+  if (!S.user || lastSocialIdentity!==S.user.id || isCommunityRestricted() || (!['social-room','room'].includes(r.name) && !SOCIAL.socialMinimized?.())) void leaveSocial();
   lastSocialIdentity = S.user?.id ?? null;
   document.documentElement.classList.toggle('is-home', r.name === 'home');
   document.documentElement.classList.toggle('is-profile-ui', ['profile','account','settings','wallet','shop','notifications','notifications-internal'].includes(r.name));

@@ -13,7 +13,8 @@ export interface AccountSettings {
 }
 export const ACCOUNT_SETTINGS_DEFAULTS: Readonly<AccountSettings> = Object.freeze({
   sound: false, notifications: false, showActivity: false, showPresence: false,
-  hideEntrances: true, hideChatEffects: true,
+  // R55: مؤثرات الهدايا ثلاثية الأبعاد والدخوليات تظهر افتراضيًا (مثل باقي المنصات)، واللاعب يقدر يخفيها من الإعدادات
+  hideEntrances: false, hideChatEffects: false,
 });
 export const ACCOUNT_REASON_MAX = 500;
 export type VerificationStatus = 'pending' | 'accepted' | 'rejected' | 'revoked';
@@ -258,7 +259,9 @@ export class AccountTools {
     playerId(id);
     const patch = settingsPatch(raw), current = this.settings(id), next = { ...current, ...patch };
     if (KEYS.every(k => current[k] === next[k])) return next;
-    return this.commit(() => { this.d.settings[id] = next; return { ...next }; });
+    // R55: نخزن اختيارات اللاعب الصريحة فقط، عشان تغيير الافتراضي مستقبلًا ما ينحبس بقيم ما اختارها
+    const stored = { ...(own(this.d.settings, id) ? this.d.settings[id] : {}), ...patch };
+    return this.commit(() => { this.d.settings[id] = stored; return { ...next }; });
   }
   requestVerification(id: string, reason: unknown) {
     playerId(id); const text = reasonText(reason), prev = this.latest(id);

@@ -562,6 +562,23 @@ export class SocialRooms {
             fail('challenge_receipt_capacity', 409);
         return Object.freeze({ roomId: r.id, councilId: c.id, challengeId, sourcePublic: r.privacy === 'public' && c.privacy === 'public' && [sender, recipient].every(id => this.opts.supportPublicActivity?.(id) !== false) && !this.state.receipts.some(p => p.command === 'game:bind' && p.key === r.id) });
     }
+    /** R55: فحص جوائز المدفع بدون رمي خطأ. لو عنصر جائزة صار مقفول برتبة أو موقوف بالمتجر، الغرف والدردشة والهدايا تكمل عادي والمدفع ما ينفعّل لين ترجع الجوائز صالحة. */
+    cannonCatalogReady() {
+        if (!this.opts.cannon)
+            return false;
+        try {
+            validateCannonCatalog(this.opts.cannon.catalog);
+            return true;
+        }
+        catch {
+            if (!this.cannonCatalogWarned) {
+                this.cannonCatalogWarned = true;
+                console.warn(JSON.stringify({ event: 'cannon_reward_catalog_unavailable', note: 'room cannon disabled until reward items are valid' }));
+            }
+            return false;
+        }
+    }
+    cannonCatalogWarned = false;
     /** Lazy enablement is a social commit BEFORE any outgoing payment, never history backfill. */
     ensureCannon(roomId) {
         if (!this.opts.cannon)
@@ -569,7 +586,8 @@ export class SocialRooms {
         const r = this.room(this.state, roomId);
         if (r.cannon || this.state.receipts.some(p => p.command === 'game:bind' && p.key === roomId))
             return;
-        validateCannonCatalog(this.opts.cannon.catalog);
+        if (!this.cannonCatalogReady())
+            return; // R55: جوائز المدفع غير جاهزة بالمتجر → الغرفة تشتغل بدون مدفع بدل ما تتعطل
         const before = this.state, d = structuredClone(before), now = this.clock(), room = this.room(d, roomId);
         room.cannon = createCannon(room.ownerId, now);
         room.updatedAt = now;
@@ -1472,10 +1490,8 @@ export class SocialRooms {
                     room[k] = b[k];
             if (admission.protection)
                 room.password = admission.protection;
-            if (this.opts.cannon) {
-                validateCannonCatalog(this.opts.cannon.catalog);
+            if (this.opts.cannon && this.cannonCatalogReady())
                 room.cannon = createCannon(id, now);
-            }
             d.rooms.push(room);
             this.enterRoom(d, room, id, media, now, { passwordVerifiedRoomId: room.id });
             this.activity(room, command, now);
@@ -1639,6 +1655,27 @@ export class SocialRooms {
         }
         if (!this.visibleRoom(r, id))
             fail('room_not_found', 404);
+        /* R55: صاحب الغرفة يحذف غرفته بنفسه — نفس حماية الإدارة: ما تنحذف وفيه جائزة مدفع معلّقة، ولا غرفة مربوطة بلعبة. */
+        if (command === 'room:delete') {
+            if (!keys(b, ['roomId']))
+                fail('invalid_room_delete');
+            if (r.ownerId !== id)
+                fail('owner_required', 403);
+            if (this.gameBound(d, r))
+                fail('game_room_delete_unavailable', 403);
+            if (r.cannon && this.cannonPendingFor(r.cannon) > 0)
+                fail('cannon_award_pending', 409);
+            for (const m of [...r.members])
+                this.remove(d, m.id, media);
+            d.rooms = d.rooms.filter(x => x.id !== r.id);
+            for (const p of d.preferences) {
+                if (p.followedRoomIds)
+                    p.followedRoomIds = p.followedRoomIds.filter(x => x !== r.id);
+                if (p.recentRoomIds)
+                    p.recentRoomIds = p.recentRoomIds.filter(x => x !== r.id);
+            }
+            return success({ roomId: r.id, closed: true });
+        }
         if (command === 'room:follow') {
             if (!this.directoryVisibleRoom(r, id))
                 fail('room_not_found', 404);
@@ -2282,7 +2319,7 @@ export class SocialRooms {
             this.ready();
             this.actor(userId);
             const visible = this.visibleRoomIds(userId);
-            return { ok: true, rooms: this.state.rooms.filter(r => visible.has(r.id)).map(r => ({ id: r.id, name: r.name, description: r.description, photo: this.photo(r), privacy: r.privacy, memory: r.memory, maxMembers: r.maxMembers, ...this.directoryRoomView(r), owner: this.who(r.ownerId), host: r.hostId && !this.blocked(userId, r.hostId) ? this.who(r.hostId) : null, count: r.members.length, councils: r.councils.length, joined: r.members.some(m => m.id === userId && (m.deadline === null || m.deadline > this.clock())), createdAt: r.createdAt, updatedAt: r.updatedAt })), directory: this.directoryView(userId, visible), current: this.current(userId), preferences: this.prefsView(userId), config: { enabled: this.state.config.enabled, requireAdultAck: this.opts.requireAdultAck !== false, minimumAge: 18, ageVerification: 'parent-eligibility-hook-plus-self-acknowledgement', maxCouncilSeats: this.state.config.maxCouncilSeats, defaultCouncilSeats: this.state.config.defaultCouncilSeats, modes: structuredClone(this.state.config.content.settings), capabilities: directoryCapabilitiesR30() } };
+            return { ok: true, rooms: this.state.rooms.filter(r => visible.has(r.id)).map(r => ({ id: r.id, mine: r.ownerId === userId, name: r.name, description: r.description, photo: this.photo(r), privacy: r.privacy, memory: r.memory, maxMembers: r.maxMembers, ...this.directoryRoomView(r), owner: this.who(r.ownerId), host: r.hostId && !this.blocked(userId, r.hostId) ? this.who(r.hostId) : null, count: r.members.length, councils: r.councils.length, joined: r.members.some(m => m.id === userId && (m.deadline === null || m.deadline > this.clock())), createdAt: r.createdAt, updatedAt: r.updatedAt })), directory: this.directoryView(userId, visible), current: this.current(userId), preferences: this.prefsView(userId), config: { enabled: this.state.config.enabled, requireAdultAck: this.opts.requireAdultAck !== false, minimumAge: 18, ageVerification: 'parent-eligibility-hook-plus-self-acknowledgement', maxCouncilSeats: this.state.config.maxCouncilSeats, defaultCouncilSeats: this.state.config.defaultCouncilSeats, modes: structuredClone(this.state.config.content.settings), capabilities: directoryCapabilitiesR30() } };
         }));
     }
     async detail(userId, roomId) {

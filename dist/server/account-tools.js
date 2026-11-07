@@ -3,7 +3,8 @@ import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 import { can } from './platform.js';
 export const ACCOUNT_SETTINGS_DEFAULTS = Object.freeze({
     sound: false, notifications: false, showActivity: false, showPresence: false,
-    hideEntrances: true, hideChatEffects: true,
+    // R55: مؤثرات الهدايا ثلاثية الأبعاد والدخوليات تظهر افتراضيًا (مثل باقي المنصات)، واللاعب يقدر يخفيها من الإعدادات
+    hideEntrances: false, hideChatEffects: false,
 });
 export const ACCOUNT_REASON_MAX = 500;
 export const VERIFICATION_GRANT_REASON_MAX = 180;
@@ -288,7 +289,9 @@ export class AccountTools {
         const patch = settingsPatch(raw), current = this.settings(id), next = { ...current, ...patch };
         if (KEYS.every(k => current[k] === next[k]))
             return next;
-        return this.commit(() => { this.d.settings[id] = next; return { ...next }; });
+        // R55: نخزن اختيارات اللاعب الصريحة فقط، عشان تغيير الافتراضي مستقبلًا ما ينحبس بقيم ما اختارها
+        const stored = { ...(own(this.d.settings, id) ? this.d.settings[id] : {}), ...patch };
+        return this.commit(() => { this.d.settings[id] = stored; return { ...next }; });
     }
     requestVerification(id, reason) {
         playerId(id);

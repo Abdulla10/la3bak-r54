@@ -261,6 +261,12 @@ function collection(ctx,s) {
 }
 
 /* R53: بطاقة العائلة تحت هوية اللاعب (مثل بطاقة «المملكة» بالمرجع) — من /api/social-private/family لحسابك فقط، وتظهر بس لو أنت بعائلة */
+function savedRoomsCard(ctx,s) {
+ const list=s.savedRooms;
+ if(!ctx.user||ctx.noCommunity||!Array.isArray(list)||!list.length)return '';
+ const tile=r=>{const photo=/^\/api\/social\/room-photo\?|^\/(?!\/)[A-Za-z0-9_./?=&-]+$/.test(r.photo)?r.photo:'';return `<a class="pvp-room-tile" href="#/social-room/${encodeURIComponent(r.id)}" aria-label="${esc(r.name)}">${photo?`<img src="${esc(photo)}" alt="" loading="lazy">`:`<span class="pvp-room-initial" aria-hidden="true">${esc(Array.from(r.name||'غ')[0])}</span>`}<span class="pvp-room-name">${esc(r.name)}</span>${r.saved?'<i class="pvp-room-heart" aria-label="محفوظة بالقلب">❤</i>':''}</a>`;};
+ return `<section class="pvp-rooms-card" data-pvp-saved-rooms aria-labelledby="pvp-rooms-title"><header><h2 id="pvp-rooms-title">غرف الدردشة</h2><small>${list.length}</small></header><div class="pvp-rooms-row">${list.map(tile).join('')}</div></section>`;
+}
 function familyCard(ctx,s) {
  const c=s.family?.circle;
  if(!ctx.user||ctx.noCommunity||!c||typeof c.name!=='string')return '';
@@ -275,12 +281,16 @@ async function loadProfileExtras(s) {
  if(owner===extrasOwner&&Date.now()-extrasAt<30000&&s.extrasLoaded)return;
  extrasOwner=owner;extrasAt=Date.now();
  const get=async url=>{try{const r=await fetch(url,{credentials:'same-origin',cache:'no-store'});return r.ok?await r.json():null;}catch{return null;}};
- const [visitors,family]=await Promise.all([get('/api/profile/visitors?limit=1'),get('/api/social-private/family')]);
+ const [visitors,family,social]=await Promise.all([get('/api/profile/visitors?limit=1'),get('/api/social-private/family'),get('/api/social/rooms')]);
  if(!s.mounted||activeState!==s)return;
  s.extrasLoaded=true;
  const fresh=Number.isSafeInteger(visitors?.fresh)?visitors.fresh:null,fam=family&&family.ok!==false?family:null;
- const changed=fresh!==s.visitorsFresh||JSON.stringify(fam?.circle??null)!==JSON.stringify(s.family?.circle??null);
- s.visitorsFresh=fresh;s.family=fam;
+ /* R55: غرف الدردشة بالملف = الغرف المحفوظة بالقلب + الغرف اللي أنت مالكها (من الخادم فقط) */
+ const myPub=String(social?.preferences?.publicId||'');
+ const followed=new Set(Array.isArray(social?.directory?.followed)?social.directory.followed:Array.isArray(social?.preferences?.followedRoomIds)?social.preferences.followedRoomIds:[]);
+ const rooms=social?.ok&&Array.isArray(social.rooms)?social.rooms.filter(r=>r&&typeof r.id==='string'&&(followed.has(r.id)||r.mine===true)).map(r=>({id:r.id,name:String(r.name||''),photo:typeof r.photo==='string'?r.photo:'',count:Number.isSafeInteger(r.count)?r.count:null,saved:followed.has(r.id)})):null;
+ const changed=fresh!==s.visitorsFresh||JSON.stringify(fam?.circle??null)!==JSON.stringify(s.family?.circle??null)||JSON.stringify(rooms)!==JSON.stringify(s.savedRooms??null);
+ s.visitorsFresh=fresh;s.family=fam;s.savedRooms=rooms;void myPub;
  if(changed)redraw(s);
 }
 
@@ -321,7 +331,7 @@ export function profileHTML(ctx={}) {
  if(requestedTab){s.tab=requestedTab;s.collectionOpen=true;requestedTab=null;}
  const journey=s.rankOpen?renderRankOverview({...ctx,rankOverviewOpen:true,profileJourneyDefault:false,rankRewards:s.rankRewards??ctx.rankRewards,rankRewardsLoading:s.rankLoading,rankRewardsError:s.rankError,rankClaimPending:s.rankPending},s.rankSystem):'';
  const error=ctx.error || s.error;
- return `<article class="pv-profile lpu pvp-page pvp-profile-r15 pvp-profile-r19" data-profile-build="profile-list-r19" dir="rtl">${referenceHero(ctx,s)}${familyCard(ctx,s)}<div data-pvp-status class="lpu-status" ${error?'role="alert"':'role="status"'} aria-live="polite">${esc(error || s.message || (ctx.loading?'جاري تحميل بيانات حسابك…':''))}${ctx.error&&typeof ctx.refreshMe==='function'?button('account-retry','إعادة تحميل الحساب','','pvp-text-button'):''}</div>${profileGiftLog(ctx)}${profileMenu(ctx,s)}${s.rankOpen?`<div class="pvp-rank-details">${rankCards(ctx,s)}${journey}</div>`:''}${profileDetails(ctx)}${!ctx.user?`<section class="lpu-login">${guestStart(ctx)}${ctx.googleCard?ctx.googleCard():''}</section>`:ctx.google===false&&ctx.googleCard?`<details class="lpu-google-details"><summary>حماية حساب الضيف بربطه بـ Google</summary>${ctx.googleCard()}</details>`:''}${referenceDrawer(ctx,s)}${referenceBottomNav(ctx)}${collection(ctx,s)}${editor(ctx,s)}</article>`;
+ return `<article class="pv-profile lpu pvp-page pvp-profile-r15 pvp-profile-r19" data-profile-build="profile-list-r19" dir="rtl">${referenceHero(ctx,s)}${familyCard(ctx,s)}${savedRoomsCard(ctx,s)}<div data-pvp-status class="lpu-status" ${error?'role="alert"':'role="status"'} aria-live="polite">${esc(error || s.message || (ctx.loading?'جاري تحميل بيانات حسابك…':''))}${ctx.error&&typeof ctx.refreshMe==='function'?button('account-retry','إعادة تحميل الحساب','','pvp-text-button'):''}</div>${profileGiftLog(ctx)}${profileMenu(ctx,s)}${s.rankOpen?`<div class="pvp-rank-details">${rankCards(ctx,s)}${journey}</div>`:''}${profileDetails(ctx)}${!ctx.user?`<section class="lpu-login">${guestStart(ctx)}${ctx.googleCard?ctx.googleCard():''}</section>`:ctx.google===false&&ctx.googleCard?`<details class="lpu-google-details"><summary>حماية حساب الضيف بربطه بـ Google</summary>${ctx.googleCard()}</details>`:''}${referenceDrawer(ctx,s)}${referenceBottomNav(ctx)}${collection(ctx,s)}${editor(ctx,s)}</article>`;
 }
 
 function redraw(s) {

@@ -15,7 +15,7 @@ import * as store from './store.js?v=build-all-r47';
 import * as payments from './payments.js?v=root-navigation-r50';
 import * as ranks from './ranks.js?v=vip-noble-r52';
 import * as vip from './vip.js?v=vip-noble-r52';
-import * as social from './social.js?v=root-navigation-r50';
+import * as social from './social.js?v=social-r55';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
 export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','community','post','u','not-found']);
 export const hasRoute=name=>routes.includes(name);
