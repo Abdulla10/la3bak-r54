@@ -4,6 +4,7 @@ import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
 import {quoteGiftBatch} from './social-gift-batch-r27.js';
 import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 import { timingSafeEqual, createHash, createHmac, randomInt, randomUUID } from 'node:crypto';
@@ -405,7 +406,18 @@ export async function createApp(
   /* R60 (قرار المالك): الضيف (بدون Google) يتصفح بس، ويلعب ضد الكمبيوتر بدون جوايز. القفل هنا بالخادم.
    * يشتغل بس إذا الدخول بـGoogle مفعّل بالخادم (وإلا الضيف ما يقدر يربط حسابه أصلًا). GUEST_READONLY=0 يطفيه. */
   const GUEST_READONLY = process.env.GUEST_READONLY !== '0' && !!cfg.googleClientId;
-  const isGuest = (id: string) => GUEST_READONLY && !identities.linked(id);
+  /* R60b: مهلة للضيوف القدامى — اللي سجّلوا قبل تشغيل القفل ياخذون مهلة (افتراضيًا 14 يوم) يربطون فيها Google وكل شي شغال عندهم مع تنبيه.
+     الضيف الجديد (بعد التشغيل) يتقفل على طول. بداية المهلة تنحفظ بملف صغير عشان ما تتجدد مع كل إعادة تشغيل.
+     GUEST_LOCK_AT=2026-12-01 يحدد تاريخ القفل بنفسه، GUEST_GRACE_DAYS=0 يلغي المهلة. */
+  const graceFile = accFile ? path.join(path.dirname(accFile), 'guest-grace.json') : '';
+  const graceStart = (() => { let t = 0; try { if (graceFile) t = Number(JSON.parse(readFileSync(graceFile, 'utf8')).startedAt) || 0; } catch { /* أول مرة */ } if (!Number.isSafeInteger(t) || t <= 0) { t = Date.now(); try { if (graceFile) writeFileSync(graceFile, JSON.stringify({ startedAt: t })); } catch { /* الذاكرة تكفي */ } } return t; })();
+  const graceDays = Math.max(0, Math.min(90, Number(process.env.GUEST_GRACE_DAYS ?? 14) || 0));
+  const lockAtEnv = Date.parse(process.env.GUEST_LOCK_AT ?? '');
+  const guestLockAt = Number.isFinite(lockAtEnv) ? lockAtEnv : graceStart + graceDays * 86_400_000;
+  /** ضيف قديم (حسابه قبل بداية المهلة) والمهلة ما خلصت */
+  const inGrace = (id: string) => { if (Date.now() >= guestLockAt) return false; const since = accounts.sinceOf(id); return since === null || since < graceStart; };
+  const unlinkedGuest = (id: string) => GUEST_READONLY && !identities.linked(id);
+  const isGuest = (id: string) => unlinkedGuest(id) && !inGrace(id);
   const GUEST_MSG = 'سجّل دخولك بحساب Google عشان تقدر تستخدم هالميزة. الضيف يقدر يتصفح ويلعب ضد الكمبيوتر بس.';
   const GUEST_WS_BLOCK = new Set(['room:join', 'room:chat', 'room:react', 'room:voice', 'room:rematch', 'mm:join', 'mm:fill', 'gift:send', 'shop:buy', 'shop:checkout', 'shop:convert', 'shop:gems', 'shop:claim', 'shop:equip', 'wallet:daily', 'city:claim', 'city:roll', 'city:up']);
   /** مسارات الكتابة المسموحة للضيف: الدخول/الخروج والربط بـGoogle، والإعدادات الشخصية، وتعليم الإشعارات مقروءة */
@@ -788,6 +800,7 @@ export async function createApp(
     res.end(JSON.stringify(body));
   };
 
+  const staticCache = new Map<string, { size: number; mtime: number; raw: Buffer; gz: Buffer | null }>(); let staticCacheBytes = 0;
   async function serveStatic(req: http.IncomingMessage, res: http.ServerResponse, pathname: string) {
     let rel = decodeURIComponent(pathname);
     if (rel.endsWith('/')) rel += 'index.html';
@@ -797,13 +810,31 @@ export async function createApp(
       const st = await stat(file);
       if (!st.isFile()) throw new Error('nf');
       const ext = path.extname(file);
-      let body = await readFile(file);
-      const gz = /\.(js|css|html|svg|webmanifest|json)$/.test(ext) && body.length > 1024 && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
-      if (gz) body = gzipSync(body);
+      // R60b (السرعة): ETag من الحجم ووقت التعديل → المتصفح يرجع 304 بدون ما ينزّل الملف من جديد
+      const tag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
+      const noCache = ext === '.html' || ext === '.webmanifest' || path.basename(file) === 'sw.js';
+      // الملف اللي طالب برقم نسخة (?v=) ما يتغير محتواه لنفس الرقم → كاش طويل
+      const versioned = !noCache && /[?&]v=[^&]+/.test(req.url ?? '');
+      const cacheControl = noCache ? 'no-cache' : versioned ? 'public, max-age=2592000, immutable' : 'public, max-age=3600';
+      const wantsGz = st.size > 1024 && /\.(js|css|html|svg|webmanifest|json)$/.test(ext) &&/\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
+      const etag = wantsGz ? tag.slice(0, -1) + '-gz"' : tag;
+      if (String(req.headers['if-none-match'] ?? '').split(/\s*,\s*/).includes(etag)) {
+        res.writeHead(304, { ETag: etag, 'Cache-Control': cacheControl, ...(wantsGz ? { Vary: 'Accept-Encoding' } : {}), ...securityHeaders });
+        res.end(); return;
+      }
+      let body: Buffer; let gz = false;
+      const hit = staticCache.get(file);
+      if (hit && hit.size === st.size && hit.mtime === st.mtimeMs) { body = wantsGz && hit.gz ? hit.gz : hit.raw; gz = wantsGz && !!hit.gz; }
+      else {
+        const raw = await readFile(file); const z = /\.(js|css|html|svg|webmanifest|json)$/.test(ext) && raw.length > 1024 ? gzipSync(raw) : null;
+        // نخزن الملفات الصغيرة والمتوسطة بس (حد أعلى للذاكرة)
+        if (raw.length <= 2_000_000) { staticCacheBytes += raw.length + (z?.length ?? 0) - (hit ? hit.raw.length + (hit.gz?.length ?? 0) : 0); staticCache.set(file, { size: st.size, mtime: st.mtimeMs, raw, gz: z }); if (staticCacheBytes > 160_000_000) { staticCache.clear(); staticCacheBytes = 0; } }
+        body = wantsGz && z ? z : raw; gz = wantsGz && !!z;
+      }
       res.writeHead(200, {
-        ...(gz ? { 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding' } : {}),
+        ...(gz ? { 'Content-Encoding': 'gzip' } : {}), ...(wantsGz ? { Vary: 'Accept-Encoding' } : {}),
         'Content-Type': MIME[ext] ?? 'application/octet-stream',
-        'Cache-Control': ext === '.html' || ext === '.webmanifest' || path.basename(file) === 'sw.js' ? 'no-cache' : 'public, max-age=3600',
+        'Cache-Control': cacheControl, ETag: gz ? etag : tag,
         ...securityHeaders,
       });
       res.end(req.method === 'HEAD' ? undefined : body);
@@ -1257,7 +1288,7 @@ export async function createApp(
         }
         return json(res, 200, { questions });
       }
-      if (url.pathname === '/api/me' && req.method === 'GET') return json(res, 200, { user, google: !!user && identities.linked(user.id), guestReadOnly: !!user && isGuest(user.id) });
+      if (url.pathname === '/api/me' && req.method === 'GET') return json(res, 200, { user, google: !!user && identities.linked(user.id), guestReadOnly: !!user && isGuest(user.id), ...(user && unlinkedGuest(user.id) && inGrace(user.id) ? { guestLockAt } : {}) });
       if (url.pathname === '/api/auth/config' && req.method === 'GET') return json(res, 200, { google: cfg.googleClientId || null });
       if (url.pathname === '/api/auth/google' && req.method === 'POST') {
         if (!cfg.googleClientId) return json(res, 404, { error: 'الدخول بـ Google غير مفعّل.' });

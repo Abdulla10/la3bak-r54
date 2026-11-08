@@ -35,7 +35,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r59d';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r58p';
-import * as PWA from '../pwa.js?v=root-navigation-r50';
+import * as PWA from '../pwa.js?v=r60e';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r59d';
@@ -401,12 +401,20 @@ async function settingsR60(view, name) {
   }
   paint(); await load(); paint();
 }
+/* R60b: الضيف القديم بالمهلة — تنبيه مرة باليوم: اربط حسابك قبل التاريخ */
+function guestGraceNotice(lockAt) {
+  if (!Number.isFinite(lockAt) || lockAt <= Date.now()) return;
+  const day = new Date().toISOString().slice(0, 10); try { if (localStorage.getItem('la3bak.g60grace') === day) return; localStorage.setItem('la3bak.g60grace', day); } catch { /* بدون تخزين يطلع كل مرة تفتح الموقع */ }
+  const left = Math.max(1, Math.ceil((lockAt - Date.now()) / 86400000));
+  const date = new Date(lockAt).toLocaleDateString('ar', { day: 'numeric', month: 'long' });
+  setTimeout(() => guestPrompt(`حسابك حاليًا حساب ضيف. اربطه بـGoogle قبل ${date} (باقي ${left} ${left === 1 ? 'يوم' : left === 2 ? 'يومين' : left <= 10 ? 'أيام' : 'يوم'}) عشان تقدر تكمل تلعب أونلاين وترسل هدايا وتشتري وتاخذ مقعد بالغرف.`, { title: 'اربط حسابك بـGoogle', sub: 'بعد هالتاريخ حساب الضيف يقدر يتصفح ويلعب ضد الكمبيوتر بس. رصيدك ومشترياتك ما تنحذف، وتنتقل معك لما تربط.', ic: '⏳', later: 'ذكّرني بكرة' }), 1800);
+}
 /* R60: الضيف يتصفح بس — أي ميزة مقفولة (الخادم يرجع code: 'guest') تطلع نافذة تسجيل الدخول بـGoogle */
 let guestPromptAt = 0;
-function guestPrompt(text) {
+function guestPrompt(text, o = {}) {
   if (Date.now() - guestPromptAt < 1500 || document.querySelector('.g60-sheet')) return; guestPromptAt = Date.now();
   const el = document.createElement('div'); el.className = 'g60-sheet'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.dir = 'rtl';
-  el.innerHTML = `<div class="g60-card"><span class="g60-ic" aria-hidden="true">🔐</span><h2>سجّل دخولك بحساب Google</h2><p>${esc(text || 'عشان تقدر تلعب أونلاين، وترسل هدايا ورسائل، وتشتري وتاخذ مقعد بالغرف.')}</p><p class="g60-sub">كضيف تقدر تتصفح وتلعب ضد الكمبيوتر بس. حسابك الحالي ورصيده ينتقلون معك لما تربطه.</p><button type="button" class="g60-go" data-g60="go">تسجيل الدخول بـ Google</button><button type="button" class="g60-x" data-g60="x">لاحقًا</button></div>`;
+  el.innerHTML = `<div class="g60-card"><span class="g60-ic" aria-hidden="true">${esc(o.ic || '🔐')}</span><h2>${esc(o.title || 'سجّل دخولك بحساب Google')}</h2><p>${esc(text || 'عشان تقدر تلعب أونلاين، وترسل هدايا ورسائل، وتشتري وتاخذ مقعد بالغرف.')}</p><p class="g60-sub">${esc(o.sub || 'كضيف تقدر تتصفح وتلعب ضد الكمبيوتر بس. حسابك الحالي ورصيده ينتقلون معك لما تربطه.')}</p><button type="button" class="g60-go" data-g60="go">تسجيل الدخول بـ Google</button><button type="button" class="g60-x" data-g60="x">${esc(o.later || 'لاحقًا')}</button></div>`;
   el.addEventListener('click', (e) => { const a = e.target.closest?.('[data-g60]')?.dataset.g60; if (e.target === el || a === 'x') el.remove(); if (a === 'go') { el.remove(); (globalThis.__LA3BAK_NAV__ || location).hash = '#/profile'; setTimeout(() => { const d = document.querySelector('.lpu-google-details'); if (d) { d.open = true; d.scrollIntoView({ block: 'center' }); } }, 700); } });
   document.body.append(el);
 }
@@ -2514,7 +2522,7 @@ async function boot() {
   try {
     const [me, games] = await Promise.all([fetch('/api/me').then((r) => r.json()), fetch('/api/games').then((r) => r.json())]);
     S.user = me.user;
-    S.google = !!me.google; S.guestReadOnly = !!me.guestReadOnly;
+    S.google = !!me.google; S.guestReadOnly = !!me.guestReadOnly; if (me.guestLockAt) guestGraceNotice(Number(me.guestLockAt));
     S.games = visibleGameCatalogue(games.games);
     S.categories = games.categories || [];
   } catch {

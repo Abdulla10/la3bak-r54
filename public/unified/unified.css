@@ -119,3 +119,5 @@ html.has-unified #view { width: 100%; max-width: none; margin: 0; padding: 0 !im
 @media (prefers-reduced-motion: reduce) {
   .lb-unified .lb-drawer { transition: none; }
 }
+/* R60b: على الجوال نستخدم نسخة الخلفية الأخف (150KB بدل 530KB) — نفس الصورة */
+@media (max-width:1200px){.lb-unified .hero{background-image:linear-gradient(#fffaf022,#fffaf088),url("/preview/assets/profile/royal-landscape-r46.webp")}}
