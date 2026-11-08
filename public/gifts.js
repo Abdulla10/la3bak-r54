@@ -1,4 +1,4 @@
-import { mini } from './avatars.js?v=r59c';
+import { mini } from './avatars.js?v=r59d';
 import { safeGiftArt as giftArt, giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon } from './gift-reward-ui.js?v=r57';
 /* الهدايا: نافذة اختيار بأقسام وبحث وفرز وعدد، داخل الغرفة (طبقة ثابتة فوق اللعب، ما تقفل الغرفة) أو من المتجر.
    الأسعار وعروض مكافآت العملات والتحقق والخصم من الخادم؛ لا يحسب العميل المكافآت ولا يضيف أرصدة،

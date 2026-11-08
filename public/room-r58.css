@@ -639,3 +639,7 @@ html body .so-page .so-owned-seat-frame.cx-fw > img:first-child:not(.cx-frame){p
 /* 3) الإطارات القديمة (حلقة CSS) بالمقعد: الحلقة تحاوط الصورة كاملة بدل ما تنضغط */
 html body .so-page .so-owned-seat-frame.cx-fw.old > .pf-ring{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;padding:0!important;border-radius:50%!important;display:block!important;}
 html body .so-page .so-owned-seat-frame.cx-fw.old .pf-ring > .so-avatar-initial,html body .so-page .so-owned-seat-frame.cx-fw.old .pf-ring > img{position:absolute!important;inset:5px!important;width:auto!important;height:auto!important;border-radius:50%;}
+/* R59c: إطارات المالك الجديدة */
+img.cx-frame[src*="frames3/f0"]{--fs:162%;}
+img.cx-frame[src*="frames3/"]:not([src*="frames3/f0"]){--fs:150%;}
+img.cx-frame[src*="frames3/f07."],img.cx-frame[src*="frames3/f08."],img.cx-frame[src*="frames3/f09."]{--fs:150%;}

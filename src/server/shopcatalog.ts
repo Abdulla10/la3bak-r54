@@ -106,7 +106,7 @@ export class ShopCatalog {
     // R57: «جليدي» صورته الأصلية مقصوصة نصها (تطلع مثل حرف C)، فتنخفي من البيع افتراضيًا. اللي يملكها تبقى له، والإدارة تقدر ترجّعها
     // R58h: إطارات lux-f المرسومة بالكود انستبدلت بإطارات المالك؛ تنخفي من البيع (اللي يملكها تبقى له)
     // R58o: إطارات art-f الأولى انستبدلت بمجموعة المالك الجديدة art-f2؛ القديمة تنخفي من البيع وتبقى لمن يملكها
-    const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-') || /^art-f-\d\d$/.test(base.id) || /^ref-p-frame-(07|09|10|12|13)$/.test(base.id); // R59b: صورها الأصلية مقصوصة؛ تنخفي من البيع وتبقى لمن يملكها
+    const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-') || /^art-f-\d\d$/.test(base.id) || /^ref-p-frame-(07|09|10|12|13)$/.test(base.id) || /^art-mf-(1[4-9]|2\d|3[0-6])$/.test(base.id); // R59c: إطارات المايك 14–36 كانت بخلفية مربعة؛ انستبدلت بإطارات شفافة 41–76، واللي يملكها تبقى له // R59b: صورها الأصلية مقصوصة؛ تنخفي من البيع وتبقى لمن يملكها
     const requestedStatus = o?.status === undefined && o?.active === undefined && (base.rankPerk || brokenArt) ? 'hidden' : shopStatus(o ?? {});
     // Missing/partial/invalid approval can never activate a proposal, including price zero.
     const status = approved === false && (!o?.status || requestedStatus === 'available') ? 'coming-soon' : requestedStatus;

@@ -1,4 +1,4 @@
-import { CM, faceOf } from '../community.js?v=r59c';
+import { CM, faceOf } from '../community.js?v=r59d';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 

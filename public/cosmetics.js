@@ -1,4 +1,4 @@
-import { referenceOf, referenceImage } from './reference-assets.js?v=r59c';
+import { referenceOf, referenceImage } from './reference-assets.js?v=r59d';
 /* مظاهر المتجر الجديدة: أفاتارات وإطارات وخلفيات SVG أصلية بالكامل (مرسومة هنا بالكود، بدون صور خارجية).
  * الندرة ما تغيّر اللون بس: كل درجة تضيف طبقات تفاصيل (حافة، بريق، أجنحة، أشعة، تاج، حركة خفيفة).
  * الأسعار والملكية من الخادم؛ هنا الرسم فقط. */
