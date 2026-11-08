@@ -402,6 +402,14 @@ export async function createApp(
   const avatarLimiter = new KeyedLimiter(6, 6 / 60);
   const roomAvatarLimiter = new KeyedLimiter(120, 2);
   const identities = new Identities(idFile, Date.now, storage);
+  /* R60 (قرار المالك): الضيف (بدون Google) يتصفح بس، ويلعب ضد الكمبيوتر بدون جوايز. القفل هنا بالخادم.
+   * يشتغل بس إذا الدخول بـGoogle مفعّل بالخادم (وإلا الضيف ما يقدر يربط حسابه أصلًا). GUEST_READONLY=0 يطفيه. */
+  const GUEST_READONLY = process.env.GUEST_READONLY !== '0' && !!cfg.googleClientId;
+  const isGuest = (id: string) => GUEST_READONLY && !identities.linked(id);
+  const GUEST_MSG = 'سجّل دخولك بحساب Google عشان تقدر تستخدم هالميزة. الضيف يقدر يتصفح ويلعب ضد الكمبيوتر بس.';
+  const GUEST_WS_BLOCK = new Set(['room:join', 'room:chat', 'room:react', 'room:voice', 'room:rematch', 'mm:join', 'mm:fill', 'gift:send', 'shop:buy', 'shop:checkout', 'shop:convert', 'shop:gems', 'shop:claim', 'shop:equip', 'wallet:daily', 'city:claim', 'city:roll', 'city:up']);
+  /** مسارات الكتابة المسموحة للضيف: الدخول/الخروج والربط بـGoogle، والإعدادات الشخصية، وتعليم الإشعارات مقروءة */
+  const guestHttpAllowed = (p: string) => /^\/api\/(auth\/|logout$|account-tools\/settings$|profile\/visitors\/seen$|notifications)/.test(p);
   const googleKeys = opts.googleKeys ?? googleKeyFetcher();
   const authLimiter = new KeyedLimiter(30, 30 / 60);
   // زر Google يحتاج هذي المصادر بالضبط (حسب توثيق Google)؛ ما نفتحها إلا إذا الدخول بـ Google مفعّل
@@ -431,6 +439,18 @@ export async function createApp(
       ledger: wallet.ledgerOf(id, 60), ledgerTotal: wallet.ledgerCount(id), progression: progression.view(id),
     };
   };
+  /* R60: رتبة VIP/النبلاء الفعلية + خيارات الخصوصية المقفولة بالرتبة (قرار المالك) */
+  const tierOf = (id: string) => { const p = progression.view(id); return { vip: p.vip.enabled && p.vip.value ? Number(p.vip.value.slice(1)) || 0 : 0, noble: p.noble.enabled && p.noble.value ? Number(p.noble.value.slice(1)) || 0 : 0 }; };
+  const PRIVACY_GATES: Record<string, { on: boolean; vip: number; noble: number | null; msg: string }> = {
+    showPresence: { on: false, vip: 4, noble: 3, msg: 'إخفاء حالة الاتصال يحتاج VIP 4 أو نبيل 3.' },
+    hideEntrances: { on: true, vip: 6, noble: 8, msg: 'إخفاء الدخولية يحتاج VIP 6 أو نبيل 8.' },
+    hideVisits: { on: true, vip: 14, noble: null, msg: 'التخفي في زيارة الملف يحتاج VIP 14.' },
+  };
+  const VISITORS_VIP = 11;
+  accountTools.gate = (id, key, value) => { const g = PRIVACY_GATES[key]; return g && value === g.on && !privacyAllowed(id, key) ? g.msg : null; };
+  const privacyAllowed = (id: string, key: string) => { const g = PRIVACY_GATES[key]; if (!g) return true; const t = tierOf(id); return t.vip >= g.vip || (g.noble !== null && t.noble >= g.noble); };
+  /** الخيار مفعّل فعليًا (اختاره اللاعب + رتبته تسمح الحين) */
+  const privacyOn = (id: string, key: 'showPresence' | 'hideEntrances' | 'hideVisits') => { const g = PRIVACY_GATES[key]; const v = accountTools.explicitSetting(id, key as any); return v === g.on && privacyAllowed(id, key); };
   const eligibleItem = (id: string, it: ReturnType<ShopCatalog['get']>) => {
     if (!it) return false; const p = progression.view(id);
     const vip = p.vip.enabled && p.vip.value ? Number(p.vip.value.slice(1)) : 0;
@@ -659,7 +679,7 @@ export async function createApp(
   const friendNoticeAt = new Map<string, number>();
   const notifyFriends = (userId: string, build: (friend: string) => unknown | null, key: string, gap: number) => {
     try {
-      if (accountTools.explicitSetting(userId, 'showPresence') === false) return;
+      if (privacyOn(userId, 'showPresence')) return;
       const now = Date.now(), last = friendNoticeAt.get(key) ?? 0; if (now - last < gap) return; friendNoticeAt.set(key, now);
       if (friendNoticeAt.size > 20000) for (const [k, t] of friendNoticeAt) if (now - t > 3600_000) friendNoticeAt.delete(k);
       for (const f of social.friendInternalIds(userId)) { if (!sockets.has(f)) continue; const msg = build(f); if (msg) sendToUser(f, msg); }
@@ -669,6 +689,7 @@ export async function createApp(
     onBeforeGameFinished(room, players, winners, ref, ts) {
       return reserveGame(ref, players, winners, ts);
     },
+    noRewards: (id: string) => isGuest(id),
     onGameFinished(room, players, winners, ref) {
       deliverIntent('game:' + ref);
     },
@@ -814,6 +835,7 @@ export async function createApp(
   const profileSocial = new ProfileSocial(profileSocialFile, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
     hidesActivity: (id) => accountTools.settings(id).showActivity === false, sinceOf: (id) => accounts.sinceOf(id),
+    viewerVip: (id) => tierOf(id).vip, needVip: VISITORS_VIP, stealthVisit: (id) => privacyOn(id, 'hideVisits'),
     resolvePublicId: (pub) => community.resolvePublicId(pub),
     who: (id) => { const photo = avatars.version(id); const lv = accounts.publicStats(id)?.level; return { publicId: community.pub(id), name: accounts.nameOf(id) || 'لاعب', avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), level: typeof lv === 'number' ? lv : null }; },
     log,
@@ -847,7 +869,7 @@ export async function createApp(
       // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
       const eq=wallet.equipped(id),cosm=(slot:string)=>{const it=eq[slot]?shopcat.get(eq[slot]):undefined;return it&&it.slot===slot&&typeof it.css==='string'?it.css:null;};
       const bubble=cosm('chat-bubble'),board=cosm('board'),micFrame=cosm('mic-frame');
-      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),ranks:{level:p.level.enabled?p.level.value:null,vip:p.vip.enabled?vip:null,noble:p.noble.enabled?noble:null},...(entrance?{entrance}:{})};
+      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),ranks:{level:p.level.enabled?p.level.value:null,vip:p.vip.enabled?vip:null,noble:p.noble.enabled?noble:null},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
     },
     blocked:(a,b)=>community.pairBlocked(a,b),eligible:socialEligible,trustedAdmin:id=>id==='token',
     emit:(ids,event)=>{for(const id of ids)sendToUser(id,event);},
@@ -911,6 +933,10 @@ export async function createApp(
     list: [...t.members].sort((a, b) => b.pts - a.pts).filter((m) => !community.pairBlocked(viewer, m.id)).map((m) => ({ ...cpPerson(m.id), pts: m.pts, leader: m.id === t.leader })),
     requests: t.leader === viewer ? t.requests.filter((r) => accounts.has(r.id)).map((r) => ({ ...cpPerson(r.id), at: r.at })) : [] });
   const tribeEligible = (id: string) => { const lv = socialRooms.ownerMaxRoomLevel(id); return { roomLevel: lv, need: TRIBE_ROOM_LEVEL, canCreate: socialEligible(id) && lv >= TRIBE_ROOM_LEVEL && !tribes.of(id) }; };
+  /* R60: صفحة «إعدادات الخصوصية» — القيم + الرتبة + شرط كل خيار (القفل نفسه بالخادم) */
+  functionalHttp.add('GET', '/api/privacy', ({ user }) => { const t = tierOf(user.id), st = accountTools.settings(user.id);
+    return { ok: true, vip: t.vip, noble: t.noble, settings: st, visitorsVip: VISITORS_VIP, visitorsOpen: t.vip >= VISITORS_VIP,
+      gates: Object.fromEntries(Object.entries(PRIVACY_GATES).map(([k, g]) => [k, { vip: g.vip, noble: g.noble, allowed: privacyAllowed(user.id, k) }])) }; });
   const tribePush = (ids: string[]) => { for (const id of ids) sendToUser(id, { t: 'tribe:update' }); };
   /* R59: كنز القبيلة — صاروخ القبيلة (كل 3 مليون هيبة أسبوعية)، المهام، المكافأة، والمتجر */
   function settleTribe(tribeId: number): void {
@@ -955,7 +981,7 @@ export async function createApp(
   functionalHttp.add('GET', '/api/friends/live', ({ user }) => {
     const ids = social.friendInternalIds(user.id).slice(0, 200);
     const list = ids.map((f) => { // الأصدقاء المقبولين بس يشوفون الغرفة، إلا إذا الصديق قفّل «إظهار التواجد» بنفسه
-      const room = accountTools.explicitSetting(f, 'showPresence') === false ? null : socialRooms.friendRoom(user.id, f); const photo = avatars.version(f); return { id: community.pub(f), name: accounts.nameOf(f), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(f)}&v=${photo}` : null, room }; });
+      const room = privacyOn(f, 'showPresence') ? null : socialRooms.friendRoom(user.id, f); const photo = avatars.version(f); return { id: community.pub(f), name: accounts.nameOf(f), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(f)}&v=${photo}` : null, room }; });
     list.sort((a, b) => Number(!!b.room) - Number(!!a.room) || String(a.name).localeCompare(String(b.name), 'ar'));
     return { ok: true, list: list.slice(0, 60) };
   });
@@ -1035,6 +1061,7 @@ export async function createApp(
       }
       // الصيانة والحظر يُطبَّقان هنا بالخادم قبل أي مسار: الصيانة تمنع كل /api/ ما عدا الحالة والجلسة القديمة والإدارة
       if (url.pathname === '/api/status' && req.method === 'GET') return json(res, 200, admin.publicStatus(user));
+      if (user && req.method !== 'GET' && req.method !== 'HEAD' && url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/admin') && isGuest(user.id) && !guestHttpAllowed(url.pathname)) return json(res, 403, { error: GUEST_MSG, code: 'guest' });
       if (url.pathname.startsWith('/api/') && url.pathname !== '/api/me' && !url.pathname.startsWith('/api/admin/')) {
         const mb = admin.maintenanceBlock(user);
         if (mb) return json(res, 503, { error: mb, maintenance: true });
@@ -1230,7 +1257,7 @@ export async function createApp(
         }
         return json(res, 200, { questions });
       }
-      if (url.pathname === '/api/me' && req.method === 'GET') return json(res, 200, { user, google: !!user && identities.linked(user.id) });
+      if (url.pathname === '/api/me' && req.method === 'GET') return json(res, 200, { user, google: !!user && identities.linked(user.id), guestReadOnly: !!user && isGuest(user.id) });
       if (url.pathname === '/api/auth/config' && req.method === 'GET') return json(res, 200, { google: cfg.googleClientId || null });
       if (url.pathname === '/api/auth/google' && req.method === 'POST') {
         if (!cfg.googleClientId) return json(res, 404, { error: 'الدخول بـ Google غير مفعّل.' });
@@ -1344,6 +1371,7 @@ export async function createApp(
   async function dispatch(user: User, t: string, m: any) {
     const blocked = admin.maintenanceBlock(user) ?? admin.banBlock(user);
     if (blocked) return { ok: false, error: blocked };
+    if (isGuest(user.id) && (GUEST_WS_BLOCK.has(t) || (t === 'room:create' && m?.mode !== 'bots'))) return { ok: false, code: 'guest', error: GUEST_MSG };
     switch (t) {
       case 'room:create':
         if (typeof m.key!=='string' || !/^[A-Za-z0-9_-]{8,128}$/.test(m.key)) return {ok:false,error:'مفتاح إنشاء الغرفة مطلوب. حدّث الصفحة.'};

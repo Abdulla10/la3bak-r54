@@ -28,6 +28,10 @@ export interface ProfileSocialDeps {
   isBanned(id: string): boolean;
   blocked(a: string, b: string): boolean;
   hidesActivity(id: string): boolean;
+  /** R60 */
+  viewerVip?(id: string): number;
+  needVip?: number;
+  stealthVisit?(id: string): boolean;
   sinceOf(id: string): number | null;
   resolvePublicId(pub: unknown): string | null;
   who(id: string): { publicId: string; name: string; avatar: string | null; level: number | null };
@@ -65,8 +69,10 @@ export class ProfileSocial {
     const list = (this.d.visits[me] ?? []).filter((v) => this.visible(me, v.by));
     const seen = this.d.seen[me] ?? 0;
     const lim = Math.max(1, Math.min(VISITS_KEEP, limit));
-    return { ok: true as const, total: list.length, fresh: list.filter((v) => v.at > seen).length, seenAt: seen || null,
-      list: list.slice(0, lim).map((v) => (v.h || this.dep.hidesActivity(v.by)
+    // R60: الأسماء والصور تنفتح من VIP 11 (حتى اللي مسكرين نشاطهم)، إلا اللي عنده VIP 14 ومشغّل التخفي. قبلها كل الزوار «زائر» مع عدد الزيارات.
+    const need = this.dep.needVip ?? 0, open = !need || (this.dep.viewerVip?.(me) ?? 0) >= need;
+    return { ok: true as const, total: list.length, fresh: list.filter((v) => v.at > seen).length, seenAt: seen || null, locked: !open, needVip: need,
+      list: list.slice(0, lim).map((v) => (!open || this.dep.stealthVisit?.(v.by) || (!need && (v.h || this.dep.hidesActivity(v.by)))
         ? { hidden: true, publicId: null, name: 'زائر مخفي', avatar: null, level: null, at: v.at, count: v.n, fresh: v.at > seen }
         : { ...this.dep.who(v.by), hidden: false, at: v.at, count: v.n, fresh: v.at > seen })) };
   }

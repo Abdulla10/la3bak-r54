@@ -643,3 +643,73 @@ html body .so-page .so-owned-seat-frame.cx-fw.old .pf-ring > .so-avatar-initial,
 img.cx-frame[src*="frames3/f0"]{--fs:162%;}
 img.cx-frame[src*="frames3/"]:not([src*="frames3/f0"]){--fs:150%;}
 img.cx-frame[src*="frames3/f07."],img.cx-frame[src*="frames3/f08."],img.cx-frame[src*="frames3/f09."]{--fs:150%;}
+
+/* R60: الإعدادات / الخصوصية / معلومات الحساب — قوائم صفوف مرتبة مثل التطبيقات */
+.s60{display:flex;flex-direction:column;gap:12px;padding:0 0 24px;color:#2c1a4a;}
+.s60-head{display:grid;grid-template-columns:36px 1fr 36px;align-items:center;}
+.s60-head h1{margin:0;min-width:0;white-space:nowrap;writing-mode:horizontal-tb;text-align:center;font-size:18px;font-weight:900;color:#2c1a4a;}
+.s60-back{display:none;}
+.s60-list,.s60-plist{list-style:none;margin:0;padding:0;border-radius:16px;background:#fff;border:1px solid #ece3f6;overflow:hidden;}
+.s60-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:50px;padding:0 14px;border-bottom:1px solid #f1ebf8;}
+.s60-row:last-child,.s60-prow:last-child{border-bottom:0;}
+.s60-row > .s60-link{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:10px;width:calc(100% + 28px);margin:0 -14px;padding:0 14px;min-height:50px;cursor:pointer;color:inherit;font:inherit;}
+.s60-label{font-size:15px;font-weight:700;}
+.s60-right{display:flex;align-items:center;gap:6px;color:#8a7fa3;font-size:13px;}
+.s60-right small{font-size:13px;color:#8a7fa3;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.s60-bio{white-space:normal!important;}
+.s60-chev{font-style:normal;font-size:20px;color:#b9aecd;line-height:1;}
+.s60-soon{padding:2px 9px;border-radius:99px;background:#f1edf8;color:#8a7fa3;font-size:11.5px;font-weight:800;}
+.s60-row.is-soon .s60-label,.s60-prow.is-soon b{color:#a99dbd;}
+.s60-row.is-danger .s60-label{color:#c0392b;}
+.s60-ok{color:#1d9a5b;font-weight:800;font-size:12.5px;}
+.s60-warn{color:#e08a12;font-weight:800;font-size:12.5px;}
+.s60-switch{flex:none;width:46px;height:28px;border-radius:99px;border:0;padding:3px;background:#d9d2e6;position:relative;transition:background .2s;}
+.s60-switch i{display:block;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:transform .2s;}
+.s60-switch.is-on{background:#6a34a8;}
+.s60-switch.is-on i{transform:translateX(-18px);}
+.s60-switch:disabled{opacity:.5;}
+.s60-prow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid #f1ebf8;}
+.s60-prow > div{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.s60-prow b{font-size:14.5px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.s60-prow small{font-size:12px;color:#8a7fa3;line-height:1.55;}
+.s60-prow.is-locked b{color:#6a5a80;}
+.s60-chip{font-style:normal;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:900;color:#fff;}
+.s60-chip.is-vip{background:linear-gradient(180deg,#f6c453,#c8861a);}
+.s60-chip.is-noble{background:linear-gradient(180deg,#9a6cf0,#5b2bb0);}
+.s60-need{color:#c0392b;font-weight:800;}
+.s60-mini{flex:none;padding:6px 14px;border-radius:99px;background:#6a34a8;color:#fff;font-weight:800;font-size:12px;text-decoration:none;}
+.s60-tier{margin:0;font-size:13px;color:#6a5a80;text-align:center;}
+.s60-msg{margin:0;padding:8px 12px;border-radius:12px;background:#eaf7ef;color:#1d6b42;font-size:13px;font-weight:700;}
+.s60-msg.is-bad{background:#fdecea;color:#a3271b;}
+.s60-note{margin:0;font-size:12.5px;color:#6a5a80;line-height:1.7;padding:0 4px;}
+/* R60: من الذي رآني */
+.ps-times{font-size:12px;font-weight:900;color:#6a34a8;background:#efe7fb;padding:1px 8px;border-radius:99px;white-space:nowrap;}
+.ps-lock{display:flex;flex-direction:column;gap:2px;padding:12px 14px;margin-bottom:10px;border-radius:14px;background:linear-gradient(160deg,#3d1a6e,#6a34a8);color:#ffe9a8;text-decoration:none;text-align:center;}
+.ps-lock b{font-size:14px;}
+.ps-lock small{font-size:12px;color:#f3e7ff;}
+/* R60: بطاقات المزادات والبطولات والأخبار بالرئيسية */
+.hq60{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 12px 4px;}
+.hq60-card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 9px;border-radius:16px;background:linear-gradient(160deg,#fffaf0,#f3eafc);border:1px solid #e3d6f2;box-shadow:0 3px 10px #4a2d6e14;text-decoration:none;color:#2c1a4a;text-align:center;}
+.hq60-ic{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(180deg,#6a34a8,#3d1a6e);font-size:20px;box-shadow:inset 0 0 0 1px #c49a3a66;}
+.hq60-card b{font-size:13.5px;font-weight:900;}
+.hq60-card small{font-size:10.5px;color:#8a7fa3;}
+/* R60: نافذة الضيف */
+.g60-sheet{position:fixed;inset:0;z-index:2147483200;display:grid;place-items:end center;background:rgba(20,10,40,.55);}
+.g60-card{width:min(420px,100%);margin:0;padding:20px 18px calc(18px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:#fffaf3;text-align:center;display:flex;flex-direction:column;gap:8px;color:#2c1a4a;animation:cn58In .25s ease both;}
+.g60-ic{font-size:34px;}
+.g60-card h2{margin:0;font-size:18px;font-weight:900;}
+.g60-card p{margin:0;font-size:13.5px;line-height:1.7;}
+.g60-sub{color:#6a5a80;font-size:12.5px!important;}
+.g60-go{margin-top:6px;padding:13px;border-radius:14px;border:0;background:linear-gradient(180deg,#6a34a8,#3d1a6e);color:#fff;font-weight:900;font-size:15px;font-family:inherit;}
+.g60-x{padding:10px;border:0;background:none;color:#8a7fa3;font-weight:800;font-family:inherit;}
+
+/* R60: الأداء على الجوال (Safari) — التمويه الخلفي على كل بطاقة وخلفية الصفحة الثابتة أثقل شي على iPhone وقت التمرير.
+   على أجهزة اللمس: البطاقات بخلفية عادية (لونها نفسه)، والخلفية تتمرر مع الصفحة، والرسومات المتحركة الصغيرة بدون ظل متحرك. */
+@media (hover:none) and (pointer:coarse){
+  html body{background-attachment:scroll!important;}
+  html body .card,html body .top,html body .lb-topbar,html body .lb-bottom-nav,html body .so-room-directory-r30 *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;}
+  html body .top{background:rgb(var(--ch) / .96)!important;}
+  html body :is(.rk58-shortcut img,.c59-shortcut img,.so-cannon-shortcut img,.c59-main img.is-hero,.rk58-hero img,.tr59-rocket img){filter:none!important;}
+  html body :is(.sup58-shortcut,.c59-shortcut,.so-cannon-shortcut) *{animation-duration:4s!important;}
+}
+@media (prefers-reduced-motion:reduce){html body *{animation-iteration-count:1!important;}}

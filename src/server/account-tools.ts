@@ -10,11 +10,13 @@ export interface AccountSettings {
   showPresence: boolean;
   hideEntrances: boolean;
   hideChatEffects: boolean;
+  /** R60: التخفي في زيارة الملف (VIP 14) */
+  hideVisits: boolean;
 }
 export const ACCOUNT_SETTINGS_DEFAULTS: Readonly<AccountSettings> = Object.freeze({
   sound: false, notifications: false, showActivity: false, showPresence: false,
   // R55: مؤثرات الهدايا ثلاثية الأبعاد والدخوليات تظهر افتراضيًا (مثل باقي المنصات)، واللاعب يقدر يخفيها من الإعدادات
-  hideEntrances: false, hideChatEffects: false,
+  hideEntrances: false, hideChatEffects: false, hideVisits: false,
 });
 export const ACCOUNT_REASON_MAX = 500;
 export type VerificationStatus = 'pending' | 'accepted' | 'rejected' | 'revoked';
@@ -212,6 +214,8 @@ export function validAccountTools(d: Record<string, unknown>): boolean {
 const blank = (): AccountToolsData => ({ v: 1, settings: {}, requests: [], audit: [], seq: 0, directGrants: {}, grantHistory: [] });
 
 export class AccountTools {
+  /** R60: فحص صلاحية تغيير خيار (يرجع رسالة الرفض أو null) */
+  gate?: (id: string, key: keyof AccountSettings, value: boolean) => string | null;
   private d = blank();
   private disk: Persister;
   readonly persistent: boolean;
@@ -262,6 +266,8 @@ export class AccountTools {
   updateSettings(id: string, raw: unknown): AccountSettings {
     playerId(id);
     const patch = settingsPatch(raw), current = this.settings(id), next = { ...current, ...patch };
+    // R60: خيارات الخصوصية المقفولة برتبة VIP/نبيل (الخادم يتحقق، مو بس الواجهة)
+    for (const k of Object.keys(patch) as (keyof AccountSettings)[]) { const why = this.gate?.(id, k, patch[k] as boolean); if (why) throw new AccountToolsError('privacy_level', why, 403); }
     if (KEYS.every(k => current[k] === next[k])) return next;
     // R55: نخزن اختيارات اللاعب الصريحة فقط، عشان تغيير الافتراضي مستقبلًا ما ينحبس بقيم ما اختارها
     const stored = { ...(own(this.d.settings, id) ? this.d.settings[id] : {}), ...patch };

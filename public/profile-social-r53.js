@@ -22,7 +22,7 @@ function face(u, size = 46) {
   if (/^[A-Za-z0-9_-]{1,100}$/.test(a)) { try { const h = mini(a, size); if (h) return `<span class="ps-av">${h}</span>`; } catch { /* حرف أول */ } }
   return `<span class="ps-av ps-initial" aria-hidden="true">${esc(String(u?.name || 'ل').trim().slice(0, 1))}</span>`;
 }
-const userRow = (u, side) => u?.hidden === true ? `<li class="ps-row is-hidden${u.fresh ? ' is-fresh' : ''}"><div class="ps-rowbox"><span class="ps-av ps-initial" aria-hidden="true">؟</span><span class="ps-who"><b>زائر مخفي</b><small>مخفي حسب إعدادات خصوصيته</small></span><span class="ps-side">${side}</span></div></li>` : PUB.test(u?.publicId || '') ? `<li class="ps-row${u.fresh ? ' is-fresh' : ''}"><a href="#/u/${esc(u.publicId)}">${face(u)}<span class="ps-who"><b>${esc(u.name || 'لاعب')}</b>${Number.isSafeInteger(u.level) ? `<small>المستوى ${nf(u.level)}</small>` : ''}</span><span class="ps-side">${side}</span></a></li>` : '';
+const userRow = (u, side) => u?.hidden === true ? `<li class="ps-row is-hidden${u.fresh ? ' is-fresh' : ''}"><div class="ps-rowbox"><span class="ps-av ps-initial" aria-hidden="true">؟</span><span class="ps-who"><b>${u.locked ? 'زائر' : 'زائر مخفي'}</b><small>${u.locked ? 'الاسم مخفي' : 'مخفي حسب إعدادات خصوصيته'}</small></span><span class="ps-side">${side}</span></div></li>` : PUB.test(u?.publicId || '') ? `<li class="ps-row${u.fresh ? ' is-fresh' : ''}"><a href="#/u/${esc(u.publicId)}">${face(u)}<span class="ps-who"><b>${esc(u.name || 'لاعب')}</b>${Number.isSafeInteger(u.level) ? `<small>المستوى ${nf(u.level)}</small>` : ''}</span><span class="ps-side">${side}</span></a></li>` : '';
 function status(root, msg, error = false) { const el = root.querySelector('[data-ps-status]'); if (el) { el.textContent = msg || ''; el.setAttribute('role', error ? 'alert' : 'status'); el.classList.toggle('is-error', !!error); } }
 
 /** من الذي رآني */
@@ -33,9 +33,10 @@ export function visitorsView(root, { api }) {
     try {
       const d = await api('/api/profile/visitors?limit=100');
       if (!alive || !root.isConnected) return;
-      const rows = (Array.isArray(d.list) ? d.list : []).map((v) => userRow(v, `${v.fresh ? '<em class="ps-new">جديد</em>' : ''}<time>${esc(ago(v.at))}</time>${v.count > 1 ? `<small>${nf(v.count)} زيارات</small>` : ''}`)).join('');
-      root.innerHTML = `<section class="card ps-card"><div class="ps-stats"><span><b>${nf(d.total)}</b><small>زائر</small></span><span><b>${nf(d.fresh)}</b><small>جديد منذ آخر مرة</small></span></div>
-        <p class="hint ps-hint">يظهر هنا اللاعبون المسجلون اللي فتحوا ملفك العام. اسم الزائر يظهر فقط إذا مفعّل «إظهار نشاطي» في إعداداته، وغير كذا يظهر «زائر مخفي». وزياراتك أنت لغيرك تتبع نفس الإعداد من <a href="#/settings">الإعدادات</a>.</p>
+      // R60: عدد الزيارات جنب الاسم والوقت، والبطاقة اللي فوق انشالت (طلب المالك)
+      const times = (n) => n === 1 ? 'مرة' : n === 2 ? 'مرتين' : n <= 10 ? `${nf(n)} مرات` : `${nf(n)} مرة`;
+      const rows = (Array.isArray(d.list) ? d.list : []).map((v) => userRow({ ...v, locked: d.locked === true }, `${v.fresh ? '<em class="ps-new">جديد</em>' : ''}<b class="ps-times">${times(Math.max(1, Number(v.count) || 1))}</b><time>${esc(ago(v.at))}</time>`)).join('');
+      root.innerHTML = `<section class="card ps-card">${d.locked ? `<a class="ps-lock" href="#/vip"><b>👑 ترقَّ إلى VIP ${nf(d.needVip)} عشان تشوف مين زارك</b><small>تشوف أسماءهم وصورهم، حتى اللي مسكرين نشاطهم.</small></a>` : ''}
         <p data-ps-status role="status"></p>${rows ? `<ul class="ps-list">${rows}</ul>` : '<div class="ps-empty"><p>ما زار أحد ملفك بعد.</p><a class="btn" href="#/community">شارك بالمجتمع عشان يتعرفون عليك</a></div>'}</section>`;
       if (d.fresh > 0) { try { await api('/api/profile/visitors/seen', 'POST', {}); } catch { /* يبقى «جديد» للمرة الجاية */ } }
     } catch (e) {

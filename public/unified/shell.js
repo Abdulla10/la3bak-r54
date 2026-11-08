@@ -1,5 +1,5 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
-import * as home from './home.js?v=r58t';
+import * as home from './home.js?v=r60b';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import {giftArt} from '../giftart.js?v=release-r14';
 import * as rooms from './rooms.js?v=r58p';
@@ -17,7 +17,7 @@ import * as ranks from './ranks.js?v=r59d';
 import * as vip from './vip.js?v=r59d';
 import * as social from './social.js?v=r59d';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
-export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','community','post','u','not-found']);
+export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','community','post','u','not-found']);
 export const hasRoute=name=>routes.includes(name);
 const pageKey=name=>({leaderboard:'ranking',shop:'store','social-rooms':'social','social-room':'social'}[name]||name);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -40,7 +40,7 @@ function identityHTML(ctx){
 export function headerHTML(ctx={}){
   const homeAccount=ctx.page==='home'&&!!ctx.user;
   const notificationsLink=ctx.noCommunity?`<button type="button" data-lb-locked aria-disabled="true" aria-label="الإشعارات الاجتماعية مقفلة">${icon('bell')}</button>`:`<a href="#/notifications" aria-label="الإشعارات">${icon('bell')}${ctx.unread?'<i class="lb-unread-dot"></i>':''}</a>`;
-  return `<header class="lb-topbar lb-compact-topbar${homeAccount?' lb-home-wallet-header':''}" dir="ltr"><div class="lb-head-row"><nav class="lb-head-tools" aria-label="البحث والإشعارات والترتيب"><button type="button" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${notificationsLink}<a href="#/leaderboard" aria-label="الترتيب">${icon('trophy')}</a></nav>${homeAccount?identityHTML(ctx):`<a class="lb-brand" href="#/" aria-label="LA3BAK | لعبنا — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" alt=""><b dir="ltr">LA3BAK <span lang="ar">| لعبنا</span></b></a>`}${ctx.page==='home'?'':`<button type="button" data-lb-shell="menu" class="lb-menu-open" aria-label="فتح القائمة" aria-expanded="false">${icon('menu')}</button>`}</div>${homeAccount?walletStripHTML(ctx):''}</header>`;
+  return `<header class="lb-topbar lb-compact-topbar${homeAccount?' lb-home-wallet-header':''}" dir="ltr"><div class="lb-head-row"><nav class="lb-head-tools" aria-label="البحث والإشعارات والترتيب"><button type="button" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${notificationsLink}<a href="#/leaderboard" aria-label="الترتيب">${icon('trophy')}</a></nav>${homeAccount?identityHTML(ctx):`<a class="lb-brand" href="#/" aria-label="LA3BAK | لعبنا — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" alt=""><b dir="ltr">LA3BAK <span lang="ar">| لعبنا</span></b></a>`}${/* R60: زر ☰ انشال بطلب المالك؛ روابطه موجودة بالشريط وملفي، والمزادات والبطولات والأخبار انتقلت للرئيسية */''}</div>${homeAccount?walletStripHTML(ctx):''}</header>`;
 }
 // Both currency artworks are existing transparent vectors. No financial writes.
 export function walletStripHTML(ctx={}){

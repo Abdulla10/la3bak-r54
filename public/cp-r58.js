@@ -39,7 +39,8 @@ function scan(root = document) {
 }
 if (typeof document !== 'undefined' && !globalThis.__LA3BAK_CP__) {
   globalThis.__LA3BAK_CP__ = true;
-  new MutationObserver(() => scan()).observe(document.documentElement, { childList: true, subtree: true });
+  // R60: نجمع التغييرات بإطار رسم واحد
+  let q = 0; new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; scan(); }); }).observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener('click', (e) => { const b = e.target.closest?.('[data-cp-ask]'); if (b) { e.preventDefault(); ask(b); } }, true);
   addEventListener('la3bak:cp', () => document.querySelectorAll('[data-cp-me],[data-cp-of]').forEach((el) => (el.dataset.cpMe !== undefined ? fillMe(el) : fillOf(el))));
   scan();

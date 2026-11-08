@@ -203,8 +203,13 @@ function socialLinksHTML(ctx) {
 function disclosure(title, glyph, content, id) {
   return `<details class="pv-home-details" data-home-section="${id}"><summary>${icon(glyph)}<span>${title}</span>${icon('arrow')}</summary><div class="pv-details-body">${content}</div></details>`;
 }
+/* R60: المزادات والبطولات والأخبار (كانت بقائمة ☰) — صف مرتب تحت البنر */
+function quickHTML() {
+  const card = (href, ic, t, d) => `<a class="hq60-card" href="${href}"><span class="hq60-ic" aria-hidden="true">${ic}</span><b>${t}</b><small>${d}</small></a>`;
+  return `<nav class="hq60" aria-label="المزادات والبطولات والأخبار">${card('#/auction', '🔨', 'المزادات', 'مقتنيات نادرة')}${card('#/tournaments', '🏆', 'البطولات', 'تحديات وجوايز')}${card('#/events', '📰', 'الأخبار', 'الفعاليات والجديد')}</nav>`;
+}
 export function render(ctx = {}) {
-  return `<div class="lb-home" dir="rtl">${accountHTML(ctx)}${ctx.user ? '<div class="fl-host" data-friends-live></div>' : ''}${heroHTML(ctx)}<div class="pv-home-content">${gamesHTML(ctx)}${socialLinksHTML(ctx)}${disclosure('المتجر والمقتنيات وتصنيفات الألعاب', 'shop', shortcutsHTML()+categoriesHTML(ctx), 'home-extras')}${disclosure('البطولات والمتصدرون', 'trophy', socialHTML(ctx), 'home-competition')}${disclosure('الأخبار والفعاليات والتطبيق', 'bell', newsHTML(ctx)+appsHTML(ctx), 'home-news')}</div></div>`;
+  return `<div class="lb-home" dir="rtl">${accountHTML(ctx)}${ctx.user ? '<div class="fl-host" data-friends-live></div>' : ''}${heroHTML(ctx)}${quickHTML()}<div class="pv-home-content">${gamesHTML(ctx)}${socialLinksHTML(ctx)}${disclosure('المتجر والمقتنيات وتصنيفات الألعاب', 'shop', shortcutsHTML()+categoriesHTML(ctx), 'home-extras')}${disclosure('البطولات والمتصدرون', 'trophy', socialHTML(ctx), 'home-competition')}${disclosure('الأخبار والفعاليات والتطبيق', 'bell', newsHTML(ctx)+appsHTML(ctx), 'home-news')}</div></div>`;
 }
 export const homeHTML = render;
 

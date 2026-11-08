@@ -1,7 +1,7 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
 import * as PR from './profile.js?v=r59d';
-import * as UNIFIED from '../unified/shell.js?v=r59d';
-import * as REF from '../unified/home.js?v=r58t';
+import * as UNIFIED from '../unified/shell.js?v=r60c';
+import * as REF from '../unified/home.js?v=r60b';
 import * as SOCIAL from '../unified/social.js?v=r59d';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
@@ -141,6 +141,7 @@ function connect() {
       return;
     }
     if (m.r !== undefined && S.pending.has(m.r)) {
+      if (m.code === 'guest') guestPrompt(m.error);
       S.pending.get(m.r)(m);
       S.pending.delete(m.r);
     } else if (m.t === 'hello') {
@@ -325,12 +326,12 @@ function parseRoute() {
   return { name, a: dec(parts[1]), b: dec(parts[2]), c: dec(parts[3]) };
 }
 
-const NAV_OF = { lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
+const NAV_OF = { lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
 /* R51: الأب المنطقي يُستخدم فقط لو فُتحت الصفحة مباشرة (ما فيه صفحة سابقة داخل الموقع)؛ غير كذا زر الرجوع يرجع للصفحة السابقة الفعلية.
    صفحات قائمة «ملفي» (VIP، نوبل، المحفظة…) أبوها الملف الشخصي، مو الرئيسية. */
 const PROFILE_CHILDREN = new Set(['vip','ranks','rank-rewards','missions','wallet','settings','family','visitors','invite']);
 /* R53b: توثيق الحساب والمساعدة والخصوصية والشروط صارت داخل الإعدادات */
-const SETTINGS_CHILDREN = new Set(['verification','support','privacy','terms']);
+const SETTINGS_CHILDREN = new Set(['verification','support','privacy','terms','privacy-settings','account-info','about']);
 const BACK_OF = (r) => (r.name === 'social-room' ? '#/social-rooms' : ['game','hub','city'].includes(r.name) ? '#/games' : r.name === 'room' ? '#/rooms' : PROFILE_CHILDREN.has(r.name) ? '#/profile' : SETTINGS_CHILDREN.has(r.name) ? '#/settings' : '#/');
 
 function needUser(nextHash) {
@@ -351,7 +352,7 @@ function loadFunctionalModule(name) {
       : key === 'family' ? import('../family-r47.js?v=build-all-r47')
       : key === 'private' ? import('../social-private.js?v=r57')
       : key === 'missions' ? import('../missions-server.js?v=r57')
-      : key === 'profile-social' ? import('../profile-social-r53.js?v=r59d')
+      : key === 'profile-social' ? import('../profile-social-r53.js?v=r60b')
       : import('../functional-pages.js?v=r57');
     functionalModules.set(key, promise);
     promise.catch(() => { if (functionalModules.get(key) === promise) functionalModules.delete(key); });
@@ -379,6 +380,39 @@ function socialGiftContext(page) {
 function unifiedContext(page, content='') {
  const scoped={...profileContext(),socialGifts:socialGiftContext(page)};
  return {...scoped, page, content, paymentCurrency:parseRoute().name==='shop'&&parseRoute().a==='packs'?parseRoute().b:undefined, socialRoomId:parseRoute().name==='social-room'?parseRoute().a:null, backHref:BACK_OF(parseRoute()), noCommunity:isCommunityRestricted(), paymentReturnId:parseRoute().name==='payments' && parseRoute().a==='return' ? parseRoute().b : undefined, user:S.user, me:scoped.me, connected:S.online, games:S.games, rooms:[...S.rooms.values()], board:BOARD, api:functionalApi, getUserId:()=>S.user?.id, req, refreshMe:()=>loadAcct(false), mountGoogle, googleCard:()=>googleCard(S.google), toast};
+}
+/* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
+let S60 = null;
+async function settingsR60(view, name) {
+  const M = await import('../settings-r60.js?v=r60b');
+  const st = { msg: '', bad: false, priv: null, settings: null };
+  const paint = () => {
+    if (parseRoute().name !== name) return;
+    const html = name === 'privacy-settings' ? M.privacyHTML(st.priv, st.msg, st.bad) : name === 'account-info' ? M.accountInfoHTML({ me: ACCT.me, user: S.user, google: S.google }) : M.settingsHTML({ google: S.google, settings: st.settings, msg: st.msg, bad: st.bad });
+    const root = view.querySelector('[data-s60-root]'); if (root) root.innerHTML = html;
+  };
+  unifiedPage(view, 'settings', '<div data-s60-root></div>', true);
+  const root = view.querySelector('[data-s60-root]');
+  M.bind(root, { google: S.google, nav: (h) => { (globalThis.__LA3BAK_NAV__ || location).hash = h; }, logout: () => previewLogout(), after: async (m, bad) => { st.msg = m; st.bad = bad; await load(); paint(); } });
+  async function load() {
+    if (name === 'privacy-settings') st.priv = await fetch('/api/privacy', { credentials: 'same-origin' }).then((r) => r.json()).catch(() => ({ ok: false }));
+    else if (name === 'settings') st.settings = await fetch('/api/account-tools/settings', { credentials: 'same-origin' }).then((r) => r.ok ? r.json() : null).catch(() => null);
+    else if (!ACCT.me) await loadAcct(false);
+  }
+  paint(); await load(); paint();
+}
+/* R60: الضيف يتصفح بس — أي ميزة مقفولة (الخادم يرجع code: 'guest') تطلع نافذة تسجيل الدخول بـGoogle */
+let guestPromptAt = 0;
+function guestPrompt(text) {
+  if (Date.now() - guestPromptAt < 1500 || document.querySelector('.g60-sheet')) return; guestPromptAt = Date.now();
+  const el = document.createElement('div'); el.className = 'g60-sheet'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.dir = 'rtl';
+  el.innerHTML = `<div class="g60-card"><span class="g60-ic" aria-hidden="true">🔐</span><h2>سجّل دخولك بحساب Google</h2><p>${esc(text || 'عشان تقدر تلعب أونلاين، وترسل هدايا ورسائل، وتشتري وتاخذ مقعد بالغرف.')}</p><p class="g60-sub">كضيف تقدر تتصفح وتلعب ضد الكمبيوتر بس. حسابك الحالي ورصيده ينتقلون معك لما تربطه.</p><button type="button" class="g60-go" data-g60="go">تسجيل الدخول بـ Google</button><button type="button" class="g60-x" data-g60="x">لاحقًا</button></div>`;
+  el.addEventListener('click', (e) => { const a = e.target.closest?.('[data-g60]')?.dataset.g60; if (e.target === el || a === 'x') el.remove(); if (a === 'go') { el.remove(); (globalThis.__LA3BAK_NAV__ || location).hash = '#/profile'; setTimeout(() => { const d = document.querySelector('.lpu-google-details'); if (d) { d.open = true; d.scrollIntoView({ block: 'center' }); } }, 700); } });
+  document.body.append(el);
+}
+if (typeof window !== 'undefined' && !window.__g60Fetch) {
+  window.__g60Fetch = true; const of = window.fetch.bind(window);
+  window.fetch = async (...a) => { const r = await of(...a); if (r.status === 403) { try { const j = await r.clone().json(); if (j?.code === 'guest') guestPrompt(j.error); } catch { /* مو JSON */ } } return r; };
 }
 function unifiedPage(view, page, content='', contentOnly=false) {
   unifiedMount?.destroy?.();
@@ -571,9 +605,11 @@ async function render() {
       unifiedPage(view,r.name,agreementView());
       break;
     case 'settings':
+    case 'privacy-settings':
+    case 'account-info':
       if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       S.pf.sec = 'settings';
-      unifiedPage(view,'settings');
+      void settingsR60(view, r.name);
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
@@ -2478,7 +2514,7 @@ async function boot() {
   try {
     const [me, games] = await Promise.all([fetch('/api/me').then((r) => r.json()), fetch('/api/games').then((r) => r.json())]);
     S.user = me.user;
-    S.google = !!me.google;
+    S.google = !!me.google; S.guestReadOnly = !!me.guestReadOnly;
     S.games = visibleGameCatalogue(games.games);
     S.categories = games.categories || [];
   } catch {

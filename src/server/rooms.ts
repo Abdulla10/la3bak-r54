@@ -97,6 +97,8 @@ export interface Hooks {
   onWallet?(userId: string, coins: number, won: number): void;
   /** نتيجة لعبة محفوظة بنجاح؛ يُستخدم لربط progression دون إعادة احتسابها. */
   onGameFinished?(room: Room, players: { id: string; name: string }[], winners: string[], ref: string): void;
+  /** R60: حسابات ما تاخذ نتائج/خبرة/جوايز (الضيف ضد الكمبيوتر) */
+  noRewards?(id: string): boolean;
   /** Optional reservation before finished-room/source writes; failure leaves the stored game unchanged. */
   onBeforeGameFinished?(room: Room, players: { id: string; name: string }[], winners: string[], ref: string, ts: number): void | (() => void);
   log?(event: string, data?: Record<string, unknown>): void;
@@ -163,8 +165,9 @@ export class RoomService {
   private async persist(room: Room): Promise<void> {
     const engine = this.engineOf(room);
     const ref = `${room.code}:${room.gameNo}`;
-    const release = this.accounts && room.status === 'finished' && room.state && room.gameNo && engine && !this.accounts.hasRecorded(ref)
-      ? this.hooks.onBeforeGameFinished?.(room, room.players.filter((p) => !p.bot).map((p) => ({ id: p.id, name: p.name })), engine.outcome(room.state).winners, ref, this.now()) : undefined;
+    const rewarded = room.players.filter((p) => !p.bot && !(room.mode === 'bots' && this.hooks.noRewards?.(p.id)));
+    const release = rewarded.length && this.accounts && room.status === 'finished' && room.state && room.gameNo && engine && !this.accounts.hasRecorded(ref)
+      ? this.hooks.onBeforeGameFinished?.(room, rewarded.map((p) => ({ id: p.id, name: p.name })), engine.outcome(room.state).winners, ref, this.now()) : undefined;
     try {
       const expected = room.revision;
       room.revision = expected + 1;
@@ -186,7 +189,8 @@ export class RoomService {
     const engine = this.engineOf(room);
     if (!engine) return;
     // اللي غادر بنص المباراة يظل ضمن نتيجتها (يخسر مثل الصندوق)، وإلا نتيجته ما تنحسب عليه
-    const humans = room.players.filter((p) => !p.bot);
+    const humans = room.players.filter((p) => !p.bot && !(room.mode === 'bots' && this.hooks.noRewards?.(p.id)));
+    if (!humans.length) return;
     const ref = `${room.code}:${room.gameNo}`;
     const players = humans.map((p) => ({ id: p.id, name: p.name }));
     const winners = engine.outcome(room.state).winners;

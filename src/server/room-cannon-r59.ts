@@ -9,9 +9,9 @@ import { createHash } from 'node:crypto';
 export type CannonPrize = { id: string; name: string; slot: 'frame' | 'mic-frame' | 'badge' };
 const P = (id: string, name: string, slot: CannonPrize['slot']): CannonPrize => ({ id, name, slot });
 export const CANNON3_LEVELS = Object.freeze([
-  Object.freeze({ level: 1, color: 'green', goal: 816_700, coins: 30_000, top1: P('art-mf-19', 'إطار مايك موج البحّار', 'mic-frame'), items: [P('art-f2-17', 'إطار أجنحة البنفسج', 'frame'), P('badge-falcon', 'شارة صقر', 'badge')] }),
-  Object.freeze({ level: 2, color: 'red', goal: 4_500_000, coins: 100_000, top1: P('art-mf-17', 'إطار مايك الحصان المجنح', 'mic-frame'), items: [P('art-mf-16', 'إطار مايك تنين اللهب', 'mic-frame'), P('art-f2-09', 'إطار غيوم الفضة', 'frame'), P('badge2-crown', 'شارة تاج', 'badge')] }),
-  Object.freeze({ level: 3, color: 'purple', goal: 14_000_000, coins: 300_000, top1: P('art-mf-18', 'إطار مايك تنين البنفسج', 'mic-frame'), items: [P('art-f2-15', 'إطار تنين الظلام', 'frame'), P('art-mf-38', 'إطار مايك هالة الملاك', 'mic-frame'), P('art-b-20', 'شارة تنين الكون', 'badge')] }),
+  Object.freeze({ level: 1, color: 'green', goal: 816_700, coins: 30_000, top1: P('art-mf-58', 'إطار مايك سفينة البحّار', 'mic-frame'), items: [P('art-f2-17', 'إطار أجنحة البنفسج', 'frame'), P('badge-falcon', 'شارة صقر', 'badge')] }),
+  Object.freeze({ level: 2, color: 'red', goal: 4_500_000, coins: 100_000, top1: P('art-mf-45', 'إطار مايك أجنحة الذهب الملكية', 'mic-frame'), items: [P('art-mf-46', 'إطار مايك تنين الحمم', 'mic-frame'), P('art-f2-09', 'إطار غيوم الفضة', 'frame'), P('badge2-crown', 'شارة تاج', 'badge')] }),
+  Object.freeze({ level: 3, color: 'purple', goal: 14_000_000, coins: 300_000, top1: P('art-mf-43', 'إطار مايك مدار الكواكب', 'mic-frame'), items: [P('art-f2-15', 'إطار تنين الظلام', 'frame'), P('art-mf-38', 'إطار مايك هالة الملاك', 'mic-frame'), P('art-b-20', 'شارة تنين الكون', 'badge')] }),
 ]);
 export const CANNON3_WINNERS = 3;
 export const CANNON3_SENDERS_MAX = 200;

@@ -106,7 +106,8 @@ function scan() {
 }
 if (typeof document !== 'undefined' && !globalThis.__LA3BAK_TRIBE__) {
   globalThis.__LA3BAK_TRIBE__ = true;
-  new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
+  // R60: نجمع التغييرات بإطار رسم واحد (كان يفحص الصفحة كاملة مع كل تغيير، وهذا يثقّل الجوال)
+  let q = 0; new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; scan(); }); }).observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener('click', (e) => {
     const o = e.target.closest?.('[data-tr-open]'); if (o) { e.preventDefault(); openTribes(o.dataset.trOpen === 'view' ? 'mine' : o.dataset.trOpen, o.dataset.id || null); return; }
     const t = e.target.closest?.('[data-tr-tab]'); if (t) { S.tab = t.dataset.trTab; S.msg = ''; paint(); if (S.tab === 'top') load(); return; }

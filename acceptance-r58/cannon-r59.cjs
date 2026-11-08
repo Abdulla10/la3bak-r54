@@ -63,7 +63,7 @@ async function sendRockets(pg, qty) {
   ok('المستوى 1 يبين اللي فجروه: ب الأول وج الثاني', c.levels[0].last?.winners?.map((w) => w.person.name + ':' + w.pts).join(',') === 'لاعب b:700000,لاعب c:116700', JSON.stringify(c.levels[0].last));
   const sb = await shop(Bt), scc = await shop(Ct), sa2 = await shop(A);
   ok('ب وج ياخذون نفس الجوايز: 30,000 عملة + إطار أجنحة البنفسج + شارة صقر', coins(sb.ledger, 1) === 30000 && coins(scc.ledger, 1) === 30000 && ['art-f2-17', 'badge-falcon'].every((x) => sb.owned.includes(x) && scc.owned.includes(x)), [coins(sb.ledger, 1), coins(scc.ledger, 1)].join(','));
-  ok('«للأول بس» (إطار مايك موج البحّار) لـ ب بس', sb.owned.includes('art-mf-19'));
+  ok('«للأول بس» (إطار مايك سفينة البحّار) لـ ب بس', sb.owned.includes('art-mf-58'));
   ok('صاحب الغرفة (ما ساهم) ما ياخذ شي', coins(sa2.ledger, 1) === 0);
   await p.evaluate(() => document.querySelector('.c59-shortcut')?.click()); await sleep(900);
   await p.evaluate(() => document.querySelector('[data-so-action="c59-level"][data-level="1"]')?.click()); await sleep(500);
@@ -74,7 +74,7 @@ async function sendRockets(pg, qty) {
   await sleep(6000); for (let k = 0; k < 6; k++) { await sendRockets(bp, 7); await sleep(1500); } await sleep(3000);
   room = await detail(A, id); c = room.cannon3; const sb2 = await shop(Bt), sc2 = await shop(Ct);
   ok('المستوى 2 انفجر والمدفع صار على المستوى 3 (البنفسجي)', c.level === 3 && c.pts === 283300, JSON.stringify({ l: c.level, p: c.pts }));
-  ok('جوايز المستوى 2 لـ ب وج: 100,000 عملة + إطار مايك تنين اللهب + إطار غيوم الفضة + شارة تاج، و«للأول بس» الحصان المجنح لـ ب', coins(sb2.ledger, 2) === 100000 && coins(sc2.ledger, 2) === 100000 && ['art-mf-16', 'art-f2-09', 'badge2-crown'].every((x) => sb2.owned.includes(x) && sc2.owned.includes(x)) && sb2.owned.includes('art-mf-17'));
+  ok('جوايز المستوى 2 لـ ب وج: 100,000 عملة + إطار مايك تنين الحمم + إطار غيوم الفضة + شارة تاج، و«للأول بس» أجنحة الذهب لـ ب', coins(sb2.ledger, 2) === 100000 && coins(sc2.ledger, 2) === 100000 && ['art-mf-46', 'art-f2-09', 'badge2-crown'].every((x) => sb2.owned.includes(x) && sc2.owned.includes(x)) && sb2.owned.includes('art-mf-45'));
   ok('ما فيه أخطاء صفحة', errs.length === 0, errs.join(' | '));
   await cmd(A, { command: 'room:delete', roomId: id });
   await br.close(); console.log(`\nSUMMARY pass ${R.filter(Boolean).length} fail ${R.filter((x) => !x).length}`); process.exit(R.every(Boolean) ? 0 : 1);
