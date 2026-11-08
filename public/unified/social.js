@@ -11,7 +11,7 @@ import {framed as frameOwnedPortrait} from '../shop.js?v=r58r2';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
 import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics} from '../social-gift-runtime-r27.js?v=r57';
-import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58r2';
+import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58t7';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
 import { mini as avatarMini } from '../avatars.js?v=r58r';
@@ -979,7 +979,7 @@ export function mount(root,ctx={}) {
     if(action==='game-voice-retry'){if(c.busy||dialogBusy)return;const retry=async()=>{autoVoiceAttempt='';await ctx.retryGameVoice?.();if(alive)await read(c);};void run(()=>ctx.gameVoice?.error==='adult_acknowledgement_required'?requireAdult(retry):retry());return;}
     if(action==='dialog-close'){closeDialog();return;}
     if(action==='panel-close'){closePanel();return;}
-    if(action==='cannon-stage'){const stage=Number(target.dataset.stage);if(!dialogBusy&&Number.isInteger(stage)&&stage>=1&&stage<=3){ui.cannonStage=stage;paint();}return;}
+    if(action==='cannon-stage'){const stage=Number(target.dataset.stage);if(!dialogBusy&&Number.isInteger(stage)&&stage>=1&&stage<=(c.snapshot?.room?.cannon?.stages?.length||3)){ui.cannonStage=stage;paint();}return;}
     if(action==='reference-benefits'){if(!dialogBusy&&!c.ctx.gameRoom){void openOwnBenefits(c).catch(error=>{c.error=friendly(error?.message);c.notify();});}return;}
     if(action==='open-panel'){if(!dialogBusy)openPanel(target.dataset.panel,target);return;}
     if(action==='focus-chat'){if(dialogBusy)return;ui.chatUnread=0;if(dialog)closeDialog(false);closePanel(false);const log=host.querySelector('.so-chat-messages');if(log)log.scrollTop=log.scrollHeight;const input=host.querySelector('#so-chat-text');if(input&&ui.chatSelection)try{input.setSelectionRange(...ui.chatSelection);}catch{}input?.scrollIntoView?.({behavior:'smooth',block:'nearest'});input?.focus({preventScroll:true});return;}

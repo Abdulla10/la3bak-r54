@@ -10,7 +10,7 @@ import { SOCIAL_MODES, validSocialModeState, advanceSocialGamesR47 } from './soc
 import { defaultSocialContent, validSocialContent, hydrateSocialContentR47, hydrateSocialRoomsGamesR47 } from './social-content.js';
 import { planRoomUpgradeR47, projectRoomUpgradeR47, validRoomUpgradeMetadataR47 } from './room-upgrade-r47.js';
 import { CHALLENGE_RECEIPT_CAP, SUPPORT_RECEIPT_CAP, SUPPORT_EVENT_TTL_MS, challengeTotals, finishChallenge, supportGiftValue, validChallenge, validGiftSupportContext, validSupportEvent, validSupportReceipt } from './social-challenge.js';
-import { CANNON_RECEIPT_CAP, cannonAwardFingerprint, cannonGiftValue, cannonHash, cannonReason, createCannon, validCannonGiftContext, validCannonState, validateCannonCatalog } from './social-cannon-r27.js';
+import { CANNON_VERSION_V1, CANNON_RECEIPT_CAP, cannonAwardFingerprint, cannonGiftValue, cannonHash, cannonReason, createCannon, validCannonGiftContext, validCannonState, validateCannonCatalog } from './social-cannon-r27.js';
 import { councilSeatLayout, validLockedSeats, validRoomTheme, validSeatIndex } from './social-room-controls-r27.js';
 export { ROOM_BACKGROUND_PRESETS } from './social-room-controls-r27.js';
 import { DIRECTORY_LIMIT_R30, UNSUPPORTED_ROOM_MODES_R30, directoryCapabilitiesR30, validDirectoryMode, validDirectoryTag, validDirectoryCountry, validRoomPasswordR30, validPasswordInputR30, makeRoomPasswordR30, verifyRoomPasswordR30, passwordFingerprintR30 } from './social-directory-r30.js';
@@ -638,7 +638,9 @@ export class SocialRooms {
         if (!this.opts.cannon)
             return;
         const r = this.room(this.state, roomId);
-        if (r.cannon || this.state.receipts.some(p => p.command === 'game:bind' && p.key === roomId))
+        // R58t: مدفع v1 فاضي (بدون أي دعم ولا جوائز) يترقّى لمدفع المراحل الخمس. اللي فيه دعم يبقى مثل ما هو.
+        const emptyV1 = !!r.cannon && r.cannon.version === CANNON_VERSION_V1 && r.cannon.total === 0 && r.cannon.receipts.length === 0 && r.cannon.stages.every(s => s.status === 'locked') && (this.opts.cannon.pendingCount?.(r.cannon.id) ?? 0) === 0;
+        if ((r.cannon && !emptyV1) || this.state.receipts.some(p => p.command === 'game:bind' && p.key === roomId))
             return;
         if (!this.cannonCatalogReady())
             return; // R55: جوائز المدفع غير جاهزة بالمتجر → الغرفة تشتغل بدون مدفع بدل ما تتعطل
@@ -737,7 +739,7 @@ export class SocialRooms {
                 if (!backend.wallet.campaignCommitted(s.id, c.ownerId)) {
                     validateCannonCatalog(backend.catalog, [s]);
                 }
-                const result = backend.wallet.grantCampaignBatch(s.id, cannonAwardFingerprint(id, c, s), [c.ownerId], { coins: 0, gems: 0, itemIds: [s.frameId, s.backgroundId] }, cannonReason(s));
+                const result = backend.wallet.grantCampaignBatch(s.id, cannonAwardFingerprint(id, c, s), [c.ownerId], { coins: 0, gems: 0, itemIds: [s.frameId, s.backgroundId] }, cannonReason(s, c.version));
                 if (result.length !== 1 || result[0].status === 'failed')
                     throw new Error('cannon_award_pending');
                 const reward = backend.wallet.grantReceipt(s.id, c.ownerId), owned = backend.wallet.owned(c.ownerId);
@@ -780,8 +782,8 @@ export class SocialRooms {
         }
         if (member.councilId !== null && !this.mediaAccess(viewer))
             return null;
-        const current = c.stages.find(s => s.status === 'locked'), stageNumber = current?.stage ?? 3;
-        const spent = c.stages.filter(s => s.stage < stageNumber).reduce((n, s) => n + s.goal, 0), progress = current ? Math.min(current.goal, Math.max(0, c.total - spent)) : c.stages[2].goal;
+        const current = c.stages.find(s => s.status === 'locked'), stageNumber = current?.stage ?? c.stages.length;
+        const spent = c.stages.filter(s => s.stage < stageNumber).reduce((n, s) => n + s.goal, 0), progress = current ? Math.min(current.goal, Math.max(0, c.total - spent)) : c.stages[c.stages.length - 1].goal;
         const info = (id) => { const item = this.opts.cannon?.catalog.get(id); return item ? { id: item.id, slot: item.slot, name: item.name, icon: item.icon, css: item.css, art: item.art, rarity: item.rarity, permanent: item.permanent } : { id }; };
         return { id: c.id, version: c.version, scope: 'room', owner: this.publicPerson(c.ownerId), enabledAt: c.enabledAt, serverNow: this.clock(), currency: 'gems', energyPerGem: 1, totalEnergy: c.total, yourContribution: c.receipts.filter(x => x.from === viewer).reduce((n, x) => n + x.value, 0), currentStage: stageNumber, status: current ? 'charging' : c.stages.every(s => s.status === 'awarded') ? 'complete' : 'settling', progress, goal: current?.goal ?? c.stages[2].goal, remaining: current ? current.goal - progress : 0, pending: this.cannonPendingFor(c), completedStages: c.stages.filter(s => s.status === 'awarded').length, stages: c.stages.map(s => ({ id: s.id, stage: s.stage, goal: s.goal, status: s.status, crossedAt: s.crossedAt, completedAt: s.completedAt, rewards: { frame: info(s.frameId), background: info(s.backgroundId) }, reward: s.reward ? structuredClone(s.reward) : null })) };
     }

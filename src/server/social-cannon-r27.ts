@@ -6,17 +6,29 @@ import type { Wallet } from './wallet.js';
 import type { ShopCatalog } from './shopcatalog.js';
 
 /** Immutable local policy. Goals are PER STAGE, not lifetime thresholds. */
-export const CANNON_VERSION = 'room-gems-permanent-r27-v1';
+/** R58t: نسختين — v1 (3 مراحل، تبقى كما هي لأي مدفع فيه دعم أو جوائز) وv2 (5 مراحل برسومات المالك) للمدافع الجديدة والفاضية. */
+export const CANNON_VERSION_V1 = 'room-gems-permanent-r27-v1';
+export const CANNON_VERSION = 'room-gems-r58-v2';
+export type CannonVersion = typeof CANNON_VERSION_V1 | typeof CANNON_VERSION;
 export const CANNON_RECEIPT_CAP = 100_000;
-export const CANNON_STAGES = Object.freeze([
+export const CANNON_STAGES_V1 = Object.freeze([
   Object.freeze({ stage: 1, goal: 1_000_000, frameId: 'ref-p-frame-08', backgroundId: 'bg2-throne' }),
   Object.freeze({ stage: 2, goal: 4_500_000, frameId: 'ref-p-frame-06', backgroundId: 'ref-p-bg-08' }),
   Object.freeze({ stage: 3, goal: 14_000_000, frameId: 'ref-p-frame-02', backgroundId: 'ref-p-bg-10' }),
 ]);
-export type CannonGiftContext = { roomId: string; councilId: string; cannonId: string; version: typeof CANNON_VERSION; ownerId: string; enabledAt: number };
+/** R58t: أهداف كل مرحلة (مو تراكمية) بالجواهر، والجوائز إطار + خلفية من مجموعة المالك */
+export const CANNON_STAGES = Object.freeze([
+  Object.freeze({ stage: 1, goal: 500_000, frameId: 'art-f2-16', backgroundId: 'art-pb-05' }),
+  Object.freeze({ stage: 2, goal: 1_500_000, frameId: 'art-f2-14', backgroundId: 'art-pb-02' }),
+  Object.freeze({ stage: 3, goal: 4_000_000, frameId: 'art-f2-23', backgroundId: 'art-pb-08' }),
+  Object.freeze({ stage: 4, goal: 10_000_000, frameId: 'art-f2-13', backgroundId: 'art-pb-01' }),
+  Object.freeze({ stage: 5, goal: 25_000_000, frameId: 'art-f2-15', backgroundId: 'art-pb-06' }),
+]);
+export const cannonStagesOf = (version: unknown) => version === CANNON_VERSION ? CANNON_STAGES : version === CANNON_VERSION_V1 ? CANNON_STAGES_V1 : null;
+export type CannonGiftContext = { roomId: string; councilId: string; cannonId: string; version: CannonVersion; ownerId: string; enabledAt: number };
 export type CannonReward = { addedItems: string[]; alreadyOwned: string[] };
 export type CannonStage = { id: string; stage: number; goal: number; frameId: string; backgroundId: string; status: 'locked' | 'pending' | 'awarded'; crossedAt: number | null; completedAt: number | null; reward: CannonReward | null };
-export type CannonState = { id: string; version: typeof CANNON_VERSION; ownerId: string; enabledAt: number; total: number; receipts: { id: string; fingerprint: string; from: string; to: string; councilId: string; at: number; value: number }[]; stages: CannonStage[] };
+export type CannonState = { id: string; version: CannonVersion; ownerId: string; enabledAt: number; total: number; receipts: { id: string; fingerprint: string; from: string; to: string; councilId: string; at: number; value: number }[]; stages: CannonStage[] };
 export type CannonBackend = {
   wallet: Pick<Wallet, 'hasGiftSource' | 'committedGiftReceipt' | 'grantCampaignBatch' | 'campaignCommitted' | 'grantReceipt' | 'owned' | 'has' | 'unsaved'>;
   catalog: Pick<ShopCatalog, 'get'>;
@@ -29,30 +41,31 @@ const nat = (x: unknown): x is number => Number.isSafeInteger(x) && Number(x) >=
 const exact = (x: Record<string, unknown>, fields: string[]) => Object.keys(x).length === fields.length && fields.every(k => Object.hasOwn(x, k));
 export const cannonCanonical = (v: unknown): string => JSON.stringify(v, (_k, x) => isObj(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
 export const cannonHash = (v: unknown): string => createHash('sha256').update(cannonCanonical(v)).digest('hex');
-export function cannonStageId(id: string, stage: number): string {
-  const h = cannonHash(['cannon-stage', CANNON_VERSION, id, stage]);
+export function cannonStageId(id: string, stage: number, version: CannonVersion = CANNON_VERSION_V1): string {
+  const h = cannonHash(['cannon-stage', version, id, stage]);
   return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-${((parseInt(h[16],16)&3)|8).toString(16)}${h.slice(17,20)}-${h.slice(20,32)}`;
 }
 export function validCannonGiftContext(x: unknown): x is CannonGiftContext {
-  return isObj(x) && exact(x, ['roomId','councilId','cannonId','version','ownerId','enabledAt']) && uuid(x.roomId) && uuid(x.councilId) && uuid(x.cannonId) && uuid(x.ownerId) && x.version === CANNON_VERSION && nat(x.enabledAt);
+  return isObj(x) && exact(x, ['roomId','councilId','cannonId','version','ownerId','enabledAt']) && uuid(x.roomId) && uuid(x.councilId) && uuid(x.cannonId) && uuid(x.ownerId) && cannonStagesOf(x.version) !== null && nat(x.enabledAt);
 }
 export function createCannon(ownerId: string, enabledAt: number): CannonState {
   if (!uuid(ownerId) || !nat(enabledAt)) throw new Error('invalid_cannon_owner_or_time');
   const id = randomUUID();
-  return { id, version: CANNON_VERSION, ownerId, enabledAt, total: 0, receipts: [], stages: CANNON_STAGES.map(s => ({ ...s, id: cannonStageId(id,s.stage), status:'locked', crossedAt:null, completedAt:null, reward:null })) };
+  return { id, version: CANNON_VERSION, ownerId, enabledAt, total: 0, receipts: [], stages: CANNON_STAGES.map(s => ({ ...s, id: cannonStageId(id,s.stage,CANNON_VERSION), status:'locked', crossedAt:null, completedAt:null, reward:null })) };
 }
 export function validCannonState(x: unknown): x is CannonState {
-  if (!isObj(x) || !exact(x,['id','version','ownerId','enabledAt','total','receipts','stages']) || !uuid(x.id) || x.version !== CANNON_VERSION || !uuid(x.ownerId) || !nat(x.enabledAt) || !nat(x.total) || !Array.isArray(x.receipts) || x.receipts.length > CANNON_RECEIPT_CAP || !Array.isArray(x.stages) || x.stages.length !== 3) return false;
+  if (!isObj(x) || !exact(x,['id','version','ownerId','enabledAt','total','receipts','stages']) || !uuid(x.id) || cannonStagesOf(x.version) === null || !uuid(x.ownerId) || !nat(x.enabledAt) || !nat(x.total) || !Array.isArray(x.receipts) || x.receipts.length > CANNON_RECEIPT_CAP || !Array.isArray(x.stages) || x.stages.length !== cannonStagesOf(x.version)!.length) return false;
   const c = x as unknown as CannonState, seen = new Set<string>(); let total = 0;
+  const table = cannonStagesOf(c.version)!;
   for (const r of c.receipts) {
     if (!isObj(r) || !exact(r,['id','fingerprint','from','to','councilId','at','value']) || !uuid(r.id) || seen.has(r.id) || typeof r.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(r.fingerprint) || !uuid(r.from) || !uuid(r.to) || r.from === r.to || !uuid(r.councilId) || !nat(r.at) || r.at < c.enabledAt || !nat(r.value) || r.value < 1 || r.value > 1_000_000) return false;
     seen.add(r.id); total += r.value; if (!nat(total)) return false;
   }
   if (total !== c.total) return false;
   let boundary = 0;
-  for (let i=0;i<3;i++) {
-    const s = c.stages[i], p = CANNON_STAGES[i]; boundary += p.goal;
-    if (!isObj(s) || !exact(s,['id','stage','goal','frameId','backgroundId','status','crossedAt','completedAt','reward']) || s.id !== cannonStageId(c.id,p.stage) || s.stage !== p.stage || s.goal !== p.goal || s.frameId !== p.frameId || s.backgroundId !== p.backgroundId) return false;
+  for (let i=0;i<table.length;i++) {
+    const s = c.stages[i], p = table[i]; boundary += p.goal;
+    if (!isObj(s) || !exact(s,['id','stage','goal','frameId','backgroundId','status','crossedAt','completedAt','reward']) || s.id !== cannonStageId(c.id,p.stage,c.version) || s.stage !== p.stage || s.goal !== p.goal || s.frameId !== p.frameId || s.backgroundId !== p.backgroundId) return false;
     // Receipt insertion order is commitment order, not wall-clock timestamp order.
     let running=0; const crossing=c.receipts.find(r => (running+=r.value) >= boundary);
     if (!crossing) { if (s.status !== 'locked' || s.crossedAt !== null || s.completedAt !== null || s.reward !== null) return false; continue; }
@@ -70,9 +83,9 @@ export function cannonGiftValue(rec: GiftRec, context: CannonGiftContext): numbe
   if (!validCannonGiftContext(context) || rec.prepaid === true || !uuid(rec.from) || !uuid(rec.to) || rec.ts < context.enabledAt) return null;
   return supportGiftValue(rec,{roomId:context.roomId,councilId:context.councilId,challengeId:null,sourcePublic:false});
 }
-export function cannonReason(stage: CannonStage): string { return `Room cannon R27 stage ${stage.stage}: permanent owner cosmetics`; }
+export function cannonReason(stage: CannonStage, version: CannonVersion = CANNON_VERSION_V1): string { return version === CANNON_VERSION ? `Room cannon R58 stage ${stage.stage}: permanent owner cosmetics` : `Room cannon R27 stage ${stage.stage}: permanent owner cosmetics`; }
 export function cannonAwardFingerprint(roomId: string, c: CannonState, s: CannonStage): string {
-  return cannonHash({roomId,cannonId:c.id,version:c.version,ownerId:c.ownerId,enabledAt:c.enabledAt,stage:s.stage,goal:s.goal,campaignId:s.id,rewards:{coins:0,gems:0,itemIds:[s.frameId,s.backgroundId]},permanent:true,reason:cannonReason(s)});
+  return cannonHash({roomId,cannonId:c.id,version:c.version,ownerId:c.ownerId,enabledAt:c.enabledAt,stage:s.stage,goal:s.goal,campaignId:s.id,rewards:{coins:0,gems:0,itemIds:[s.frameId,s.backgroundId]},permanent:true,reason:cannonReason(s,c.version)});
 }
 /** Approved base IDs only. No rank-gated, proposal-only, custom or unavailable reward. */
 export function validateCannonCatalog(catalog: CannonBackend['catalog'], stages: readonly Pick<CannonStage,'frameId'|'backgroundId'>[] = CANNON_STAGES): void {
