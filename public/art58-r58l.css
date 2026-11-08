@@ -154,3 +154,19 @@ html body .r23-store section.r23-empty[data-current-id] > p:not(.muted){display:
 html body .r23-store section.r23-empty[data-current-id] .r23-current-id{grid-column:3;grid-row:1 / span 2;font-size:16px!important;margin:0!important;white-space:nowrap;}
 html body .r23-store section.r23-empty[data-current-id] p:last-of-type{display:block!important;grid-column:2;font-size:11px!important;line-height:1.5;margin:0!important;color:#6a5a80;}
 html body .lux-thumb .lux-board[class*="lux-board-art"]{padding:8% 20% 0!important;font-size:10px!important;}
+/* R58q: قالب الأيدي بالملف الشخصي أصغر (طلب المالك) */
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate]{width:136px!important;max-width:136px;margin-top:2px;gap:2px;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] > span{font-size:8px!important;letter-spacing:0;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] b[data-pvp-player-id]{font-size:12px!important;letter-spacing:0;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] .lpu-copy{transform:scale(.65);margin:0 -4px;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate]{flex-wrap:nowrap!important;white-space:nowrap!important;justify-content:center;padding-top:0!important;padding-bottom:0!important;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] *{white-space:nowrap!important;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] > span{display:inline-flex!important;align-items:baseline;gap:2px;flex:0 0 auto;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] b[data-pvp-player-id]{font-size:11px!important;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] .lpu-copy{flex:0 0 auto;width:16px!important;height:16px!important;min-width:0!important;padding:0!important;transform:none;margin:0!important;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] .lpu-copy svg{width:11px;height:11px;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate]{padding-left:29%!important;padding-right:7%!important;overflow:hidden;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] > span{font-size:0!important;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] > span b[data-pvp-player-id]{font-size:12px!important;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate]{direction:ltr!important;justify-content:center!important;padding:0 10px 0 42px!important;box-sizing:border-box!important;overflow:visible;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="1"],html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="2"],html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="3"],html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="6"]{padding:0 18px!important;}
