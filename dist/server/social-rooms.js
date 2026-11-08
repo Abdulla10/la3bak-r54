@@ -1,3 +1,5 @@
+import { currentWeek, validRoomWeek, validAllSenders, addSender, topOf } from './room-supporters-r58.js';
+import { ROCKET_STAGES, ROCKET_SENDERS_MAX, ROCKET_RECIPIENTS_MAX, currentRocket, rocketBoundaries, validRoomRocket, rocketCampaignId, rocketFingerprint, rocketReason, topSender } from './room-rocket-r58.js';
 import { roomCodeOf, roomLevelOf, ROOM_VANITY, ROOM_ADS_MAX, currentRoomMonth, roomRankView, validRoomMonth, ROOM_MONTH_SENDERS_MAX } from './room-extras-r58.js';
 import { ENTRANCE_ART_PATHS } from './entrance-catalog.js';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
@@ -53,7 +55,7 @@ export function validSocialRooms(d) {
     const roomIds = new Set(), councilIds = new Set(), users = new Set(), channels = new Set(), challengeIds = new Set(), scoredIds = new Set();
     const cannonIds = new Set(), cannonReceiptIds = new Set();
     for (const r of d.rooms) {
-        if (!isObj(r) || !keys(r, ['id', 'name', 'description', 'privacy', 'memory', 'maxMembers', 'ownerId', 'hostId', 'moderators', 'invites', 'bans', 'members', 'councils', 'memories', 'activity', 'createdAt', 'updatedAt', 'settings', 'micRequests', 'micApprovals', 'cover', 'challenge', 'cannon', 'roomMode', 'roomTag', 'country', 'password', 'upgrade', 'vanity', 'vanityItem', 'support', 'ads', 'month']) || !uuid(r.id) || roomIds.has(r.id) || !str(r.name, 80) || !r.name.trim() || !str(r.description, 400) || !privacy(r.privacy) || typeof r.memory !== 'boolean' || !num(r.maxMembers, 2, 50) || !ident(r.ownerId) || !(r.hostId === null || ident(r.hostId)) || !strings(r.moderators, ident, 50) || r.moderators.includes(r.ownerId) || !strings(r.invites, ident, 200) || !Array.isArray(r.bans) || r.bans.length > 500 || !Array.isArray(r.members) || r.members.length > r.maxMembers || !Array.isArray(r.councils) || r.councils.length > 50 || !Array.isArray(r.memories) || r.memories.length > 100 || !Array.isArray(r.activity) || r.activity.length > 100 || !stamp(r.createdAt) || !stamp(r.updatedAt))
+        if (!isObj(r) || !keys(r, ['id', 'name', 'description', 'privacy', 'memory', 'maxMembers', 'ownerId', 'hostId', 'moderators', 'invites', 'bans', 'members', 'councils', 'memories', 'activity', 'createdAt', 'updatedAt', 'settings', 'micRequests', 'micApprovals', 'cover', 'challenge', 'cannon', 'roomMode', 'roomTag', 'country', 'password', 'upgrade', 'vanity', 'vanityItem', 'support', 'ads', 'month', 'rocket', 'week', 'allSenders']) || !uuid(r.id) || roomIds.has(r.id) || !str(r.name, 80) || !r.name.trim() || !str(r.description, 400) || !privacy(r.privacy) || typeof r.memory !== 'boolean' || !num(r.maxMembers, 2, 50) || !ident(r.ownerId) || !(r.hostId === null || ident(r.hostId)) || !strings(r.moderators, ident, 50) || r.moderators.includes(r.ownerId) || !strings(r.invites, ident, 200) || !Array.isArray(r.bans) || r.bans.length > 500 || !Array.isArray(r.members) || r.members.length > r.maxMembers || !Array.isArray(r.councils) || r.councils.length > 50 || !Array.isArray(r.memories) || r.memories.length > 100 || !Array.isArray(r.activity) || r.activity.length > 100 || !stamp(r.createdAt) || !stamp(r.updatedAt))
             return false;
         if (Object.hasOwn(r, 'upgrade') && !validRoomUpgradeMetadataR47(r.upgrade))
             return false;
@@ -62,6 +64,10 @@ export function validSocialRooms(d) {
         if (Object.hasOwn(r, 'support') && !nat(r.support))
             return false;
         if (Object.hasOwn(r, 'month') && !validRoomMonth(r.month))
+            return false;
+        if (Object.hasOwn(r, 'rocket') && !validRoomRocket(r.rocket))
+            return false;
+        if (Object.hasOwn(r, 'week') && !validRoomWeek(r.week) || Object.hasOwn(r, 'allSenders') && !validAllSenders(r.allSenders))
             return false;
         if (Object.hasOwn(r, 'ads') && (!Array.isArray(r.ads) || r.ads.length > ROOM_ADS_MAX || r.ads.some((a) => !isObj(a) || !keys(a, ['id', 'text', 'at']) || !uuid(a.id) || !str(a.text, 200) || !a.text.trim() || !nat(a.at))))
             return false;
@@ -601,11 +607,90 @@ export class SocialRooms {
                     m.senders[sender] = prev + value;
                 room.month = m;
             }
+            // R58v: داعمين الأسبوع وكل الوقت
+            const wk = currentWeek(room.week, now);
+            room.week = { key: wk.key, senders: addSender(wk.senders, sender, value) };
+            room.allSenders = addSender(room.allSenders ?? {}, sender, value);
+            // R58u: صاروخ الغرفة اليومي
+            const rk = structuredClone(currentRocket(room.rocket, now));
+            const rpts = rk.pts + value;
+            if (nat(rpts)) {
+                rk.pts = rpts;
+                const pv = rk.senders[sender] ?? 0;
+                if (pv || Object.keys(rk.senders).length < ROCKET_SENDERS_MAX)
+                    rk.senders[sender] = pv + value;
+                const bounds = rocketBoundaries();
+                while (rk.launches.length < ROCKET_STAGES.length && rk.pts >= bounds[rk.launches.length]) {
+                    const present = room.members.filter((mm) => this.mediaAccess(mm.id)?.roomId === roomId).map((mm) => mm.id);
+                    if (!present.includes(sender) && room.members.some((mm) => mm.id === sender))
+                        present.push(sender);
+                    present.sort((a, b) => (rk.senders[b] ?? 0) - (rk.senders[a] ?? 0));
+                    rk.launches.push({ stage: rk.launches.length + 1, at: now, status: 'pending', recipients: present.slice(0, ROCKET_RECIPIENTS_MAX), top: topSender(rk) });
+                }
+                room.rocket = rk;
+            }
             this.save(d, now);
             this.state = d;
             this.notice(before, d);
+            this.settleRocket(roomId);
         }
         catch { /* الهدية انصرفت؛ الليفل يكمل مع الهدايا الجاية */ }
+    }
+    /** R58u: يمنح جوائز إطلاقات الصاروخ المعلّقة (معرّف ثابت لكل إطلاق، فإعادة المحاولة ما تكرر). */
+    settleRocket(roomId) {
+        const wallet = this.opts.cannon?.wallet;
+        if (!wallet || wallet.unsaved())
+            return;
+        const r = this.state.rooms.find((x) => x.id === roomId);
+        const rk = r?.rocket;
+        if (!r || !rk)
+            return;
+        rk.launches.forEach((l, i) => {
+            if (l.status !== 'pending')
+                return;
+            const st = ROCKET_STAGES[l.stage - 1];
+            try {
+                if (l.recipients.length) {
+                    const res = wallet.grantCampaignBatch(rocketCampaignId(roomId, rk.day, l.stage, 'crowd'), rocketFingerprint(roomId, rk.day, l, 'crowd'), l.recipients, { coins: st.coins, gems: 0, itemIds: [] }, rocketReason(l.stage, 'crowd'));
+                    if (res.some((x) => x.status === 'failed' && x.code !== 'BALANCE_OVERFLOW'))
+                        return;
+                }
+                if (l.top)
+                    wallet.grantCampaignBatch(rocketCampaignId(roomId, rk.day, l.stage, 'top'), rocketFingerprint(roomId, rk.day, l, 'top'), [l.top], { coins: st.topBonus, gems: 0, itemIds: [] }, rocketReason(l.stage, 'top'));
+            }
+            catch {
+                return;
+            }
+            const before = this.state, d = structuredClone(before), now = this.clock(), room = this.room(d, roomId);
+            const dl = room.rocket?.launches[i];
+            if (!dl || room.rocket.day !== rk.day || dl.status !== 'pending')
+                return;
+            dl.status = 'done';
+            this.save(d, now);
+            this.state = d;
+            this.notice(before, d);
+            try {
+                const ids = room.members.filter((mm) => this.mediaAccess(mm.id)?.roomId === roomId).map((mm) => mm.id);
+                for (const id of ids)
+                    this.opts.emit([id], { t: 'social:rocket', roomId, event: { id: rocketCampaignId(roomId, rk.day, l.stage, 'crowd'), stage: l.stage, at: l.at, coins: dl.recipients.includes(id) ? st.coins : 0, topBonus: dl.top === id ? st.topBonus : 0, top: dl.top ? this.publicPerson(dl.top) : null } });
+            }
+            catch { /* الجوائز انحفظت؛ التنبيه بس اللي فشل */ }
+        });
+    }
+    /** R58v: قائمة الداعمين (اليوم، الأسبوع، الشهر، كل الوقت) — أعلى 20 بكل فترة */
+    supportersView(r) {
+        const now = this.clock();
+        const list = (m) => topOf(m, 20).map(([id, pts]) => { const p = this.who(id); return p && p.id !== id ? { id: p.id, name: p.name, ...(p.avatar ? { avatar: p.avatar } : {}), ...(p.frame ? { frame: p.frame } : {}), pts } : null; }).filter(Boolean);
+        return { day: list(currentRocket(r.rocket, now).senders), week: list(currentWeek(r.week, now).senders), month: list(currentRoomMonth(r.month, now).senders), all: list(r.allSenders) };
+    }
+    rocketView(r) {
+        const rk = currentRocket(r.rocket, this.clock());
+        const bounds = rocketBoundaries();
+        const done = rk.launches.length;
+        const stage = Math.min(done + 1, ROCKET_STAGES.length), floor = stage > 1 ? bounds[stage - 2] : 0, goal = ROCKET_STAGES[stage - 1].goal;
+        const progress = done >= ROCKET_STAGES.length ? goal : Math.max(0, Math.min(goal, rk.pts - floor));
+        const top = Object.entries(rk.senders).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id, pts]) => ({ person: this.publicPerson(id), pts })).filter((x) => x.person);
+        return { day: rk.day, pts: rk.pts, stage, progress, goal, finished: done >= ROCKET_STAGES.length, stages: ROCKET_STAGES.map((s, i) => ({ stage: s.stage, goal: s.goal, coins: s.coins, topBonus: s.topBonus, launched: i < done })), top };
     }
     /** R58c: أداة مراجعة بيانات الغرفة (للمالك والمشرفين): نقاط الشهر وعدد الهدايا وأكثر الداعمين */
     rankStatsView(r, viewer) {
@@ -615,7 +700,7 @@ export class SocialRooms {
     }
     /** R58: الرقم الظاهر للغرفة: الأيدي المميز إذا موجود، وإلا رقم 8 خانات الثابت */
     roomCode(r) { return r.vanity ?? roomCodeOf(r.id); }
-    roomExtrasView(r) { const lv = roomLevelOf(r.support ?? 0); return { rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })) }; }
+    roomExtrasView(r) { const lv = roomLevelOf(r.support ?? 0); return { rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })), }; }
     /** R55: فحص جوائز المدفع بدون رمي خطأ. لو عنصر جائزة صار مقفول برتبة أو موقوف بالمتجر، الغرف والدردشة والهدايا تكمل عادي والمدفع ما ينفعّل لين ترجع الجوائز صالحة. */
     cannonCatalogReady() {
         if (!this.opts.cannon)
@@ -2478,7 +2563,7 @@ export class SocialRooms {
             const permissions = this.permissions(r, userId);
             const base = { id: r.id, name: r.name, description: r.description, photo: this.photo(r), settings: this.settings(r), permissions, privacy: r.privacy, memory: r.memory, maxMembers: r.maxMembers, ...this.directoryRoomView(r), owner: this.who(r.ownerId), host: r.hostId && !this.blocked(userId, r.hostId) ? this.who(r.hostId) : null, createdAt: r.createdAt, updatedAt: r.updatedAt, count: r.members.length, role: this.role(r, userId) };
             const room = { ...base, moderators: member || privileged ? r.moderators.map(id => this.who(id)) : [], members: member ? r.members.map(m => this.memberView(r, m, userId)).filter(Boolean) : [], councils: member ? r.councils.map(c => this.councilView(r, c, userId)) : [], memories: member ? r.memories.filter(m => m.text !== null || m.authors.includes(userId)).map(m => ({ id: m.id, councilId: m.councilId, text: m.text ?? this.pendingMemory.get(m.id) ?? null, saved: m.text !== null, authors: m.authors.map(uid => this.who(uid)), approved: m.approved.map(uid => this.who(uid)), at: m.at })) : [], activity: member ? structuredClone(r.activity) : [], ...(permissions.audio ? { microphoneRequests: (r.micRequests ?? []).map(id => this.privateWho(id)).filter(Boolean), microphoneApprovals: (r.micApprovals ?? []).map(id => this.privateWho(id)).filter(Boolean) } : {}), ...(permissions.moderation ? { mutedMembers: r.members.filter(m => m.muted).map(m => this.privateWho(m.id) ? this.memberView(r, m, userId) : null).filter(Boolean), bannedMembers: r.bans.map(b => { const who = this.privateWho(b.id); return who ? { ...who, reason: b.reason } : null; }).filter(Boolean) } : {}), ...(permissions.audit ? { audit: this.auditView(r) } : {}) };
-            return { ok: true, room: { ...room, cannon: member ? this.cannonView(r, userId) : null, challenge: member ? this.challengeView(r, userId) : null, supportEvents: member ? (this.state.supportEvents ?? []).map(e => this.supportEventView(e, userId)).filter(Boolean) : [], rankStats: privileged ? this.rankStatsView(r, userId) : null }, publicSupport: this.publicSupportView(r, userId), current: this.current(userId), preferences: this.prefsView(userId) };
+            return { ok: true, room: { ...room, rocket: this.rocketView(r), supporters: this.supportersView(r), cannon: member ? this.cannonView(r, userId) : null, challenge: member ? this.challengeView(r, userId) : null, supportEvents: member ? (this.state.supportEvents ?? []).map(e => this.supportEventView(e, userId)).filter(Boolean) : [], rankStats: privileged ? this.rankStatsView(r, userId) : null }, publicSupport: this.publicSupportView(r, userId), current: this.current(userId), preferences: this.prefsView(userId) };
         }));
     }
     mediaAccess(userId) {

@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
 import * as PR from './profile.js?v=r58r2';
-import * as UNIFIED from '../unified/shell.js?v=r58t7';
+import * as UNIFIED from '../unified/shell.js?v=r58v';
 import * as REF from '../unified/home.js?v=r58t';
-import * as SOCIAL from '../unified/social.js?v=r58t7';
+import * as SOCIAL from '../unified/social.js?v=r58v';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r57';
@@ -175,6 +175,9 @@ function connect() {
       if (S.user && S.ws === ws && ['social-room','room'].includes(parseRoute().name)) refreshSocial(m);
     } else if (m.t === 'social:support') {
       if (S.user && S.ws === ws && parseRoute().name === 'social-room') SOCIAL.receiveSocialSupport(m.event);
+    } else if (m.t === 'social:rocket') {
+      if(S.user&&S.ws===ws&&parseRoute().name==='social-room'&&!S.accountSettings?.hideChatEffects)SOCIAL.receiveSocialRocket?.(m);
+      if(S.user&&S.ws===ws&&parseRoute().name==='social-room')refreshSocial(m);
     } else if (m.t === 'social:cannon') {
       if(S.user&&S.ws===ws&&parseRoute().name==='social-room'&&!S.accountSettings?.hideChatEffects)SOCIAL.receiveSocialCannon(m);
       if(S.user&&S.ws===ws&&parseRoute().name==='social-room')refreshSocial(m);

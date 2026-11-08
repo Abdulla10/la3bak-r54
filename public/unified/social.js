@@ -11,6 +11,7 @@ import {framed as frameOwnedPortrait} from '../shop.js?v=r58r2';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
 import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics} from '../social-gift-runtime-r27.js?v=r57';
+import {rocketShortcut,rocketPanel,rocketLaunch} from './room-rocket-r58.js?v=r58u';
 import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58t7';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
@@ -142,6 +143,7 @@ export function receiveSocialSupport(event) {
 export function receiveSocialGiftEffect(event,meta){return receiveGiftRuntime(live,event,meta);}
 export function socialGiftEffectMetrics(){return giftRuntimeMetrics(live);}
 export function socialCannonMetrics(){return live?.cannonFX?.metrics?.()||{disposed:true,contexts:0,frames:0,triangles:0};}
+export function receiveSocialRocket(message){const c=live;if(!c||c.ctx.gameRoom||message?.roomId!==c.routeRoom||c.ctx.hideChatEffects)return false;return rocketLaunch(message.event);}
 export function receiveSocialCannon(message){const c=live;if(!c||c.ctx.gameRoom||message?.roomId!==c.routeRoom||c.snapshot?.current?.roomId!==c.routeRoom||c.ctx.hideChatEffects)return false;return c.cannonFX?.receive(message.event,message.event?.cannon||c.snapshot?.room?.cannon)===true;}
 async function disconnectVoice(c) { c.voiceTarget=''; c.speakers.clear(); if(c.voice) await c.voice.disconnect().catch(()=>{}); c.voiceState={status:'disconnected',microphone:false}; c.notify(); }
 async function stopAmbient(c) { const audio=c.ambient;c.ambient=null;c.ambientOn=false;if(audio){audio.pause();audio.removeAttribute('src');audio.load();} }
@@ -211,9 +213,23 @@ function referenceHeaderRanks(m) {
   const ranks=[['level','LV',100],['vip','VIP',15],['noble','N',9]].filter(([key,,max])=>Number.isInteger(m.ranks?.[key])&&m.ranks[key]>0&&m.ranks[key]<=max);
   return ranks.map(([key,name])=>RANK_CHIP(key,m.ranks[key])?`<span class="so-rank so-rank-${key} has-art58" data-so-rank="${key}" dir="ltr"><img class="art58-chip" src="${RANK_CHIP(key,m.ranks[key])}" alt="" decoding="async"><b class="art58-chip-tx">${name}${m.ranks[key]}</b></span>`:`<span class="so-rank so-rank-${key}" data-so-rank="${key}" dir="ltr">${icon('star')}${name}${m.ranks[key]}</span>`).join('');
 }
+// R58v: قائمة الداعمين (اليوم، الأسبوع، الشهر، كل الوقت) — من بيانات الخادم فقط
+const SUP_TABS=[['day','اليوم'],['week','الأسبوع'],['month','الشهر'],['all','الكل']];
+function supportersShortcut(s){
+  if(!s||!Array.isArray(s.week))return '';
+  const top=(s.day?.length?s.day:s.week.length?s.week:s.month||[]).slice(0,3);
+  return `<button type="button" class="so-cannon-shortcut sup58-shortcut" data-so-action="open-panel" data-panel="supporters" aria-label="داعمين الغرفة"><span class="sup58-faces">${top.length?top.map(p=>`<span>${portraitHTML(p,26)}</span>`).join(''):'<span class="sup58-cup">🏆</span>'}</span><span>الداعمين</span></button>`;
+}
+function supportersPanel(s,tab='day'){
+  if(!s)return '<p class="so-note">قائمة الداعمين غير متاحة.</p>';
+  const key=SUP_TABS.some(([k])=>k===tab)?tab:'day',list=Array.isArray(s[key])?s[key]:[];
+  const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
+  const rows=list.length?`<ol class="sup58-list">${list.map((p,i)=>`<li class="${i<3?'is-top is-top'+(i+1):''}"><i>${medal(i)}</i><span class="sup58-face">${portraitHTML(p,40)}</span><b>${esc(p.name)}</b><span dir="ltr">${Number(p.pts).toLocaleString('en-US')} 💎</span></li>`).join('')}</ol>`:'<p class="so-note">ما فيه دعم بهالفترة للحين. أرسل هدية وكن أول داعم!</p>';
+  return `<section class="sup58-panel"><div class="sup58-tabs" role="tablist">${SUP_TABS.map(([k,l])=>`<button type="button" role="tab" data-so-action="sup-tab" data-tab="${k}" aria-selected="${k===key}">${l}</button>`).join('')}</div>${rows}<p class="so-cannon-unit">الترتيب حسب قيمة الهدايا (بالجواهر) اللي انرسلت داخل الغرفة. الأسبوع يبدأ السبت، واليوم يبدأ 12 بالليل بتوقيت الخليج.</p><button type="button" class="so-button so-primary so-cannon-support" data-so-action="open-panel" data-panel="gifts">أرسل هدية وادعم الغرفة</button></section>`;
+}
 function referenceShortcuts(c) {
   if(c.ctx.gameRoom)return '';
-  return `<aside class="so-room-shortcuts" aria-label="مدفع الغرفة">${cannonShortcut(c.snapshot?.room?.cannon)}</aside>`;
+  return `<aside class="so-room-shortcuts" aria-label="مدفع وصاروخ الغرفة">${cannonShortcut(c.snapshot?.room?.cannon)}${rocketShortcut(c.snapshot?.room?.rocket)}${supportersShortcut(c.snapshot?.room?.supporters)}</aside>`;
 }
 function publicRole(m,c) {
   if(ROLE_NAMES[m.role])return m.role;
@@ -369,6 +385,7 @@ function roomMenuGridHTML(c,ui,council){
     c.challengeModel?.available?tile('challenge-setup','users','تحدّي الفريقين',c.challengeModel.canStart?'':'disabled'):'',
     council?tile('room-clear-chat','broom','مسح الدردشة'):'',
     !c.ctx.gameRoom?tile('rank-open','star','رتبة الغرفة'):'',
+    !c.ctx.gameRoom?panelTile('supporters','heart','الداعمين'):'',
     tile('info','info','معلومات الغرفة'),
     !joined?tile('join-room','plus','دخول الغرفة','','is-primary'):'',
     mine&&!c.ctx.gameRoom?tile('room-delete','trash','حذف الغرفة','','is-danger'):'',
@@ -555,11 +572,11 @@ function roomMemoryHTML(c) {
   return `<section class="so-memory"><p class="so-note">ذاكرة نصية اختيارية، بموافقة أصحابها. لا تسجيل للصوت.</p>${currentCouncil(c)?button('memory','اقتراح ذكرى نصية'):''}${arr(room.memories).map(m=>`<article><p>${esc(m.text||'ذكرى بانتظار الموافقة')}</p>${m.saved===false&&arr(m.authors).some(a=>a.id===selfId(c))?button('memory-consent','أوافق على الحفظ',`data-id="${esc(m.id)}" data-enabled="true"`)+button('memory-consent','لا أوافق',`data-id="${esc(m.id)}" data-enabled="false"`):`<small>${m.saved?'ذكرى محفوظة بموافقة أصحابها':'بانتظار الموافقة'}</small>`}</article>`).join('')||'<p class="so-note">لا توجد ذكريات محفوظة بعد.</p>'}</section>`;
 }
 // room-tools-r33: panel
-const PANEL_NAMES={roomtools:'أدوات المجلس',menu:'خيارات الغرفة',memory:'ذاكرة المجلس',councils:'المجالس المتاحة',members:'أعضاء الغرفة',settings:'الخصوصية وإدارة الغرفة',audio:'الصوت والمايك',modes:'أنماط الجلسة',gifts:'هدايا الغرفة',cannon:'مدفع الغرفة'};
+const PANEL_NAMES={roomtools:'أدوات المجلس',menu:'خيارات الغرفة',memory:'ذاكرة المجلس',councils:'المجالس المتاحة',members:'أعضاء الغرفة',settings:'الخصوصية وإدارة الغرفة',audio:'الصوت والمايك',modes:'أنماط الجلسة',gifts:'هدايا الغرفة',cannon:'مدفع الغرفة',rocket:'صاروخ الغرفة',supporters:'داعمين الغرفة'};
 function roomPanelHTML(c,ui) {
   const panel=ui.panel,council=currentCouncil(c);
   if(!PANEL_NAMES[panel])return '';
-  const body=panel==='roomtools'?(c.roomTools?.render()||'<p>حالة الأدوات غير متاحة.</p>'):panel==='cannon'?cannonPanel(c.snapshot.room.cannon,ui.cannonStage):panel==='menu'?roomMenuGridHTML(c,ui,council):panel==='memory'?roomMemoryHTML(c):panel==='gifts'?`<div data-so-gifts>${typeof c.ctx.socialGifts?.render==='function'?c.ctx.socialGifts.render({...c.snapshot,snapshotVoice:c.voiceState}):'<p class="so-note">الهدايا غير متاحة في هذه الغرفة الآن.</p>'}</div>`:panel==='councils'?councilListHTML(c,ui.preview):panel==='members'?memberListHTML(c):panel==='settings'?moderationHTML(c,council):panel==='audio'?voiceHTML(c):modeHTML(c,council)||'<p class="so-note">خذ مقعدًا في مجلس لعرض أنماط الجلسة.</p>';
+  const body=panel==='roomtools'?(c.roomTools?.render()||'<p>حالة الأدوات غير متاحة.</p>'):panel==='cannon'?cannonPanel(c.snapshot.room.cannon,ui.cannonStage):panel==='rocket'?rocketPanel(c.snapshot.room.rocket):panel==='supporters'?supportersPanel(c.snapshot.room.supporters,ui.supTab):panel==='menu'?roomMenuGridHTML(c,ui,council):panel==='memory'?roomMemoryHTML(c):panel==='gifts'?`<div data-so-gifts>${typeof c.ctx.socialGifts?.render==='function'?c.ctx.socialGifts.render({...c.snapshot,snapshotVoice:c.voiceState}):'<p class="so-note">الهدايا غير متاحة في هذه الغرفة الآن.</p>'}</div>`:panel==='councils'?councilListHTML(c,ui.preview):panel==='members'?memberListHTML(c):panel==='settings'?moderationHTML(c,council):panel==='audio'?voiceHTML(c):modeHTML(c,council)||'<p class="so-note">خذ مقعدًا في مجلس لعرض أنماط الجلسة.</p>';
   return `<section class="so-room-panel" data-so-open-panel="${panel}" data-so-panel="${panel}" role="region" aria-labelledby="so-panel-title" tabindex="-1"><header class="so-room-panel-heading"><h2 id="so-panel-title">${PANEL_NAMES[panel]}</h2>${button('panel-close',icon('close')+'<span class="so-sr">إغلاق '+PANEL_NAMES[panel]+'</span>')}</header><div class="so-room-panel-body" data-so-panel-scroll>${body}</div></section>`;
 }
 function roomToolsHTML(c,ui,joined,council) {
@@ -979,6 +996,7 @@ export function mount(root,ctx={}) {
     if(action==='game-voice-retry'){if(c.busy||dialogBusy)return;const retry=async()=>{autoVoiceAttempt='';await ctx.retryGameVoice?.();if(alive)await read(c);};void run(()=>ctx.gameVoice?.error==='adult_acknowledgement_required'?requireAdult(retry):retry());return;}
     if(action==='dialog-close'){closeDialog();return;}
     if(action==='panel-close'){closePanel();return;}
+    if(action==='sup-tab'){const t=target.dataset.tab;if(['day','week','month','all'].includes(t)){ui.supTab=t;paint();}return;}
     if(action==='cannon-stage'){const stage=Number(target.dataset.stage);if(!dialogBusy&&Number.isInteger(stage)&&stage>=1&&stage<=(c.snapshot?.room?.cannon?.stages?.length||3)){ui.cannonStage=stage;paint();}return;}
     if(action==='reference-benefits'){if(!dialogBusy&&!c.ctx.gameRoom){void openOwnBenefits(c).catch(error=>{c.error=friendly(error?.message);c.notify();});}return;}
     if(action==='open-panel'){if(!dialogBusy)openPanel(target.dataset.panel,target);return;}
