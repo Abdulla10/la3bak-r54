@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r58o';
-import * as UNIFIED from '../unified/shell.js?v=r58o';
+import * as PR from './profile.js?v=r58p';
+import * as UNIFIED from '../unified/shell.js?v=r58p';
 import * as REF from '../unified/home.js?v=r58t';
-import * as SOCIAL from '../unified/social.js?v=r58o';
+import * as SOCIAL from '../unified/social.js?v=r58p';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r57';
@@ -23,7 +23,7 @@ import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
 import * as PF from '../profile.js?v=r58o';
-import * as SHOP from '../shop.js?v=r58o';
+import * as SHOP from '../shop.js?v=r58p';
 import * as GIFT from '../gifts.js?v=r58o';
 import * as GFX from '../giftfx.js?v=r57';
 import * as AVR from '../avatars.js?v=r58o';
@@ -564,7 +564,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r58o').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r58p').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':

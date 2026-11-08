@@ -2,7 +2,7 @@
  * All mutations target an explicitly selected canonical UUID; never infer an owner account.
  * The server remains authoritative for policy, ownership, permissions and idempotency.
  */
-import { framed, bgLayer } from './shop.js?v=r58o';
+import { framed, bgLayer } from './shop.js?v=r58p';
 import { avatarArt } from './avatars.js?v=r58o';
 import { referenceOf, referenceImage } from './reference-assets.js?v=r58o';
 
