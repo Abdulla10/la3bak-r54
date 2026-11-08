@@ -198,3 +198,9 @@ html body .r23-store .r23-store-tabs > button{min-height:54px;font-size:11px!imp
 .so-room-theme-card[data-theme^="img"]{background-size:cover!important;background-position:center!important;color:#fff;text-shadow:0 1px 3px #000;}
 html body .so-avatar > img.so-mic-frame-r58{position:absolute!important;left:-35%!important;top:-35%!important;right:auto!important;bottom:auto!important;width:170%!important;height:170%!important;max-width:none!important;max-height:none!important;border-radius:0!important;object-fit:contain!important;border:0!important;background:none!important;inset:auto;}
 html body .so-member .so-member-name.lux-board[class*="lux-board-art"]{max-width:118px;margin-inline:auto;}
+/* R58s: إطارات المايك 37-40 مرسومة بمساحة أوسع (النمر أوسع شي) */
+html body .so-avatar > img.so-mic-frame-r58[src*="/m38."],html body .so-avatar > img.so-mic-frame-r58[src*="/m39."],html body .so-avatar > img.so-mic-frame-r58[src*="/m40."]{left:-50%!important;top:-50%!important;width:200%!important;height:200%!important;}
+html body .so-avatar > img.so-mic-frame-r58[src*="/m37."]{left:-103%!important;top:-103%!important;width:306%!important;height:306%!important;}
+.mf-thumb img[src*="/m37."]{inset:-30%;width:160%;height:160%;}
+.mf-thumb img[src*="/m38."],.mf-thumb img[src*="/m39."],.mf-thumb img[src*="/m40."]{inset:-9%;width:118%;height:118%;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-room-theme^="img"]{background-image:linear-gradient(180deg,rgba(252,249,244,.35),rgba(252,249,244,.08) 30%,rgba(252,249,244,.08) 70%,rgba(252,249,244,.45)),var(--so-room-theme)!important;}

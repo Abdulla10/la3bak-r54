@@ -19,9 +19,9 @@ ok('15 لقب جديد مكتسب + الألقاب القديمة باقية', t
 ok('اسم لقب الجاكارو صار مطابق للرسمة', titles.find((a) => a.id === 'ach-t-jackaro')?.name === 'ملك الجاكارو');
 ok('24 إطار جديد للبيع، والإطارات art-f القديمة مخفية عن البيع (وتبقى لمن يملكها)', shop.items.filter((i) => /^art-f2-\d\d$/.test(i.id) && i.status === 'available').length === 24 && !shop.items.some((i) => /^art-f-\d\d$/.test(i.id) && i.status === 'available'));
 const mf = shop.items.filter((i) => i.slot === 'mic-frame');
-ok('36 إطار مايك بالمتجر بالمجوهرات', mf.length === 36 && mf.every((i) => i.currency === 'gems' && /^mf\d\d$/.test(i.css)), mf.length);
+ok('40 إطار مايك بالمتجر بالمجوهرات', mf.length === 40 && mf.every((i) => i.currency === 'gems' && /^mf\d\d$/.test(i.css)), mf.length);
 ok('10 خلفيات ملف جديدة', shop.items.filter((i) => /^art-pb-\d\d$/.test(i.id) && i.slot === 'bg').length === 10);
-const mfFiles = await Promise.all(Array.from({ length: 36 }, async (_, i) => (await fetch(B + `/assets/art58/mic/m${String(i + 1).padStart(2, '0')}.webp`)).status));
+const mfFiles = await Promise.all(Array.from({ length: 40 }, async (_, i) => (await fetch(B + `/assets/art58/mic/m${String(i + 1).padStart(2, '0')}.webp`)).status));
 ok('ملفات إطارات المايك موجودة', mfFiles.every((x) => x === 200));
 { const it = mf.filter((i) => !shop.owned.includes(i.id)).sort((a, b) => a.price - b.price)[0];
   if (it) { const before = (await req('shop:get')).gems; const b = await req('shop:buy', { item: it.id, key: randomUUID() }); const e = await req('shop:equip', { item: it.id });

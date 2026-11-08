@@ -3,10 +3,10 @@ export const ROOM_BACKGROUND_PRESETS = Object.freeze([
   Object.freeze({ id: 'royal', name: 'ملكي', gradient: 'linear-gradient(165deg, #42275c 0%, #38204f 65%, #48275a 100%)' }),
   Object.freeze({ id: 'amethyst', name: 'جمشت', gradient: 'linear-gradient(145deg, #614480 0%, #704e94 65%, #846847 100%)' }),
   Object.freeze({ id: 'gold', name: 'ذهبي', gradient: 'linear-gradient(145deg, #503360 0%, #896745 65%, #ab8f58 100%)' }),
-  Object.freeze({ id: 'img1', name: 'قاعة التاج', gradient: 'url(/assets/art58/roombg/r1.jpg)' }),
+  Object.freeze({ id: 'img1', name: 'قاعة العرش', gradient: 'url(/assets/art58/roombg/r1.jpg)' }),
   Object.freeze({ id: 'img2', name: 'شرفة القمر', gradient: 'url(/assets/art58/roombg/r2.jpg)' }),
   Object.freeze({ id: 'img3', name: 'صالة الجيمر', gradient: 'url(/assets/art58/roombg/r3.jpg)' }),
-  Object.freeze({ id: 'img4', name: 'المكتبة الدافئة', gradient: 'url(/assets/art58/roombg/r4.jpg)' }),
+  Object.freeze({ id: 'img4', name: 'خيمة الصحراء', gradient: 'url(/assets/art58/roombg/r4.jpg)' }),
   Object.freeze({ id: 'img5', name: 'قاعة الفلك', gradient: 'url(/assets/art58/roombg/r5.jpg)' }),
   Object.freeze({ id: 'dusk', name: 'الغسق', gradient: 'linear-gradient(145deg, #463257 0%, #61466a 65%, #675645 100%)' }),
 ] as const);

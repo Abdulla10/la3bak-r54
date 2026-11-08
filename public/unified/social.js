@@ -4,9 +4,9 @@ import {createRoomToolsR33} from '../social-room-tools-r33.js?v=r58p';
 import {SOCIAL_GAME_LABELS_R47,renderSocialGame,normalizeSocialGameActionR47,createSocialGamesR47} from '../social-games-r47.js?v=r58p';
 import {renderUpgradePanel,roomUpgradeConfirmationR47,roomUpgradeErrorR47} from '../room-upgrade-r47.js?v=build-all-r47';
 import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room-photo-r31';
-import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r58o';
+import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r58s';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
-import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r58r';
+import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r58s';
 import {framed as frameOwnedPortrait} from '../shop.js?v=r58r2';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
@@ -201,7 +201,7 @@ const textField = (name,label,max=500,value='',required=true) => `<label class="
 const check = (name,label,checked=false) => `<label class="so-check"><input name="${name}" type="checkbox" ${checked?'checked':''}>${esc(label)}</label>`;
 const select = (name,label,options,value) => `<label class="so-field">${esc(label)}<select name="${name}">${Object.entries(options).map(([id,text])=>`<option value="${esc(id)}"${id===String(value)?' selected':''}>${esc(text)}</option>`).join('')}</select></label>`;
 const selfId = c => String(c.snapshot?.selfId || c.list?.selfId || c.uid);
-const RANK_CHIP=(key,n)=>key==='vip'&&n>=1&&n<=15?`/assets/art58/chips/vip${n}.webp?v=r58o`:key==='noble'&&n>=1&&n<=9?`/assets/art58/chips/n${n}.webp?v=r58o`:key==='room'&&n>=1&&n<=10?`/assets/art58/chips/lv${n}.webp?v=r58o`:'';
+const RANK_CHIP=(key,n)=>key==='vip'&&n>=1&&n<=15?`/assets/art58/chips/vip${n}.webp?v=r58o`:key==='noble'&&n>=1&&n<=9?`/assets/art58/chips/n${n}.webp?v=r58o`:key==='room'&&n>=1&&n<=10?`/assets/art58/chips/lv${n}.webp?v=r58s`:'';
 function rankBadges(m) {
   const rank=[['vip','VIP',15],['noble','N',9],['level','LV',100]].find(([key,,max])=>Number.isInteger(m.ranks?.[key])&&m.ranks[key]>0&&m.ranks[key]<=max);
   return rank?`<span class="so-member-ranks"><small class="so-rank so-rank-${rank[0]}${RANK_CHIP(rank[0],m.ranks[rank[0]])?' has-art58':''}" data-so-rank="${rank[0]}" dir="ltr">${RANK_CHIP(rank[0],m.ranks[rank[0]])?`<img class="art58-chip" src="${RANK_CHIP(rank[0],m.ranks[rank[0]])}" alt="" decoding="async"><b class="art58-chip-tx">${rank[1]}${m.ranks[rank[0]]}</b>`:`${icon('star')}${rank[1]}${m.ranks[rank[0]]}`}</small></span>`:'';
