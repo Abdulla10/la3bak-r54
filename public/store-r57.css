@@ -22,3 +22,7 @@
 .r23-store .r23-product-art img.r23-frame-art{width:88%;height:88%;object-fit:contain;object-position:center;margin:auto;}
 /* إطارات SVG أكبر داخل مربع المنتج */
 .r23-store .r23-product-art .cx-fw.sm{transform:scale(1.45);}
+
+/* R58h: إطارات المالك مصممة على خلفية داكنة — نعرضها على بطاقة داكنة عشان تطلع ألوانها مثل التصميم */
+.r23-product[data-id^="art-f-"] .r23-product-art{background:radial-gradient(circle at 50% 45%,#3a2160 0%,#1d0f33 62%,#120822 100%);border-radius:16px;}
+.r23-product[data-id^="art-f-"] .r23-product-tile{background:transparent;}

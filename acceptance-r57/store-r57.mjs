@@ -25,7 +25,7 @@ ok('رصيد اختبار للحسابين (محلي فقط)', await gems(t1, 50
 const c1 = client(t1), c2 = client(t2); await c1.ready; await c2.ready;
 const shop = await c1.req('shop:get');
 const bySlot = (s) => shop.items.filter((i) => i.slot === s);
-ok('المتجر فيه 12 إطار فخم جديد', shop.items.filter((i) => i.id.startsWith('lux-f-')).length === 12);
+ok('إطارات المالك (20) معروضة للبيع، وإطارات lux-f القديمة مخفية', shop.items.filter((i) => i.id.startsWith('art-f-') && i.status === 'available').length === 20 && !shop.items.some((i) => i.id.startsWith('lux-f-') && i.status === 'available'), shop.items.filter((i) => i.id.startsWith('art-f-')).length);
 ok('المتجر فيه 8 خلفيات فخمة جديدة', shop.items.filter((i) => i.id.startsWith('lux-b-')).length === 8);
 ok('فقاعات الدردشة (6) ولوحات الأسماء (5) صارت أقسام فيها منتجات', bySlot('chat-bubble').length === 6 && bySlot('board').length === 5);
 ok('السيارات انشالت من المتجر بالكامل (طلب المالك)', !shop.items.some((i) => i.slot === 'entrance'), shop.items.filter((i) => i.slot === 'entrance').map((i) => i.id).join(','));
@@ -36,8 +36,8 @@ ok('إطار «جليدي» المقصوص ما ينعرض للبيع', !shop.it
 const deco = shop.items.filter((i) => ['frame', 'bg', 'chat-bubble', 'board', 'special-id', 'room-id'].includes(i.slot) && i.price > 0 && i.status === 'available');
 const coinsLeft = deco.filter((i) => i.currency !== 'gems');
 ok('كل الزينة (إطارات/خلفيات/سيارات/فقاعات/لوحات/أيديات) بالمجوهرات فقط', coinsLeft.length === 0, coinsLeft.map((i) => i.id + ':' + i.currency).slice(0, 8).join(','));
-const luxF = shop.items.filter((i) => i.id.startsWith('lux-f-'));
-ok('الإطارات الفخمة من 15 ألف وفوق، والأسطورية 100 ألف وفوق', luxF.every((i) => i.price >= 15000) && luxF.filter((i) => ['legendary', 'ultra'].includes(i.rarity)).every((i) => i.price >= 100000), luxF.map((i) => i.price).join(','));
+const luxF = shop.items.filter((i) => i.id.startsWith('art-f-'));
+ok('إطارات المالك بالمجوهرات، والأسطورية والخرافية 100 ألف وفوق', luxF.every((i) => i.currency === 'gems' && i.price >= 2000) && luxF.filter((i) => ['legendary', 'ultra'].includes(i.rarity)).every((i) => i.price >= 100000), luxF.map((i) => i.price).join(','));
 ok('الأيديات المميزة 45 مليون وفوق', bySlot('special-id').every((i) => i.price >= 45_000_000) && bySlot('room-id').every((i) => i.price >= 45_000_000), Math.min(...bySlot('special-id').map((i) => i.price)) + '');
 const buy = (c, item) => c.req('shop:buy', { item, key: randomUUID() });
 const b1 = await buy(c1, 'lux-bub-gold'); ok('شراء فقاعة ذهبية', b1.ok && b1.owned.includes('lux-bub-gold'), b1.error);

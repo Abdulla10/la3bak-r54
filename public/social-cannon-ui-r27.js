@@ -1,4 +1,4 @@
-import {bgLayer} from './shop.js?v=r58r';
+import {bgLayer} from './shop.js?v=r58j5';
 import {createCannon3D} from './cannon3d-r29.js?v=gifts-cannon-r29';
 /* Room-wide cannon presentation. All progress/awards are server snapshots; no wallet writes. */
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

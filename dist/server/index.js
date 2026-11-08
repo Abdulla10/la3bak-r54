@@ -572,6 +572,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 const slot = it ? it.slot : String(m.slot ?? '');
                 if (!SLOTS.includes(slot))
                     return { ok: false, error: 'خانة غير صالحة.' };
+                if (slot === 'souvenir')
+                    return { ok: false, code: 'souvenir', error: 'التذكار ما يتجهّز؛ ينعرض تلقائيًا في رف تذكاراتك بالملف.' };
                 if (slot === 'special-id') {
                     if (it && !wallet.owned(id).includes(it.id))
                         return { ok: false, error: 'ما تملك هذا العنصر.' };

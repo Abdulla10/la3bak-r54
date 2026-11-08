@@ -156,3 +156,33 @@
 .rr-emblem{object-fit:contain;}
 .rr-chip img.rr-emblem{width:20px;height:20px;margin:-2px 0;}
 .rr-main img.rr-emblem{filter:drop-shadow(0 10px 22px #0008);animation:rrFloat 3.6s ease-in-out infinite;}
+
+/* R58j: شارات VIP1–15 والنبلاء N1–N9 وليفل الغرفة Lv1–10 (رسومات المالك) — النص يبقى للقارئ الصوتي */
+.art58-chip-tx{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;}
+img.art58-chip{display:block;height:24px;width:auto;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(20,8,40,.35));}
+.has-art58{position:relative;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;min-width:0!important;display:inline-flex!important;align-items:center;line-height:0;}
+.has-art58::before,.has-art58::after{display:none!important;}
+.rl-chip.has-art58 img.art58-chip{height:30px;}
+.rl-chip.has-art58.is-big img.art58-chip{height:56px;}
+.so-rank.has-art58 img.art58-chip{height:28px;}
+.nx-chip.has-art58 img.art58-chip{height:40px;}
+.pvp-head-pill.is-vip[data-art58]{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;}
+.pvp-head-pills .pvp-head-pill.is-vip[data-art58] img.art58-chip{height:34px!important;width:auto!important;max-width:none!important;margin:-6px 0 -4px;}
+.pvp-head-pills .pvp-head-pill.is-vip[data-art58]{height:auto!important;width:auto!important;}
+
+/* R58j: التذكارات — المتجر ورف «تذكاراتي» بالملف */
+img.r23-souv-art{width:100%;height:100%;max-height:120px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(60,20,110,.35));}
+.souv-note{margin:4px 2px 10px;font-size:13px;color:#6b5a86;}
+.souv-shelf{margin:10px 14px;padding:12px 12px 10px;border-radius:18px;background:linear-gradient(160deg,#2a1450,#14092b 70%);box-shadow:0 8px 24px rgba(40,10,80,.25),inset 0 0 0 1px rgba(232,190,90,.35);color:#f7e7c0;}
+.souv-shelf header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.souv-shelf header b{font-size:15px;background:linear-gradient(90deg,#ffe7a3,#e2a93b);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.souv-shelf header small{color:#cbb6ef;font-size:12px;}
+.souv-row{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none;}
+.souv-row::-webkit-scrollbar{display:none;}
+.souv-item{flex:0 0 76px;margin:0;scroll-snap-align:start;text-align:center;}
+.souv-item img{display:block;width:76px;height:76px;object-fit:contain;border-radius:14px;background:radial-gradient(circle at 50% 70%,rgba(255,210,120,.28),transparent 65%);}
+.souv-item figcaption{font-size:11px;line-height:1.3;margin-top:2px;color:#f1dfb5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.souv-item.r-legendary img,.souv-item.r-ultra img{background:radial-gradient(circle at 50% 70%,rgba(255,200,90,.5),transparent 70%);}
+.souv-empty{display:flex;align-items:center;gap:6px;color:#e9d6ff;text-decoration:none;font-size:13px;}
+.souv-empty i{flex:0 0 44px;height:44px;border-radius:12px;border:1px dashed rgba(232,190,90,.55);background:rgba(255,255,255,.04);}
+.souv-empty span{margin-inline-start:6px;}

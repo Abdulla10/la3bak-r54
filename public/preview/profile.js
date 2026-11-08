@@ -6,11 +6,11 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=r58r';
-import { avatarArt } from '../avatars.js?v=r58c';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r58j5';
+import { avatarArt } from '../avatars.js?v=r58i';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58r';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58j5';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r58i';
 import { rankSummary, renderRankOverview } from './rank-overview.js?v=r58c';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -235,7 +235,8 @@ function referenceHeadBadges(ctx) {
  const rankHTML=system=>{const rank=rankSummary(ctx,system),earned=rank.state==='earned';
   const text=system==='level'?(earned?String(rank.rank):'—'):(earned?'VIP'+rank.rank:'VIP —');
   const art=system==='level'&&earned?`<span class="pvp-head-level-icon" data-pvp-level-theme="${rank.theme}" aria-hidden="true">${icon('crown')}</span>`:system==='level'?icon('crown'):'';
-  return button('rank-system',`${art}<small dir="ltr" data-pvp-head-rank="${system}">${esc(text)}</small>`,`data-system="${system}" data-rank-state="${rank.state}" aria-label="تفاصيل ${esc(rank.text)}" title="${esc(rank.text)}"`,'pvp-head-rank pvp-head-pill is-'+system);
+  const chip=system==='vip'&&earned&&Number.isInteger(rank.rank)&&rank.rank>=1&&rank.rank<=15?`<img class="art58-chip" src="/assets/art58/chips/vip${rank.rank}.webp?v=r58j" alt="" decoding="async">`:'';
+  return button('rank-system',`${chip||art}<small dir="ltr" data-pvp-head-rank="${system}"${chip?' class="art58-chip-tx"':''}>${esc(text)}</small>`,`data-system="${system}" data-rank-state="${rank.state}"${system==='vip'&&earned&&rank.rank>=1&&rank.rank<=15?' data-art58="1"':''} aria-label="تفاصيل ${esc(rank.text)}" title="${esc(rank.text)}"`,'pvp-head-rank pvp-head-pill is-'+system);
  };
  const support=headerCount(m?.giftCounts?.recv),supportTitle='عدد مرات الدعم بالهدايا المستلمة من أشخاص آخرين: '+support;
  const supportHTML=ctx.user&&!ctx.noCommunity?button('gift-log',`${headHeartIcon}<span class="pvp-head-support-number">${support}</span>`,`data-direction="incoming" data-pvp-head-support aria-label="${supportTitle}" title="${supportTitle}"`,'pvp-head-pill is-support'):`<span class="pvp-head-pill is-support" data-pvp-head-support title="${ctx.noCommunity?'الهدايا مقفلة بإعدادات ولي الأمر':'سجّل الدخول لعرض الدعم'}">${headHeartIcon}<span class="pvp-head-support-number">—</span></span>`;
@@ -261,6 +262,14 @@ function collection(ctx,s) {
 }
 
 /* R53: بطاقة العائلة تحت هوية اللاعب (مثل بطاقة «المملكة» بالمرجع) — من /api/social-private/family لحسابك فقط، وتظهر بس لو أنت بعائلة */
+function souvenirShelf(ctx) {
+ // R58j: رف «تذكاراتي» — التذكارات المملوكة من المتجر (رسومات المالك). العرض من بيانات الخادم فقط.
+ if(!ctx.user||!ctx.shopData)return '';
+ const owned=new Set(arr(ctx.shopData.owned)),list=arr(ctx.shopData.items).filter(i=>i&&i.slot==='souvenir'&&owned.has(i.id)&&/^\/assets\/art58\/souv\/s\d{2}\.webp$/.test(String(i.art||'')));
+ const total=arr(ctx.shopData.items).filter(i=>i&&i.slot==='souvenir').length;
+ const body=list.length?`<div class="souv-row">${list.map(i=>`<figure class="souv-item r-${esc(i.rarity||'common')}"><img src="${esc(i.art)}?v=r58j" alt="" loading="lazy" decoding="async"><figcaption>${esc(i.name)}</figcaption></figure>`).join('')}</div>`:`<a class="souv-empty" href="#/shop" data-souv-shop>${'<i></i>'.repeat(3)}<span>رفّك فاضي — اقتنِ أول تذكار من المتجر</span></a>`;
+ return `<section class="souv-shelf" data-souv-shelf aria-label="تذكاراتي"><header><b>تذكاراتي</b><small dir="ltr">${list.length}/${total}</small></header>${body}</section>`;
+}
 function savedRoomsCard(ctx,s) {
  const list=s.savedRooms;
  if(!ctx.user||ctx.noCommunity||!Array.isArray(list)||!list.length)return '';
@@ -331,7 +340,7 @@ export function profileHTML(ctx={}) {
  if(requestedTab){s.tab=requestedTab;s.collectionOpen=true;requestedTab=null;}
  const journey=s.rankOpen?renderRankOverview({...ctx,rankOverviewOpen:true,profileJourneyDefault:false,rankRewards:s.rankRewards??ctx.rankRewards,rankRewardsLoading:s.rankLoading,rankRewardsError:s.rankError,rankClaimPending:s.rankPending},s.rankSystem):'';
  const error=ctx.error || s.error;
- return `<article class="pv-profile lpu pvp-page pvp-profile-r15 pvp-profile-r19" data-profile-build="profile-list-r19" dir="rtl">${referenceHero(ctx,s)}${familyCard(ctx,s)}<div data-pvp-status class="lpu-status" ${error?'role="alert"':'role="status"'} aria-live="polite">${esc(error || s.message || (ctx.loading?'جاري تحميل بيانات حسابك…':''))}${ctx.error&&typeof ctx.refreshMe==='function'?button('account-retry','إعادة تحميل الحساب','','pvp-text-button'):''}</div>${profileGiftLog(ctx)}${profileMenu(ctx,s)}${savedRoomsCard(ctx,s)}${s.rankOpen?`<div class="pvp-rank-details">${rankCards(ctx,s)}${journey}</div>`:''}${profileDetails(ctx)}${!ctx.user?`<section class="lpu-login">${guestStart(ctx)}${ctx.googleCard?ctx.googleCard():''}</section>`:ctx.google===false&&ctx.googleCard?`<details class="lpu-google-details"><summary>حماية حساب الضيف بربطه بـ Google</summary>${ctx.googleCard()}</details>`:''}${referenceDrawer(ctx,s)}${referenceBottomNav(ctx)}${collection(ctx,s)}${editor(ctx,s)}</article>`;
+ return `<article class="pv-profile lpu pvp-page pvp-profile-r15 pvp-profile-r19" data-profile-build="profile-list-r19" dir="rtl">${referenceHero(ctx,s)}${familyCard(ctx,s)}<div data-pvp-status class="lpu-status" ${error?'role="alert"':'role="status"'} aria-live="polite">${esc(error || s.message || (ctx.loading?'جاري تحميل بيانات حسابك…':''))}${ctx.error&&typeof ctx.refreshMe==='function'?button('account-retry','إعادة تحميل الحساب','','pvp-text-button'):''}</div>${profileGiftLog(ctx)}${souvenirShelf(ctx)}${profileMenu(ctx,s)}${savedRoomsCard(ctx,s)}${s.rankOpen?`<div class="pvp-rank-details">${rankCards(ctx,s)}${journey}</div>`:''}${profileDetails(ctx)}${!ctx.user?`<section class="lpu-login">${guestStart(ctx)}${ctx.googleCard?ctx.googleCard():''}</section>`:ctx.google===false&&ctx.googleCard?`<details class="lpu-google-details"><summary>حماية حساب الضيف بربطه بـ Google</summary>${ctx.googleCard()}</details>`:''}${referenceDrawer(ctx,s)}${referenceBottomNav(ctx)}${collection(ctx,s)}${editor(ctx,s)}</article>`;
 }
 
 function redraw(s) {

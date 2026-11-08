@@ -1,5 +1,5 @@
 import { rankPerkCatalogItems } from './rank-perks-r56.js';
-import { LUX_ITEMS, LUX_SET, SPECIAL_ID_ITEMS, ROOM_ID_ITEMS } from './store-lux-r57.js';
+import { LUX_ITEMS, LUX_SET, SPECIAL_ID_ITEMS, ROOM_ID_ITEMS, SOUVENIR_ITEMS } from './store-lux-r57.js';
 import { luxuryPricedSeed } from './luxury-pricing-r23.js';
 import { gemsOnlyStorePrice } from './store-gems-r58.js';
 import { REFERENCE_ITEMS, REFERENCE_SETS } from './reference-catalog.js';
@@ -122,7 +122,7 @@ for (const i of ENTRANCE_ITEMS) {
 }
 CATALOG.push(...ENTRANCE_ITEMS);
 const perkIds = new Set(CATALOG.map((i) => i.id));
-for (const i of [...LUX_ITEMS, ...SPECIAL_ID_ITEMS, ...ROOM_ID_ITEMS]) {
+for (const i of [...LUX_ITEMS, ...SPECIAL_ID_ITEMS, ...ROOM_ID_ITEMS, ...SOUVENIR_ITEMS]) {
     if (perkIds.has(i.id))
         throw new Error(`Lux catalog ID collision: ${i.id}`);
     perkIds.add(i.id);
@@ -147,7 +147,7 @@ for (let index = 0; index < CATALOG.length; index++)
     CATALOG[index] = gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index]));
 const BY_ID = new Map(CATALOG.map((i) => [i.id, i]));
 export const itemOf = (id) => (typeof id === 'string' ? BY_ID.get(id) : undefined);
-export const SLOTS = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id'];
+export const SLOTS = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir'];
 export const MILESTONES = [
     { id: 'm-first-win', label: 'أول فوز', cur: 'coins', amount: 100, goal: 1, metric: 'wins' },
     { id: 'm-played-10', label: 'أكمل 10 مباريات', cur: 'coins', amount: 150, goal: 10, metric: 'played' },

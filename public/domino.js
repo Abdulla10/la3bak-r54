@@ -3,7 +3,7 @@
  * المساحات الآمنة: ما نستعمل env() هنا. الشريط العلوي يبدأ من 143u والسفلي ينتهي عند 1915u،
  * وهذا يغطي الجزيرة (حتى 59pt) ومؤشر الرجوع (34pt) على آيفون بمقاس الفيديو، فما فيه احتساب مزدوج. */
 import { faceHtml } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=r58c';
+import { avatarArt } from './avatars.js?v=r58i';
 import { layout, slotFor, viewport } from './domino-layout.js?v=shell-r6';
 export { layout, slotFor, viewport };
 

@@ -1,4 +1,4 @@
-import { referenceOf, referenceImage } from './reference-assets.js?v=luxury-store-r23';
+import { referenceOf, referenceImage } from './reference-assets.js?v=r58i';
 /* مظاهر المتجر الجديدة: أفاتارات وإطارات وخلفيات SVG أصلية بالكامل (مرسومة هنا بالكود، بدون صور خارجية).
  * الندرة ما تغيّر اللون بس: كل درجة تضيف طبقات تفاصيل (حافة، بريق، أجنحة، أشعة، تاج، حركة خفيفة).
  * الأسعار والملكية من الخادم؛ هنا الرسم فقط. */
@@ -227,7 +227,7 @@ function rankFrameInner(css) {
 }
 /** إطار جديد كطبقة SVG تنحط فوق الصورة (الحاوية لازم position:relative) */
 export function frameArt(css) {
-  if (referenceOf(css)?.slot === 'frame') return referenceImage(css, 'cx-frame ref-frame');
+  if (referenceOf(css)?.slot === 'frame') return referenceImage(css, String(referenceOf(css).src).includes('/art58/rank/') ? 'cx-frame ref-frame art58-rank' : 'cx-frame ref-frame');
   if (!FR[css]) return '';
   if (RANK_FR[css]) return `<svg class="cx-frame r-${FR[css].r} rk-frame t${RANK_FR[css].t}" viewBox="-4 -6 128 132" direction="ltr" aria-hidden="true" focusable="false">${rankFrameInner(css)}</svg>`;
   return `<svg class="cx-frame r-${FR[css].r}" viewBox="0 0 120 120" direction="ltr" aria-hidden="true" focusable="false">${frameInner(css)}</svg>`;

@@ -111,3 +111,9 @@
 )) {
   background: transparent !important;
 }
+
+/* R58i: إطارات رتب VIP والنبلاء (تصميم المالك) مرسومة بصندوق 180% من الصورة عشان التيجان والأجنحة */
+:is(.cx-fw.has, .pf-ring.cx-pring) > img.cx-frame.art58-rank{left:-40%;top:-40%;width:180%;height:180%;max-width:none;max-height:none;object-fit:contain;}
+.sb12-frame > img.cx-frame.art58-rank{inset:-20%;width:140%;height:140%;}
+/* R58i: رسومات المالك شفافة أصلًا — بدون دمج «screen» اللي يبهّت الألوان */
+img.cx-frame[src*="/art58/"]{mix-blend-mode:normal!important;filter:none!important;}

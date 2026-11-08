@@ -82,7 +82,7 @@ const EMBLEMS = [
 ];
 export function tierEmblem(i, size = 120, uid = 'e') {
   // R58g: شعارات 3D مرندرة (three.js) — ملفات الرسم بمجلد tools/room-rank-badges
-  const t = TIERS[i]; return `<img class="rr-emblem rr-emblem-${t.id}" src="/assets/room-rank/${t.id}.webp?v=r58g" width="${size}" height="${size}" alt="" decoding="async" draggable="false">`;
+  const t = TIERS[i]; return `<img class="rr-emblem rr-emblem-${t.id}" src="/assets/room-rank/${t.id}.webp?v=r58i" width="${size}" height="${size}" alt="" decoding="async" draggable="false">`;
 }
 export const tierChip = (tierId, uid = 'c') => { const i = tierIndex(tierId); if (i < 0) return ''; return `<span class="rr-chip rr-chip-${esc(tierId)}" title="رتبة الغرفة: ${esc(TIERS[i].name)}">${tierEmblem(i, 18, uid)}<b>${esc(TIERS[i].name)}</b></span>`; };
 

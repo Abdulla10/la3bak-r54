@@ -104,7 +104,8 @@ export class ShopCatalog {
     const approved = base.proposalOnly ? approvedProposal(o) : undefined;
     // R56: مقتنيات سلّم الرتب مخفية عن البيع افتراضيًا (تظهر وتنجهّز لمالكها فقط)، إلا إذا الإدارة حددت حالة غيرها
     // R57: «جليدي» صورته الأصلية مقصوصة نصها (تطلع مثل حرف C)، فتنخفي من البيع افتراضيًا. اللي يملكها تبقى له، والإدارة تقدر ترجّعها
-    const brokenArt = base.id === 'ref-p-frame-11';
+    // R58h: إطارات lux-f المرسومة بالكود انستبدلت بإطارات المالك؛ تنخفي من البيع (اللي يملكها تبقى له)
+    const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-');
     const requestedStatus = o?.status === undefined && o?.active === undefined && (base.rankPerk || brokenArt) ? 'hidden' : shopStatus(o ?? {});
     // Missing/partial/invalid approval can never activate a proposal, including price zero.
     const status = approved === false && (!o?.status || requestedStatus === 'available') ? 'coming-soon' : requestedStatus;
@@ -160,6 +161,7 @@ export class ShopCatalog {
   private cssFor(slot: Slot, raw: unknown): string {
     // Entrance effects are the two fixed canonical seeds, not arbitrary custom CSS or URLs.
     if (slot === 'entrance') throw new ShopInputError('دخول السيارات متاح من العناصر الأساسية المعتمدة فقط.');
+    if (slot === 'souvenir') throw new ShopInputError('التذكارات متاحة من رسومات الكتالوج المعتمدة فقط.');
     if (slot === 'frame' || slot === 'bg') {
       const c = String(raw ?? '');
       if (!PRESETS[slot].includes(c)) throw new ShopInputError('المظهر لازم يكون من القائمة المتاحة.');

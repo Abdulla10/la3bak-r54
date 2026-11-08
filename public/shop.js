@@ -1,8 +1,8 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58c';
-import { avatarArt } from './avatars.js?v=r58c';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58i';
+import { avatarArt } from './avatars.js?v=r58i';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=luxury-store-r23';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58i';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=release-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
@@ -41,7 +41,7 @@ export function txListHTML(list, emptyMsg = 'ما فيه معاملات بعد.'
 }
 
 /* ---- معاينة مركّبة: خلفية + أفاتار + إطار + لقب + شارة ---- */
-const SLOT_NAME = { avatar: 'أفاتار', frame: 'إطار', entrance: 'دخول مركبة', bg: 'خلفية', title: 'لقب', badge: 'شارة', 'chat-bubble': 'فقاعة دردشة', board: 'لوحة اسم', 'special-id': 'أيدي مميز', 'room-id': 'أيدي غرفة' };
+const SLOT_NAME = { souvenir: 'تذكار', avatar: 'أفاتار', frame: 'إطار', entrance: 'دخول مركبة', bg: 'خلفية', title: 'لقب', badge: 'شارة', 'chat-bubble': 'فقاعة دردشة', board: 'لوحة اسم', 'special-id': 'أيدي مميز', 'room-id': 'أيدي غرفة' };
 const FACE = `<span class="avatar-wrap cx-ghost" style="--sz:64px">${renderProfileIcon('person')}</span>`;
 /** إطار حول محتوى (جديد = طبقة SVG، قديم = حلقة CSS) */
 export function framed(css, inner, cls = '') {
@@ -66,6 +66,7 @@ function thumb(i) {
   if (i.slot === 'room-id') return `<span class="lux-thumb"><span class="lux-sid lux-rid r-${esc(i.rarity || 'rare')}"><small>ROOM ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'special-id') return `<span class="lux-thumb"><span class="lux-sid r-${esc(i.rarity || 'rare')}"><small>ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'entrance') return safeArt(i.art) ? `<img class="r23-entrance-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : `<span class="r23-art-missing">${renderProfileIcon('image')}<small>صورة المركبة غير متاحة</small></span>`;
+  if (i.slot === 'souvenir') return safeArt(i.art) ? `<img class="r23-souv-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : renderProfileIcon('star');
   if (i.slot === 'avatar') return avatarArt(i.id, 64, i.css === 'av2' ? undefined : i.css) || renderProfileIcon('person');
   if (i.slot === 'frame') return safeArt(i.art) ? `<img class="r23-frame-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : referenceOf(i.css || i.id)?.slot === 'frame' ? referenceImage(i.css || i.id, 'r23-frame-art') : framed(i.css, FACE, 'sm');
   if (i.slot === 'bg') return `<span class="cx-bgthumb">${bgLayer(i)}</span>`;
@@ -90,6 +91,7 @@ function priceHTML(i) {
 }
 function itemActionHTML(i, d) {
   const on = d.equipped[i.slot] === i.id;
+  if (ownsItem(i, d) && i.slot === 'souvenir') return `<a class="btn ghost" href="#/profile">في رف تذكاراتك ✓</a>`;
   if (ownsItem(i, d)) return `<button class="btn ${on ? 'ghost' : 'gold'}" type="button" data-act="shop-equip" data-id="${esc(i.id)}" data-slot="${esc(i.slot)}" data-on="${on ? 1 : 0}"${SH.busy || (!on && !itemEligible(i)) ? ' disabled' : ''}>${on ? 'إزالة التجهيز' : itemEligible(i) ? 'تجهيز' : 'شرط الرتبة غير مكتمل'}</button>`;
   if (!approvedPrice(i)) return '<button class="btn ghost" type="button" disabled>الشراء غير متاح · السعر غير معتمد</button>';
   if (itemStatus(i) !== 'available' || i.active === false || i.retired) return `<button class="btn ghost" type="button" disabled>${statusLabel(i)}</button>`;
@@ -164,7 +166,8 @@ function filtersHTML(d, tab) {
 // لا نفترض سعر صرف بين العملات والجواهر. نجمع العملة ثم نرتب السعر داخلها.
 const priceOrder = (a, b) => a.currency === b.currency ? (a.price ?? 0) - (b.price ?? 0) : String(a.currency || '').localeCompare(String(b.currency || ''));
 // Featured order is presentation only: no products or prices are fabricated.
-const featuredFrames = ['ref-p-frame-08', 'ref-p-frame-02', 'ref-p-frame-06', 'lux-f-inferno', 'lux-f-galaxy', 'lux-f-phoenix', 'lux-f-sapphire', 'lux-f-emerald', 'lux-f-ruby'];
+// R58h: إطارات المالك أولًا (الأفخم فوق)
+const featuredFrames = ['art-f-29', 'art-f-28', 'art-f-24', 'art-f-23', 'art-f-22', 'art-f-21', 'art-f-20', 'art-f-18', 'art-f-16', 'art-f-15', 'art-f-14', 'art-f-11', 'art-f-10', 'art-f-09', 'art-f-08', 'art-f-07', 'art-f-06', 'art-f-03', 'art-f-02', 'art-f-01', 'ref-p-frame-08', 'ref-p-frame-02', 'ref-p-frame-06'];
 const featuredOrder = (i) => { const n = featuredFrames.indexOf(i.id); return n < 0 ? featuredFrames.length : n; };
 function gridFor(d, tab) {
   const f = SH.f;
@@ -230,7 +233,7 @@ export function shopHTML(me) {
   if (SH.loading && !SH.data) return '<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="status">جاري تحميل المتجر…</p></div></div>';
   if (SH.err || !SH.data) return `<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="alert">${esc(SH.err || 'تعذّر التحميل.')}</p><button class="btn" type="button" data-act="shop-reload">إعادة المحاولة</button></div></div>`;
   const full = SH.data;
-  const inWorld = (i) => /^(lux-|sid-|rid-)/.test(i.id) ? SH.world === 'players' : i.slot === 'entrance' ? SH.world === 'kids' ? i.kids === true : SH.world === 'players' && i.kids !== true : SH.world === 'legacy' ? !i.id.startsWith('ref-') : i.id.startsWith(SH.world === 'kids' ? 'ref-k-' : 'ref-p-') || (SH.world === 'players' && isSuppliedBackground(i.id));
+  const inWorld = (i) => /^(lux-|sid-|rid-|art-|souv-)/.test(i.id) ? SH.world === 'players' : i.slot === 'entrance' ? SH.world === 'kids' ? i.kids === true : SH.world === 'players' && i.kids !== true : SH.world === 'legacy' ? !i.id.startsWith('ref-') : i.id.startsWith(SH.world === 'kids' ? 'ref-k-' : 'ref-p-') || (SH.world === 'players' && isSuppliedBackground(i.id));
   const d = { ...full, items: full.items.filter((i) => inWorld(i) && visibleItem(i, full)), collectionItems: full.collectionItems?.filter((i) => inWorld(i) && visibleItem(i, full)) };
   const tab = [...SLOT_TABS, ...STOREFRONT_TABS].some((t) => t[0] === SH.tab) ? SH.tab : 'frame';
   const header = `<header class="r23-store-header"><a class="r23-store-back" href="#/account" aria-label="العودة إلى حسابي">${renderProfileIcon('back')}</a><h1>متجر الأغراض</h1><button class="r23-my-items ${tab === 'owned' ? 'on' : ''}" type="button" data-act="shop-tab" data-v="owned" aria-pressed="${tab === 'owned'}">أغراضي</button></header>`;
@@ -259,7 +262,9 @@ export function shopHTML(me) {
     body = `<details class="r23-appearance"><summary>${renderProfileIcon('camera')} معاينة مظهري</summary>${previewHTML(d)}</details>` + setsHTML(d);
   } else if (tab === 'ach' || (SH.world !== 'legacy' && ['badge','title'].includes(tab))) {
     body = achHTML({ ...d, artWorld: SH.world, achievementKind: tab === 'ach' ? null : tab });
-  } else if (['profile-card', 'souvenir'].includes(tab)) {
+  } else if (tab === 'souvenir') {
+    body = `<p class="souv-note">التذكار ينعرض تلقائيًا في رف «تذكاراتي» بملفك الشخصي أول ما تشتريه.</p>` + gridFor(d, tab);
+  } else if (['profile-card'].includes(tab)) {
     body = unavailableHTML(tab, me);
   } else if (['special-id', 'board', 'chat-bubble', 'room-id'].includes(tab)) {
     body = (tab === 'special-id' ? unavailableHTML(tab, me).replace('data-empty-category', 'data-current-id') : '') + gridFor(d, tab);
@@ -273,3 +278,5 @@ export function shopHTML(me) {
   if (SH.convertConfirm?.key) dlg=`<div class="sh-modal" role="dialog" aria-modal="true" aria-label="إيصال تحويل سابق"><div class="card"><h2>مراجعة إيصال سابق</h2><p>التحويلات الجديدة مقفولة. يُعاد معرّف الطلب السابق فقط للتحقق من الإيصال، دون خصم أو إضافة جديدة.</p><button class="btn gold" data-act="shop-convert-go" ${SH.busy?'disabled':''}>التحقق من الإيصال السابق</button></div></div>`;
   return `<div class="stack ref-store r23-store" data-world="${esc(SH.world)}" data-store-tab="${esc(tab)}" dir="rtl">${header}${tabs}${more}<div class="r23-store-body" id="r23-store-panel" role="tabpanel">${body}</div>${dlg}</div>`;
 }
+// R58j: رابط «اقتنِ أول تذكار» من رف الملف يفتح قسم التذكارات مباشرة
+if (typeof document !== 'undefined') document.addEventListener('click', (e) => { if (e.target.closest?.('[data-souv-shop]')) SH.tab = 'souvenir'; }, true);

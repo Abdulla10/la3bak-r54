@@ -10,6 +10,7 @@ const LADDERS: Readonly<Partial<Record<ShopItem['slot'], Ladder>>> = Object.free
   bg: { common: 1_000, premium: 3_000, rare: 8_000, epic: 25_000, legendary: 60_000, ultra: 150_000 },
   entrance: { common: 50_000, premium: 80_000, rare: 120_000, epic: 200_000, legendary: 350_000, ultra: 600_000 },
   'chat-bubble': { common: 1_000, premium: 3_000, rare: 10_000, epic: 30_000, legendary: 80_000, ultra: 200_000 },
+  souvenir: { common: 5_000, premium: 15_000, rare: 40_000, epic: 100_000, legendary: 250_000, ultra: 600_000 },
   board: { common: 1_000, premium: 3_000, rare: 10_000, epic: 30_000, legendary: 80_000, ultra: 200_000 },
 });
 /** قطع العرض الأفخم بكل قسم */
