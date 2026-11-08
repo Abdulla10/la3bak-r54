@@ -6,11 +6,11 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=r58y4';
-import { avatarArt } from '../avatars.js?v=r58r';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r59c';
+import { avatarArt } from '../avatars.js?v=r59c';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58y4';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r58r';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r59c';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r59c';
 import { rankSummary, renderRankOverview } from './rank-overview.js?v=r58c';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -35,7 +35,7 @@ const states = new Map();
 const mounts = new WeakMap();
 let activeState = null;
 let requestedTab = null;
-const displayArt = html => String(html ?? '').replace(/\/assets\/reference\/(ref-[pk]-(?:av|frame|badge|title)-\d+)\.webp/g,'/preview/assets/cosmetics/$1.png').replaceAll('/assets/reference/','/preview/assets/cosmetics/');
+const displayArt = html => String(html ?? '').replace(/\/assets\/reference\/(ref-[pk]-frame-\d+)\.webp/g,'/assets/art58/legacy/$1.webp').replace(/\/assets\/reference\/(ref-[pk]-(?:av|frame|badge|title)-\d+)\.webp/g,'/preview/assets/cosmetics/$1.png').replaceAll('/assets/reference/','/preview/assets/cosmetics/');
 /** Host shortcut bridge; click handlers also manage their own tab state. */
 export function openInventory(slot = 'inventory') {
   const tab = slot === 'ach' ? 'achievements' : slot === 'background' ? 'bg' : slot;

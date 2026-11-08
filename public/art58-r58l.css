@@ -174,7 +174,7 @@ html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="1"],html body .p
 /* R58r: اللوحات 17-20 */
 .lux-board-art17{background:none!important;border-style:solid!important;border-width:0!important;border-color:transparent!important;border-radius:0!important;box-shadow:none!important;border-image:url(/assets/art58/boards/b17.webp?v=r58r) 0 26% fill / 0 28px stretch!important;padding:6px 30px!important;min-width:110px;min-height:28px;line-height:18px;font-weight:800;}
 html body .so-page .so-room-detail .so-member-name.lux-board.lux-board-art17,html body .lux-board.lux-board-art17{color:#fff!important;text-shadow:0 1px 2px #000c!important;}
-.lux-board-art18{background:none!important;border-style:solid!important;border-width:0!important;border-color:transparent!important;border-radius:0!important;box-shadow:none!important;border-image:url(/assets/art58/boards/b18.webp?v=r58r) 0 26% fill / 0 28px stretch!important;padding:6px 30px!important;min-width:110px;min-height:28px;line-height:18px;font-weight:800;}
+.lux-board-art18{background:none!important;border-style:solid!important;border-width:0!important;border-color:transparent!important;border-radius:0!important;box-shadow:none!important;border-image:url(/assets/art58/boards/b18.webp?v=r59b) 0 26% fill / 0 28px stretch!important;padding:6px 30px!important;min-width:110px;min-height:28px;line-height:18px;font-weight:800;}
 html body .so-page .so-room-detail .so-member-name.lux-board.lux-board-art18,html body .lux-board.lux-board-art18{color:#fff!important;text-shadow:0 1px 2px #000c!important;}
 .lux-board-art19{background:none!important;border-style:solid!important;border-width:0!important;border-color:transparent!important;border-radius:0!important;box-shadow:none!important;border-image:url(/assets/art58/boards/b19.webp?v=r58r) 0 26% fill / 0 28px stretch!important;padding:6px 30px!important;min-width:110px;min-height:28px;line-height:18px;font-weight:800;}
 html body .so-page .so-room-detail .so-member-name.lux-board.lux-board-art19,html body .lux-board.lux-board-art19{color:#fff!important;text-shadow:0 1px 2px #000c!important;}
@@ -201,6 +201,9 @@ html body .so-member .so-member-name.lux-board[class*="lux-board-art"]{max-width
 /* R58s: إطارات المايك 37-40 مرسومة بمساحة أوسع (النمر أوسع شي) */
 html body .so-avatar > img.so-mic-frame-r58[src*="/m38."],html body .so-avatar > img.so-mic-frame-r58[src*="/m39."],html body .so-avatar > img.so-mic-frame-r58[src*="/m40."]{left:-50%!important;top:-50%!important;width:200%!important;height:200%!important;}
 html body .so-avatar > img.so-mic-frame-r58[src*="/m37."]{left:-103%!important;top:-103%!important;width:306%!important;height:306%!important;}
-.mf-thumb img[src*="/m37."]{inset:-30%;width:160%;height:160%;}
+.mf-thumb img[src*="/m37."]{inset:auto;left:2.5%;top:-14.8%;width:125%;height:125%;} /* R59b: النمر كان مقصوص من اليسار بالمتجر */
 .mf-thumb img[src*="/m38."],.mf-thumb img[src*="/m39."],.mf-thumb img[src*="/m40."]{inset:-9%;width:118%;height:118%;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-room-theme^="img"]{background-image:linear-gradient(180deg,rgba(252,249,244,.35),rgba(252,249,244,.08) 30%,rgba(252,249,244,.08) 70%,rgba(252,249,244,.45)),var(--so-room-theme)!important;}
+
+/* R59b: فقاعة قصر الليل — الكتابة تنقرا فوق رسمة القصر */
+html body .so-page .so-room-detail .so-chat-message.rp-bubble-art20 > p,html body .rp-art-bubble .rp-bubble-art20{text-shadow:0 0 2px #000,0 0 4px #000,0 0 7px #0b1640,0 1px 2px #000!important;font-weight:800!important;}

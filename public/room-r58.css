@@ -604,3 +604,38 @@ html body .so-page .so-room-detail .so-room-panel[data-so-panel="gifts"] [data-s
 .tr59-item .tr59-go{padding:5px 10px;font-size:11.5px;}
 .tr59-bal{display:flex;justify-content:flex-end;gap:10px;}
 .tr59-bal span{padding:5px 12px;border-radius:99px;background:#f1edf8;font-weight:800;font-size:13px;color:#2c1a4a;}
+
+/* ===== R59b: إصلاح الإطارات (تدقيق المالك) ===== */
+/* R59b: مقاس كل إطار حسب فتحته (الإطارات 13–24 فتحتها أصغر فكانت تطلع فوق الوجه)، وتوسيطه على الصورة */
+img.cx-frame[src*="frames2/f01."]{--fs:144.2%;--fx:-0.11%;--fy:-0.29%;}
+img.cx-frame[src*="frames2/f02."]{--fs:139.2%;--fx:-0.17%;--fy:0.03%;}
+img.cx-frame[src*="frames2/f03."]{--fs:138.3%;--fx:0.1%;--fy:0.17%;}
+img.cx-frame[src*="frames2/f04."]{--fs:139.2%;--fx:-0.04%;--fy:-0.06%;}
+img.cx-frame[src*="frames2/f05."]{--fs:139.4%;--fx:0.04%;--fy:0.11%;}
+img.cx-frame[src*="frames2/f06."]{--fs:139.2%;--fx:0.0%;--fy:0.13%;}
+img.cx-frame[src*="frames2/f07."]{--fs:137.5%;--fx:-0.07%;--fy:0.31%;}
+img.cx-frame[src*="frames2/f08."]{--fs:137.6%;--fx:-0.07%;--fy:0.29%;}
+img.cx-frame[src*="frames2/f09."]{--fs:140.6%;--fx:0.1%;--fy:0.05%;}
+img.cx-frame[src*="frames2/f10."]{--fs:140.8%;--fx:-0.09%;--fy:0.29%;}
+img.cx-frame[src*="frames2/f11."]{--fs:139.7%;--fx:-0.07%;--fy:0.4%;}
+img.cx-frame[src*="frames2/f12."]{--fs:139.7%;--fx:-0.12%;--fy:0.01%;}
+img.cx-frame[src*="frames2/f13."]{--fs:221.9%;--fx:-0.17%;--fy:1.89%;}
+img.cx-frame[src*="frames2/f14."]{--fs:231.7%;--fx:1.79%;--fy:-3.75%;}
+img.cx-frame[src*="frames2/f15."]{--fs:210.0%;--fx:0%;--fy:0%;}
+img.cx-frame[src*="frames2/f16."]{--fs:197.0%;--fx:0.75%;--fy:0.42%;}
+img.cx-frame[src*="frames2/f17."]{--fs:219.3%;--fx:1.72%;--fy:0.84%;}
+img.cx-frame[src*="frames2/f18."]{--fs:218.2%;--fx:-0.13%;--fy:-0.43%;}
+img.cx-frame[src*="frames2/f19."]{--fs:205.9%;--fx:-0.27%;--fy:-3.66%;}
+img.cx-frame[src*="frames2/f20."]{--fs:212.4%;--fx:0.48%;--fy:0.18%;}
+img.cx-frame[src*="frames2/f21."]{--fs:222.2%;--fx:0.4%;--fy:-4.32%;}
+img.cx-frame[src*="frames2/f22."]{--fs:208.2%;--fx:1.89%;--fy:-0.31%;}
+img.cx-frame[src*="frames2/f23."]{--fs:221.6%;--fx:0.42%;--fy:-3.19%;}
+img.cx-frame[src*="frames2/f24."]{--fs:235.6%;--fx:-2.14%;--fy:-0.57%;}/* 1) الإطار الصوري بأي مكان: بالنص على الصورة، وبمقاس فتحته */
+html body .cx-fw.has > img.cx-frame,html body .pvp-page .lpu-portrait > .cx-fw.has > img.cx-frame,html body .so-page .so-owned-seat-frame.cx-fw.has > img.cx-frame{position:absolute!important;inset:auto!important;left:50%!important;top:50%!important;width:var(--fs,136%)!important;height:var(--fs,136%)!important;max-width:none!important;max-height:none!important;transform:translate(calc(-50% - var(--fx,0%)),calc(-50% - var(--fy,0%)))!important;object-fit:contain!important;border-radius:0!important;pointer-events:none;}
+/* 2) مقعد الغرفة: الصورة/الحرف تعبّي الدائرة والإطار حولها (كان الإطار مايل فوق يسار والحرف برّا) */
+html body .so-page .so-owned-seat-frame.cx-fw{position:relative!important;display:grid!important;place-items:center!important;width:100%!important;aspect-ratio:1;height:auto!important;overflow:visible!important;}
+html body .so-page .so-owned-seat-frame.cx-fw > .so-avatar-initial,html body .so-page .so-owned-seat-frame.cx-fw .pf-ring > .so-avatar-initial{position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;background:#e6ddf3;color:#4a2d6e;font-weight:900;font-size:clamp(16px,40%,28px);line-height:1;}
+html body .so-page .so-owned-seat-frame.cx-fw > img:first-child:not(.cx-frame){position:absolute;inset:0;width:100%!important;height:100%!important;object-fit:cover;border-radius:50%;}
+/* 3) الإطارات القديمة (حلقة CSS) بالمقعد: الحلقة تحاوط الصورة كاملة بدل ما تنضغط */
+html body .so-page .so-owned-seat-frame.cx-fw.old > .pf-ring{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;padding:0!important;border-radius:50%!important;display:block!important;}
+html body .so-page .so-owned-seat-frame.cx-fw.old .pf-ring > .so-avatar-initial,html body .so-page .so-owned-seat-frame.cx-fw.old .pf-ring > img{position:absolute!important;inset:5px!important;width:auto!important;height:auto!important;border-radius:50%;}

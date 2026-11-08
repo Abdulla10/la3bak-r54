@@ -1,8 +1,8 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58r';
-import { avatarArt } from './avatars.js?v=r58r';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r59c';
+import { avatarArt } from './avatars.js?v=r59c';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58r';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r59c';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=release-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
@@ -48,7 +48,8 @@ const FACE = `<span class="avatar-wrap cx-ghost" style="--sz:64px">${renderProfi
 /** إطار حول محتوى (جديد = طبقة SVG، قديم = حلقة CSS) */
 export function framed(css, inner, cls = '') {
   if (!css) return `<span class="cx-fw ${cls}">${inner}</span>`;
-  if (isFrame2(css)) return `<span class="cx-fw has ${cls}">${inner}${frameArt(css)}</span>`;
+  // R59b: الإطارات القديمة (ref-p/ref-k) صورها webp بخلفية سودا وغير موسّطة؛ نستخدم نسخة شفافة موسّطة
+  if (isFrame2(css)) return `<span class="cx-fw has ${cls}">${inner}${String(frameArt(css)).replace(/\/(?:assets\/reference|preview\/assets\/cosmetics)\/(ref-[pk]-frame-\d+)\.(?:webp|png)/g, '/assets/art58/legacy/$1.webp')}</span>`;
   return `<span class="cx-fw old ${cls}"><span class="pf-ring fr-${esc(css)}">${inner}</span></span>`;
 }
 /** خلفية كطبقة (جديدة = مشهد SVG، قديمة = تدرّج CSS) */
