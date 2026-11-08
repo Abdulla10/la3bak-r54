@@ -636,6 +636,10 @@ export class SocialRooms {
         }
         catch { /* الهدية انصرفت؛ الليفل يكمل مع الهدايا الجاية */ }
     }
+    /** R58x: أعلى ليفل لغرفة يملكها الحساب (شرط إنشاء القبيلة) */
+    ownerMaxRoomLevel(userId) { let lv = 0; for (const r of this.state.rooms)
+        if (r.ownerId === userId)
+            lv = Math.max(lv, roomLevelOf(r.support ?? 0).level); return lv; }
     /** R58u: يمنح جوائز إطلاقات الصاروخ المعلّقة (معرّف ثابت لكل إطلاق، فإعادة المحاولة ما تكرر). */
     settleRocket(roomId) {
         const wallet = this.opts.cannon?.wallet;

@@ -11,7 +11,7 @@ import {framed as frameOwnedPortrait} from '../shop.js?v=r58r2';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
 import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics} from '../social-gift-runtime-r27.js?v=r57';
-import {rocketShortcut,rocketPanel,rocketLaunch} from './room-rocket-r58.js?v=r58u';
+import {rocketShortcut,rocketPanel,rocketLaunch} from './room-rocket-r58.js?v=r58x3';
 import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58t7';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */

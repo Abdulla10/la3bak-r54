@@ -122,7 +122,9 @@ const settle = async (p, want) => { const t = Date.now(); while (Date.now() - t 
     const { c, p, errs } = await ctxFor(browser, 'b', 390);
     await p.goto(B + '/#/visitors'); await settle(p, '#/visitors'); await sleep(1000);
     const t = await p.evaluate(() => document.querySelector('.ps-stats b')?.textContent);
-    ok('عزل: حساب B يشوف زواره هو (0) مو زوار A', t === '0', t);
+    // R58x: العدد الصحيح = زوار B من الخادم (اختبارات CP والقبائل تفتح ملف B، فما يكون صفر دايم)
+    const own = await p.evaluate(async () => { const r = await (await fetch('/api/profile/visitors')).json(); return String(r.total ?? r.count ?? (Array.isArray(r.list) ? r.list.length : Array.isArray(r.visitors) ? r.visitors.length : '')); });
+    ok('عزل: حساب B يشوف زواره هو مو زوار A', t === own, t + ' / ' + own);
     await p.goto(B + '/#/profile'); await settle(p, '#/profile'); await sleep(1500);
     ok('عزل: حساب B ما تطلع له بطاقة عائلة A', await p.evaluate(() => !document.querySelector('[data-pvp-family-card]')));
     // دعوة: حساب جديد D يفتح رابط دعوة B ويأكد

@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r58w';
-import * as UNIFIED from '../unified/shell.js?v=r58v';
+import * as PR from './profile.js?v=r58x';
+import * as UNIFIED from '../unified/shell.js?v=r58x3';
 import * as REF from '../unified/home.js?v=r58t';
-import * as SOCIAL from '../unified/social.js?v=r58v';
+import * as SOCIAL from '../unified/social.js?v=r58x3';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r57';
@@ -175,6 +175,8 @@ function connect() {
       if (S.user && S.ws === ws && ['social-room','room'].includes(parseRoute().name)) refreshSocial(m);
     } else if (m.t === 'social:support') {
       if (S.user && S.ws === ws && parseRoute().name === 'social-room') SOCIAL.receiveSocialSupport(m.event);
+    } else if (m.t === 'tribe:update') {
+      if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:tribe', { detail: m }));
     } else if (m.t === 'cp:update') {
       if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:cp', { detail: m }));
     } else if (m.t === 'social:rocket') {

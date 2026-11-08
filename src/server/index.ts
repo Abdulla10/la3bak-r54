@@ -20,6 +20,7 @@ import { Leaderboard, validBoard } from './leaderboard.js';
 import { Matchmaker } from './matchmaker.js';
 import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
 import { CpPoints, cpKey, cpLevelOf } from './cp-r58.js';
+import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, tribeLevelOf, type Tribe } from './tribes-r58.js';
 import { achOf, achView, earned, type AchInput } from './achievements.js';
 import { City, CityError, validCity } from './city.js';
 import { ShopCatalog, validShop, shopEligibility } from './shopcatalog.js';
@@ -803,8 +804,9 @@ export async function createApp(
     pub: (id) => community.pub(id), nameOf: (id) => accounts.nameOf(id),
   });
   const cpPoints = new CpPoints(cpFile, Date.now, storage);
+  const tribes = new Tribes(process.env.TRIBES_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'tribes.json') : ''), Date.now, storage);
   // R58w: هدية بين طرفين بينهم ارتباط افتراضي (R47) ترفع نقاط CP
-  const cpGift = (from: string, to: string, rec: { cur?: string; total?: number; price: number; qty?: number; ts: number }) => { try { if (rec.cur !== 'gems') return; const c = social.coupleOf(from); if (!c || c.partner !== to || rec.ts < c.at) return; const v = rec.total ?? rec.price * (rec.qty ?? 1); if (cpPoints.add(cpKey(c.id, from, to), v)) for (const id of [from, to]) sendToUser(id, { t: 'cp:update', kind: 'points' }); } catch { /* الهدية انحفظت؛ نقاط CP بس */ } };
+  const cpGift = (from: string, to: string, rec: { cur?: string; total?: number; price: number; qty?: number; ts: number }) => { try { if (rec.cur === 'gems') { const tv = rec.total ?? rec.price * (rec.qty ?? 1); tribes.addGift(from, tv); } } catch { /* نقاط القبيلة بس */ } try { if (rec.cur !== 'gems') return; const c = social.coupleOf(from); if (!c || c.partner !== to || rec.ts < c.at) return; const v = rec.total ?? rec.price * (rec.qty ?? 1); if (cpPoints.add(cpKey(c.id, from, to), v)) for (const id of [from, to]) sendToUser(id, { t: 'cp:update', kind: 'points' }); } catch { /* الهدية انحفظت؛ نقاط CP بس */ } };
   /* R53: «من الذي رآني» و«ادعُ الأصدقاء» — نفس الحسابات والمعرّف العام والحظر والخصوصية القائمة؛ بدون أي حركة مالية */
   const profileSocial = new ProfileSocial(profileSocialFile, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
@@ -899,6 +901,25 @@ export async function createApp(
     const myAge = accounts.socialAge(user.id), theirAge = accounts.socialAge(id);
     return { ok: true, cp: shown && c ? { partner: cpPerson(c.partner), ...cpStats(c, id) } : null, canRequest: id !== user.id && !c && !social.coupleOf(user.id) && myAge !== null && myAge >= 18 && theirAge !== null && theirAge >= 18 };
   });
+  // R58x: القبائل (نظام عام منفصل عن العائلة الخاصة)
+  const tribeRun = (fn: () => unknown) => { try { return fn(); } catch (e) { if (e instanceof TribeError) return { ok: false, code: e.code, error: TRIBE_ERR[e.code] ?? 'تعذّر تنفيذ الطلب.' }; throw e; } };
+  const tribeCard = (t: Tribe) => { const lv = tribeLevelOf(t.pts); return { id: t.id, name: t.name, level: lv.level, levelName: lv.name, cap: lv.cap, floor: lv.floor, next: lv.next, pts: t.pts, monthPts: tribes.monthPts(t), members: t.members.length }; };
+  const tribeView = (t: Tribe, viewer: string) => ({ ...tribeCard(t), leader: cpPerson(t.leader), isLeader: t.leader === viewer, isMember: t.members.some((m) => m.id === viewer), requested: t.requests.some((r) => r.id === viewer),
+    list: [...t.members].sort((a, b) => b.pts - a.pts).filter((m) => !community.pairBlocked(viewer, m.id)).map((m) => ({ ...cpPerson(m.id), pts: m.pts, leader: m.id === t.leader })),
+    requests: t.leader === viewer ? t.requests.filter((r) => accounts.has(r.id)).map((r) => ({ ...cpPerson(r.id), at: r.at })) : [] });
+  const tribeEligible = (id: string) => { const lv = socialRooms.ownerMaxRoomLevel(id); return { roomLevel: lv, need: TRIBE_ROOM_LEVEL, canCreate: socialEligible(id) && lv >= TRIBE_ROOM_LEVEL && !tribes.of(id) }; };
+  const tribePush = (ids: string[]) => { for (const id of ids) sendToUser(id, { t: 'tribe:update' }); };
+  functionalHttp.add('GET', '/api/tribes/me', ({ user }) => { const t = tribes.of(user.id); return { ok: true, eligible: socialEligible(user.id), create: tribeEligible(user.id), tribe: t ? tribeView(t, user.id) : null, requested: tribes.requestedBy(user.id).map(tribeCard) }; });
+  functionalHttp.add('GET', '/api/tribes/top', () => ({ ok: true, list: tribes.top(30).map(tribeCard) }));
+  functionalHttp.add('GET', '/api/tribes/:id', ({ user, params }) => { const t = tribes.get(Number(params.id)); return t ? { ok: true, tribe: tribeView(t, user.id) } : { ok: false, error: TRIBE_ERR.not_found }; });
+  functionalHttp.add('GET', '/api/tribes/of/:pub', ({ params }) => { const id = community.resolvePublicId(String(params.pub ?? '')); const t = id ? tribes.of(id) : null; return { ok: true, tribe: t ? tribeCard(t) : null }; });
+  functionalHttp.add('POST', '/api/tribes/create', ({ user, body }) => tribeRun(() => { if (!socialEligible(user.id)) throw new TribeError('ineligible'); if (socialRooms.ownerMaxRoomLevel(user.id) < TRIBE_ROOM_LEVEL) throw new TribeError('room_level'); const name = String((body as any)?.name ?? ''); const mod = moderateText(name, 'room-name'); if (!mod.ok) return { ok: false, code: mod.code, error: mod.message }; const t = tribes.create(user.id, name); return { ok: true, tribe: tribeView(t, user.id) }; }));
+  functionalHttp.add('POST', '/api/tribes/:id/join', ({ user, params }) => tribeRun(() => { if (!socialEligible(user.id)) throw new TribeError('ineligible'); const t = tribes.get(Number(params.id)); if (!t) throw new TribeError('not_found'); if (community.pairBlocked(user.id, t.leader)) throw new TribeError('not_found'); tribes.join(user.id, t.id); tribePush([t.leader]); return { ok: true }; }));
+  functionalHttp.add('POST', '/api/tribes/:id/cancel', ({ user, params }) => tribeRun(() => { tribes.cancelJoin(user.id, Number(params.id)); return { ok: true }; }));
+  functionalHttp.add('POST', '/api/tribes/:id/respond', ({ user, params, body }) => tribeRun(() => { const b = body as any; const who = community.resolvePublicId(String(b?.user ?? '')); if (!who) throw new TribeError('no_request'); if (b?.accept === true && !socialEligible(who)) { tribes.respond(user.id, Number(params.id), who, false); throw new TribeError('ineligible'); } tribes.respond(user.id, Number(params.id), who, b?.accept === true); tribePush([who]); return { ok: true }; }));
+  functionalHttp.add('POST', '/api/tribes/:id/kick', ({ user, params, body }) => tribeRun(() => { const who = community.resolvePublicId(String((body as any)?.user ?? '')); if (!who) throw new TribeError('not_member'); tribes.kick(user.id, Number(params.id), who); tribePush([who]); return { ok: true }; }));
+  functionalHttp.add('POST', '/api/tribes/leave', ({ user }) => tribeRun(() => { tribes.leave(user.id); return { ok: true }; }));
+  functionalHttp.add('POST', '/api/tribes/disband', ({ user }) => tribeRun(() => { const t = tribes.disband(user.id); tribePush(t.members.map((m) => m.id).filter((x) => x !== user.id)); return { ok: true }; }));
   functionalHttp.add('GET', '/api/friends/live', ({ user }) => {
     const ids = social.friendInternalIds(user.id).slice(0, 200);
     const list = ids.map((f) => { // الأصدقاء المقبولين بس يشوفون الغرفة، إلا إذا الصديق قفّل «إظهار التواجد» بنفسه

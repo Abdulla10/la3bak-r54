@@ -25,7 +25,7 @@ export function rocketLaunch(ev) {
   if (!ev || typeof ev.id !== 'string' || seen.has(ev.id) || document.hidden) return false; seen.add(ev.id);
   const n = document.createElement('section'); n.className = 'rk58-launch'; n.setAttribute('role', 'status');
   const mine = ev.coins > 0 || ev.topBonus > 0;
-  n.innerHTML = `<div class="rk58-fly">${art(ev.stage, 'is-fly')}</div>${Array.from({ length: 18 }, (_, k) => `<i class="rk58-star" style="--x:${(k * 37) % 100}%;--d:${(k % 6) * 90}ms" aria-hidden="true"></i>`).join('')}<div class="rk58-card"><b>🚀 انطلق صاروخ المرحلة ${esc(ev.stage)}!</b>${mine ? `<span>حصلت على 🪙 ${nf((ev.coins || 0) + (ev.topBonus || 0))} عملة${ev.topBonus ? ' (منها مكافأة أكبر داعم)' : ''}</span>` : ''}${ev.top?.name ? `<small>أكبر داعم: ${esc(ev.top.name)}</small>` : ''}</div>`;
+  n.innerHTML = `<div class="rk58-fly">${art(ev.stage, 'is-fly')}<i class="rk58-flame" aria-hidden="true"></i></div>${Array.from({ length: 12 }, (_, k) => `<i class="rk58-smoke" style="--d:${k * 120}ms;--s:${0.6 + (k % 4) * 0.25}" aria-hidden="true"></i>`).join('')}${Array.from({ length: 18 }, (_, k) => `<i class="rk58-star" style="--x:${(k * 37) % 100}%;--d:${(k % 6) * 90}ms" aria-hidden="true"></i>`).join('')}<div class="rk58-card"><b>🚀 انطلق صاروخ المرحلة ${esc(ev.stage)}!</b>${mine ? `<span>حصلت على 🪙 ${nf((ev.coins || 0) + (ev.topBonus || 0))} عملة${ev.topBonus ? ' (منها مكافأة أكبر داعم)' : ''}</span>` : ''}${ev.top?.name ? `<small>أكبر داعم: ${esc(ev.top.name)}</small>` : ''}</div>`;
   document.body.appendChild(n);
   setTimeout(() => { n.classList.add('is-out'); setTimeout(() => n.remove(), 500); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 2000 : 4800);
   return true;

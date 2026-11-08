@@ -288,3 +288,66 @@ img.cn58-rw{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin
 .cp58-ask img{width:38px;height:auto;}
 .cp58-msg{text-align:center;font-size:12px;color:#6a34a8;min-height:1em;margin:4px 0 8px;}
 @media (prefers-reduced-motion:reduce){.cp58-pair > i{animation:none}}
+
+/* R58x: القبائل */
+.tr58-me{margin:10px 14px;}
+.tr58-card{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border-radius:18px;border:1px solid #e0b04a66;background:linear-gradient(160deg,#fff8e6,#fcf9f4);color:#2c1a4a;text-align:start;box-shadow:0 4px 14px rgba(60,20,110,.08);}
+.tr58-card img.tr58-emblem{width:46px;height:54px;object-fit:contain;}
+.tr58-card span{flex:1;display:flex;flex-direction:column;gap:2px;}
+.tr58-card b{font-size:15px;}
+.tr58-card small{font-size:12px;color:#6a5a80;}
+.tr58-card > i{font-style:normal;font-size:22px;color:#a08ab8;}
+.tr58-of{display:flex;justify-content:center;margin:8px 0 2px;}
+.tr58-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 14px 4px 8px;border-radius:999px;border:1px solid #e0b04a88;background:#fff8e6;color:#4a2d6e;font-size:13px;}
+.tr58-chip img{width:24px;height:28px;object-fit:contain;}
+.tr58-sheet{position:fixed;inset:0;z-index:2147482000;display:flex;align-items:flex-end;justify-content:center;background:rgba(20,8,40,.5);}
+.tr58-panel{width:min(560px,100%);max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;background:#fcf9f4;color:#2c1a4a;padding:12px 14px 22px;box-shadow:0 -10px 30px rgba(20,8,40,.35);}
+.tr58-panel header{display:flex;align-items:center;justify-content:space-between;}
+.tr58-panel header h2{margin:0;font-size:18px;}
+.tr58-x{width:34px;height:34px;border-radius:50%;border:0;background:#e6ddf3;color:#4a2d6e;font-size:16px;}
+.tr58-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0;}
+.tr58-tabs button{padding:8px 2px;border-radius:12px;border:1px solid #e3d6f2;background:#fff;color:#4a2d6e;font-weight:800;}
+.tr58-tabs button[aria-selected="true"]{background:linear-gradient(160deg,#6a34a8,#3d1a6e);color:#ffe9a8;border-color:#c49a3a;}
+.tr58-detail,.tr58-create{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;}
+img.tr58-emblem.is-big{width:96px;height:112px;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(60,20,110,.3));}
+.tr58-detail h2{margin:0;font-size:20px;}
+.tr58-lv{margin:0;font-size:13px;color:#6a5a80;}
+.tr58-bar{width:100%;height:9px;border-radius:999px;background:#e6ddf3;overflow:hidden;}
+.tr58-bar i{display:block;height:100%;background:linear-gradient(90deg,#8a4fd8,#e0b04a);}
+.tr58-sub,.tr58-note{margin:0;font-size:12px;color:#6a5a80;line-height:1.6;}
+.tr58-msg{margin:0 0 8px;padding:8px 10px;border-radius:12px;background:#f1eafb;color:#4a2d6e;font-size:13px;text-align:center;}
+.tr58-btn{margin:6px 0;padding:10px 22px;border-radius:999px;border:0;background:linear-gradient(90deg,#7a2fd0,#4a1a8a);color:#fff;font-weight:800;}
+.tr58-btn.is-ghost{background:#e6ddf3;color:#4a2d6e;}
+.tr58-btn.is-danger{background:#f8e1e6;color:#a01e3c;}
+.tr58-detail h3{align-self:stretch;text-align:start;margin:12px 0 4px;font-size:14px;}
+.tr58-list,.tr58-top{list-style:none;padding:0;margin:0;display:grid;gap:6px;align-self:stretch;}
+.tr58-list li{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:14px;background:#fff;border:1px solid #e3d6f2;text-align:start;}
+.tr58-list li > i{font-style:normal;min-width:18px;font-weight:800;color:#6a5a80;}
+.tr58-face{width:34px;height:34px;border-radius:50%;overflow:hidden;flex:0 0 34px;display:grid;place-items:center;background:#e6ddf3;color:#4a2d6e;}
+.tr58-face img{width:100%;height:100%;object-fit:cover;}
+.tr58-list b{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tr58-list b a{color:inherit;text-decoration:none;}
+.tr58-list em{font-style:normal;font-size:11px;color:#a0700a;}
+.tr58-list span[dir]{font-size:12px;color:#6a34a8;font-weight:700;}
+.tr58-mini{padding:5px 10px;border-radius:999px;border:0;background:#7a2fd0;color:#fff;font-size:12px;font-weight:700;}
+.tr58-mini.is-ghost{background:#e6ddf3;color:#4a2d6e;}
+.tr58-top li button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:14px;border:1px solid #e3d6f2;background:#fff;color:#2c1a4a;text-align:start;}
+.tr58-top li button i{font-style:normal;min-width:20px;font-weight:800;}
+.tr58-top li:first-child button{border-color:#e0b04a;background:#fff8e6;}
+.tr58-top img.tr58-emblem{width:36px;height:42px;object-fit:contain;}
+.tr58-top li button span:not([dir]){flex:1;display:flex;flex-direction:column;}
+.tr58-top small{font-size:11px;color:#6a5a80;}
+.tr58-top span[dir]{font-size:12px;font-weight:700;color:#6a34a8;}
+.tr58-create label{display:flex;flex-direction:column;gap:4px;width:100%;font-size:13px;font-weight:700;text-align:start;}
+.tr58-create input{padding:10px 12px;border-radius:12px;border:1px solid #d3c6e6;background:#fff;font-size:15px;}
+/* R58x: إطلاق الصاروخ لفوق: لهب ودخان واهتزاز خفيف (الرسمة تتبدل لما يرسل المالك صاروخ فضائي عمودي) */
+.rk58-launch{animation:cn58In .3s ease both,rk58Shake .5s linear .25s 3!important;}
+@keyframes rk58Shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-3px,2px)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,-1px)}}
+.rk58-fly{transform:translateX(-50%)!important;animation:rk58Up 2.8s cubic-bezier(.55,0,.75,.3) .3s both!important;}
+.rk58-fly img{transform:rotate(-45deg);}
+@keyframes rk58Up{0%{bottom:-35%}20%{bottom:4%}100%{bottom:125%}}
+.rk58-flame{position:absolute;left:50%;top:92%;width:34%;height:46%;transform:translateX(-50%);border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 20%,#fff 0,#ffe08a 25%,#ff8a2e 55%,rgba(255,60,40,0) 75%);filter:blur(1px);animation:rk58Flicker .12s linear infinite alternate;}
+@keyframes rk58Flicker{from{transform:translateX(-50%) scaleY(1)}to{transform:translateX(-50%) scaleY(1.25)}}
+.rk58-smoke{position:absolute;left:calc(50% - 30px);bottom:4%;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.55),rgba(200,180,230,.15) 60%,transparent 70%);opacity:0;animation:rk58Smoke 2.2s ease-out calc(.6s + var(--d)) both;}
+@keyframes rk58Smoke{0%{opacity:.9;transform:translate(0,0) scale(var(--s))}100%{opacity:0;transform:translate(calc((var(--s) - .9) * 160px),-40px) scale(calc(var(--s) * 3))}}
+@media (prefers-reduced-motion:reduce){.rk58-launch{animation:cn58In .3s ease both!important}.rk58-smoke,.rk58-flame{display:none}}

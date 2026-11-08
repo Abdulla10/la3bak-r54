@@ -35,7 +35,7 @@ async function ask(btn) {
 function scan(root = document) {
   root.querySelectorAll?.('[data-cp-me]').forEach((el) => { if (el.dataset.cpDone) return; el.dataset.cpDone = '1'; fillMe(el); });
   const m = /^(?:#)?\/u\/([A-Za-z0-9_-]{6,64})\/?$/.exec(((globalThis.__LA3BAK_NAV__ || location).hash) || location.pathname); const prof = document.querySelector('.cm-prof');
-  if (m && prof && !prof.nextElementSibling?.matches?.('[data-cp-of]')) { const el = document.createElement('div'); el.dataset.cpOf = m[1]; prof.after(el); fillOf(el); }
+  if (m && prof && !document.querySelector('[data-cp-of]')) { const el = document.createElement('div'); el.dataset.cpOf = m[1]; prof.after(el); fillOf(el); }
 }
 if (typeof document !== 'undefined' && !globalThis.__LA3BAK_CP__) {
   globalThis.__LA3BAK_CP__ = true;
