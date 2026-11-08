@@ -57,14 +57,16 @@ export const bgLayer = (item) => {
 };
 const rarChip = (r) => `<em class="cx-rar r-${esc(r)}">${esc(RARITY[r]?.label ?? '')}</em>`;
 const safeArt = (src) => typeof src === 'string' && /^\/assets\/[A-Za-z0-9_./-]+\.(?:webp|png|jpe?g|svg)$/i.test(src) && !src.includes('..') ? src : '';
+export const idPlate = (price) => price >= 100_000_000 ? 6 : price >= 48_000_000 ? 5 : price >= 40_000_000 ? 4 : price >= 30_000_000 ? 3 : price >= 25_000_000 ? 2 : 1;
 /** R52: نفس صورة العنصر بالمتجر لصفحتي VIP ونوبل */
 export function itemThumb(i) { return thumb(i); }
 function thumb(i) {
   // R57: فقاعات الدردشة ولوحات الأسماء والأيديات المميزة
   if (i.slot === 'chat-bubble') return `<span class="rp-art rp-art-bubble lux-thumb"><span class="rp-bubble-${esc(i.css || '')}">مرحبا 👋</span></span>`;
   if (i.slot === 'board') return `<span class="lux-thumb"><span class="lux-board lux-board-${esc(i.css || '')}">اسمك</span></span>`;
-  if (i.slot === 'room-id') return `<span class="lux-thumb"><span class="lux-sid lux-rid r-${esc(i.rarity || 'rare')}"><small>ROOM ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
-  if (i.slot === 'special-id') return `<span class="lux-thumb"><span class="lux-sid r-${esc(i.rarity || 'rare')}"><small>ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
+  // R58n: قالب الأيدي من رسومات المالك حسب السعر (6 قوالب)
+  if (i.slot === 'room-id') return `<span class="lux-thumb"><span class="lux-sid lux-rid art-idp idp-${idPlate(i.price)} r-${esc(i.rarity || 'rare')}"><small>ROOM ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
+  if (i.slot === 'special-id') return `<span class="lux-thumb"><span class="lux-sid art-idp idp-${idPlate(i.price)} r-${esc(i.rarity || 'rare')}"><small>ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'entrance') return safeArt(i.art) ? `<img class="r23-entrance-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : `<span class="r23-art-missing">${renderProfileIcon('image')}<small>صورة المركبة غير متاحة</small></span>`;
   if (i.slot === 'souvenir') return safeArt(i.art) ? `<img class="r23-souv-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : renderProfileIcon('star');
   if (i.slot === 'avatar') return avatarArt(i.id, 64, i.css === 'av2' ? undefined : i.css) || renderProfileIcon('person');

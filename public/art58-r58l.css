@@ -106,3 +106,27 @@ html body .pvp-identity-copy .id.lpu-special-id[data-sid-tier]{display:inline-fl
 html body .pvp-identity-copy .id.lpu-special-id[data-sid-tier] > span{font:800 12px/1 system-ui,sans-serif;color:var(--sid-c3)!important;}
 html body .pvp-identity-copy .id.lpu-special-id[data-sid-tier] b[data-pvp-player-id]{font:900 italic 21px/1 'Georgia','Times New Roman',serif;letter-spacing:1px;background:linear-gradient(180deg,var(--sid-c1) 10%,var(--sid-c2) 45%,var(--sid-c3) 90%);-webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 0 #ffffffb0) drop-shadow(0 2px 2px rgba(40,10,70,.35)) drop-shadow(0 0 8px var(--sid-glow));}
 html body .pvp-identity-copy .id.lpu-special-id[data-sid-tier] .lpu-special-id-label{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font:800 10px/1.4 system-ui,sans-serif;color:#fff!important;background:linear-gradient(180deg,var(--sid-c2),var(--sid-c3));box-shadow:0 0 8px var(--sid-glow);}
+/* R58n: قوالب الأيدي المميز وأيدي الغرف — رسومات المالك PNG شفافة (6 قوالب حسب السعر) */
+html body .lux-sid.art-idp.idp-1,html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="1"]{background:url(/assets/art58/idplates2/id1.webp?v=r58n) center/100% 100% no-repeat!important;aspect-ratio:793/255;padding:9.65% 12% 7.07% 12%!important;--idp-c:#ffe2b8;}
+html body .lux-sid.art-idp.idp-2,html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="2"]{background:url(/assets/art58/idplates2/id2.webp?v=r58n) center/100% 100% no-repeat!important;aspect-ratio:807/257;padding:10.19% 15% 7.64% 15%!important;--idp-c:#eef6ff;}
+html body .lux-sid.art-idp.idp-3,html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="3"]{background:url(/assets/art58/idplates2/id3.webp?v=r58n) center/100% 100% no-repeat!important;aspect-ratio:822/230;padding:7.83% 18% 7.27% 18%!important;--idp-c:#e8f4ff;}
+html body .lux-sid.art-idp.idp-4,html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="4"]{background:url(/assets/art58/idplates2/id4.webp?v=r58n) center/100% 100% no-repeat!important;aspect-ratio:837/240;padding:8.60% 8% 8.03% 30%!important;--idp-c:#f6dcff;}
+html body .lux-sid.art-idp.idp-5,html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="5"]{background:url(/assets/art58/idplates2/id5.webp?v=r58n) center/100% 100% no-repeat!important;aspect-ratio:834/320;padding:11.51% 8% 9.21% 31%!important;--idp-c:#ffe9a0;}
+html body .lux-sid.art-idp.idp-6,html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="6"]{background:url(/assets/art58/idplates2/id6.webp?v=r58n) center/100% 100% no-repeat!important;aspect-ratio:851/327;padding:13.83% 30% 11.53% 30%!important;--idp-c:#fff3c8;}
+html body .lux-sid.art-idp{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;direction:ltr;width:100%;max-width:230px;margin:auto;}
+html body .lux-sid.art-idp::after,html body .lux-sid.art-idp small{display:none!important;}
+html body .lux-sid.art-idp b{all:unset;font:900 italic min(22px,13cqw)/1 'Georgia','Times New Roman',serif;letter-spacing:.5px;white-space:nowrap;color:var(--idp-c);text-shadow:0 1px 0 #000,0 0 6px #000c,0 0 10px rgba(0,0,0,.5);}
+html body .r23-lux-preview .lux-sid.art-idp{max-width:340px;}
+html body .r23-lux-preview .lux-sid.art-idp b{font-size:30px;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate]{display:flex;align-items:center;justify-content:center;gap:4px;width:min(230px,100%);height:auto;margin-top:4px;border:0!important;border-radius:0!important;box-shadow:none!important;direction:ltr;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] > span{font:800 11px/1 system-ui,sans-serif;color:var(--idp-c)!important;text-shadow:0 1px 2px #000;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] b[data-pvp-player-id]{all:unset;font:900 italic 19px/1 'Georgia','Times New Roman',serif;color:var(--idp-c)!important;-webkit-text-fill-color:var(--idp-c);background:none!important;filter:none!important;text-shadow:0 1px 0 #000,0 0 6px #000c;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] .lpu-special-id-label{display:none!important;}
+html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] .lpu-copy{color:var(--idp-c)!important;transform:scale(.8);}
+html body .lux-sid.art-idp b{color:var(--idp-c)!important;-webkit-text-fill-color:var(--idp-c)!important;background:none!important;filter:none!important;animation:none!important;}
+html body .lux-sid.art-idp{height:auto!important;max-height:none!important;min-height:0!important;}
+html body .r23-lux-preview:has(.art-idp){height:auto!important;min-height:0!important;padding:18px 10px!important;display:flex;align-items:center;justify-content:center;}
+html body .r23-lux-preview:has(.art-idp){background:none!important;border:0!important;box-shadow:none!important;overflow:visible;}
+html body .r23-lux-preview .lux-sid.art-idp{width:min(100%,300px)!important;max-width:300px;flex:0 0 auto;}
+html body .r23-lux-preview .lux-sid.art-idp b{font-size:26px;}
+html body .r23-lux-preview:has(.art-idp) .lux-thumb{transform:none!important;width:100%;display:flex;justify-content:center;}
