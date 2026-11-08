@@ -267,3 +267,24 @@ img.cn58-rw{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin
 .sup58-list li.is-top1{background:linear-gradient(90deg,#fff6d8,#fcf9f4);border-color:#e0b04a;}
 .sup58-list li.is-top2{background:linear-gradient(90deg,#f1f3f8,#fcf9f4);border-color:#b9c2d3;}
 .sup58-list li.is-top3{background:linear-gradient(90deg,#fbeee4,#fcf9f4);border-color:#d39a6a;}
+
+/* R58w: بطاقة CP */
+.cp58-card{position:relative;margin:10px 14px;padding:14px 14px 12px;border-radius:20px;text-align:center;color:#fff;background:radial-gradient(circle at 50% 0,rgba(255,120,190,.35),transparent 60%),linear-gradient(160deg,#4a1660,#1c0b33 75%);box-shadow:0 10px 26px rgba(60,10,90,.3),inset 0 0 0 1px rgba(255,190,220,.35);}
+.cp58-card .cp58-badge{width:86px;height:auto;margin:-4px auto 2px;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));}
+.cp58-pair{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0 6px;}
+.cp58-face{width:58px;height:58px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#e6ddf3;color:#4a2d6e;font-size:22px;box-shadow:0 0 0 3px #ffb3d6,0 0 14px rgba(255,120,190,.6);}
+.cp58-face img{width:100%;height:100%;object-fit:cover;}
+.cp58-pair > i{font-style:normal;font-size:24px;animation:cp58Beat 1.4s ease-in-out infinite;}
+@keyframes cp58Beat{0%,100%{transform:scale(1)}15%{transform:scale(1.25)}30%{transform:scale(1)}}
+.cp58-card h3{margin:2px 0;font-size:16px;color:#ffe9f4;}
+.cp58-card h3 a{color:#ffd166;text-decoration:none;}
+.cp58-meta{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:4px 0 8px;font-size:12px;color:#f3d7ea;}
+.cp58-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden;margin:0 6px;}
+.cp58-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ff7ab8,#ffd166);}
+.cp58-pts{margin:6px 0 0;font-size:12px;color:#f3d7ea;}
+.cp58-hint{margin:8px 0 0;font-size:11.5px;line-height:1.6;color:#e7cfe0;}
+.cp58-card.is-empty .cp58-badge{opacity:.8;width:70px;}
+.cp58-ask{display:flex!important;align-items:center;justify-content:center;gap:8px;margin:10px auto 2px;padding:6px 18px!important;border-radius:999px!important;background:linear-gradient(90deg,#c2307a,#7a2fd0)!important;color:#fff!important;border:0!important;font-weight:800;}
+.cp58-ask img{width:38px;height:auto;}
+.cp58-msg{text-align:center;font-size:12px;color:#6a34a8;min-height:1em;margin:4px 0 8px;}
+@media (prefers-reduced-motion:reduce){.cp58-pair > i{animation:none}}

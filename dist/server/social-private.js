@@ -375,6 +375,8 @@ export class SocialPrivate {
             return applyFamilyCommand(state, me, command, this.familyContext(me));
         });
     }
+    /** R58w: الارتباط الافتراضي الحالي (للخادم بس: نقاط CP). ما يغيّر شي ولا يتجاوز إعدادات الظهور. */
+    coupleOf(me) { const b = (this.d.familyR47?.couples ?? []).find(x => x.a === me || x.b === me); return b ? { id: b.id, partner: b.a === me ? b.b : b.a, at: b.at } : null; }
     /** Parent resolves subject/viewer from the current account/profile; never accept internal IDs from HTTP. */
     familyPublic(subject, viewer) {
         return publicFamilyView(this.d.familyR47 ?? emptyFamilyState(), subject, viewer, this.familyContext());

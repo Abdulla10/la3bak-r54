@@ -19,6 +19,7 @@ import { MemoryStore, type RoomStore } from './store.js';
 import { Leaderboard, validBoard } from './leaderboard.js';
 import { Matchmaker } from './matchmaker.js';
 import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
+import { CpPoints, cpKey, cpLevelOf } from './cp-r58.js';
 import { achOf, achView, earned, type AchInput } from './achievements.js';
 import { City, CityError, validCity } from './city.js';
 import { ShopCatalog, validShop, shopEligibility } from './shopcatalog.js';
@@ -249,6 +250,7 @@ export async function createApp(
   const functionalFile = (configured: string | undefined, name: string) => configured || (cfg.walletFile ? path.join(path.dirname(cfg.walletFile), name + '.json') : '');
   const accountToolsFile = functionalFile(cfg.accountToolsFile, 'account-tools');
   const socialFile = functionalFile(cfg.socialPrivateFile, 'social-private');
+  const cpFile = process.env.CP_POINTS_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'cp-points.json') : '');
   const missionsFile = functionalFile(cfg.missionsFile, 'missions');
   const rankRewardsFile = functionalFile(cfg.rankRewardsFile, 'rank-rewards');
   const supportFile = functionalFile(cfg.supportNotificationsFile, 'support-notifications');
@@ -544,7 +546,7 @@ export async function createApp(
     const fromName=accounts.nameOf(user.id)||user.name,toNames=Object.fromEntries(m.to.map((to:string)=>[to,accounts.nameOf(to)||'لاعب']));
     const r=wallet.sendGiftBatch(user.id,m.to,g,m.qty,m.key,scope,fromName,toNames);
     if(!r.ok)return{ok:false,error:r.code==='poor'?'جواهرك لا تكفي للمجموع. لم تُرسل أي هدية.':r.code==='self'?'ما تقدر ترسل هدية لنفسك.':'طلب الهدايا مب صالح. لم تُرسل أي هدية.',code:r.code};
-    if(!r.dup){sendToUser(user.id,{t:'wallet',coins:r.coins,gems:r.gems,won:0});for(const child of r.receipts){sendToUser(child.to,{t:'wallet',coins:child.toCoins,gems:child.toGems,won:0});const incoming={...child.rec,dir:'in' as const};sendToUser(child.to,{t:'gift',gift:giftPub(incoming),ev:giftEvent(child.rec,true)});}}
+    if(!r.dup){for(const child of r.receipts)cpGift(user.id,child.to,child.rec);sendToUser(user.id,{t:'wallet',coins:r.coins,gems:r.gems,won:0});for(const child of r.receipts){sendToUser(child.to,{t:'wallet',coins:child.toCoins,gems:child.toGems,won:0});const incoming={...child.rec,dir:'in' as const};sendToUser(child.to,{t:'gift',gift:giftPub(incoming),ev:giftEvent(child.rec,true)});}}
     return{ok:true,dup:r.dup,batchId:r.batchId,coins:r.coins,gems:r.gems,gifts:r.receipts.map(c=>giftPub(c.rec)),evs:r.receipts.map(c=>giftEvent(c.rec,true)),aggregate:r.quote};
   };
   const giftCmd = async (user: User, t: string, m: any, trustedSocial?: {room: string}) => {
@@ -585,6 +587,7 @@ export async function createApp(
     if(!r.ok)return{ok:false,error:r.code==='poor'?'جواهرك ما تكفي لهذي الهدية.':r.code==='self'?'ما تقدر ترسل هدية لنفسك.':r.code==='noto'?'هذا اللاعب غير متاح لاستلام الهدايا.':'طلب غير صالح.',code:r.code};
     const ev=giftEvent(r.rec,!!trustedSocial);
     if(!r.dup){
+      cpGift(id,to,r.rec);
       sendToUser(id,{t:'wallet',coins:r.coins,gems:r.gems,won:0});sendToUser(to,{t:'wallet',coins:r.toCoins,gems:r.toGems,won:0});
       if(room){pushChat(room.code,ev);for(const p of room.players)sendToUser(p.id,{t:'roomgift',code:room.code,ev});}
       else sendToUser(to,{t:'gift',gift:giftPub(wallet.giftsOf(to,'in',1)[0]!),ev:{...ev,from:{id:trustedSocial?community.pub(id):'',name:fromName}}});
@@ -799,6 +802,9 @@ export async function createApp(
     isBlocked: (a, b) => community.pairBlocked(a, b), isMuted: (a, b) => community.isMuted(a, b),
     pub: (id) => community.pub(id), nameOf: (id) => accounts.nameOf(id),
   });
+  const cpPoints = new CpPoints(cpFile, Date.now, storage);
+  // R58w: هدية بين طرفين بينهم ارتباط افتراضي (R47) ترفع نقاط CP
+  const cpGift = (from: string, to: string, rec: { cur?: string; total?: number; price: number; qty?: number; ts: number }) => { try { if (rec.cur !== 'gems') return; const c = social.coupleOf(from); if (!c || c.partner !== to || rec.ts < c.at) return; const v = rec.total ?? rec.price * (rec.qty ?? 1); if (cpPoints.add(cpKey(c.id, from, to), v)) for (const id of [from, to]) sendToUser(id, { t: 'cp:update', kind: 'points' }); } catch { /* الهدية انحفظت؛ نقاط CP بس */ } };
   /* R53: «من الذي رآني» و«ادعُ الأصدقاء» — نفس الحسابات والمعرّف العام والحظر والخصوصية القائمة؛ بدون أي حركة مالية */
   const profileSocial = new ProfileSocial(profileSocialFile, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
@@ -882,6 +888,17 @@ export async function createApp(
   wireProfileSocialRoutes(functionalHttp, profileSocial, (id) => community.pub(id));
   // R58: أيديات الغرف المميزة اللي يملكها اللاعب (لاختيارها من إعدادات غرفته)
   // R58f: شريط الأصدقاء مثل انستغرام: صورة كل صديق، وإذا هو داخل غرفة ظاهرة تطلع عليه «في غرفة» وتدخل عليها مباشرة
+  // R58w: CP = «الارتباط الافتراضي» (R47) + نقاط ومستوى من الهدايا بين الطرفين
+  const cpPerson = (id: string) => { const photo = avatars.version(id); return { id: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : (wallet.equippedAvatar(id) ?? null) }; };
+  const cpStats = (c: { id: number; partner: string; at: number }, me: string) => { const pts = cpPoints.get(cpKey(c.id, me, c.partner)); const lv = cpLevelOf(pts); return { pts, ...lv, days: Math.floor((Date.now() - c.at) / 86_400_000) + 1, since: c.at }; };
+  functionalHttp.add('GET', '/api/cp/me', ({ user }) => { const age = accounts.socialAge(user.id); const c = social.coupleOf(user.id); let hidden = true; try { const snap = social.familySnapshot(user.id) as { couple?: { hidden?: boolean } | null }; hidden = !snap?.couple || snap.couple.hidden === true; } catch { /* حد القراءة: نخفي الشريك */ } return { ok: true, adult: age !== null && age >= 18, me: cpPerson(user.id), cp: c ? { partner: hidden ? null : cpPerson(c.partner), hidden, ...cpStats(c, user.id) } : null }; });
+  functionalHttp.add('GET', '/api/cp/of/:pub', ({ user, params }) => {
+    const id = community.resolvePublicId(String(params.pub ?? '')); if (!id || !accounts.has(id)) return { ok: false, error: 'الحساب غير متاح.' };
+    const pub = social.familyPublic(id, user.id) as { couple?: { partnerPub?: string } | null }; const c = social.coupleOf(id);
+    const shown = !!pub?.couple && !!c && community.pub(c.partner) === pub.couple.partnerPub;
+    const myAge = accounts.socialAge(user.id), theirAge = accounts.socialAge(id);
+    return { ok: true, cp: shown && c ? { partner: cpPerson(c.partner), ...cpStats(c, id) } : null, canRequest: id !== user.id && !c && !social.coupleOf(user.id) && myAge !== null && myAge >= 18 && theirAge !== null && theirAge >= 18 };
+  });
   functionalHttp.add('GET', '/api/friends/live', ({ user }) => {
     const ids = social.friendInternalIds(user.id).slice(0, 200);
     const list = ids.map((f) => { // الأصدقاء المقبولين بس يشوفون الغرفة، إلا إذا الصديق قفّل «إظهار التواجد» بنفسه
