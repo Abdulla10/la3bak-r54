@@ -1,5 +1,5 @@
-import { av2Art, AV2_IDS } from './cosmetics.js?v=r58k';
-import { referenceOf, referenceImage } from './reference-assets.js?v=r58k';
+import { av2Art, AV2_IDS } from './cosmetics.js?v=r58l';
+import { referenceOf, referenceImage } from './reference-assets.js?v=r58l';
 /* الأفاتارات المدفوعة: 15 تصميم SVG أصلي بهوية لعبك (بنفسجي داكن + ذهبي). الملكية والأسعار من الخادم؛ هنا الرسم والتسميات فقط. */
 export const TIERS = {
   common: { label: 'عادي', c1: '#4a5bd4', c2: '#241b55' },

@@ -4,7 +4,7 @@
  * وضعان: رأسي (مسرح 921×2000 بنفس حجز المساحات الآمنة) وأفقي (مسرح 2000×1125) — يتبدل تلقائياً مع الشاشة.
  * رسم الأوراق SVG أصلي بالكامل (بدون أي شعار أو أصول منسوخة). */
 import { faceHtml } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=r58k';
+import { avatarArt } from './avatars.js?v=r58l';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');

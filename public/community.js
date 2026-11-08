@@ -1,6 +1,6 @@
 /* المجتمع: منشورات وإعجابات وتعليقات ومتابعة وإشعارات وبلاغات. كل التحقق والعدّ والصلاحيات من الخادم (src/server/community.ts).
  * النصوص تُعرض بعد تهريبها دائماً (ما نستعمل HTML من المستخدم)، والروابط داخلية فقط. */
-import { avatarArt } from './avatars.js?v=r58k';
+import { avatarArt } from './avatars.js?v=r58l';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');

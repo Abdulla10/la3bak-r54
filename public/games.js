@@ -1,10 +1,10 @@
 import { faceSvg, faceHtml, charOf } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=r58k';
+import { avatarArt } from './avatars.js?v=r58l';
 import { ldPlayMode, LD_MODES } from './hub.js?v=shell-r6';
 import * as SFX from './sfx.js?v=shell-r6';
-import { domino } from './domino.js?v=r58k';
-import { uno } from './uno.js?v=r58k';
-import { carrom } from './carrom.js?v=r58k';
+import { domino } from './domino.js?v=r58l';
+import { uno } from './uno.js?v=r58l';
+import { carrom } from './carrom.js?v=r58l';
 import { minaboli } from './minaboli-r47.js?v=r57';
 /* واجهات الألعاب بالدور والتصويت. كل دالة تأخذ الغرفة وترجع HTML.
    الأزرار ترسل حركتها عبر data-a (JSON) والخادم هو اللي يتحقق منها. */

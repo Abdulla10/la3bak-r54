@@ -3,7 +3,7 @@
  * ولا يُخترع امتياز أو رقم. */
 import * as R from './rank-vip-shared.js?v=r58p';
 // استيراد كمساحة أسماء: لو المتصفح عنده نسخة أقدم من shop.js بالكاش (بدون itemThumb) ما تنكسر الصفحة
-import * as SHOP from '../shop.js?v=r58k';
+import * as SHOP from '../shop.js?v=r58l';
 import { PERK_ITEMS } from '../rank-perks-r56.js?v=r58i';
 const { esc, obj, list, nat } = R;
 

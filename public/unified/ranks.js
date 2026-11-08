@@ -1,9 +1,9 @@
 /* Rank page BODY only. The unified shell owns header, wallet, auth and navigation.
  * GETs never grant points. Every entitlement and claim remains server-authoritative. */
 import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r58i';
-import { mini } from '../avatars.js?v=r58k';
+import { mini } from '../avatars.js?v=r58l';
 import * as R from './rank-vip-shared.js?v=r58p';
-import * as V from './vip-noble-r52.js?v=r58k';
+import * as V from './vip-noble-r52.js?v=r58l';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 
 export function catalogueOf(data) {

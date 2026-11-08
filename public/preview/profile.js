@@ -6,11 +6,11 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=r58k';
-import { avatarArt } from '../avatars.js?v=r58k';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r58l';
+import { avatarArt } from '../avatars.js?v=r58l';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58k';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r58k';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58l';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r58l';
 import { rankSummary, renderRankOverview } from './rank-overview.js?v=r58c';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -24,6 +24,8 @@ const playerID = ctx => {
   return typeof original==='string' && /^[0-9]{8}$/.test(original) ? original : '';
 };
 const specialID = ctx => typeof ctx.me?.specialPlayerId==='string' && /^[1-9][0-9]{0,7}$/.test(ctx.me.specialPlayerId) && playerID(ctx)===ctx.me.specialPlayerId;
+// R58l: قالب الأيدي المميز حسب ندرة الأيدي المشترى (رسومات المالك)
+const specialTier = ctx => { const v=ctx.me?.specialPlayerId; const it=Array.isArray(ctx.shopData?.items)?ctx.shopData.items.find(i=>i&&i.slot==='special-id'&&String(i.css)===String(v)):null; return ['common','premium','rare','epic','legendary','ultra'].includes(it?.rarity)?it.rarity:'rare'; };
 const SLOTS = ['avatar', 'frame', 'bg', 'title', 'badge'];
 const LABEL = {avatar:'الأفتارات',frame:'الإطارات',bg:'الخلفيات',title:'الألقاب',badge:'الشارات',inventory:'المقتنيات',achievements:'الإنجازات'};
 const TABS = [['achievements','trophy'],['inventory','crown'],['title','medal'],['badge','shield'],['frame','frame'],['bg','image'],['avatar','person']];
@@ -253,7 +255,7 @@ function referenceHeadCounts(ctx) {
 function referenceHero(ctx,s) {
  const m=ctx.me,id=playerID(ctx),avatar=equipped(ctx,'avatar'),fr=equipped(ctx,'frame'),background=equipped(ctx,'bg');
  const portrait=frame(ctx,face(ctx,88),fr,88),name=m?.name||ctx.user?.name||'الملف الشخصي';
- return `${referenceHeader(ctx,s)}<section class="hero pvp-compact-head pvp-head-r20 pvp-head-r22${background?' lpu-custom-cover':''}" data-pvp-section="identity" aria-label="هوية اللاعب" title="${ctx.connected?'متصل بالخادم':'غير متصل بالخادم'}">${background?`<div class="lpu-cover" aria-hidden="true">${bg(ctx,background)}</div>`:''}<div class="avatar" data-pvp-section="avatar-frame"><div class="lpu-portrait">${portrait}</div>${ctx.user?button('upload-photo','<span>رفع وتغيير صورة اللاعب</span>',`aria-label="رفع وتغيير صورة اللاعب" ${typeof ctx.pickPhoto!=='function'?'disabled':''}`,'pvp-head-upload'):''}</div><div class="pvp-identity-copy"><h1 class="name" title="${esc(name)}">${esc(name)}${verificationBadge(ctx)}</h1>${referenceHeadBadges(ctx)}<div class="id${specialID(ctx)?' lpu-special-id':''}"><span dir="ltr">ID: <b data-pvp-player-id>${esc(id||'—')}</b></span>${specialID(ctx)?'<small class="lpu-special-id-label" title="رقم عرض مميّز؛ رقم اللاعب الدائم محفوظ">ID مميّز</small>':''}${id?button('copy',icon('copy'),'aria-label="نسخ رقم اللاعب"','lpu-copy'):''}</div></div>${ctx.user?button('edit',icon('edit'),`${!m||typeof ctx.rename!=='function'||typeof ctx.savePresentation!=='function'?'disabled':''} aria-label="تعديل الملف الشخصي" title="تعديل الملف الشخصي"`,'pvp-edit-profile'):''}${referenceHeadCounts(ctx)}${avatar?'<p class="pvp-upload-note">أفاتار المتجر مجهّز الآن. لإظهار صورتك المرفوعة، أزله من «المظهر والمقتنيات»؛ صورتك المحفوظة لا تُحذف.</p>':''}</section>`;
+ return `${referenceHeader(ctx,s)}<section class="hero pvp-compact-head pvp-head-r20 pvp-head-r22${background?' lpu-custom-cover':''}" data-pvp-section="identity" aria-label="هوية اللاعب" title="${ctx.connected?'متصل بالخادم':'غير متصل بالخادم'}">${background?`<div class="lpu-cover" aria-hidden="true">${bg(ctx,background)}</div>`:''}<div class="avatar" data-pvp-section="avatar-frame"><div class="lpu-portrait">${portrait}</div>${ctx.user?button('upload-photo','<span>رفع وتغيير صورة اللاعب</span>',`aria-label="رفع وتغيير صورة اللاعب" ${typeof ctx.pickPhoto!=='function'?'disabled':''}`,'pvp-head-upload'):''}</div><div class="pvp-identity-copy"><h1 class="name" title="${esc(name)}">${esc(name)}${verificationBadge(ctx)}</h1>${referenceHeadBadges(ctx)}<div class="id${specialID(ctx)?' lpu-special-id':''}"${specialID(ctx)?` data-sid-tier="${specialTier(ctx)}"`:''}><span dir="ltr">ID: <b data-pvp-player-id>${esc(id||'—')}</b></span>${specialID(ctx)?'<small class="lpu-special-id-label" title="رقم عرض مميّز؛ رقم اللاعب الدائم محفوظ">ID مميّز</small>':''}${id?button('copy',icon('copy'),'aria-label="نسخ رقم اللاعب"','lpu-copy'):''}</div></div>${ctx.user?button('edit',icon('edit'),`${!m||typeof ctx.rename!=='function'||typeof ctx.savePresentation!=='function'?'disabled':''} aria-label="تعديل الملف الشخصي" title="تعديل الملف الشخصي"`,'pvp-edit-profile'):''}${referenceHeadCounts(ctx)}${avatar?'<p class="pvp-upload-note">أفاتار المتجر مجهّز الآن. لإظهار صورتك المرفوعة، أزله من «المظهر والمقتنيات»؛ صورتك المحفوظة لا تُحذف.</p>':''}</section>`;
 }
 
 function collection(ctx,s) {

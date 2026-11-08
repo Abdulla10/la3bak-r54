@@ -27,7 +27,7 @@ const shop = await c1.req('shop:get');
 const bySlot = (s) => shop.items.filter((i) => i.slot === s);
 ok('إطارات المالك (20) معروضة للبيع، وإطارات lux-f القديمة مخفية', shop.items.filter((i) => i.id.startsWith('art-f-') && i.status === 'available').length === 20 && !shop.items.some((i) => i.id.startsWith('lux-f-') && i.status === 'available'), shop.items.filter((i) => i.id.startsWith('art-f-')).length);
 ok('المتجر فيه 8 خلفيات فخمة جديدة', shop.items.filter((i) => i.id.startsWith('lux-b-')).length === 8);
-ok('فقاعات الدردشة (6) ولوحات الأسماء (5) صارت أقسام فيها منتجات', bySlot('chat-bubble').length === 6 && bySlot('board').length === 5);
+ok('فقاعات الدردشة (6 + 20 من تصميم المالك) ولوحات الأسماء (5 + 20)', bySlot('chat-bubble').length === 26 && bySlot('board').length === 25, bySlot('chat-bubble').length + '/' + bySlot('board').length);
 ok('السيارات انشالت من المتجر بالكامل (طلب المالك)', !shop.items.some((i) => i.slot === 'entrance'), shop.items.filter((i) => i.slot === 'entrance').map((i) => i.id).join(','));
 const carBuy = await c1.req('shop:buy', { item: 'entrance-sport', key: randomUUID() }); ok('شراء سيارة ينرفض من الخادم', !carBuy.ok, carBuy.error);
 ok('أيديات مميزة معروضة للبيع', bySlot('special-id').length >= 20);
@@ -38,7 +38,10 @@ const coinsLeft = deco.filter((i) => i.currency !== 'gems');
 ok('كل الزينة (إطارات/خلفيات/سيارات/فقاعات/لوحات/أيديات) بالمجوهرات فقط', coinsLeft.length === 0, coinsLeft.map((i) => i.id + ':' + i.currency).slice(0, 8).join(','));
 const luxF = shop.items.filter((i) => i.id.startsWith('art-f-'));
 ok('إطارات المالك بالمجوهرات، والأسطورية والخرافية 100 ألف وفوق', luxF.every((i) => i.currency === 'gems' && i.price >= 2000) && luxF.filter((i) => ['legendary', 'ultra'].includes(i.rarity)).every((i) => i.price >= 100000), luxF.map((i) => i.price).join(','));
-ok('الأيديات المميزة 45 مليون وفوق', bySlot('special-id').every((i) => i.price >= 45_000_000) && bySlot('room-id').every((i) => i.price >= 45_000_000), Math.min(...bySlot('special-id').map((i) => i.price)) + '');
+// R58m (طلب المالك): المكرر 45 مليون، والباقي أسعار متنوعة حسب النمط (20–40 مليون)، والأقصر أغلى
+const ids = [...bySlot('special-id'), ...bySlot('room-id')];
+ok('أسعار الأيديات متنوعة: المكرر (7–8 أرقام) 45 مليون، والباقي من 20 مليون وفوق', ids.filter((i) => /^(\d)\1{6,7}$/.test(i.css)).every((i) => i.price === 45_000_000) && ids.every((i) => i.price >= 20_000_000) && new Set(ids.map((i) => i.price)).size >= 6 && ids.some((i) => !/^(\d)\1+$/.test(i.css) && i.price < 45_000_000), [...new Set(ids.map((i) => i.price / 1e6))].sort((a, b) => a - b).join(','));
+ok('الأيديات مو كلها أرقام مكررة', bySlot('special-id').filter((i) => !/^(\d)\1+$/.test(i.css)).length >= 20);
 const buy = (c, item) => c.req('shop:buy', { item, key: randomUUID() });
 const b1 = await buy(c1, 'lux-bub-gold'); ok('شراء فقاعة ذهبية', b1.ok && b1.owned.includes('lux-bub-gold'), b1.error);
 const e1 = await c1.req('shop:equip', { item: 'lux-bub-gold' }); ok('تجهيز الفقاعة', e1.ok && e1.equipped['chat-bubble'] === 'lux-bub-gold', e1.error);
@@ -58,7 +61,7 @@ ok('الأيدي الجديد صار رقم الحساب الظاهر (البح�
 const un = await c1.req('shop:equip', { slot: 'special-id', item: null }); ok('ترجع لرقمك العادي بإلغاء التجهيز', un.ok, un.error);
 const re = await c1.req('shop:equip', { item: sid.id }); ok('وترجع للأيدي المميز متى ما تبي', re.ok, re.error);
 const poor = client(await fresh('فقير ' + Date.now().toString(36))); await poor.ready;
-const sid2 = bySlot('special-id').find((i) => i.id !== sid.id && i.price >= 45_000_000);
+const sid2 = bySlot('special-id').find((i) => i.id !== sid.id && !shop.owned.includes(i.id));
 const p1 = await buy(poor, sid2.id); ok('بدون رصيد: الشراء ينرفض والأيدي ما ينحجز', !p1.ok && (await c2.req('shop:get')).items.some((i) => i.id === sid2.id), p1.error);
 // المؤثرات تظهر بالغرفة: المالك يسوي غرفة ويكتب، ونقرأ عرض الغرفة
 const cmd = async (t, body) => (await fetch(B + '/api/social/command', { method: 'POST', headers: { cookie: 'qa_s=' + t, Origin: B, 'Content-Type': 'application/json' }, body: JSON.stringify({ key: randomUUID(), ...body }) })).json();
