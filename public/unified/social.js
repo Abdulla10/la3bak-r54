@@ -10,8 +10,8 @@ import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-
 import {framed as frameOwnedPortrait} from '../shop.js?v=r58y4';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
-import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics} from '../social-gift-runtime-r27.js?v=r57';
-import {rocketShortcut,rocketPanel,rocketLaunch} from './room-rocket-r58.js?v=r58y4';
+import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r57';
+import {cannon3Shortcut,cannon3Panel,cannon3Blast} from './room-cannon-r59.js?v=r59b';
 import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58y4';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
@@ -140,14 +140,42 @@ export function receiveSocialSupport(event) {
   const c=live;if(!c||c.ctx.gameRoom||c.snapshot?.current?.roomId!==c.routeRoom)return false;
   return c.challengeUI?.receive(supportEventModel(event))===true;
 }
-export function receiveSocialGiftEffect(event,meta){return receiveGiftRuntime(live,event,meta);}
+export function receiveSocialGiftEffect(event,meta){const ok=receiveGiftRuntime(live,event,meta);try{if(!meta?.dup&&!meta?.historical&&live&&!live.ctx?.gameRoom&&meta?.roomId===live.routeRoom&&!(live.ctx?.hideChatEffects||live.ctx?.accountSettings?.hideChatEffects))giftSlide(event);}catch{}return ok;}
+/* R59: شريط الهدية الجانبي «N×» (صورة المرسل + الهدية + المستلم) مثل الفيديو. عرض بس؛ القيم من حدث الخادم المؤكد. */
+const slideSeen=new Set();
+function giftSlide(ev){
+  if(!ev?.tx||slideSeen.has(ev.tx)||!ev.gift||typeof document==='undefined')return;slideSeen.add(ev.tx);
+  let host=document.querySelector('.g59-slides');if(!host){host=document.createElement('div');host.className='g59-slides';host.setAttribute('aria-live','polite');document.body.append(host);}
+  const face=p=>p?.avatar&&/^\/[A-Za-z0-9_./-]+$/.test(p.avatar)?`<img src="${esc(p.avatar)}" alt="">`:`<b>${esc(String(p?.name||'؟').trim().charAt(0))}</b>`;
+  const n=document.createElement('div');n.className='g59-slide';n.setAttribute('role','status');
+  n.innerHTML=`<span class="g59-face">${face(ev.from)}</span><span class="g59-txt"><b>${esc(ev.from?.name||'عضو')}</b><small>أرسل إلى ${esc(ev.to?.name||'عضو')}</small></span><span class="g59-gift">${giftArtwork(ev.gift)||'🎁'}</span><em>${esc(ev.qty||1)}<i>×</i></em>`;
+  host.append(n);while(host.children.length>3)host.firstElementChild.remove();
+  setTimeout(()=>{n.classList.add('is-out');setTimeout(()=>n.remove(),400);},3600);
+}
+/* R59: زر Combo — بعد الإرسال يطلع يسار تحت 5 ثواني، والضغط يعيد نفس الهدية بطلب جديد (نفس مسار الإرسال بالخادم). */
+let comboTimer=null,comboCount=0;
+function showCombo(c){
+  if(typeof document==='undefined'||!c||c.ctx?.gameRoom)return;const gifts=c.ctx.socialGifts;if(typeof gifts?.combo!=='function')return;
+  const info=gifts.comboInfo?.();if(!info)return;comboCount+=1;
+  let b=document.querySelector('.g59-combo');
+  if(!b){b=document.createElement('button');b.type='button';b.className='g59-combo';let h=document.querySelector('.g59-combo-host');if(!h){h=document.createElement('div');h.className='g59-combo-host';document.body.append(h);}h.append(b);}
+  b.setAttribute('aria-label',`Combo: أرسل ${info.gift.name} مرة ثانية`);
+  b.innerHTML=`<span class="g59-combo-ring" aria-hidden="true"></span><span class="g59-combo-gift">${giftArtwork(info.gift)||'🎁'}</span><b>Combo</b><small>×${comboCount}</small>`;
+  b.classList.remove('is-ticking');void b.offsetWidth;b.classList.add('is-ticking');
+  clearTimeout(comboTimer);comboTimer=setTimeout(()=>{b.remove();comboCount=0;},5000);
+}
+function comboClick(b){const r=live&&live.ctx.socialGifts?.combo(live.snapshot);if(r){b.classList.add('is-hit');clearTimeout(comboTimer);comboTimer=setTimeout(()=>{b.remove();comboCount=0;},15000);setTimeout(()=>b.classList.remove('is-hit'),180);}}
+if(typeof document!=='undefined')document.addEventListener('click',e=>{const b=e.target?.closest?.('.g59-combo');if(b)comboClick(b);});
+function hideCombo(){clearTimeout(comboTimer);comboCount=0;document.querySelector?.('.g59-combo')?.remove();}
 export function socialGiftEffectMetrics(){return giftRuntimeMetrics(live);}
 export function socialCannonMetrics(){return live?.cannonFX?.metrics?.()||{disposed:true,contexts:0,frames:0,triangles:0};}
-export function receiveSocialRocket(message){const c=live;if(!c||c.ctx.gameRoom||message?.roomId!==c.routeRoom||c.ctx.hideChatEffects)return false;return rocketLaunch(message.event);}
+/* R59: الصاروخ انتقل للقبيلة؛ رسائل صاروخ الغرفة القديمة تنتجاهل */
+export function receiveSocialRocket(){return false;}
+export function receiveSocialCannon3(message){const c=live;if(!c||c.ctx.gameRoom||message?.roomId!==c.routeRoom||c.ctx.hideChatEffects)return false;const ok=cannon3Blast(message.event);try{c.refresh?.();}catch{}return ok;}
 export function receiveSocialCannon(message){const c=live;if(!c||c.ctx.gameRoom||message?.roomId!==c.routeRoom||c.snapshot?.current?.roomId!==c.routeRoom||c.ctx.hideChatEffects)return false;return c.cannonFX?.receive(message.event,message.event?.cannon||c.snapshot?.room?.cannon)===true;}
 async function disconnectVoice(c) { c.voiceTarget=''; c.speakers.clear(); if(c.voice) await c.voice.disconnect().catch(()=>{}); c.voiceState={status:'disconnected',microphone:false}; c.notify(); }
 async function stopAmbient(c) { const audio=c.ambient;c.ambient=null;c.ambientOn=false;if(audio){audio.pause();audio.removeAttribute('src');audio.load();} }
-async function cleanup(c) { c.onPageHide();window.removeEventListener('beforeunload',c.onPageHide);window.removeEventListener('pagehide',c.onPageHide);window.removeEventListener('pageshow',c.onPageShow);c.cannonFX?.destroy();c.cannonFX=null;clearGiftRuntime(c);destroyBenefits(c);c.entranceFX?.cancel();c.challengeUI?.destroy();c.challengeHost=null;c.challengeModel={available:false};c.epoch++;c.readSeq++;await Promise.all([disconnectVoice(c),stopAmbient(c)]);c.snapshot=null;c.list=null; }
+async function cleanup(c) { c.onPageHide();window.removeEventListener('beforeunload',c.onPageHide);window.removeEventListener('pagehide',c.onPageHide);window.removeEventListener('pageshow',c.onPageShow);c.cannonFX?.destroy();c.cannonFX=null;clearGiftRuntime(c);hideCombo();document.querySelector('.g59-slides')?.remove();destroyBenefits(c);c.entranceFX?.cancel();c.challengeUI?.destroy();c.challengeHost=null;c.challengeModel={available:false};c.epoch++;c.readSeq++;await Promise.all([disconnectVoice(c),stopAmbient(c)]);c.snapshot=null;c.list=null; }
 /** Route exit/logout only. DOM destroy intentionally does NOT invoke this. */
 export async function leaveSocial() { clearMinimized(); const c=live; if(!c) return; live=null; await cleanup(c);c.listeners.clear(); }
 async function voiceConnect(c,confirmedCurrent=null) {
@@ -229,7 +257,7 @@ function supportersPanel(s,tab='day'){
 }
 function referenceShortcuts(c) {
   if(c.ctx.gameRoom)return '';
-  return `<aside class="so-room-shortcuts" aria-label="مدفع وصاروخ الغرفة">${cannonShortcut(c.snapshot?.room?.cannon)}${rocketShortcut(c.snapshot?.room?.rocket)}${supportersShortcut(c.snapshot?.room?.supporters)}</aside>`;
+  return `<aside class="so-room-shortcuts" aria-label="مدفع الغرفة والداعمين">${cannon3Shortcut(c.snapshot?.room?.cannon3)}${supportersShortcut(c.snapshot?.room?.supporters)}</aside>`;
 }
 function publicRole(m,c) {
   if(ROLE_NAMES[m.role])return m.role;
@@ -572,11 +600,11 @@ function roomMemoryHTML(c) {
   return `<section class="so-memory"><p class="so-note">ذاكرة نصية اختيارية، بموافقة أصحابها. لا تسجيل للصوت.</p>${currentCouncil(c)?button('memory','اقتراح ذكرى نصية'):''}${arr(room.memories).map(m=>`<article><p>${esc(m.text||'ذكرى بانتظار الموافقة')}</p>${m.saved===false&&arr(m.authors).some(a=>a.id===selfId(c))?button('memory-consent','أوافق على الحفظ',`data-id="${esc(m.id)}" data-enabled="true"`)+button('memory-consent','لا أوافق',`data-id="${esc(m.id)}" data-enabled="false"`):`<small>${m.saved?'ذكرى محفوظة بموافقة أصحابها':'بانتظار الموافقة'}</small>`}</article>`).join('')||'<p class="so-note">لا توجد ذكريات محفوظة بعد.</p>'}</section>`;
 }
 // room-tools-r33: panel
-const PANEL_NAMES={roomtools:'أدوات المجلس',menu:'خيارات الغرفة',memory:'ذاكرة المجلس',councils:'المجالس المتاحة',members:'أعضاء الغرفة',settings:'الخصوصية وإدارة الغرفة',audio:'الصوت والمايك',modes:'أنماط الجلسة',gifts:'هدايا الغرفة',cannon:'مدفع الغرفة',rocket:'صاروخ الغرفة',supporters:'داعمين الغرفة'};
+const PANEL_NAMES={roomtools:'أدوات المجلس',menu:'خيارات الغرفة',memory:'ذاكرة المجلس',councils:'المجالس المتاحة',members:'أعضاء الغرفة',settings:'الخصوصية وإدارة الغرفة',audio:'الصوت والمايك',modes:'أنماط الجلسة',gifts:'هدايا الغرفة',cannon:'مدفع الغرفة',cannon3:'مدفع الغرفة',supporters:'داعمين الغرفة'};
 function roomPanelHTML(c,ui) {
   const panel=ui.panel,council=currentCouncil(c);
   if(!PANEL_NAMES[panel])return '';
-  const body=panel==='roomtools'?(c.roomTools?.render()||'<p>حالة الأدوات غير متاحة.</p>'):panel==='cannon'?cannonPanel(c.snapshot.room.cannon,ui.cannonStage):panel==='rocket'?rocketPanel(c.snapshot.room.rocket):panel==='supporters'?supportersPanel(c.snapshot.room.supporters,ui.supTab):panel==='menu'?roomMenuGridHTML(c,ui,council):panel==='memory'?roomMemoryHTML(c):panel==='gifts'?`<div data-so-gifts>${typeof c.ctx.socialGifts?.render==='function'?c.ctx.socialGifts.render({...c.snapshot,snapshotVoice:c.voiceState}):'<p class="so-note">الهدايا غير متاحة في هذه الغرفة الآن.</p>'}</div>`:panel==='councils'?councilListHTML(c,ui.preview):panel==='members'?memberListHTML(c):panel==='settings'?moderationHTML(c,council):panel==='audio'?voiceHTML(c):modeHTML(c,council)||'<p class="so-note">خذ مقعدًا في مجلس لعرض أنماط الجلسة.</p>';
+  const body=panel==='roomtools'?(c.roomTools?.render()||'<p>حالة الأدوات غير متاحة.</p>'):panel==='cannon'?cannonPanel(c.snapshot.room.cannon,ui.cannonStage):panel==='cannon3'?cannon3Panel(c.snapshot.room.cannon3,ui.c59Level,ui.c59Help):panel==='supporters'?supportersPanel(c.snapshot.room.supporters,ui.supTab):panel==='menu'?roomMenuGridHTML(c,ui,council):panel==='memory'?roomMemoryHTML(c):panel==='gifts'?`<div data-so-gifts>${typeof c.ctx.socialGifts?.render==='function'?c.ctx.socialGifts.render({...c.snapshot,snapshotVoice:c.voiceState}):'<p class="so-note">الهدايا غير متاحة في هذه الغرفة الآن.</p>'}</div>`:panel==='councils'?councilListHTML(c,ui.preview):panel==='members'?memberListHTML(c):panel==='settings'?moderationHTML(c,council):panel==='audio'?voiceHTML(c):modeHTML(c,council)||'<p class="so-note">خذ مقعدًا في مجلس لعرض أنماط الجلسة.</p>';
   return `<section class="so-room-panel" data-so-open-panel="${panel}" data-so-panel="${panel}" role="region" aria-labelledby="so-panel-title" tabindex="-1"><header class="so-room-panel-heading"><h2 id="so-panel-title">${PANEL_NAMES[panel]}</h2>${button('panel-close',icon('close')+'<span class="so-sr">إغلاق '+PANEL_NAMES[panel]+'</span>')}</header><div class="so-room-panel-body" data-so-panel-scroll>${body}</div></section>`;
 }
 function roomToolsHTML(c,ui,joined,council) {
@@ -997,6 +1025,8 @@ export function mount(root,ctx={}) {
     if(action==='dialog-close'){closeDialog();return;}
     if(action==='panel-close'){closePanel();return;}
     if(action==='sup-tab'){const t=target.dataset.tab;if(['day','week','month','all'].includes(t)){ui.supTab=t;paint();}return;}
+    if(action==='c59-level'){const lv=Number(target.dataset.level);if(Number.isInteger(lv)&&lv>=1&&lv<=3){ui.c59Level=lv;paint();}return;}
+    if(action==='c59-help'){ui.c59Help=!ui.c59Help;paint();return;}
     if(action==='cannon-stage'){const stage=Number(target.dataset.stage);if(!dialogBusy&&Number.isInteger(stage)&&stage>=1&&stage<=(c.snapshot?.room?.cannon?.stages?.length||3)){ui.cannonStage=stage;paint();}return;}
     if(action==='reference-benefits'){if(!dialogBusy&&!c.ctx.gameRoom){void openOwnBenefits(c).catch(error=>{c.error=friendly(error?.message);c.notify();});}return;}
     if(action==='open-panel'){if(!dialogBusy)openPanel(target.dataset.panel,target);return;}
@@ -1146,7 +1176,7 @@ export function mount(root,ctx={}) {
     }
     return true;
   };
-  if(typeof gifts?.onChange==='function'){try{giftsUnsubscribe=gifts.onChange(reason=>{if(!alive)return;if(reason==='gift-sent'&&ui.panel==='gifts'&&!ctx.gameRoom){closePanel(false);return;}if(!(reason==='quantity-inline'&&paintGiftQuantity()))paint();});}catch(e){reportError(e);}}
+  if(typeof gifts?.onChange==='function'){try{giftsUnsubscribe=gifts.onChange(reason=>{if(!alive)return;if(reason==='gift-sent'&&!ctx.gameRoom){showCombo(live);if(ui.panel==='gifts'){closePanel(false);return;}}if(!(reason==='quantity-inline'&&paintGiftQuantity()))paint();});}catch(e){reportError(e);}}
   const viewport=window.visualViewport,fitViewport=()=>{
     if(!alive)return;
     const currentViewport=window.visualViewport||viewport;

@@ -21,6 +21,7 @@ import { Matchmaker } from './matchmaker.js';
 import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
 import { CpPoints, cpKey, cpLevelOf } from './cp-r58.js';
 import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, tribeLevelOf, type Tribe } from './tribes-r58.js';
+import { TribeTreasure, TreasureError, TREASURE_ERR, TRIBE_TASKS, TRIBE_BOXES, TRIBE_SHOP, ROCKET_PRESTIGE, launchGrants, planetOfLaunch } from './tribe-treasure-r59.js';
 import { achOf, achView, earned, type AchInput } from './achievements.js';
 import { City, CityError, validCity } from './city.js';
 import { ShopCatalog, validShop, shopEligibility } from './shopcatalog.js';
@@ -477,6 +478,7 @@ export async function createApp(
       const r = wallet.buy(id, it, String(m.key ?? ''));
       if (!r.ok && prevSpecial !== undefined) { try { accounts.setSpecialPlayerId(id, prevSpecial); } catch { /* يبقى كما هو؛ ما فيه خصم */ } }
       if (!r.ok) return { ok: false, error: r.code === 'owned' ? 'تملك هذا العنصر من قبل.' : r.code === 'poor' ? (it.currency === 'gems' ? 'جواهرك ما تكفي.' : 'عملاتك ما تكفي.') : 'طلب غير صالح.', code: r.code };
+      if (!r.dup && it.currency === 'gems') { try { treasure.shopSpend(id, Number(it.price) || 0); } catch { /* وقود القبيلة بس */ } }
       return { ...shopView(id), bought: it.id, dup: r.dup };
     }
     if (m.t === 'shop:checkout') return { ok:false, code:'payments_not_configured', error:'بوابة الدفع مب مهيأة. ما تم خصم أو إضافة أي رصيد.' };
@@ -805,8 +807,9 @@ export async function createApp(
   });
   const cpPoints = new CpPoints(cpFile, Date.now, storage);
   const tribes = new Tribes(process.env.TRIBES_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'tribes.json') : ''), Date.now, storage);
+  const treasure = new TribeTreasure(process.env.TRIBE_TREASURE_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'tribe-treasure.json') : ''), Date.now, storage);
   // R58w: هدية بين طرفين بينهم ارتباط افتراضي (R47) ترفع نقاط CP
-  const cpGift = (from: string, to: string, rec: { cur?: string; total?: number; price: number; qty?: number; ts: number }) => { try { if (rec.cur === 'gems') { const tv = rec.total ?? rec.price * (rec.qty ?? 1); tribes.addGift(from, tv); } } catch { /* نقاط القبيلة بس */ } try { if (rec.cur !== 'gems') return; const c = social.coupleOf(from); if (!c || c.partner !== to || rec.ts < c.at) return; const v = rec.total ?? rec.price * (rec.qty ?? 1); if (cpPoints.add(cpKey(c.id, from, to), v)) for (const id of [from, to]) sendToUser(id, { t: 'cp:update', kind: 'points' }); } catch { /* الهدية انحفظت؛ نقاط CP بس */ } };
+  const cpGift = (from: string, to: string, rec: { cur?: string; total?: number; price: number; qty?: number; ts: number }) => { try { if (rec.cur === 'gems') { const tv = rec.total ?? rec.price * (rec.qty ?? 1); tribes.addGift(from, tv); const tt = tribes.of(from); if (tt) { const tr = socialRooms.ownerTopRoom(tt.leader); const inside = !!tr && typeof (rec as any).room === 'string' && (rec as any).room.startsWith(`social:${tr.id}:`); if (treasure.gift(tt.id, from, tv, inside).length) settleTribe(tt.id); } } } catch { /* نقاط القبيلة بس */ } try { if (rec.cur !== 'gems') return; const c = social.coupleOf(from); if (!c || c.partner !== to || rec.ts < c.at) return; const v = rec.total ?? rec.price * (rec.qty ?? 1); if (cpPoints.add(cpKey(c.id, from, to), v)) for (const id of [from, to]) sendToUser(id, { t: 'cp:update', kind: 'points' }); } catch { /* الهدية انحفظت؛ نقاط CP بس */ } };
   /* R53: «من الذي رآني» و«ادعُ الأصدقاء» — نفس الحسابات والمعرّف العام والحظر والخصوصية القائمة؛ بدون أي حركة مالية */
   const profileSocial = new ProfileSocial(profileSocialFile, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
@@ -909,6 +912,35 @@ export async function createApp(
     requests: t.leader === viewer ? t.requests.filter((r) => accounts.has(r.id)).map((r) => ({ ...cpPerson(r.id), at: r.at })) : [] });
   const tribeEligible = (id: string) => { const lv = socialRooms.ownerMaxRoomLevel(id); return { roomLevel: lv, need: TRIBE_ROOM_LEVEL, canCreate: socialEligible(id) && lv >= TRIBE_ROOM_LEVEL && !tribes.of(id) }; };
   const tribePush = (ids: string[]) => { for (const id of ids) sendToUser(id, { t: 'tribe:update' }); };
+  /* R59: كنز القبيلة — صاروخ القبيلة (كل 3 مليون هيبة أسبوعية)، المهام، المكافأة، والمتجر */
+  function settleTribe(tribeId: number): void {
+    if (wallet.unsaved()) return;
+    for (const { week, l } of treasure.pendingLaunches(tribeId)) {
+      try { for (const g of launchGrants(tribeId, week, l)) { const res = wallet.grantCampaignBatch(g.campaignId, g.fp, g.ids, { coins: g.coins, gems: g.gems, itemIds: g.itemIds }, g.reason); if (res.some((x) => x.status === 'failed' && x.code !== 'BALANCE_OVERFLOW')) return; } } catch { return; }
+      treasure.markDone(tribeId, l.n);
+      const t = tribes.get(tribeId); if (!t) continue; const p = planetOfLaunch(l.n);
+      const ev = { id: `tribe-${tribeId}-${week}-${l.n}`, n: l.n, planet: p.name, stage: ((l.n - 1) % 7) + 1, winners: l.winners.map((id, k) => ({ rank: k + 1, ...cpPerson(id) })), luck: l.luck ? cpPerson(l.luck) : null };
+      for (const m of t.members) { const k = l.winners.indexOf(m.id); sendToUser(m.id, { t: 'tribe:rocket', event: { ...ev, mine: k >= 0 ? { rank: k + 1, gems: p.prizes[k], gifts: p.gifts[k].map((x) => x.name) } : l.luck === m.id ? { rank: 0, gems: 0, gifts: [p.luck.name] } : null } }); sendToUser(m.id, { t: 'tribe:update' }); }
+    }
+  }
+  const treasureRun = (fn: () => unknown) => { try { return fn(); } catch (e) { if (e instanceof TreasureError) return { ok: false, code: e.code, error: TREASURE_ERR[e.code] ?? 'تعذّر تنفيذ الطلب.' }; throw e; } };
+  const myTribe = (id: string) => { const t = tribes.of(id); if (!t) throw new TreasureError('no_tribe'); return t; };
+  const treasureView = (t: Tribe, viewer: string) => { const v = treasure.view(t.id, viewer); const room = socialRooms.ownerTopRoom(t.leader);
+    return { ok: true, tribe: { ...tribeCard(t), createdDays: Math.max(1, Math.ceil((Date.now() - t.at) / 86_400_000)), room, dayPts: v.dayPts, weekPts: v.weekPts, wealth: v.wealth },
+      rocket: { count: v.rockets, toNext: v.toNext, per: v.per, nextPlanet: v.nextPlanet, launches: v.launches.map((l) => ({ ...l, winners: l.winners.map((id, k) => ({ rank: k + 1, ...cpPerson(id) })), luck: l.luck ? cpPerson(l.luck) : null })) },
+      tasks: TRIBE_TASKS.map((x) => ({ ...x, done: v.me.done.includes(x.id) })), boxes: TRIBE_BOXES.map((b) => ({ ...b, open: v.weekPts >= b.need, claimed: v.me.boxes.includes(b.level) })),
+      shop: TRIBE_SHOP, me: { fuel: v.me.fuel, dayPts: v.me.dayPts, weekPts: v.me.weekPts, bag: v.me.bag, coinsWeek: v.me.coinsWeek, coins: wallet.balance(viewer) } };
+  };
+  functionalHttp.add('GET', '/api/tribes/treasure', ({ user }) => treasureRun(() => treasureView(myTribe(user.id), user.id)));
+  functionalHttp.add('POST', '/api/tribes/treasure/task', ({ user, body }) => treasureRun(() => { const t = myTribe(user.id); const id = String((body as any)?.id ?? '');
+    if (id === 'stay') { const room = socialRooms.ownerTopRoom(t.leader); const since = room ? socialRooms.presenceSince(user.id, room.id) : null; if (since === null || Date.now() - since < 5 * 60_000) throw new TreasureError('stay'); }
+    else if (id !== 'checkin') throw new TreasureError('item');
+    if (treasure.task(t.id, user.id, id as 'checkin' | 'stay').length) settleTribe(t.id); return treasureView(t, user.id); }));
+  functionalHttp.add('POST', '/api/tribes/treasure/box', ({ user, body }) => treasureRun(() => { const t = myTribe(user.id); treasure.claimBox(t.id, user.id, Number((body as any)?.level)); return treasureView(t, user.id); }));
+  functionalHttp.add('POST', '/api/tribes/treasure/buy', ({ user, body }) => treasureRun(() => { const t = myTribe(user.id); const r = treasure.buy(t.id, user.id, String((body as any)?.item ?? ''));
+    if (r.grant) { const res = wallet.grantCampaignBatch(r.grant.campaignId, r.grant.fp, r.grant.ids, { coins: r.grant.coins, gems: 0, itemIds: [] }, r.grant.reason); const w = res[0]; if (w && w.status !== 'failed') sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 }); }
+    return treasureView(t, user.id); }));
+  functionalHttp.add('POST', '/api/tribes/treasure/send-bag', ({ user, body }) => treasureRun(() => { const t = myTribe(user.id); const r = treasure.sendBag(user.id, String((body as any)?.bag ?? ''), t.members.map((m) => m.id)); for (const id of r.ids) sendToUser(id, { t: 'tribe:update' }); return { ...treasureView(t, user.id) as object, sent: r.each }; }));
   functionalHttp.add('GET', '/api/tribes/me', ({ user }) => { const t = tribes.of(user.id); return { ok: true, eligible: socialEligible(user.id), create: tribeEligible(user.id), tribe: t ? tribeView(t, user.id) : null, requested: tribes.requestedBy(user.id).map(tribeCard) }; });
   functionalHttp.add('GET', '/api/tribes/top', () => ({ ok: true, list: tribes.top(30).map(tribeCard) }));
   functionalHttp.add('GET', '/api/tribes/:id', ({ user, params }) => { const t = tribes.get(Number(params.id)); return t ? { ok: true, tribe: tribeView(t, user.id) } : { ok: false, error: TRIBE_ERR.not_found }; });

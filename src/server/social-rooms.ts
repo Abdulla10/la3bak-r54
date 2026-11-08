@@ -1,4 +1,9 @@
 import { currentWeek, validRoomWeek, validAllSenders, addSender, topOf, type RoomWeek } from './room-supporters-r58.js';
+import { CANNON3_LEVELS, newCannon3, validRoomCannon3, cannon3Add, cannon3Grants, cannon3CampaignId, cannon3Fingerprint, cannon3Art, cannon3Top, type RoomCannon3 } from './room-cannon-r59.js';
+/** R59: المدفع القديم (R27/R58t) انقفل وانستبدل بمدفع R59 بطلب المالك. بياناته تبقى محفوظة، وأي جوائز معلّقة فيه تنصرف عادي. */
+const LEGACY_CANNON = false;
+/** R59: صاروخ الغرفة انقفل (انتقل للقبيلة) */
+const ROOM_ROCKET = false;
 import { ROCKET_PLANETS, ROCKET_SENDERS_MAX, ROCKET_LUCK_MIN_MS, currentRocket, rocketBoundaries, validRoomRocket, rocketCampaignId, rocketFingerprint, rocketGrants, rocketWinners, rocketLuckPick, rocketShareOf, rocketGiftArt, type RoomRocket } from './room-rocket-r58.js';
 import { roomCodeOf, roomLevelOf, ROOM_VANITY, ROOM_ADS_MAX, type RoomAd, currentRoomMonth, roomRankView, validRoomMonth, ROOM_MONTH_SENDERS_MAX, type RoomMonth } from './room-extras-r58.js';
 import { ENTRANCE_ART_PATHS } from './entrance-catalog.js';
@@ -71,7 +76,7 @@ type StoredSettings = Partial<Omit<RoomSettings, 'moderatorPermissions'>> & { mo
 type Chat = { id: string; actor: string; text: string; at: number };
 type Council = { id: string; name: string; description: string; kind: Kind; privacy: Privacy; ownerId: string; hostId: string | null; seats: number; locked: boolean; lockedSeats?: number[]; allowRequests: boolean; invites: string[]; requests: string[]; channel: string; createdAt: number; modeEnabled: Record<SocialModeId, boolean>; modes: Record<SocialModeId, Record<string, any>>; chat: Chat[]; tools?: RoomToolsR33 };
 type Memory = { id: string; councilId: string; authors: string[]; approved: string[]; text: string | null; at: number };
-type Room = { id: string; name: string; description: string; privacy: Privacy; memory: boolean; maxMembers: number; ownerId: string; hostId: string | null; moderators: string[]; invites: string[]; bans: { id: string; reason: string }[]; members: Member[]; councils: Council[]; memories: Memory[]; activity: { action: string; at: number }[]; createdAt: number; updatedAt: number; settings?: StoredSettings; micRequests?: string[]; micApprovals?: string[]; cover?: string; challenge?: Challenge; cannon?: CannonState; roomMode?: DirectoryRoomMode; roomTag?: DirectoryRoomTag; country?: DirectoryCountry; password?: RoomPasswordR30; upgrade?: RoomUpgradeMetadataR47; vanity?: string; vanityItem?: string; support?: number; ads?: RoomAd[]; month?: RoomMonth; rocket?: RoomRocket; week?: RoomWeek; allSenders?: Record<string, number> };
+type Room = { id: string; name: string; description: string; privacy: Privacy; memory: boolean; maxMembers: number; ownerId: string; hostId: string | null; moderators: string[]; invites: string[]; bans: { id: string; reason: string }[]; members: Member[]; councils: Council[]; memories: Memory[]; activity: { action: string; at: number }[]; createdAt: number; updatedAt: number; settings?: StoredSettings; micRequests?: string[]; micApprovals?: string[]; cover?: string; challenge?: Challenge; cannon?: CannonState; roomMode?: DirectoryRoomMode; roomTag?: DirectoryRoomTag; country?: DirectoryCountry; password?: RoomPasswordR30; upgrade?: RoomUpgradeMetadataR47; vanity?: string; vanityItem?: string; support?: number; ads?: RoomAd[]; month?: RoomMonth; rocket?: RoomRocket; week?: RoomWeek; allSenders?: Record<string, number>; cannon3?: RoomCannon3 };
 type Pref = { id: string; invitations: boolean; interests: string; remember: boolean; adultConsent: boolean; favorites: { roomId: string; councilId: string }[]; previous: { roomId: string; councilId: string } | null; rates: number[]; recentRoomIds?: string[]; followedRoomIds?: string[] };
 type DirectoryAdmission = { passwordVerifiedRoomId?: string; protection?: RoomPasswordR30 };
 type Report = { id: string; actor: string; targetType: string; targetId: string; subjectId: string | null; roomId: string; councilId: string; text: string; evidence: string | null; at: number; resolution: string | null };
@@ -109,12 +114,13 @@ export function validSocialRooms(d: Record<string, unknown>): boolean {
   const roomIds = new Set<string>(), councilIds = new Set<string>(), users = new Set<string>(), channels = new Set<string>(), challengeIds = new Set<string>(), scoredIds = new Set<string>();
   const cannonIds = new Set<string>(), cannonReceiptIds = new Set<string>();
   for (const r of d.rooms) {
-    if (!isObj(r) || !keys(r, ['id','name','description','privacy','memory','maxMembers','ownerId','hostId','moderators','invites','bans','members','councils','memories','activity','createdAt','updatedAt','settings','micRequests','micApprovals','cover','challenge','cannon','roomMode','roomTag','country','password','upgrade','vanity','vanityItem','support','ads','month','rocket','week','allSenders']) || !uuid(r.id) || roomIds.has(r.id) || !str(r.name, 80) || !r.name.trim() || !str(r.description, 400) || !privacy(r.privacy) || typeof r.memory !== 'boolean' || !num(r.maxMembers, 2, 50) || !ident(r.ownerId) || !(r.hostId === null || ident(r.hostId)) || !strings(r.moderators, ident, 50) || r.moderators.includes(r.ownerId) || !strings(r.invites, ident, 200) || !Array.isArray(r.bans) || r.bans.length > 500 || !Array.isArray(r.members) || r.members.length > r.maxMembers || !Array.isArray(r.councils) || r.councils.length > 50 || !Array.isArray(r.memories) || r.memories.length > 100 || !Array.isArray(r.activity) || r.activity.length > 100 || !stamp(r.createdAt) || !stamp(r.updatedAt)) return false;
+    if (!isObj(r) || !keys(r, ['id','name','description','privacy','memory','maxMembers','ownerId','hostId','moderators','invites','bans','members','councils','memories','activity','createdAt','updatedAt','settings','micRequests','micApprovals','cover','challenge','cannon','roomMode','roomTag','country','password','upgrade','vanity','vanityItem','support','ads','month','rocket','week','allSenders','cannon3']) || !uuid(r.id) || roomIds.has(r.id) || !str(r.name, 80) || !r.name.trim() || !str(r.description, 400) || !privacy(r.privacy) || typeof r.memory !== 'boolean' || !num(r.maxMembers, 2, 50) || !ident(r.ownerId) || !(r.hostId === null || ident(r.hostId)) || !strings(r.moderators, ident, 50) || r.moderators.includes(r.ownerId) || !strings(r.invites, ident, 200) || !Array.isArray(r.bans) || r.bans.length > 500 || !Array.isArray(r.members) || r.members.length > r.maxMembers || !Array.isArray(r.councils) || r.councils.length > 50 || !Array.isArray(r.memories) || r.memories.length > 100 || !Array.isArray(r.activity) || r.activity.length > 100 || !stamp(r.createdAt) || !stamp(r.updatedAt)) return false;
     if (Object.hasOwn(r, 'upgrade') && !validRoomUpgradeMetadataR47(r.upgrade)) return false;
     if (Object.hasOwn(r,'vanity') && (typeof r.vanity !== 'string' || !ROOM_VANITY.test(r.vanity) || typeof r.vanityItem !== 'string')) return false;
     if (Object.hasOwn(r,'support') && !nat(r.support)) return false;
     if (Object.hasOwn(r,'month') && !validRoomMonth(r.month)) return false;
     if (Object.hasOwn(r,'rocket') && !validRoomRocket(r.rocket)) return false;
+    if (Object.hasOwn(r,'cannon3') && !validRoomCannon3(r.cannon3)) return false;
     if (Object.hasOwn(r,'week') && !validRoomWeek(r.week) || Object.hasOwn(r,'allSenders') && !validAllSenders(r.allSenders)) return false;
     if (Object.hasOwn(r,'ads') && (!Array.isArray(r.ads) || r.ads.length > ROOM_ADS_MAX || r.ads.some((a: any) => !isObj(a) || !keys(a,['id','text','at']) || !uuid(a.id) || !str(a.text,200) || !a.text.trim() || !nat(a.at)))) return false;
     if (Object.hasOwn(r,'roomMode') && !validDirectoryMode(r.roomMode) || Object.hasOwn(r,'roomTag') && !validDirectoryTag(r.roomTag) || Object.hasOwn(r,'country') && !validDirectoryCountry(r.country) || Object.hasOwn(r,'password') && !validRoomPasswordR30(r.password)) return false;
@@ -449,12 +455,15 @@ export class SocialRooms {
       if (nat(pts)) { m.pts = pts; m.gifts += 1; const prev = m.senders[sender] ?? 0; if (prev || Object.keys(m.senders).length < ROOM_MONTH_SENDERS_MAX) m.senders[sender] = prev + value; room.month = m; }
       // R58v: داعمين الأسبوع وكل الوقت
       const wk = currentWeek(room.week, now); room.week = { key: wk.key, senders: addSender(wk.senders, sender, value) }; room.allSenders = addSender(room.allSenders ?? {}, sender, value);
+      // R59: مدفع الغرفة الجديد (3 مستويات)
+      room.cannon3 = cannon3Add(room.cannon3 ?? newCannon3(), sender, value, now);
       // R58u: صاروخ الغرفة اليومي
+      // R59: الصاروخ انتقل للقبيلة بطلب المالك؛ صاروخ الغرفة ما ينطلق ولا يوزّع. نكمل نسجل داعمين اليوم بس (قائمة «اليوم» بالداعمين تعتمد عليها)
       const rk = structuredClone(currentRocket(room.rocket, now)); const rpts = rk.pts + value;
       if (nat(rpts)) {
         rk.pts = rpts; const pv = rk.senders[sender] ?? 0; if (pv || Object.keys(rk.senders).length < ROCKET_SENDERS_MAX) rk.senders[sender] = pv + value;
         const bounds = rocketBoundaries();
-        while (rk.launches.length < ROCKET_PLANETS.length && rk.pts >= bounds[rk.launches.length]) {
+        while (ROOM_ROCKET && rk.launches.length < ROCKET_PLANETS.length && rk.pts >= bounds[rk.launches.length]) {
           // R58y: أكثر 3 عبّوا بترول باليوم ياخذون الجواهر والهدايا، وفايز حظ من الحاضرين (3 دقايق أو أكثر بالغرفة)
           const stage = rk.launches.length + 1, winners = rocketWinners(rk);
           const cand = room.members.filter((mm) => this.mediaAccess(mm.id)?.roomId === roomId && now - mm.joinedAt >= ROCKET_LUCK_MIN_MS && !winners.includes(mm.id)).map((mm) => mm.id);
@@ -464,9 +473,17 @@ export class SocialRooms {
       }
       this.save(d, now); this.state = d; this.notice(before, d);
       this.settleRocket(roomId);
+      this.settleCannon3(roomId);
     } catch { /* الهدية انصرفت؛ الليفل يكمل مع الهدايا الجاية */ }
   }
   /** R58x: أعلى ليفل لغرفة يملكها الحساب (شرط إنشاء القبيلة) */
+  /** R59: غرفة القبيلة = أعلى غرفة ليفل يملكها القائد */
+  ownerTopRoom(userId: string): { id: string; name: string; level: number; members: number; code: string } | null {
+    let best: Room | null = null; for (const r of this.state.rooms) if (r.ownerId === userId && (!best || (r.support ?? 0) > (best.support ?? 0))) best = r;
+    return best ? { id: best.id, name: best.name, level: roomLevelOf(best.support ?? 0).level, members: best.members.length, code: this.roomCode(best) } : null;
+  }
+  /** R59: من متى الحساب حاضر بالغرفة (للمهمة «ابقَ 5 دقايق») */
+  presenceSince(userId: string, roomId: string): number | null { const r = this.state.rooms.find((x) => x.id === roomId); const m = r?.members.find((x) => x.id === userId); return m && this.mediaAccess(userId)?.roomId === roomId ? m.joinedAt : null; }
   ownerMaxRoomLevel(userId: string): number { let lv = 0; for (const r of this.state.rooms) if (r.ownerId === userId) lv = Math.max(lv, roomLevelOf(r.support ?? 0).level); return lv; }
   /** R58u: يمنح جوائز إطلاقات الصاروخ المعلّقة (معرّف ثابت لكل إطلاق، فإعادة المحاولة ما تكرر). */
   private settleRocket(roomId: string): void {
@@ -492,6 +509,36 @@ export class SocialRooms {
         for (const id of ids) { const mine = rocketShareOf(dl, id); this.opts.emit([id], { t: 'social:rocket', roomId, event: { id: rocketCampaignId(roomId, rk.day, l.stage, 'event'), stage: l.stage, planet: p.name, at: l.at, rank: mine.rank, gems: mine.gems, gifts: mine.gifts, winners, luck } }); }
       } catch { /* الجوائز انحفظت؛ التنبيه بس اللي فشل */ }
     });
+  }
+  /** R59: يمنح جوايز انفجارات المدفع المعلّقة (معرّف ثابت لكل انفجار، فإعادة المحاولة ما تكرر) ويبلغ الحاضرين. */
+  private settleCannon3(roomId: string): void {
+    const wallet = this.opts.cannon?.wallet; if (!wallet || wallet.unsaved()) return;
+    const r = this.state.rooms.find((x) => x.id === roomId); const c = r?.cannon3; if (!r || !c) return;
+    c.blasts.forEach((b, i) => {
+      if (b.status !== 'pending') return;
+      try {
+        for (const g of cannon3Grants(b)) {
+          const res = wallet.grantCampaignBatch(cannon3CampaignId(roomId, b, g.kind), cannon3Fingerprint(roomId, b, g), g.ids, { coins: g.coins, gems: 0, itemIds: g.itemIds }, g.reason);
+          if (res.some((x) => x.status === 'failed' && x.code !== 'BALANCE_OVERFLOW')) return;
+        }
+      } catch { return; }
+      const before = this.state, d = structuredClone(before), now = this.clock(), room = this.room(d, roomId); const db = room.cannon3?.blasts[i];
+      if (!db || db.status !== 'pending' || db.round !== b.round || db.level !== b.level) return;
+      db.status = 'done'; this.save(d, now); this.state = d; this.notice(before, d);
+      try {
+        const L = CANNON3_LEVELS[b.level - 1]; const winners = b.winners.map((w, k) => ({ rank: k + 1, pts: w.pts, person: this.publicPerson(w.id) })).filter((w) => w.person);
+        const ids = room.members.filter((mm) => this.mediaAccess(mm.id)?.roomId === roomId).map((mm) => mm.id);
+        for (const id of ids) { const k = b.winners.findIndex((w) => w.id === id);
+          this.opts.emit([id], { t: 'social:cannon3', roomId, event: { id: cannon3CampaignId(roomId, b, 'event'), round: b.round, level: b.level, at: b.at, winners, mine: k >= 0 ? { coins: L.coins, items: [...L.items.map((x) => x.name), ...(k === 0 ? [L.top1.name] : [])] } : null } }); }
+      } catch { /* الجوايز انحفظت؛ التنبيه بس اللي فشل */ }
+    });
+  }
+  private cannon3View(r: Room, viewer = '') {
+    const c = r.cannon3 ?? newCannon3();
+    const prize = (p: { id: string; name: string; slot: string }) => { const it = this.opts.cannon?.catalog.get(p.id); return { id: p.id, name: p.name, slot: p.slot, art: cannon3Art(p.id) || (typeof it?.art === 'string' ? it.art : ''), icon: it?.icon ?? '🎁' }; };
+    const last = (lv: number) => { const b = [...c.blasts].reverse().find((x) => x.level === lv); return b ? { round: b.round, at: b.at, winners: b.winners.map((w, k) => ({ rank: k + 1, pts: w.pts, person: this.publicPerson(w.id) })).filter((w) => w.person) } : null; };
+    return { v: 3, round: c.round, level: c.level, pts: c.pts, mine: c.senders[viewer] ?? 0, goal: CANNON3_LEVELS[c.level - 1].goal, top: cannon3Top(c.senders, 5).map((w) => ({ pts: w.pts, person: this.publicPerson(w.id) })).filter((w) => w.person),
+      levels: CANNON3_LEVELS.map((L) => ({ level: L.level, color: L.color, goal: L.goal, coins: L.coins, top1: prize(L.top1), items: L.items.map(prize), last: last(L.level) })) };
   }
   /** R58v: قائمة الداعمين (اليوم، الأسبوع، الشهر، كل الوقت) — أعلى 20 بكل فترة */
   private supportersView(r: Room) {
@@ -528,7 +575,7 @@ export class SocialRooms {
   private cannonCatalogWarned = false;
   /** Lazy enablement is a social commit BEFORE any outgoing payment, never history backfill. */
   private ensureCannon(roomId: string): void {
-    if (!this.opts.cannon) return;
+    if (!this.opts.cannon || !LEGACY_CANNON) return; // R59: المدفع القديم انقفل (انستبدل بمدفع R59)
     const r=this.room(this.state,roomId);
     // R58t: مدفع v1 فاضي (بدون أي دعم ولا جوائز) يترقّى لمدفع المراحل الخمس. اللي فيه دعم يبقى مثل ما هو.
     const emptyV1=!!r.cannon&&r.cannon.version===CANNON_VERSION_V1&&r.cannon.total===0&&r.cannon.receipts.length===0&&r.cannon.stages.every(s=>s.status==='locked')&&(this.opts.cannon.pendingCount?.(r.cannon.id)??0)===0;
@@ -540,7 +587,7 @@ export class SocialRooms {
   }
   /** Synchronous server-only hook inside withGiftAccess. Original challenge context stays exact4. */
   reserveCannonGiftContext(sender: string, recipient: string, at: number): CannonGiftContext | null {
-    const x=this.activeGift;if(!x||x.sender!==sender||x.recipient!==recipient&&!this.activeGiftBatch?.includes(recipient)||!this.opts.cannon)return null;
+    const x=this.activeGift;if(!LEGACY_CANNON||!x||x.sender!==sender||x.recipient!==recipient&&!this.activeGiftBatch?.includes(recipient)||!this.opts.cannon)return null;
     this.ready();if(!nat(at))fail('invalid_clock');
     this.giftAccess(sender,x.roomId,x.councilId,[...(this.activeGiftBatch??[recipient])],x.allowExternalSupport);
     const r=this.room(this.state,x.roomId),c=r.cannon;if(!c)return null;
@@ -1047,7 +1094,7 @@ export class SocialRooms {
       const room:Room={id:randomUUID(),name:text(b.name,80),description:text(b.description,400,true),privacy:b.privacy===undefined?'public':privacy(b.privacy)?b.privacy:fail('invalid_privacy'),memory:b.memory===undefined?false:boolean(b.memory),maxMembers:b.maxMembers===undefined?24:num(b.maxMembers,2,50)?b.maxMembers:fail('invalid_members_limit'),ownerId:id,hostId:null,moderators:[],invites:[],bans:[],members:[],councils:[],memories:[],activity:[],createdAt:now,updatedAt:now};
       for(const k of ['roomMode','roomTag','country'] as const)if(Object.hasOwn(b,k))(room as any)[k]=b[k];
       if(admission.protection)room.password=admission.protection;
-      if(this.opts.cannon&&this.cannonCatalogReady())room.cannon=createCannon(id,now);
+      if(LEGACY_CANNON&&this.opts.cannon&&this.cannonCatalogReady())room.cannon=createCannon(id,now);
       d.rooms.push(room);this.enterRoom(d,room,id,media,now,{passwordVerifiedRoomId:room.id});this.activity(room,command,now);return success({roomId:room.id});
     }
     if(command==='room:leave') {
@@ -1435,7 +1482,7 @@ export class SocialRooms {
       const permissions=this.permissions(r,userId);
       const base={id:r.id,name:r.name,description:r.description,photo:this.photo(r),settings:this.settings(r),permissions,privacy:r.privacy,memory:r.memory,maxMembers:r.maxMembers,...this.directoryRoomView(r),owner:this.who(r.ownerId),host:r.hostId&&!this.blocked(userId,r.hostId)?this.who(r.hostId):null,createdAt:r.createdAt,updatedAt:r.updatedAt,count:r.members.length,role:this.role(r,userId)};
       const room={...base,moderators:member||privileged?r.moderators.map(id=>this.who(id)):[],members:member?r.members.map(m=>this.memberView(r,m,userId)).filter(Boolean):[],councils:member?r.councils.map(c=>this.councilView(r,c,userId)):[],memories:member?r.memories.filter(m=>m.text!==null||m.authors.includes(userId)).map(m=>({id:m.id,councilId:m.councilId,text:m.text??this.pendingMemory.get(m.id)??null,saved:m.text!==null,authors:m.authors.map(uid=>this.who(uid)),approved:m.approved.map(uid=>this.who(uid)),at:m.at})):[],activity:member?structuredClone(r.activity):[],...(permissions.audio?{microphoneRequests:(r.micRequests??[]).map(id=>this.privateWho(id)).filter(Boolean),microphoneApprovals:(r.micApprovals??[]).map(id=>this.privateWho(id)).filter(Boolean)}:{}),...(permissions.moderation?{mutedMembers:r.members.filter(m=>m.muted).map(m=>this.privateWho(m.id)?this.memberView(r,m,userId):null).filter(Boolean),bannedMembers:r.bans.map(b=>{const who=this.privateWho(b.id);return who?{...who,reason:b.reason}:null;}).filter(Boolean)}:{}),...(permissions.audit?{audit:this.auditView(r)}:{})};
-      return {ok:true,room:{...room,rocket:this.rocketView(r),supporters:this.supportersView(r),cannon:member?this.cannonView(r,userId):null,challenge:member?this.challengeView(r,userId):null,supportEvents:member?(this.state.supportEvents??[]).map(e=>this.supportEventView(e,userId)).filter(Boolean):[],rankStats:privileged?this.rankStatsView(r,userId):null},publicSupport:this.publicSupportView(r,userId),current:this.current(userId),preferences:this.prefsView(userId)};
+      return {ok:true,room:{...room,cannon3:this.cannon3View(r,userId),rocket:this.rocketView(r),supporters:this.supportersView(r),cannon:member?this.cannonView(r,userId):null,challenge:member?this.challengeView(r,userId):null,supportEvents:member?(this.state.supportEvents??[]).map(e=>this.supportEventView(e,userId)).filter(Boolean):[],rankStats:privileged?this.rankStatsView(r,userId):null},publicSupport:this.publicSupportView(r,userId),current:this.current(userId),preferences:this.prefsView(userId)};
     }));
   }
   mediaAccess(userId:string):null|{roomId:string;councilId:string;channel:string;epoch:string;muted:boolean;highQuality:boolean;name:string;id:string} {

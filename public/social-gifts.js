@@ -31,7 +31,7 @@ export function renderSocialGiftArtwork(gift,hooks={},size=64){
  return `<span class="gift-art"${ready?' data-so-gift-3d="true"':''}>${html}</span>`;
 }
 function validEvent(e){return !!(e&&typeof e.tx==='string'&&e.tx&&typeof e.gift?.id==='string'&&e.gift.id&&typeof e.from?.id==='string'&&typeof e.to?.id==='string'&&e.from.id!==e.to.id&&Number.isSafeInteger(e.qty)&&e.qty>=1&&e.qty<=777&&Number.isFinite(e.ts)&&e.ts>0&&Number.isFinite(new Date(e.ts).getTime())&&giftRewardEventQuote(e));}
-function eventHTML(e,compact=false){const full=`<article class="so-gift-receipt" data-so-gift-receipt="${esc(e.tx)}"><div>${giftRewardCard({gift:e.gift,recipient:e.to,qty:e.qty,quote:giftRewardEventQuote(e),confirmed:true,prepaid:e.prepaid===true,compact:true,sender:e.from})}</div><time datetime="${new Date(e.ts).toISOString()}">${esc(new Date(e.ts).toLocaleTimeString('ar-u-nu-latn',{hour:'2-digit',minute:'2-digit'}))}</time></article>`;if(!compact)return full;return `<details class="so-pk-gift-event" data-so-pk-gift-event="${esc(e.tx)}"><summary><span><b>${esc(e.from?.name)}</b> أرسل ${esc(e.gift?.name)} ×${esc(e.qty)} إلى <b>${esc(e.to?.name)}</b></span><small>تفاصيل</small></summary>${full}</details>`;}
+function eventHTML(e,compact=false){const full=`<article class="so-gift-receipt" data-so-gift-receipt="${esc(e.tx)}"><div>${giftRewardCard({gift:e.gift,recipient:e.to,qty:e.qty,quote:giftRewardEventQuote(e),confirmed:true,prepaid:e.prepaid===true,compact:true,sender:e.from})}</div><time datetime="${new Date(e.ts).toISOString()}">${esc(new Date(e.ts).toLocaleTimeString('ar-u-nu-latn',{hour:'2-digit',minute:'2-digit'}))}</time></article>`;if(!compact)return full;return `<details class="so-pk-gift-event" data-so-pk-gift-event="${esc(e.tx)}"><summary><span><b><bdi>${esc(e.from?.name)}</bdi></b> أرسل ${esc(e.gift?.name)} ×${esc(e.qty)} إلى <b><bdi>${esc(e.to?.name)}</bdi></b></span><small>تفاصيل</small></summary>${full}</details>`;}
 function virtualTabs(cat){return (cat?.virtual||[]).filter(c=>['popular','newest','rare'].includes(c?.id));}
 function filteredGifts(cat,id){
  const all=cat.gifts||[];if(id==='all')return all;
@@ -47,6 +47,7 @@ export function createSocialGiftStore({ownerId,req,api,hooks={},giftArtwork,onCo
  hooks={...hooks,...(giftArtwork?{giftArtwork}:{}),...(onConfirmedGift?{onConfirmedGift}:{}),...(art?{art}:{}),...(gift3DReady?{gift3DReady}:{})};
  const storageKey='la3bak:social-gift-pending:'+ownerId;
  const listeners=new Set(),receipts=new Map();let generation=0,quoteGeneration=0,walletRevision=0,opened=false,disposed=false,lastSnapshot=null,quotePromise=null;
+ let comboLast=null;
  const s={targetCouncil:'',catalog:null,coins:null,gems:null,cat:'all',page:1,gift:null,to:[],qty:1,pending:null,busy:false,sendWaiting:false,loading:false,error:'',success:'',confirm:false,confirmSig:'',result:[],customOpen:false,quantityError:'',quote:null,quoteSig:'',quoteLoading:false};
  const targetFor=snapshot=>giftTarget(snapshot,s.targetCouncil);
  function current(snapshot){const t=targetFor(snapshot);if(!t)return null;return t.external?{id:t.councilId,members:t.recipients}:snapshot.room.councils?.find(c=>c.id===t.councilId);}
@@ -139,7 +140,8 @@ export function createSocialGiftStore({ownerId,req,api,hooks={},giftArtwork,onCo
    if(!quote||!amount(quote.total)||quote.total<=0||quote.total>MAX_TOTAL){s.error=s.error||'عرض الخادم غير صالح للإجمالي الحالي. حدّث قائمة الهدايا.';changed();return;}
    if(!amount(s[quote.cur])||s[quote.cur]<quote.total){s.error=`رصيد ${quote.cur==='gems'?'الجواهر':'العملات'} غير متاح أو لا يكفي للإجمالي.`;changed();return;}
    const threshold=Math.min(10000,Number.isSafeInteger(s.catalog.confirmAt)&&s.catalog.confirmAt>0?s.catalog.confirmAt:10000);
-   if(quote.total>=threshold&&(!confirmed||!confirmationMatches)){s.confirm=true;s.confirmSig=sig;changed();return;}
+   // R59 (طلب المالك): الإرسال فوري بدون بطاقة تأكيد، مثل الفيديو. علامة confirm تنرسل للخادم تلقائيًا للمبالغ الكبيرة.
+   void confirmed;void confirmationMatches;
    const ids=targets(s.to);
    s.pending=freeze(clone({roomId:targetFor(snapshot).roomId,key:crypto.randomUUID(),body:{councilId:targetFor(snapshot).councilId,to:ids.length===1?ids[0]:ids,gift:gift.id,qty:s.qty,seen:gift.price,seenPolicy:quote.policy,...(quote.total>=threshold?{confirm:true}:{})},quote,gift,recipient:ids.map(id=>peer(lastSnapshot).find(p=>p.id===id)?.name||id).join('، ')}));persist();
   }
@@ -150,9 +152,10 @@ export function createSocialGiftStore({ownerId,req,api,hooks={},giftArtwork,onCo
    if(!r?.ok){const err=Error(r?.error||'لم يؤكد الخادم إرسال الهدية.');err.status=r?.status;throw err;}
    if(disposed)return;generation++;walletRevision++;s.loading=false;invalidateQuote();if(amount(r.coins))s.coins=r.coins;if(amount(r.gems))s.gems=r.gems;
    const evs=Array.isArray(r.evs)?r.evs:r.ev?[r.ev]:[];
-   s.result=[];s.success=r.dup?'هذا الطلب أُرسل سابقًا، ما تكرر الخصم أو البونص.':'تم تأكيد إرسال الهدية لجميع المستلمين وحفظ أرصدتها الفعلية في الخادم.';
+   s.result=[];s.success=r.dup?'هذا الطلب أُرسل سابقًا، ما تكرر الخصم أو البونص.':'';
    for(const ev of evs)if(accept(lastSnapshot,{roomId:r.roomId??p.roomId,councilId:r.councilId??p.body.councilId,ev},{dup:r.dup===true}))s.result.push(ev);
    s.pending=null;persist();
+   if(p.gift)comboLast={gift:p.gift,qty:p.body.qty,to:targets(p.body.to)};
    if(r.dup!==true&&s.result.length>0)changed('gift-sent');
   }catch(e){if(disposed)return;const status=e.status||e.response?.status;s.error=e.message||'انقطع الاتصال. أعد المحاولة بنفس المفتاح.';
    // Preserve historical scalar/array bodies and key on every uncertain/lost/429/408 response.
@@ -203,7 +206,9 @@ export function createSocialGiftStore({ownerId,req,api,hooks={},giftArtwork,onCo
    ${s.confirm?`<div class="so-gift-confirm" role="dialog" aria-modal="true" aria-labelledby="so-gift-confirm-title"><h3 id="so-gift-confirm-title">تأكيد إجمالي إرسال الهدية لجميع المستلمين</h3>${summary}${preview}<button type="button" id="so-gift-confirm-send" class="so-button so-primary" data-so-gift-action="confirm" ${canSend?'':'disabled'}>تأكيد الإرسال للجميع</button><button type="button" id="so-gift-confirm-cancel" class="so-button" data-so-gift-action="cancel">إلغاء</button></div>`:''}
   </section>`;
  }
- return {render,open(snapshot){sync(snapshot);opened=true;void load();},close(){opened=false;s.confirm=false;s.confirmSig='';},onChange(cb){listeners.add(cb);return()=>listeners.delete(cb);},events(snapshot,options={}){sync(snapshot);return [...receipts.values()].filter(r=>r.scope===scope(snapshot)).slice(-60).map(r=>eventHTML(r.ev,options.compact===true)).join('');},receive(event){accept(lastSnapshot,event);},accept,
+ return {render,open(snapshot){sync(snapshot);opened=true;void load();},close(){opened=false;s.confirm=false;s.confirmSig='';},onChange(cb){listeners.add(cb);return()=>listeners.delete(cb);},events(snapshot,options={}){sync(snapshot);return [...receipts.values()].filter(r=>r.scope===scope(snapshot)).slice(-60).map(r=>eventHTML(r.ev,true)).join('');},
+  /** R59: Combo — نفس الهدية والمستلمين والكمية بطلب جديد (مفتاح جديد) */
+  combo(snapshot){if(!comboLast||s.busy||s.sendWaiting||s.pending)return false;s.gift=comboLast.gift.id;s.to=[...comboLast.to];s.qty=comboLast.qty;invalidateQuote();void send(snapshot,true);return true;},lastError(){return s.error||'';},comboInfo(){return comboLast?{gift:comboLast.gift,qty:comboLast.qty,to:comboLast.to.length}:null;},receive(event){accept(lastSnapshot,event);},accept,
   handle(e,snapshot){
    if(disposed)return false;sync(snapshot);const el=e.target.closest?.('[data-so-gift-action]');if(!el)return false;const action=el.dataset.soGiftAction,isInput=el.tagName==='INPUT'||el.tagName==='SELECT';
    // Never replace focused input while typing; change commits before the same send click. No focus calls.

@@ -1,11 +1,11 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
 import * as PR from './profile.js?v=r58y5';
-import * as UNIFIED from '../unified/shell.js?v=r58y4';
+import * as UNIFIED from '../unified/shell.js?v=r59s';
 import * as REF from '../unified/home.js?v=r58t';
-import * as SOCIAL from '../unified/social.js?v=r58y4';
+import * as SOCIAL from '../unified/social.js?v=r59s';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
-import { createSocialGiftStore } from '../social-gifts.js?v=r57';
+import { createSocialGiftStore } from '../social-gifts.js?v=r59v';
 import {giftArtwork} from '../gift-assets-r27.js?v=unique-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
 import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r58r';
@@ -182,6 +182,12 @@ function connect() {
     } else if (m.t === 'social:rocket') {
       if(S.user&&S.ws===ws&&parseRoute().name==='social-room'&&!S.accountSettings?.hideChatEffects)SOCIAL.receiveSocialRocket?.(m);
       if(S.user&&S.ws===ws&&parseRoute().name==='social-room')refreshSocial(m);
+    } else if (m.t === 'tribe:rocket') {
+      // R59: صاروخ القبيلة انطلق — نفس حركة الإطلاق لكل أعضاء القبيلة، مع جايزتك إذا فزت
+      if(S.user&&S.ws===ws&&!S.accountSettings?.hideChatEffects){const e=m.event||{};import('../unified/room-rocket-r58.js?v=r59t').then(x=>x.rocketLaunch({id:String(e.id||''),stage:e.stage,planet:e.planet,title:`🚀 تم إطلاق صاروخ القبيلة رقم ${e.n} — كوكب ${e.planet||''}!`,rank:e.mine?e.mine.rank:-1,gems:e.mine?.gems||0,gifts:e.mine?.gifts||[],winners:(e.winners||[]).map(w=>({rank:w.rank,person:{name:w.name,avatar:w.avatar}})),luck:e.luck||null})).catch(()=>{});}
+      try{dispatchEvent(new CustomEvent('la3bak:tribe'));}catch{}
+    } else if (m.t === 'social:cannon3') {
+      if(S.user&&S.ws===ws&&parseRoute().name==='social-room'&&!S.accountSettings?.hideChatEffects)SOCIAL.receiveSocialCannon3?.(m);
     } else if (m.t === 'social:cannon') {
       if(S.user&&S.ws===ws&&parseRoute().name==='social-room'&&!S.accountSettings?.hideChatEffects)SOCIAL.receiveSocialCannon(m);
       if(S.user&&S.ws===ws&&parseRoute().name==='social-room')refreshSocial(m);
