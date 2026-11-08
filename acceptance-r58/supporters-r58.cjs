@@ -18,7 +18,7 @@ async function sendRockets(bp, qty) {
   await bp.click('[aria-label="إرسال هدية"]'); await sleep(1500);
   await bp.click('[data-so-gifts] button:has-text("للاعب a")').catch(() => {}); await sleep(300);
   await bp.click(`[data-so-gifts] button:has-text("${GIFT}")`); await sleep(400);
-  for (const q of await bp.$$('[data-so-gifts] button')) { if ((await q.textContent()).trim() === String(qty)) { await q.click(); break; } } await sleep(800);
+  await bp.locator('[data-so-gifts] button', { hasText: new RegExp('^\\s*' + qty + '\\s*$') }).first().click({ timeout: 5000 }).catch(() => {}); await sleep(800);
   const send = await bp.$('[data-so-gifts] button:has-text("إرسال"):not([disabled])'); if (send) { await send.click(); await sleep(1500); }
   const conf = await bp.$('[data-so-gifts] button:has-text("تأكيد"):not([disabled]), [data-so-gifts] [data-so-gift-action="confirm"]'); if (conf) { await conf.click(); await sleep(1500); }
   await bp.keyboard.press('Escape').catch(() => {}); await sleep(500);

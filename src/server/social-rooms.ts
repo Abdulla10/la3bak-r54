@@ -1,5 +1,5 @@
 import { currentWeek, validRoomWeek, validAllSenders, addSender, topOf, type RoomWeek } from './room-supporters-r58.js';
-import { ROCKET_STAGES, ROCKET_SENDERS_MAX, ROCKET_RECIPIENTS_MAX, currentRocket, rocketBoundaries, validRoomRocket, rocketCampaignId, rocketFingerprint, rocketReason, topSender, type RoomRocket } from './room-rocket-r58.js';
+import { ROCKET_PLANETS, ROCKET_SENDERS_MAX, ROCKET_LUCK_MIN_MS, currentRocket, rocketBoundaries, validRoomRocket, rocketCampaignId, rocketFingerprint, rocketGrants, rocketWinners, rocketLuckPick, rocketShareOf, rocketGiftArt, type RoomRocket } from './room-rocket-r58.js';
 import { roomCodeOf, roomLevelOf, ROOM_VANITY, ROOM_ADS_MAX, type RoomAd, currentRoomMonth, roomRankView, validRoomMonth, ROOM_MONTH_SENDERS_MAX, type RoomMonth } from './room-extras-r58.js';
 import { ENTRANCE_ART_PATHS } from './entrance-catalog.js';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
@@ -454,11 +454,11 @@ export class SocialRooms {
       if (nat(rpts)) {
         rk.pts = rpts; const pv = rk.senders[sender] ?? 0; if (pv || Object.keys(rk.senders).length < ROCKET_SENDERS_MAX) rk.senders[sender] = pv + value;
         const bounds = rocketBoundaries();
-        while (rk.launches.length < ROCKET_STAGES.length && rk.pts >= bounds[rk.launches.length]) {
-          const present = room.members.filter((mm) => this.mediaAccess(mm.id)?.roomId === roomId).map((mm) => mm.id);
-          if (!present.includes(sender) && room.members.some((mm) => mm.id === sender)) present.push(sender);
-          present.sort((a, b) => (rk.senders[b] ?? 0) - (rk.senders[a] ?? 0));
-          rk.launches.push({ stage: rk.launches.length + 1, at: now, status: 'pending', recipients: present.slice(0, ROCKET_RECIPIENTS_MAX), top: topSender(rk) });
+        while (rk.launches.length < ROCKET_PLANETS.length && rk.pts >= bounds[rk.launches.length]) {
+          // R58y: أكثر 3 عبّوا بترول باليوم ياخذون الجواهر والهدايا، وفايز حظ من الحاضرين (3 دقايق أو أكثر بالغرفة)
+          const stage = rk.launches.length + 1, winners = rocketWinners(rk);
+          const cand = room.members.filter((mm) => this.mediaAccess(mm.id)?.roomId === roomId && now - mm.joinedAt >= ROCKET_LUCK_MIN_MS && !winners.includes(mm.id)).map((mm) => mm.id);
+          rk.launches.push({ stage, at: now, status: 'pending', winners, luck: rocketLuckPick(roomId, rk.day, stage, cand) });
         }
         room.rocket = rk;
       }
@@ -474,17 +474,22 @@ export class SocialRooms {
     const r = this.state.rooms.find((x) => x.id === roomId); const rk = r?.rocket; if (!r || !rk) return;
     rk.launches.forEach((l, i) => {
       if (l.status !== 'pending') return;
-      const st = ROCKET_STAGES[l.stage - 1];
+      const grants = rocketGrants(l);
       try {
-        if (l.recipients.length) { const res = wallet.grantCampaignBatch(rocketCampaignId(roomId, rk.day, l.stage, 'crowd'), rocketFingerprint(roomId, rk.day, l, 'crowd'), l.recipients, { coins: st.coins, gems: 0, itemIds: [] }, rocketReason(l.stage, 'crowd')); if (res.some((x) => x.status === 'failed' && x.code !== 'BALANCE_OVERFLOW')) return; }
-        if (l.top) wallet.grantCampaignBatch(rocketCampaignId(roomId, rk.day, l.stage, 'top'), rocketFingerprint(roomId, rk.day, l, 'top'), [l.top], { coins: st.topBonus, gems: 0, itemIds: [] }, rocketReason(l.stage, 'top'));
+        for (const g of grants) {
+          const res = wallet.grantCampaignBatch(rocketCampaignId(roomId, rk.day, l.stage, g.kind), rocketFingerprint(roomId, rk.day, l.stage, g), [g.id], { coins: 0, gems: g.gems, itemIds: g.itemIds }, g.reason);
+          if (res.some((x) => x.status === 'failed' && x.code !== 'BALANCE_OVERFLOW')) return;
+        }
       } catch { return; }
       const before = this.state, d = structuredClone(before), now = this.clock(), room = this.room(d, roomId); const dl = room.rocket?.launches[i];
       if (!dl || room.rocket!.day !== rk.day || dl.status !== 'pending') return;
       dl.status = 'done'; this.save(d, now); this.state = d; this.notice(before, d);
       try {
-        const ids = room.members.filter((mm) => this.mediaAccess(mm.id)?.roomId === roomId).map((mm) => mm.id);
-        for (const id of ids) this.opts.emit([id], { t: 'social:rocket', roomId, event: { id: rocketCampaignId(roomId, rk.day, l.stage, 'crowd'), stage: l.stage, at: l.at, coins: dl.recipients.includes(id) ? st.coins : 0, topBonus: dl.top === id ? st.topBonus : 0, top: dl.top ? this.publicPerson(dl.top) : null } });
+        const p = ROCKET_PLANETS[l.stage - 1];
+        const winners = dl.winners.map((id, k) => ({ rank: k + 1, person: this.publicPerson(id) })).filter((w) => w.person);
+        const luck = dl.luck ? this.publicPerson(dl.luck) : null;
+        const ids = new Set(room.members.filter((mm) => this.mediaAccess(mm.id)?.roomId === roomId).map((mm) => mm.id));
+        for (const id of ids) { const mine = rocketShareOf(dl, id); this.opts.emit([id], { t: 'social:rocket', roomId, event: { id: rocketCampaignId(roomId, rk.day, l.stage, 'event'), stage: l.stage, planet: p.name, at: l.at, rank: mine.rank, gems: mine.gems, gifts: mine.gifts, winners, luck } }); }
       } catch { /* الجوائز انحفظت؛ التنبيه بس اللي فشل */ }
     });
   }
@@ -495,11 +500,15 @@ export class SocialRooms {
     return { day: list(currentRocket(r.rocket, now).senders), week: list(currentWeek(r.week, now).senders), month: list(currentRoomMonth(r.month, now).senders), all: list(r.allSenders) };
   }
   private rocketView(r: Room) {
-    const rk = currentRocket(r.rocket, this.clock()); const bounds = rocketBoundaries(); const done = rk.launches.length;
-    const stage = Math.min(done + 1, ROCKET_STAGES.length), floor = stage > 1 ? bounds[stage - 2] : 0, goal = ROCKET_STAGES[stage - 1].goal;
-    const progress = done >= ROCKET_STAGES.length ? goal : Math.max(0, Math.min(goal, rk.pts - floor));
-    const top = Object.entries(rk.senders).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id, pts]) => ({ person: this.publicPerson(id), pts })).filter((x) => x.person);
-    return { day: rk.day, pts: rk.pts, stage, progress, goal, finished: done >= ROCKET_STAGES.length, stages: ROCKET_STAGES.map((s, i) => ({ stage: s.stage, goal: s.goal, coins: s.coins, topBonus: s.topBonus, launched: i < done })), top };
+    const rk = currentRocket(r.rocket, this.clock()); const bounds = rocketBoundaries(); const done = rk.launches.length, N = ROCKET_PLANETS.length;
+    const stage = Math.min(done + 1, N), floor = stage > 1 ? bounds[stage - 2] : 0, goal = ROCKET_PLANETS[stage - 1].goal;
+    const progress = done >= N ? goal : Math.max(0, Math.min(goal, rk.pts - floor));
+    const top = Object.entries(rk.senders).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 5).map(([id, pts]) => ({ person: this.publicPerson(id), pts })).filter((x) => x.person);
+    const gift = (g: { id: string; name: string }) => ({ id: g.id, name: g.name, art: rocketGiftArt(g.id) });
+    return { v: 2, day: rk.day, pts: rk.pts, stage, progress, goal, finished: done >= N, reached: done,
+      stages: ROCKET_PLANETS.map((s, i) => { const l = rk.launches[i]; const nm = (id: string) => this.publicPerson(id)?.name ?? null;
+      return { stage: s.stage, name: s.name, goal: s.goal, total: bounds[i], prizes: [...s.prizes], gifts: s.gifts.map((g) => g.map(gift)), luck: gift(s.luck), launched: i < done,
+        ...(l ? { won: { winners: l.winners.map((id, k) => ({ rank: k + 1, name: nm(id) })).filter((w) => w.name), luck: l.luck ? nm(l.luck) : null } } : {}) }; }), top };
   }
   /** R58c: أداة مراجعة بيانات الغرفة (للمالك والمشرفين): نقاط الشهر وعدد الهدايا وأكثر الداعمين */
   private rankStatsView(r: Room, viewer: string) {

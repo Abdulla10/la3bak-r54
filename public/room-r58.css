@@ -351,3 +351,40 @@ img.tr58-emblem.is-big{width:96px;height:112px;object-fit:contain;filter:drop-sh
 .rk58-smoke{position:absolute;left:calc(50% - 30px);bottom:4%;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.55),rgba(200,180,230,.15) 60%,transparent 70%);opacity:0;animation:rk58Smoke 2.2s ease-out calc(.6s + var(--d)) both;}
 @keyframes rk58Smoke{0%{opacity:.9;transform:translate(0,0) scale(var(--s))}100%{opacity:0;transform:translate(calc((var(--s) - .9) * 160px),-40px) scale(calc(var(--s) * 3))}}
 @media (prefers-reduced-motion:reduce){.rk58-launch{animation:cn58In .3s ease both!important}.rk58-smoke,.rk58-flame{display:none}}
+
+/* R58y: رحلة الكواكب السبعة */
+.rk58-shortcut img.rk58-ship.is-mini{display:block;width:30px;height:48px;object-fit:contain;margin:0 auto -2px;animation:rk58Bob 2.4s ease-in-out infinite;filter:drop-shadow(0 3px 5px rgba(40,10,80,.4));}
+.rk58-hero{position:relative;min-height:200px;}
+.rk58-hero img.is-target{width:min(130px,38%);height:auto;animation:rk58Spin 30s linear infinite;filter:drop-shadow(0 0 14px rgba(170,110,255,.55));}
+.rk58-hero img.is-hero{position:absolute;bottom:30px;inset-inline-start:14%;width:54px;height:auto;animation:rk58Bob 2.4s ease-in-out infinite;}
+@keyframes rk58Spin{to{transform:rotate(360deg)}}
+.rk58-planets{list-style:none;padding:0;margin:6px 0 10px;display:grid;gap:8px;}
+.rk58-planets > li{padding:10px;border-radius:16px;background:#fcf9f4;border:1px solid #e3d6f2;color:#4a2d6e;}
+.rk58-planets > li.is-now{border-color:#c49a3a;box-shadow:0 0 0 2px #c49a3a44;}
+.rk58-planets > li.is-done{background:linear-gradient(160deg,#6a34a8,#3d1a6e);color:#ffe9a8;border-color:#c49a3a;}
+.rk58-pl-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.rk58-pl-head img{width:56px;height:56px;object-fit:contain;flex:none;}
+.rk58-pl-head div{display:flex;flex-direction:column;gap:1px;}
+.rk58-pl-head b{font-size:14px;}
+.rk58-pl-head small{font-size:12px;opacity:.85;}
+.rk58-pl-head em{font-style:normal;font-weight:800;color:#ffd166;font-size:12px;}
+.rk58-prizes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;}
+.rk58-prize{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:12px;background:rgba(106,52,168,.07);text-align:center;font-size:11px;}
+li.is-done .rk58-prize{background:rgba(255,255,255,.1);}
+.rk58-prize > i{font-style:normal;font-size:16px;}
+.rk58-prize > span{font-weight:800;font-size:11px;}
+.rk58-gift{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.rk58-gift img{width:34px;height:34px;object-fit:contain;}
+.rk58-gift small{font-size:10px;line-height:1.25;}
+.rk58-dest{position:absolute;left:50%;top:6%;width:min(190px,48vw);transform:translateX(-50%) scale(.4);opacity:0;animation:rk58Dest 1.4s ease-out .5s both;}
+.rk58-dest img{width:100%;height:auto;filter:drop-shadow(0 0 22px rgba(190,130,255,.7));}
+@keyframes rk58Dest{to{opacity:1;transform:translateX(-50%) scale(1)}}
+.rk58-fly{width:min(84px,22vw)!important;animation:rk58Land 3s cubic-bezier(.45,0,.3,1) .3s both!important;}
+.rk58-fly img{transform:none!important;filter:drop-shadow(0 0 16px rgba(200,140,255,.7))!important;}
+.rk58-flame{top:88%!important;width:46%!important;background:radial-gradient(ellipse at 50% 20%,#fff 0,#f0d0ff 25%,#b066ff 55%,rgba(120,40,220,0) 75%)!important;}
+@keyframes rk58Land{0%{bottom:-35%}25%{bottom:6%}85%{bottom:calc(100% - 6% - min(190px,48vw) - 150px)}100%{bottom:calc(100% - 6% - min(190px,48vw) - 140px)}}
+.rk58-card{animation:cn58In .4s ease 2.6s both!important;}
+.rk58-card small + small{margin-top:-2px;}
+@media (prefers-reduced-motion:reduce){.rk58-dest{animation:none;opacity:1;transform:translateX(-50%)}.rk58-hero img{animation:none!important}}
+.rk58-won{margin:0 0 6px;font-size:12px;font-weight:800;color:#ffd166;}
+.rk58-gift img{border-radius:6px;}

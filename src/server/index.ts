@@ -493,7 +493,7 @@ export async function createApp(
       if (it && !eligibleItem(id, it)) return { ok: false, code: 'rank_required', error: 'رتبتك الحالية ما تستوفي شرط استخدام العنصر.' };
       const slot = it ? it.slot : String(m.slot ?? '');
       if (!SLOTS.includes(slot as never)) return { ok: false, error: 'خانة غير صالحة.' };
-      if (slot === 'souvenir') return { ok: false, code: 'souvenir', error: 'التذكار ما يتجهّز؛ ينعرض تلقائيًا في رف تذكاراتك بالملف.' };
+      if (slot === 'souvenir') return { ok: false, code: 'souvenir', error: 'التذكار ما يتجهّز؛ ينحفظ تلقائيًا في «المقتنيات» بملفك.' };
       if (slot === 'special-id') {
         if (it && !wallet.owned(id).includes(it.id)) return { ok: false, error: 'ما تملك هذا العنصر.' };
         const value = it ? String(it.css ?? '') : null;

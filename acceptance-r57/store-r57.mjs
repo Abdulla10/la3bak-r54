@@ -41,7 +41,8 @@ ok('إطارات المالك بالمجوهرات، والأسطورية وال
 // R58m (طلب المالك): المكرر 45 مليون، والباقي أسعار متنوعة حسب النمط (20–40 مليون)، والأقصر أغلى
 const ids = [...bySlot('special-id'), ...bySlot('room-id')];
 ok('أسعار الأيديات متنوعة: المكرر (7–8 أرقام) 45 مليون، والباقي من 20 مليون وفوق', ids.filter((i) => /^(\d)\1{6,7}$/.test(i.css)).every((i) => i.price === 45_000_000) && ids.every((i) => i.price >= 20_000_000) && new Set(ids.map((i) => i.price)).size >= 6 && ids.some((i) => !/^(\d)\1+$/.test(i.css) && i.price < 45_000_000), [...new Set(ids.map((i) => i.price / 1e6))].sort((a, b) => a - b).join(','));
-ok('الأيديات مو كلها أرقام مكررة', bySlot('special-id').filter((i) => !/^(\d)\1+$/.test(i.css)).length >= 20);
+// R58y: الأيدي اللي ينشرى ينخفي عن غيره، وتشغيلات الاختبار المتكررة تشتري أرخص أيدي كل مرة، فالعدد المعروض ينقص. نفحص التنوع كنسبة بدل رقم ثابت.
+{ const sp = bySlot('special-id'), other = sp.filter((i) => !/^(\d)\1+$/.test(i.css)); ok('الأيديات مو كلها أرقام مكررة (أغلبها أنماط ثانية)', other.length >= 10 && other.length * 2 >= sp.length, `${other.length}/${sp.length}`); }
 const buy = (c, item) => c.req('shop:buy', { item, key: randomUUID() });
 const b1 = await buy(c1, 'lux-bub-gold'); ok('شراء فقاعة ذهبية', b1.ok && b1.owned.includes('lux-bub-gold'), b1.error);
 const e1 = await c1.req('shop:equip', { item: 'lux-bub-gold' }); ok('تجهيز الفقاعة', e1.ok && e1.equipped['chat-bubble'] === 'lux-bub-gold', e1.error);

@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r58x';
-import * as UNIFIED from '../unified/shell.js?v=r58x3';
+import * as PR from './profile.js?v=r58y5';
+import * as UNIFIED from '../unified/shell.js?v=r58y4';
 import * as REF from '../unified/home.js?v=r58t';
-import * as SOCIAL from '../unified/social.js?v=r58x3';
+import * as SOCIAL from '../unified/social.js?v=r58y4';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r57';
@@ -23,7 +23,7 @@ import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
 import * as PF from '../profile.js?v=r58r';
-import * as SHOP from '../shop.js?v=r58r2';
+import * as SHOP from '../shop.js?v=r58y4';
 import * as GIFT from '../gifts.js?v=r58r';
 import * as GFX from '../giftfx.js?v=r57';
 import * as AVR from '../avatars.js?v=r58r';
@@ -571,7 +571,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r58r2').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r58y4').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -2454,6 +2454,8 @@ document.addEventListener('submit', async (e) => {
 for (const name of OFF.ACTION_NAMES) ACTIONS[name] = (el) => OFF.handle(name, el, render);
 
 window.addEventListener('hashchange', render);
+// R58y: الدخول للملف من الغرفة (أو أي صفحة ما تحمّل المتجر) كان يخلي رف «تذكاراتي» فاضي لين تحديث الصفحة؛ نحمّل بيانات المتجر أول ما يفتح الملف
+window.addEventListener('hashchange', () => { try { if (S.user && S.helloDone && !SHOP.SH.data && !SHOP.SH.loading && parseRoute().name === 'profile') SHOP.load(req).then(() => { if (parseRoute().name === 'profile') render(); }); } catch { /* المتجر يتحمّل بعدين */ } });
 
 /* ---------------- الإقلاع ---------------- */
 /* الخطوط تنحمّل بعد ما تظهر الصفحة، عشان بطء الشبكة ما يوقف العرض */

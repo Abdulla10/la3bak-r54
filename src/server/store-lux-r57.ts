@@ -230,7 +230,7 @@ export const ROOM_ID_ITEMS: ShopItem[] = ROOM_NUMBERS.map((n) => { const price =
 
 /** R58j: التذكارات (Souvenir) — مقتنيات من رسومات المالك تنعرض في رف «تذكاراتي» بالملف الشخصي (ما تنجهّز). */
 const S = (id: string, name: string, rarity: Rarity): ShopItem =>
-  ({ id, slot: 'souvenir', name, icon: '🎁', price: 1000, currency: 'gems', desc: 'تذكار فاخر ينعرض في رف تذكاراتك بالملف الشخصي.', css: id, art: `/assets/art58/souv/s${id.slice(5)}.webp`, permanent: true, rarity, set: 'lux' });
+  ({ id, slot: 'souvenir', name, icon: '🎁', price: 1000, currency: 'gems', desc: 'تذكار فاخر ينحفظ في «المقتنيات» بملفك.', css: id, art: `/assets/art58/souv/s${id.slice(5)}.webp`, permanent: true, rarity, set: 'lux' });
 export const SOUVENIR_ITEMS: ShopItem[] = [
   S('souv-01', 'كأس البطولة', 'legendary'),
   S('souv-02', 'الألماسة', 'epic'),
@@ -261,3 +261,4 @@ export const SOUVENIR_ITEMS: ShopItem[] = [
   S('souv-27', 'فانوس رمضان', 'premium'),
   S('souv-28', 'البوابة السحرية', 'legendary'),
 ];
+

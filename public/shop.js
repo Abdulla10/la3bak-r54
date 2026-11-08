@@ -99,7 +99,7 @@ function priceHTML(i) {
 }
 function itemActionHTML(i, d) {
   const on = d.equipped[i.slot] === i.id;
-  if (ownsItem(i, d) && i.slot === 'souvenir') return `<a class="btn ghost" href="#/profile">في رف تذكاراتك ✓</a>`;
+  if (ownsItem(i, d) && i.slot === 'souvenir') return `<a class="btn ghost" href="#/profile" data-pvp-open-souv>في مقتنياتك ✓</a>`;
   if (ownsItem(i, d)) return `<button class="btn ${on ? 'ghost' : 'gold'}" type="button" data-act="shop-equip" data-id="${esc(i.id)}" data-slot="${esc(i.slot)}" data-on="${on ? 1 : 0}"${SH.busy || (!on && !itemEligible(i)) ? ' disabled' : ''}>${on ? 'إزالة التجهيز' : itemEligible(i) ? 'تجهيز' : 'شرط الرتبة غير مكتمل'}</button>`;
   if (!approvedPrice(i)) return '<button class="btn ghost" type="button" disabled>الشراء غير متاح · السعر غير معتمد</button>';
   if (itemStatus(i) !== 'available' || i.active === false || i.retired) return `<button class="btn ghost" type="button" disabled>${statusLabel(i)}</button>`;
@@ -273,7 +273,7 @@ export function shopHTML(me) {
     // R58k: شارات المتجر الجديدة (مثل «تنين الكون») تنعرض للبيع تحت الشارات المكتسبة
     if (tab === 'badge' && d.items.some((i) => i.slot === 'badge')) body += `<h3 class="r23-sub">شارات للبيع</h3>` + gridFor(d, 'badge');
   } else if (tab === 'souvenir') {
-    body = `<p class="souv-note">التذكار ينعرض تلقائيًا في رف «تذكاراتي» بملفك الشخصي أول ما تشتريه.</p>` + gridFor(d, tab);
+    body = `<p class="souv-note">التذكار ينحفظ في «المقتنيات» بملفك أول ما تشتريه.</p>` + gridFor(d, tab);
   } else if (['profile-card'].includes(tab)) {
     body = unavailableHTML(tab, me);
   } else if (['special-id', 'board', 'chat-bubble', 'room-id'].includes(tab)) {

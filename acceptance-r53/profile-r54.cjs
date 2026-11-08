@@ -9,7 +9,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const R = []; const ok = (n, c, x = '') => { R.push(!!c); console.log(c ? 'PASS' : 'FAIL', n, x ? '— ' + String(x).slice(0, 300) : ''); };
 const jar = (u) => fs.readFileSync(`${JARS}/${u}.cj`, 'utf8').split('\n').find((l) => l.includes('qa_s')).split('\t')[6].trim();
 // R54: الأصدقاء والعائلة والهدايا والدعوات والمظهر والإنجازات والمستوى والمكافآت والمهام صارت داخل قسم واحد «أصدقائي وتقدّمي»
-const EXPECTED = ['من الذي رآني', 'منشوراتي', 'محفظتي', 'مركز العروض', 'VIP', 'ترتيب الرتبة', 'نوبل', 'المركز التجاري', 'أصدقائي وتقدّمي', 'الإعدادات'];
+const EXPECTED = ['من الذي رآني', 'منشوراتي', 'محفظتي', 'حقيبتي', 'مركز العروض', 'VIP', 'ترتيب الرتبة', 'نوبل', 'المركز التجاري', 'أصدقائي وتقدّمي', 'الإعدادات'];
 const HUB = ['الأصدقاء', 'العائلة والارتباط الافتراضي', 'الهدايا المستلمة', 'الهدايا المرسلة', 'ادعُ الأصدقاء', 'المظهر والمقتنيات', 'الشارات والألقاب والإنجازات', 'المستوى والخبرة', 'مكافآت الرتب', 'المهام'];
 const visibleLabels = (p) => p.evaluate(() => [...document.querySelectorAll('[data-pvp-profile-list] .pvp-menu-label')].filter((e) => e.offsetParent).map((e) => e.childNodes[0].textContent.trim()));
 const SETTINGS_LINKS = [['#/verification', 'توثيق الحساب'], ['#/support', 'المساعدة والدعم'], ['#/privacy', 'سياسة الخصوصية'], ['#/terms', 'الشروط والأحكام']];
@@ -38,7 +38,7 @@ const settle = async (p, want) => { const t = Date.now(); while (Date.now() - t 
     if (w === 390) await p.screenshot({ path: `${OUT}/profile-collapsed-390.png`, fullPage: true });
     await p.click('[data-pvp-hub-toggle]'); await sleep(400);
     const opened = await visibleLabels(p);
-    const want = [...EXPECTED.slice(0, 9), ...HUB, 'الإعدادات'];
+    const want = [...EXPECTED.slice(0, -1), ...HUB, 'الإعدادات'];
     ok(`${w}: فتح «أصدقائي وتقدّمي» يعرض العشرة كلها بالترتيب`, JSON.stringify(opened) === JSON.stringify(want) && await p.evaluate(() => document.querySelector('[data-pvp-hub-toggle]').getAttribute('aria-expanded') === 'true'), opened.join(' | '));
     const vals = await p.evaluate(() => ({ vip: document.querySelector('[data-pvp-rank-value="vip"]')?.textContent, noble: document.querySelector('[data-pvp-rank-value="noble"]')?.textContent, visitors: document.querySelector('[data-pvp-visitors-value]')?.textContent, family: document.querySelector('[data-pvp-family-card] b')?.textContent, groups: document.querySelectorAll('.pvp-menu-r53 .pvp-menu-group').length }));
     ok(`${w}: قيم الحالة من الخادم (VIP 9، N2، زوار جدد) وبطاقة العائلة و4 مجموعات`, vals.vip === 'VIP 9' && vals.noble === 'N2' && /جديد/.test(vals.visitors || '') && vals.family === 'عائلة الاختبار' && vals.groups === 4, JSON.stringify(vals));
