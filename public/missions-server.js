@@ -1,6 +1,6 @@
 /* المهام الرسمية: تقدم ومطالبات الخادم فقط؛ لا localStorage ولا نجوم محلية أو XP. */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const num = (n) => Number(n).toLocaleString('ar-EG');
+const num = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 const messages = {
   bad: 'طلب المهمة غير صالح.', not_found: 'المهمة غير موجودة.', inactive: 'هذه المهمة غير نشطة الآن.',
   ineligible: 'لم يكتمل تقدمك الخادمي لهذه المهمة بعد.', reward_failed: 'تعذّر منح المكافأة؛ لم تسجّل كمستلمة. تواصل مع الإدارة.',
@@ -33,7 +33,7 @@ export function missionsServerView(root, { api }) {
     };
     const section = (scope, title) => {
       const missions = view.missions.filter((m) => m.scope === scope);
-      const end = new Date(view.windows[scope].endAt).toLocaleString('ar-EG', { timeZone: 'UTC', dateStyle: 'short', timeStyle: 'short' });
+      const end = new Date(view.windows[scope].endAt).toLocaleString('ar-EG-u-nu-latn', { timeZone: 'UTC', dateStyle: 'short', timeStyle: 'short' });
       return `<section class="card"><h2>${title}</h2>${missions.length ? `<ul class="ms-list">${missions.map(row).join('')}</ul><p class="hint">تتجدد: ${esc(end)} UTC</p>` : '<p class="hint">لا توجد مهام نشطة حالياً.</p>'}</section>`;
     };
     root.innerHTML = `<div class="stack"><section class="card"><h2>المهام الرسمية</h2><p class="hint">التقدم من مبارياتك والهدايا الفعلية على الخادم فقط. يتجدد اليوم بتوقيت UTC، والأسبوع يبدأ الاثنين. النجوم المحلية ليست عملة أو خبرة رسمية.</p>${error ? `<p role="alert">${esc(error)}</p>` : ''}<button class="btn ghost" type="button" data-ms-action="refresh" ${busy || loading ? 'disabled' : ''}>${loading ? 'جاري التحديث…' : 'تحديث'}</button></section>${section('daily', 'مهام اليوم')}${section('weekly', 'مهام الأسبوع')}</div>`;

@@ -7,6 +7,9 @@ import { canonicalGiftBatchTargets, quoteGiftBatch, GIFT_BATCH_QUANTITY_MAX } fr
 import { AUCTION_R47_LIMITS, approvedAuctionItemR47, auctionFingerprintR47, auctionKeyR47, auctionViewR47, validAuctionKeyR47, validAuctionRequestR47, validAuctionWalletR47 } from './auction-r47.js';
 /** سقف سعر أي عنصر بالمتجر لكل عملة: مصدر واحد يُستخدم عند الإنشاء والتعديل وعند تنفيذ الشراء */
 export const PRICE_MAX = { coins: 1_000_000, gems: 100_000 };
+/** R58b: سقف أسعار عناصر المتجر فقط (أيديات مميزة بـ45 مليون وفوق، إطارات وسيارات فخمة).
+ * الهدايا والحقائب والعضويات تبقى على PRICE_MAX كما هي. */
+export const SHOP_PRICE_MAX = { coins: 1_000_000, gems: 1_000_000_000 };
 export const START_COINS = 1000;
 /** Historical coin→gem offers, retained for receipt identification only; new conversions are closed. */
 export const GEM_PACKS = [{ id: 'gems-10', gems: 10, coins: 1_000 }, { id: 'gems-50', gems: 50, coins: 5_000 }, { id: 'gems-100', gems: 100, coins: 10_000 }, { id: 'gems-500', gems: 500, coins: 50_000 }];
@@ -58,7 +61,7 @@ const validBuyOp = (v) => {
     if (!isObj(v) || !str(v.itemId))
         return false;
     if (v.kind === 'item')
-        return currency(v.cur) && nat(v.price) && v.price <= PRICE_MAX[v.cur];
+        return currency(v.cur) && nat(v.price) && v.price <= SHOP_PRICE_MAX[v.cur];
     if (v.kind === 'gems')
         return pos(v.coins) && pos(v.gems);
     return v.kind === 'conversion' && pos(v.gems) && pos(v.rate) && pos(v.coins) && Number.isSafeInteger(v.gems * v.rate)
@@ -435,6 +438,10 @@ export class Wallet {
     balance(id) { this.recoverAuctionsR47(); return this.a(id).coins; }
     gems(id) { this.recoverAuctionsR47(); return this.a(id).gems ?? 0; }
     owned(id) { this.recoverAuctionsR47(); return [...(this.a(id).owned ?? [])]; }
+    /** R58: هل يملك هذا العنصر حساب غير exceptId؟ (للمقتنيات الفريدة مثل أيدي الغرف) — قراءة فقط */
+    anyOwner(itemId, exceptId) { for (const [key, acc] of Object.entries(this.d.acc))
+        if (key !== exceptId && acc.owned?.includes(itemId))
+            return true; return false; }
     /** الأفاتار المجهّز (معرّف عنصر) أو null؛ قراءة فقط ولا تنشئ حساباً للمعرّف */
     equippedAvatar(id) { return this.d.acc[id]?.equipped?.avatar ?? null; }
     equipped(id) { return { ...(this.a(id).equipped ?? {}) }; }
@@ -1208,7 +1215,7 @@ export class Wallet {
         if (!nat(item.price))
             return { ok: false, code: 'bad' };
         // خط دفاع أخير: عملة معروفة وسعر ضمن السقف حتى لو ملف المتجر تعدّل يدوياً أو بخلل
-        if ((item.currency !== 'coins' && item.currency !== 'gems') || item.price > PRICE_MAX[item.currency])
+        if ((item.currency !== 'coins' && item.currency !== 'gems') || item.price > SHOP_PRICE_MAX[item.currency])
             return { ok: false, code: 'bad' };
         const k = this.opKey(id, key);
         const a = this.a(id);

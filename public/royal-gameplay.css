@@ -4,14 +4,14 @@
 :is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
     .jk-screen.v2.dm2, .jk-screen.v2.u2, .cr-screen, .cw-screen) {
   --rg-deep: #10051e;
-  --rg-surface: #fffaf0;
+  --rg-surface: #fcf9f4;
   --rg-raised: #261044;
-  --rg-gold: #b98a3d;
-  --rg-purple: #176b50;
-  --rg-text: #264d3b;
-  --rg-muted: #506c5b;
+  --rg-gold: #c49a3a;
+  --rg-purple: #5a2a8c;
+  --rg-text: #2c1a4a;
+  --rg-muted: #6a5a80;
   --rg-line: #b98a3d61;
-  --rg-chrome: linear-gradient(160deg, #fffaf0, #fffaf0);
+  --rg-chrome: linear-gradient(160deg, #fcf9f4, #fcf9f4);
   --rg-width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
   --rg-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   color: var(--rg-text);
@@ -19,8 +19,8 @@
 
 /* The five fixed v2 canvases stay immersive; no site navigation is added. */
 .jk-screen.v2:is(.jx, .ld2, .bl2, .dm2, .u2), .cr-screen {
-  background: radial-gradient(ellipse at 50% 42%, #fffaf0, #fffaf0 55%, #fffaf0);
-  background-color: #fffaf0;
+  background: radial-gradient(ellipse at 50% 42%, #fcf9f4, #fcf9f4 55%, #fcf9f4);
+  background-color: #fcf9f4;
 }
 .jk-screen.v2.jx::before {
   background: radial-gradient(ellipse at 50% 42%, transparent 45%, #fffaf099);
@@ -124,7 +124,7 @@
   color: var(--rg-text);
 }
 .jk-screen.v2.bl2 .bl2-av {
-  background: linear-gradient(160deg, #e8c987, #fffaf0);
+  background: linear-gradient(160deg, #ead18e, #fcf9f4);
 }
 .jk-screen.v2.bl2 .bl2-score :is(.hd, .ft) {
   background: var(--rg-surface);
@@ -163,7 +163,7 @@
 .jk-screen.v2.dm2 .dm-bg #dmWood stop[offset="0"] { stop-color: #261044; }
 .jk-screen.v2.dm2 .dm-bg #dmWood stop[offset="1"] { stop-color: #10051e; }
 .jk-screen.v2.dm2 :is(.dm-av) {
-  background: linear-gradient(145deg, #e8c987, #fffaf0);
+  background: linear-gradient(145deg, #ead18e, #fcf9f4);
 }
 .jk-screen.v2.dm2 :is(.dm-score, .dm-social, .dm-round) {
   background: var(--rg-surface);
@@ -186,10 +186,10 @@
 
 /* UNO: ornamental frame only. Felt, --cc, card colors and actions stay intact. */
 .jk-screen.v2.u2 .u2-bg {
-  background: radial-gradient(ellipse at 50% 44%, #fffaf0, #fffaf0 55%, #fffaf0);
+  background: radial-gradient(ellipse at 50% 44%, #fcf9f4, #fcf9f4 55%, #fcf9f4);
 }
 .jk-screen.v2.u2 .u2-table {
-  background: linear-gradient(160deg, #e8c987, #fffaf0 40%, #fffaf0);
+  background: linear-gradient(160deg, #ead18e, #fcf9f4 40%, #fcf9f4);
   box-shadow: 0 calc(30 * var(--u)) calc(60 * var(--u)) #264d3b2e,
               inset 0 calc(6 * var(--u)) calc(10 * var(--u)) #b98a3d2e;
 }
@@ -240,7 +240,7 @@
 }
 :is(.jk-screen.v2.jx, .jk-screen.v2.ld2, .jk-screen.v2.bl2,
     .jk-screen.v2.dm2, .jk-screen.v2.u2) :is(.jk-menu, .bl2-menu, .dm-menu) button.out {
-  color: #264d3b;
+  color: #2c1a4a;
 }
 
 /* Rules are root descendants even when siblings of a stage. No global rules. */
@@ -411,9 +411,9 @@
 .cw-screen {
   --cw-team-blue: #58e1ff;
   --cw-team-red: #ff68b5;
-  --pink: #264d3b;
-  --ink: #264d3b;
-  --muted: #506c5b;
+  --pink: #2c1a4a;
+  --ink: #2c1a4a;
+  --muted: #6a5a80;
   --border-soft: #b98a3d61;
   --line: #b98a3d61;
   padding-left: env(safe-area-inset-left, 0px);

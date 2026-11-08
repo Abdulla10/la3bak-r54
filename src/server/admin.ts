@@ -4,7 +4,7 @@ import { EconomyInputError, type Economy } from './economy.js';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type http from 'node:http';
 import { MILESTONES } from './catalog.js';
-import { PRESETS, ShopInputError, PRICE_MAX, type ShopCatalog } from './shopcatalog.js';
+import { PRESETS, ShopInputError, SHOP_PRICE_MAX as PRICE_MAX, type ShopCatalog } from './shopcatalog.js';
 import { StorageError, STORAGE_MSG, StorageMonitor, Persister, loadJsonFile, isObj } from './datafile.js';
 import type { Accounts } from './account.js';
 import type { Leaderboard } from './leaderboard.js';

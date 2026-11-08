@@ -1,16 +1,16 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=luxury-store-r23';
-import { avatarArt } from './avatars.js?v=shell-r6';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58c';
+import { avatarArt } from './avatars.js?v=r58c';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=luxury-store-r23';
-import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=release-r14';
-import {backgroundVisual,isSuppliedBackground} from './background-art.js';
+import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const nf = (n) => Number(n).toLocaleString('ar-EG');
+const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 export const SH = { data: null, err: '', loading: false, world: 'players', tab: 'frame', preview: null, confirm: null, busy: false, giftTab: null, who: null, try: {}, f: { rar: 'all', own: 'all', sort: 'rar', set: 'all' }, lim: 24 };
-export const STOREFRONT_TABS = [['frame', 'إطار الرأس'], ['special-id', 'أيدي مميز'], ['entrance', 'دخول مركبات'], ['board', 'لوحة'], ['bg', 'خلفية صفحة الملف الشخصي'], ['profile-card', 'بطاقة البيانات الشخصية'], ['chat-bubble', 'فقاعة الدردشة'], ['souvenir', 'تذكار']];
-export const SLOT_TABS = [['avatar', 'الأفاتارات'], ['frame', 'الإطارات'], ['entrance', 'دخول مركبات'], ['bg', 'الخلفيات'], ['owned', 'أغراضي'], ['sets', 'المجموعات'], ['title', 'ألقاب'], ['badge', 'شارات'], ['ach', 'المكتسبة'], ['gift', 'الهدايا'], ['coins', 'عملات'], ['gems', 'الجواهر'], ['convert', 'التحويل'], ['tasks', 'مكافآت'], ['log', 'السجل']];
+export const STOREFRONT_TABS = [['frame', 'إطار الرأس'], ['special-id', 'أيدي مميز'], ['board', 'لوحة'], ['bg', 'خلفية صفحة الملف الشخصي'], ['profile-card', 'بطاقة البيانات الشخصية'], ['chat-bubble', 'فقاعة الدردشة'], ['room-id', 'أيدي الغرف'], ['souvenir', 'تذكار']];
+export const SLOT_TABS = [['avatar', 'الأفاتارات'], ['frame', 'الإطارات'], ['bg', 'الخلفيات'], ['owned', 'أغراضي'], ['sets', 'المجموعات'], ['title', 'ألقاب'], ['badge', 'شارات'], ['ach', 'المكتسبة'], ['gift', 'الهدايا'], ['coins', 'عملات'], ['gems', 'الجواهر'], ['convert', 'التحويل'], ['tasks', 'مكافآت'], ['log', 'السجل']];
 const CUR = { coins: renderProfileIcon('coin').replace('class="pvp-icon"','class="sh-currency sh-currency-coins"').replace('<svg','<svg width="24" height="24"'), gems: giftArt({motif:'diamond',cat:'luxury',variant:0,name:'جواهر'},24).replace('class="gift-art','class="sh-currency sh-currency-gems gift-art') };
 const TAB_ICON = { avatar: 'person', frame: 'frame', entrance: 'star', owned: 'shirt', bg: 'image', sets: 'shirt', title: 'crown', badge: 'medal', ach: 'trophy', gift: 'star', convert: 'back', tasks: 'calendar', log: 'file' };
 const tabIcon = (tab) => CUR[tab] || renderProfileIcon(TAB_ICON[tab]);
@@ -36,12 +36,12 @@ export function apply(r) { if (r && r.items && r.coins !== undefined) { SH.data 
 export function txListHTML(list, emptyMsg = 'ما فيه معاملات بعد.') {
   if (!list?.length) return `<p class="muted" style="text-align:start">${emptyMsg}</p>`;
   return `<ul class="tx-list">${list.map((t) => `<li><span class="tx-ic" aria-hidden="true">${CUR[t.cur] ?? CUR.coins}</span>
-    <div><b>${esc(t.reason || KIND[t.kind] || t.kind)}</b><small>${new Date(t.ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })} · ${t.before === undefined ? '' : nf(t.before) + ' ← ' + nf(t.after)}</small></div>
+    <div><b>${esc(t.reason || KIND[t.kind] || t.kind)}</b><small>${new Date(t.ts).toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' })} · ${t.before === undefined ? '' : nf(t.before) + ' ← ' + nf(t.after)}</small></div>
     <strong class="${t.delta < 0 ? 'neg' : 'pos'}" dir="ltr">${t.delta > 0 ? '+' : ''}${nf(t.delta)}</strong></li>`).join('')}</ul>`;
 }
 
 /* ---- معاينة مركّبة: خلفية + أفاتار + إطار + لقب + شارة ---- */
-const SLOT_NAME = { avatar: 'أفاتار', frame: 'إطار', entrance: 'دخول مركبة', bg: 'خلفية', title: 'لقب', badge: 'شارة' };
+const SLOT_NAME = { avatar: 'أفاتار', frame: 'إطار', entrance: 'دخول مركبة', bg: 'خلفية', title: 'لقب', badge: 'شارة', 'chat-bubble': 'فقاعة دردشة', board: 'لوحة اسم', 'special-id': 'أيدي مميز', 'room-id': 'أيدي غرفة' };
 const FACE = `<span class="avatar-wrap cx-ghost" style="--sz:64px">${renderProfileIcon('person')}</span>`;
 /** إطار حول محتوى (جديد = طبقة SVG، قديم = حلقة CSS) */
 export function framed(css, inner, cls = '') {
@@ -60,6 +60,11 @@ const safeArt = (src) => typeof src === 'string' && /^\/assets\/[A-Za-z0-9_./-]+
 /** R52: نفس صورة العنصر بالمتجر لصفحتي VIP ونوبل */
 export function itemThumb(i) { return thumb(i); }
 function thumb(i) {
+  // R57: فقاعات الدردشة ولوحات الأسماء والأيديات المميزة
+  if (i.slot === 'chat-bubble') return `<span class="rp-art rp-art-bubble lux-thumb"><span class="rp-bubble-${esc(i.css || '')}">مرحبا 👋</span></span>`;
+  if (i.slot === 'board') return `<span class="lux-thumb"><span class="lux-board lux-board-${esc(i.css || '')}">اسمك</span></span>`;
+  if (i.slot === 'room-id') return `<span class="lux-thumb"><span class="lux-sid lux-rid r-${esc(i.rarity || 'rare')}"><small>ROOM ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
+  if (i.slot === 'special-id') return `<span class="lux-thumb"><span class="lux-sid r-${esc(i.rarity || 'rare')}"><small>ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'entrance') return safeArt(i.art) ? `<img class="r23-entrance-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : `<span class="r23-art-missing">${renderProfileIcon('image')}<small>صورة المركبة غير متاحة</small></span>`;
   if (i.slot === 'avatar') return avatarArt(i.id, 64, i.css === 'av2' ? undefined : i.css) || renderProfileIcon('person');
   if (i.slot === 'frame') return safeArt(i.art) ? `<img class="r23-frame-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : referenceOf(i.css || i.id)?.slot === 'frame' ? referenceImage(i.css || i.id, 'r23-frame-art') : framed(i.css, FACE, 'sm');
@@ -135,7 +140,7 @@ export function closePreview() {
 }
 export function detailsHTML(i, d = SH.data, confirming = false) {
   if (!i || !d) return '';
-  const stage = i.slot === 'entrance' ? `<section class="r23-entrance-preview" data-entrance-preview="${esc(i.id)}" aria-label="معاينة المركبة">${thumb(i)}<span>${renderProfileIcon('person')}${esc(currentWho().name)}</span></section><p class="cx-pnote">معاينة فقط — لا خصم ولا تغيير في دخولك عند فتحها.</p>` : previewHTML(d, i);
+  const stage = ['chat-bubble', 'board', 'special-id', 'room-id'].includes(i.slot) ? `<section class="r23-lux-preview" aria-label="معاينة">${thumb(i)}</section><p class="cx-pnote">${i.slot === 'special-id' ? 'يصير هذا رقمك الظاهر بملفك والغرف بعد الشراء. كل رقم ينباع لحساب واحد فقط.' : i.slot === 'room-id' ? 'بعد الشراء تختاره من إعدادات غرفتك ← «أيدي الغرفة». كل رقم ينباع لحساب واحد فقط.' : 'يظهر بالغرف بعد الشراء والتجهيز.'}</p>` : i.slot === 'entrance' ? `<section class="r23-entrance-preview" data-entrance-preview="${esc(i.id)}" aria-label="معاينة المركبة">${thumb(i)}<span>${renderProfileIcon('person')}${esc(currentWho().name)}</span></section><p class="cx-pnote">معاينة فقط — لا خصم ولا تغيير في دخولك عند فتحها.</p>` : previewHTML(d, i);
   const requirements = requirementLabel(i);
   return `<div class="r23-details-head"><div><small>${esc(SLOT_NAME[i.slot] || 'مظهر')}</small><h2 id="r23-preview-title">${esc(i.name)}</h2></div><button class="r23-dialog-close" type="button" data-act="shop-preview-close" aria-label="إغلاق المعاينة"${SH.busy ? ' disabled' : ''}>${renderProfileIcon('close')}</button></div>${stage}<div class="r23-detail-meta">${rarChip(i.rarity)}${i.set && d.sets?.[i.set] ? `<span>${esc(d.sets[i.set])}</span>` : ''}${i.season ? `<span>موسم ${esc(i.season)}</span>` : ''}</div>${i.desc ? `<p class="r23-detail-desc">${esc(i.desc)}</p>` : ''}${requirements ? `<p class="r23-requirements">شرط الاستحقاق: ${esc(requirements)}</p>` : ''}${i.previewPlaceholder ? '<p class="r23-requirements">المعروض معاينة مؤقتة، وليس الرسم النهائي.</p>' : ''}<div class="r23-detail-price">${priceHTML(i)}</div>${!approvedPrice(i) && !i.earned ? '<p class="r23-price-disclaimer">السعر لم يُعتمد بعد؛ العرض للمعاينة فقط والشراء مقفول.</p>' : ''}${confirming ? `<p class="r23-confirm-note">${i.price === 0 ? 'تأكيد الاستلام المجاني' : `تأكيد الشراء · الرصيد بعد الشراء: ${CUR[i.currency]} ${nf(curBal(d, i.currency) - i.price)}`}</p><div class="btn-row"><button class="btn gold" type="button" data-act="shop-buy"${SH.busy ? ' disabled aria-busy="true"' : ''}>${SH.busy ? 'جاري التنفيذ…' : 'تأكيد'}</button><button class="btn ghost" type="button" data-act="shop-cancel"${SH.busy ? ' disabled' : ''}>إلغاء الشراء</button></div>` : `<div class="btn-row r23-detail-actions">${itemActionHTML(i, d)}<button class="btn ghost" type="button" data-act="shop-preview-close"${SH.busy ? ' disabled' : ''}>إغلاق</button></div>`}`;
 }
@@ -159,7 +164,7 @@ function filtersHTML(d, tab) {
 // لا نفترض سعر صرف بين العملات والجواهر. نجمع العملة ثم نرتب السعر داخلها.
 const priceOrder = (a, b) => a.currency === b.currency ? (a.price ?? 0) - (b.price ?? 0) : String(a.currency || '').localeCompare(String(b.currency || ''));
 // Featured order is presentation only: no products or prices are fabricated.
-const featuredFrames = ['ref-p-frame-08', 'ref-p-frame-02', 'ref-p-frame-06'];
+const featuredFrames = ['ref-p-frame-08', 'ref-p-frame-02', 'ref-p-frame-06', 'lux-f-inferno', 'lux-f-galaxy', 'lux-f-phoenix', 'lux-f-sapphire', 'lux-f-emerald', 'lux-f-ruby'];
 const featuredOrder = (i) => { const n = featuredFrames.indexOf(i.id); return n < 0 ? featuredFrames.length : n; };
 function gridFor(d, tab) {
   const f = SH.f;
@@ -172,6 +177,8 @@ function gridFor(d, tab) {
   if (tab !== 'owned' && f.own === 'afford') list = list.filter((i) => canBuyItem(i, d));
   list = [...list].sort(f.sort === 'asc' ? priceOrder : f.sort === 'desc' ? (a, b) => -priceOrder(a, b) : (a, b) => rarityLv(a.rarity) - rarityLv(b.rarity) || priceOrder(a,b));
   if (tab === 'frame' && f.sort === 'rar') list.sort((a, b) => featuredOrder(a) - featuredOrder(b));
+  // R57: الخلفيات الجاهزة للبيع (ومنها مجموعة الفخامة) قبل اللي بانتظار اعتماد السعر
+  if (tab === 'bg' && f.sort === 'rar') list.sort((a, b) => (approvedPrice(b) ? 1 : 0) - (approvedPrice(a) ? 1 : 0) || (b.id.startsWith('lux-') ? 1 : 0) - (a.id.startsWith('lux-') ? 1 : 0) || rarityLv(b.rarity) - rarityLv(a.rarity));
   const have = all.filter((i) => ownsItem(i, d)).length;
   const shownList = list.slice(0, SH.lim);
   const empty = tab === 'owned' ? 'لا توجد أغراض مملوكة متاحة للعرض في بيانات حسابك الحالية.' : !all.length ? tab === 'entrance' ? 'لا توجد مركبات في كتالوج الخادم لهذا القسم حالياً.' : 'لا توجد منتجات لهذا القسم حالياً.' : 'لا توجد عناصر تطابق التصفية الحالية.';
@@ -187,7 +194,7 @@ function unavailableHTML(tab, me) {
   const who = currentWho(me);
   const id = who.displayPlayerId ?? who.specialPlayerId ?? who.playerId;
   const names = Object.fromEntries(STOREFRONT_TABS);
-  return `<section class="card r23-empty" data-empty-category="${esc(tab)}">${renderProfileIcon(tab === 'special-id' ? 'info' : 'image')}<h2>${esc(names[tab] || 'غير متاح')}</h2>${tab === 'special-id' ? `<p>معرّف حسابك الحالي</p>${id !== undefined && id !== null && String(id) !== '' ? `<b class="r23-current-id" dir="ltr">ID: ${esc(id)}</b>` : '<p class="muted">المعرّف غير متاح في بيانات الحساب الحالية.</p>'}<p>الأيدي المميز تخصيص إداري للحساب، وليس منتجاً للبيع هنا. لا توجد خدمة شراء أيدي مميز في كتالوج المتجر الحالي.</p>` : '<p>هذا القسم غير متاح في كتالوج المتجر الحالي؛ لا توجد عناصر للبيع أو وظائف شراء مرتبطة به.</p>'}</section>`;
+  return `<section class="card r23-empty" data-empty-category="${esc(tab)}">${renderProfileIcon(tab === 'special-id' ? 'info' : 'image')}<h2>${esc(names[tab] || 'غير متاح')}</h2>${tab === 'special-id' ? `<p>معرّف حسابك الحالي</p>${id !== undefined && id !== null && String(id) !== '' ? `<b class="r23-current-id" dir="ltr">ID: ${esc(id)}</b>` : '<p class="muted">المعرّف غير متاح في بيانات الحساب الحالية.</p>'}<p>اختر رقم مميز من القائمة تحت. بعد الشراء يصير هو رقمك الظاهر بملفك وبالغرف، وكل رقم ينباع لحساب واحد بس. تقدر ترجع لرقمك العادي من «أغراضي».</p>` : '<p>هذا القسم غير متاح في كتالوج المتجر الحالي؛ لا توجد عناصر للبيع أو وظائف شراء مرتبطة به.</p>'}</section>`;
 }
 function setsHTML(d) {
   const by = {};
@@ -223,7 +230,7 @@ export function shopHTML(me) {
   if (SH.loading && !SH.data) return '<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="status">جاري تحميل المتجر…</p></div></div>';
   if (SH.err || !SH.data) return `<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="alert">${esc(SH.err || 'تعذّر التحميل.')}</p><button class="btn" type="button" data-act="shop-reload">إعادة المحاولة</button></div></div>`;
   const full = SH.data;
-  const inWorld = (i) => i.slot === 'entrance' ? SH.world === 'kids' ? i.kids === true : SH.world === 'players' && i.kids !== true : SH.world === 'legacy' ? !i.id.startsWith('ref-') : i.id.startsWith(SH.world === 'kids' ? 'ref-k-' : 'ref-p-') || (SH.world === 'players' && isSuppliedBackground(i.id));
+  const inWorld = (i) => /^(lux-|sid-|rid-)/.test(i.id) ? SH.world === 'players' : i.slot === 'entrance' ? SH.world === 'kids' ? i.kids === true : SH.world === 'players' && i.kids !== true : SH.world === 'legacy' ? !i.id.startsWith('ref-') : i.id.startsWith(SH.world === 'kids' ? 'ref-k-' : 'ref-p-') || (SH.world === 'players' && isSuppliedBackground(i.id));
   const d = { ...full, items: full.items.filter((i) => inWorld(i) && visibleItem(i, full)), collectionItems: full.collectionItems?.filter((i) => inWorld(i) && visibleItem(i, full)) };
   const tab = [...SLOT_TABS, ...STOREFRONT_TABS].some((t) => t[0] === SH.tab) ? SH.tab : 'frame';
   const header = `<header class="r23-store-header"><a class="r23-store-back" href="#/account" aria-label="العودة إلى حسابي">${renderProfileIcon('back')}</a><h1>متجر الأغراض</h1><button class="r23-my-items ${tab === 'owned' ? 'on' : ''}" type="button" data-act="shop-tab" data-v="owned" aria-pressed="${tab === 'owned'}">أغراضي</button></header>`;
@@ -252,8 +259,10 @@ export function shopHTML(me) {
     body = `<details class="r23-appearance"><summary>${renderProfileIcon('camera')} معاينة مظهري</summary>${previewHTML(d)}</details>` + setsHTML(d);
   } else if (tab === 'ach' || (SH.world !== 'legacy' && ['badge','title'].includes(tab))) {
     body = achHTML({ ...d, artWorld: SH.world, achievementKind: tab === 'ach' ? null : tab });
-  } else if (['special-id', 'board', 'profile-card', 'chat-bubble', 'souvenir'].includes(tab)) {
+  } else if (['profile-card', 'souvenir'].includes(tab)) {
     body = unavailableHTML(tab, me);
+  } else if (['special-id', 'board', 'chat-bubble', 'room-id'].includes(tab)) {
+    body = (tab === 'special-id' ? unavailableHTML(tab, me).replace('data-empty-category', 'data-current-id') : '') + gridFor(d, tab);
   } else if (tab === 'owned') {
     body = gridFor(full, 'owned');
   } else {

@@ -149,7 +149,7 @@ html.has-unified body.reference-ui[data-page="ranks"], body[data-page="ranks"] {
 .nx-face { position: relative; display: grid; place-items: center; width: 84px; height: 84px; justify-self: start; border-radius: 50%; padding: 4px; background: conic-gradient(from 200deg, #f7dca0, #b98a43, #f7dca0, #9a6c2c, #f7dca0); box-shadow: 0 0 14px rgba(255, 215, 140, .45); }
 .nx-face > :first-child { width: 76px; height: 76px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #3a2c1c; }
 .nx-face :is(img, .avatar-wrap) { width: 76px !important; height: 76px !important; border-radius: 50%; object-fit: cover; --sz: 76px; }
-.nx-face em { white-space: nowrap; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); padding: 1px 10px; border-radius: 6px; background: linear-gradient(180deg, #4fd38f, #1f9a5c); color: #fff; font-style: normal; font-weight: 900; font-size: 12px; border: 1px solid #c9f3d9; }
+.nx-face em { white-space: nowrap; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); padding: 1px 10px; border-radius: 6px; background: linear-gradient(180deg, #4fd38f, #1f9a5c); color: #fff; font-style: normal; font-weight: 900; font-size: 12px; border: 1px solid #dfcaf2; }
 .nx-card-id { display: grid; justify-items: start; gap: 4px; min-width: 0; }
 .nx-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 6px; background: linear-gradient(90deg, #1f9a5c, #4fd38f); color: #fff; font-weight: 900; font-size: 13px; font-style: italic; }
 .nx-chip .vn-glyph { width: 14px; height: 14px; }
@@ -223,3 +223,6 @@ html.has-unified body.reference-ui[data-page="ranks"], body[data-page="ranks"] {
 .vx-page .lbv-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .vx-page .lbv-confirm .lbrv-button { min-height: 46px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .15); background: #2a2a2e; color: #fff; font: inherit; font-weight: 800; }
 .vx-page .lbv-confirm .lbrv-button.is-gold { border: 0; color: #3a2408; background: linear-gradient(180deg, #f6dfb3 0%, #d9b075 55%, #c1924f 100%); }
+/* R58b: شريط اللقب */
+.vn-page .vn-title-art{display:grid;place-items:center;width:100%;height:100%;-webkit-mask-image:none;mask-image:none;mix-blend-mode:normal;}
+.vn-page .vn-title-art svg{width:100%;max-width:100%;height:auto;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));}

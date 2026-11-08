@@ -2,7 +2,7 @@
  * The host owns auth, routing, HTTP/CSRF and the common shell.
  * No Community follows, mock players, presence inference or client persistence.
  */
-import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 
 const BASE = '/api/social-private/';
 const PUB = /^[A-Za-z0-9_-]{16}$/;

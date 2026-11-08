@@ -153,15 +153,15 @@
 
 /* Accent colors stay local to the optional, explicitly supplied gender. */
 .pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-age:is([data-gender="male"], :has(.pvp-head-gender[data-gender="male"])) {
-  color: #506c5b;
-  border-color: #d4e4d8;
+  color: #6a5a80;
+  border-color: #e6ddf3;
   background: linear-gradient(110deg, #263451, var(--pvp-surface));
 }
 
 .pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-age:is([data-gender="female"], :has(.pvp-head-gender[data-gender="female"])) {
-  color: #264d3b;
-  border-color: #d4e4d8;
-  background: linear-gradient(110deg, #fffaf0, var(--pvp-surface));
+  color: #2c1a4a;
+  border-color: #e6ddf3;
+  background: linear-gradient(110deg, #fcf9f4, var(--pvp-surface));
 }
 
 .pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill .pvp-head-gender {
@@ -192,15 +192,15 @@
   order: 1;
   color: var(--pvp-gold);
   border-color: var(--pvp-gold);
-  background: linear-gradient(110deg, #fffaf0, var(--pvp-surface));
+  background: linear-gradient(110deg, #fcf9f4, var(--pvp-surface));
 }
 
 .pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-level {
   order: 2;
   gap: 2px;
   color: var(--pvp-gold);
-  border-color: #d4e4d8;
-  background: linear-gradient(110deg, #fffaf0, #fffaf0);
+  border-color: #e6ddf3;
+  background: linear-gradient(110deg, #fcf9f4, #fcf9f4);
 }
 
 /* Compact crown follows the latest reference; the displayed number is canonical LEVEL. */
@@ -209,8 +209,8 @@
 .pvp-page.pvp-profile-r15 .pvp-head-r20.pvp-head-r22 .pvp-head-pill.is-support {
   order: 3;
   color: var(--pvp-gold);
-  border-color: #b98a3d;
-  background: linear-gradient(110deg, #724329, #fffaf0);
+  border-color: #c49a3a;
+  background: linear-gradient(110deg, #724329, #fcf9f4);
 }
 
 /* Use the existing heart SVG. A markup-provided paint server is optional;

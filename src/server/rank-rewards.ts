@@ -1,3 +1,4 @@
+import { defaultRankPolicies } from './rank-perks-r56.js';
 import { createHash } from 'node:crypto';
 import { itemOf } from './catalog.js';
 import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
@@ -110,6 +111,15 @@ export class RankRewards {
     return typeof value === 'number' ? value : Number(value.slice(1));
   }
   configView() { return clone(this.d.policies); }
+  /** R56: سياسات الإدارة + السلّم الافتراضي للمستويات اللي ما لها سياسة (عناصر شكلية فقط، بدون عملات) */
+  private effectivePolicies(): (RankRewardPolicy & { builtIn?: true })[] {
+    const own = new Set(this.d.policies.map((p) => `${p.system}:${p.rank}`));
+    const defaults = defaultRankPolicies().filter((p) => !own.has(`${p.system}:${p.rank}`) && p.rewards.every((r) => this.itemExists(r.itemId)))
+      .map((p) => ({ ...p, rewards: p.rewards.map((r): RankReward => ({ type: 'item', itemId: r.itemId, mode: 'grant' })), builtIn: true as const }));
+    // R58e: مكافآت السيارات انشالت من العرض (السجلات القديمة ما تنمس)
+    const noCars = this.d.policies.map((p) => ({ ...p, rewards: p.rewards.filter((r: any) => !(r && r.type === 'item' && typeof r.itemId === 'string' && r.itemId.startsWith('entrance-'))) })).filter((p) => p.rewards.length > 0);
+    return [...noCars, ...defaults];
+  }
   /** Call only with actor from existing authenticated RBAC; client-supplied roles are never authority. */
   configure(policies: unknown, actor: { id: string; role: Role }): RankRewardPolicy[] {
     if (!actor?.id || actor.role !== 'owner') throw new Error('rank_rewards_forbidden');
@@ -153,7 +163,7 @@ export class RankRewards {
   view(id: string) {
     return {
       persistent: this.persistent,
-      policies: this.d.policies.map((p) => {
+      policies: this.effectivePolicies().map((p) => {
         const claim = this.d.claims[claimKey(id, p.system, p.rank)];
         return { id: `${p.system}:${p.rank}`, ...clone(p), rewards: clone(claim?.rewards ?? p.rewards), fingerprint: claim?.fingerprint ?? fingerprint(p), eligible: this.currentRank(id, p.system) >= p.rank,
           status: claim?.status ?? 'available', claimable: !claim && this.currentRank(id, p.system) >= p.rank };
@@ -175,7 +185,7 @@ export class RankRewards {
     let intent = this.d.claims[key];
     const previous = !!intent;
     if (!intent) {
-      const policy = this.d.policies.find((p) => p.system === system && p.rank === rank);
+      const policy = this.effectivePolicies().find((p) => p.system === system && p.rank === rank);
       if (!policy) return fail('rank_rewards_not_configured');
       if (expectedFingerprint !== undefined && expectedFingerprint !== fingerprint(policy)) return fail('rank_rewards_policy_conflict');
       if (this.currentRank(id, system) < rank) return fail('rank_rewards_ineligible');

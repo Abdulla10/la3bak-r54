@@ -4,8 +4,8 @@
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"]{
  --so-pk-left-inset:max(10px,env(safe-area-inset-left,0px));
  --so-pk-right-inset:max(10px,env(safe-area-inset-right,0px));
- background-color:#fffaf0;
- background-image:linear-gradient(180deg,#15142500 0%,#fffaf012 46%,#fffaf0bd 76%,#fffaf0f5 100%),linear-gradient(90deg,#fffaf0 0%,#fffaf0 42%,#fffaf0 70%,#fffaf0 100%);
+ background-color:#fcf9f4;
+ background-image:linear-gradient(180deg,#15142500 0%,#fffaf012 46%,#fffaf0bd 76%,#fffaf0f5 100%),linear-gradient(90deg,#fcf9f4 0%,#fcf9f4 42%,#fcf9f4 70%,#fcf9f4 100%);
  background-size:100% 100%;background-position:center;
 }
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"]>.so-room-header{margin-bottom:3px;}
@@ -16,7 +16,7 @@
  height:clamp(298px,calc(var(--so-viewport-height,100dvh) * .38),336px);
  min-height:0;max-height:none;padding:0;border:0;border-radius:0;box-shadow:none;
  overflow:hidden;overscroll-behavior:auto;
- background:linear-gradient(90deg,#176b50 0%,#d4e4d8 50%,#fffaf0 50%,#d4e4d8 100%);
+ background:linear-gradient(90deg,#5a2a8c 0%,#e6ddf3 50%,#fcf9f4 50%,#e6ddf3 100%);
 }
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-heading{position:absolute;top:23px;left:4px;z-index:4;min-height:0;padding:0;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-cancel{height:20px;min-height:0;padding:0 5px;background:#fffaf060;border:0;border-radius:9px;font-size:8px;}
@@ -48,9 +48,9 @@
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-rank{font-size:6px;line-height:9px;padding:0 2px;gap:1px;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-rank svg{width:6px;height:6px;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge .so-seat-mic{top:-3px;bottom:auto;right:auto;left:-8px;width:13px;height:13px;border:0;}
-.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-unknown,.so-seat-mic-disconnected){background:#fffaf0;color:#176b50;}
-.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-server-muted,.so-seat-mic-local-off,.so-seat-mic-remote-off){background:#d4e4d8;color:#fff;}
-.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-local-live,.so-seat-mic-remote-live){background:#d4e4d8;color:#fff;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-unknown,.so-seat-mic-disconnected){background:#fcf9f4;color:#5a2a8c;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-server-muted,.so-seat-mic-local-off,.so-seat-mic-remote-off){background:#e6ddf3;color:#fff;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge :is(.so-seat-mic-local-live,.so-seat-mic-remote-live){background:#e6ddf3;color:#fff;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-value{top:-8px;left:calc(50% + 13px);height:13px;min-height:0;padding:0 3px;border:0;font-size:8px;line-height:13px;max-width:55px;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-support{height:15px;min-height:0;width:34px;padding:0 2px;border:0;border-radius:9px;background:#fffaf075;font-size:8px;line-height:15px;}
 /* A single real-room member/control strip. Native details is closed by default.
@@ -70,7 +70,7 @@
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-seat-grid{flex:none;gap:9px 4px;max-height:none;overflow:visible;padding:8px 0 6px;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-seat{--so-seat-size:40px;min-height:62px;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-seat:nth-child(-n/**/+2){--so-seat-size:40px;grid-column:auto;min-height:62px;margin-bottom:0;}
-.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-central-footer{position:sticky;bottom:0;min-height:27px;background:#fffaf0;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-challenge-chairs .so-central-footer{position:sticky;bottom:0;min-height:27px;background:#fcf9f4;}
 /* Short screens keep chat + controls outside the arena. Only very short viewports
    scroll the bounded arena; ordinary 390×844 portrait has no internal scrolling. */
 @media(max-height:650px){
@@ -93,6 +93,6 @@
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary{display:flex;align-items:center;gap:6px;padding:5px 8px;min-height:26px;color:#fff;font-size:10px;line-height:16px;list-style:none;cursor:pointer;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary::-webkit-details-marker{display:none;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary>span{flex:1;min-width:0;}
-.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary>small{flex:none;color:#264d3b;font-size:9px;text-decoration:underline;}
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event>summary>small{flex:none;color:#2c1a4a;font-size:9px;text-decoration:underline;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event:not([open])>.so-gift-receipt{display:none;}
 .so-page[data-so-social-voice="true"] .so-room-detail[data-so-pk-reference="active"] .so-pk-gift-event[open]>.so-gift-receipt{margin:0;padding:5px;max-width:100%;}

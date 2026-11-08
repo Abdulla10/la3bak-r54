@@ -2,7 +2,7 @@
  * Shared header, wallet, navigation, drawer and footer placement belong to the shell.
  * The optional avatarHTML callback is trusted application-owned markup.
  */
-import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { visibleGameCatalogue } from '../game-availability.js?v=games-royal-1';
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -166,7 +166,7 @@ function socialHTML(ctx) {
 function postCard(post, ctx) {
   const author = post.author || {};
   const media = safeURL(post.media, { image: true });
-  const date = post.at && !Number.isNaN(new Date(post.at).getTime()) ? new Intl.DateTimeFormat('ar', { day: 'numeric', month: 'short' }).format(new Date(post.at)) : '';
+  const date = post.at && !Number.isNaN(new Date(post.at).getTime()) ? new Intl.DateTimeFormat('ar-u-nu-latn', { day: 'numeric', month: 'short' }).format(new Date(post.at)) : '';
   return `<a class="pv-news-card pv-news-card--post" href="#/post/${esc(encodeURIComponent(String(post.id)))}"><span class="pv-news-visual">${media ? `<img src="${esc(media)}" alt="" loading="lazy" decoding="async">` : face(ctx, author, 62)}</span><div><span class="pv-eyebrow">من المجتمع</span><h3>${esc(author.name || 'منشور من المجتمع')}</h3><p>${esc(post.text || 'شارك لحظات اللعب مع المجتمع.')}</p>${date ? `<small>${esc(date)}</small>` : ''}</div></a>`;
 }
 function newsHTML(ctx) {
@@ -204,7 +204,7 @@ function disclosure(title, glyph, content, id) {
   return `<details class="pv-home-details" data-home-section="${id}"><summary>${icon(glyph)}<span>${title}</span>${icon('arrow')}</summary><div class="pv-details-body">${content}</div></details>`;
 }
 export function render(ctx = {}) {
-  return `<div class="lb-home" dir="rtl">${accountHTML(ctx)}${heroHTML(ctx)}<div class="pv-home-content">${gamesHTML(ctx)}${socialLinksHTML(ctx)}${disclosure('المتجر والمقتنيات وتصنيفات الألعاب', 'shop', shortcutsHTML()+categoriesHTML(ctx), 'home-extras')}${disclosure('البطولات والمتصدرون', 'trophy', socialHTML(ctx), 'home-competition')}${disclosure('الأخبار والفعاليات والتطبيق', 'bell', newsHTML(ctx)+appsHTML(ctx), 'home-news')}</div></div>`;
+  return `<div class="lb-home" dir="rtl">${accountHTML(ctx)}${ctx.user ? '<div class="fl-host" data-friends-live></div>' : ''}${heroHTML(ctx)}<div class="pv-home-content">${gamesHTML(ctx)}${socialLinksHTML(ctx)}${disclosure('المتجر والمقتنيات وتصنيفات الألعاب', 'shop', shortcutsHTML()+categoriesHTML(ctx), 'home-extras')}${disclosure('البطولات والمتصدرون', 'trophy', socialHTML(ctx), 'home-competition')}${disclosure('الأخبار والفعاليات والتطبيق', 'bell', newsHTML(ctx)+appsHTML(ctx), 'home-news')}</div></div>`;
 }
 export const homeHTML = render;
 

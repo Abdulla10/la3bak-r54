@@ -1,45 +1,45 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=profile-r55';
-import * as UNIFIED from '../unified/shell.js?v=social-r55';
-import * as REF from '../unified/home.js?v=minaboli-cover-r49';
-import * as SOCIAL from '../unified/social.js?v=social-r55';
+import * as PR from './profile.js?v=r58r';
+import * as UNIFIED from '../unified/shell.js?v=r58g';
+import * as REF from '../unified/home.js?v=r58t';
+import * as SOCIAL from '../unified/social.js?v=r58g';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
-import { createSocialGiftStore } from '../social-gifts.js?v=purple-r38';
+import { createSocialGiftStore } from '../social-gifts.js?v=r57';
 import {giftArtwork} from '../gift-assets-r27.js?v=unique-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=build-all-r47';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r58p';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
 import * as HUB from '../hub.js?v=shell-r6';
 import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
 import { initStatus, checkStatusNow } from '../status.js?v=root-navigation-r50';
-import * as LOB from '../lobby.js?v=complete-r46';
+import * as LOB from '../lobby.js?v=r58c';
 import * as AVT from '../avatar.js?v=shell-r6';
 import * as AUTH from '../auth.js?v=shell-r6';
 import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=ui-correction-r3';
-import * as SHOP from '../shop.js?v=frame-gems-r24';
-import * as GIFT from '../gifts.js?v=purple-r38';
-import * as GFX from '../giftfx.js?v=release-r14';
-import * as AVR from '../avatars.js?v=shell-r6';
-import * as DMV from '../domino.js?v=shell-r6';
-import * as UNV from '../uno.js?v=shell-r6';
-import * as CRV from '../carrom.js?v=shell-r6';
-import * as MNV from '../minaboli-r47.js?v=build-all-r47';
-import * as CITY from '../city.js?v=shell-r6';
-import * as COM from '../community.js?v=root-navigation-r50';
+import * as PF from '../profile.js?v=r58c';
+import * as SHOP from '../shop.js?v=r58r';
+import * as GIFT from '../gifts.js?v=r58c';
+import * as GFX from '../giftfx.js?v=r57';
+import * as AVR from '../avatars.js?v=r58c';
+import * as DMV from '../domino.js?v=r58c';
+import * as UNV from '../uno.js?v=r58c';
+import * as CRV from '../carrom.js?v=r58p';
+import * as MNV from '../minaboli-r47.js?v=r57';
+import * as CITY from '../city.js?v=r57';
+import * as COM from '../community.js?v=r58c';
 import { isCommunityRestricted } from '../community-access-r37.js';
-import * as THEME from '../theme.js?v=emerald-r44';
+import * as THEME from '../theme.js?v=r58p';
 import * as PWA from '../pwa.js?v=root-navigation-r50';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=no-kids-r37';
-import * as CHAT from '../chat.js?v=release-r14';
+import * as MIS from '../missions.js?v=r58c';
+import * as CHAT from '../chat.js?v=r58c';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -168,6 +168,9 @@ function connect() {
       curFx = fxs;
       try { render(); } finally { curFx = null; }
       refreshSocial();
+    } else if (m.t === 'friend:online' || m.t === 'friend:room') {
+      // R58f: تنبيه دخول صديق للموقع أو لغرفة
+      if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:friend', { detail: m }));
     } else if (m.t === 'social:update') {
       if (S.user && S.ws === ws && ['social-room','room'].includes(parseRoute().name)) refreshSocial(m);
     } else if (m.t === 'social:support') {
@@ -331,12 +334,12 @@ const functionalModules = new Map();
 function loadFunctionalModule(name) {
   const key = ['auction','family'].includes(name) ? name : name === 'friends' || name === 'messages' ? 'private' : name === 'missions' ? 'missions' : ['visitors','invite'].includes(name) ? 'profile-social' : 'pages';
   if (!functionalModules.has(key)) {
-    const promise = key === 'auction' ? import('../auction-r47.js?v=build-all-r47')
+    const promise = key === 'auction' ? import('../auction-r47.js?v=r57')
       : key === 'family' ? import('../family-r47.js?v=build-all-r47')
-      : key === 'private' ? import('../social-private.js?v=shell-r6')
-      : key === 'missions' ? import('../missions-server.js?v=shell-r6')
-      : key === 'profile-social' ? import('../profile-social-r53.js?v=profile-r53')
-      : import('../functional-pages.js?v=shell-r6');
+      : key === 'private' ? import('../social-private.js?v=r57')
+      : key === 'missions' ? import('../missions-server.js?v=r57')
+      : key === 'profile-social' ? import('../profile-social-r53.js?v=r58c')
+      : import('../functional-pages.js?v=r57');
     functionalModules.set(key, promise);
     promise.catch(() => { if (functionalModules.get(key) === promise) functionalModules.delete(key); });
   }
@@ -561,7 +564,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=build-all-r47').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r58r').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -693,7 +696,7 @@ const playersText = (g) => `${g.minPlayers} إلى ${g.maxPlayers} لاعبين`
 const ICON_SVG = {
   uno: '<svg viewBox="0 0 40 40" width="1em" height="1em" aria-hidden="true"><rect x="5" y="7" width="18" height="27" rx="3.5" fill="#1e88e5" stroke="#fff" stroke-width="2" transform="rotate(-14 14 20)"/><rect x="16" y="5" width="18" height="27" rx="3.5" fill="#e53935" stroke="#fff" stroke-width="2" transform="rotate(10 25 18)"/><ellipse cx="25" cy="18" rx="6" ry="9" fill="#fff" transform="rotate(38 25 18)"/><text x="25" y="22" text-anchor="middle" font-size="11" font-weight="900" fill="#e53935" style="direction:ltr">7</text></svg>',
   carrom: '<svg viewBox="0 0 40 40" width="1em" height="1em" aria-hidden="true"><rect x="3" y="3" width="34" height="34" rx="5" fill="#6a3412"/><rect x="6.5" y="6.5" width="27" height="27" fill="#efd29a"/><circle cx="9" cy="9" r="2.6" fill="#2a1608"/><circle cx="31" cy="9" r="2.6" fill="#2a1608"/><circle cx="9" cy="31" r="2.6" fill="#2a1608"/><circle cx="31" cy="31" r="2.6" fill="#2a1608"/><circle cx="20" cy="20" r="3" fill="#d3202a"/><circle cx="15" cy="18" r="2.6" fill="#fff8e8" stroke="#a88" stroke-width=".5"/><circle cx="25" cy="18" r="2.6" fill="#222"/><circle cx="20" cy="25" r="2.6" fill="#fff8e8" stroke="#a88" stroke-width=".5"/><circle cx="20" cy="30" r="3.4" fill="#cfe7f7" stroke="#2a6fa8"/></svg>',
-  domino: '<svg viewBox="0 0 40 40" width="1em" height="1em" aria-hidden="true"><g transform="rotate(-14 20 20)"><rect x="11" y="3" width="18" height="34" rx="4" fill="#fffaf0" stroke="#3a2a18" stroke-width="2"/><path d="M13 20h14" stroke="#3a2a18" stroke-width="1.6"/><g fill="#1b1b1b"><circle cx="16" cy="8.5" r="1.9"/><circle cx="24" cy="15" r="1.9"/><circle cx="20" cy="11.8" r="1.9"/><circle cx="16" cy="25" r="1.9"/><circle cx="24" cy="25" r="1.9"/><circle cx="16" cy="32" r="1.9"/><circle cx="24" cy="32" r="1.9"/></g></g></svg>',
+  domino: '<svg viewBox="0 0 40 40" width="1em" height="1em" aria-hidden="true"><g transform="rotate(-14 20 20)"><rect x="11" y="3" width="18" height="34" rx="4" fill="#fcf9f4" stroke="#3a2a18" stroke-width="2"/><path d="M13 20h14" stroke="#3a2a18" stroke-width="1.6"/><g fill="#1b1b1b"><circle cx="16" cy="8.5" r="1.9"/><circle cx="24" cy="15" r="1.9"/><circle cx="20" cy="11.8" r="1.9"/><circle cx="16" cy="25" r="1.9"/><circle cx="24" cy="25" r="1.9"/><circle cx="16" cy="32" r="1.9"/><circle cx="24" cy="32" r="1.9"/></g></g></svg>',
 };
 const gameIco = (g) => g.id === 'minaboli' ? '<img src="/preview/assets/game-minaboli-3d-r49.webp" alt="" width="64" height="44" decoding="async" style="width:100%;height:100%;object-fit:contain">' : ICON_SVG[g.id] ?? esc(g.icon);
 function gameCardHTML(g, full) {
@@ -797,7 +800,7 @@ async function loadHomePosts() {
 }
 
 const FOOTED = new Set(['daily', 'home', 'games', 'profile', 'leaderboard', 'about', 'privacy', 'admin', 'play']);
-const nf = (n) => new Intl.NumberFormat('ar-EG').format(n);
+const nf = (n) => new Intl.NumberFormat('ar-EG-u-nu-latn').format(n);
 
 function dailyView() {
   const d = MIS.daily();
@@ -1218,7 +1221,7 @@ function ensureGameVoiceUI(room) {
     return gameVoiceUI.surface;
   }
   destroyGameVoiceUI();
-  if(!document.querySelector('link[data-game-voice-r9]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/unified/game-voice-r9.css?v=emerald-r44';link.dataset.gameVoiceR9='';document.head.append(link);}
+  if(!document.querySelector('link[data-game-voice-r9]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/unified/game-voice-r9.css?v=r58p';link.dataset.gameVoiceR9='';document.head.append(link);}
   const voice=gameVoiceBindings.get(owner+'/'+room.code),ctx={...unifiedContext('room'),page:'social-room',gameRoom:room,gameVoice:voice,socialRoomId:voice?.status==='ready'?voice.roomId:null,retryGameVoice:()=>resolveGameVoice(room.code,true)};
   unifiedPage($('#view'),'room',`<section class="gv-wrapper" data-game-voice-wrapper data-game-voice-mode="${protectedGame?'game':'room'}"><div class="gv-social" data-game-voice-social>${protectedGame?'<section class="card"><h2>لعب آمن</h2><p>المجتمع مقفل من إعدادات ولي الأمر؛ اللعبة متاحة دون غرفة صوتية.</p></section>':SOCIAL.render(ctx)}</div><nav class="gv-switch" aria-label="اللعبة والغرفة"><button type="button" data-gv-mode="room" aria-pressed="${!protectedGame}" ${protectedGame?'disabled':''}>الغرفة</button><button type="button" data-gv-mode="game" aria-pressed="${protectedGame}" aria-controls="gv-game-surface">اللعبة</button><button type="button" data-gv-share>دعوة للعبة</button></nav><section id="gv-game-surface" class="gv-game-surface" data-game-voice-surface aria-label="لوحة اللعبة وتحكمها" ${protectedGame?'':'hidden'}></section></section>`,true);
   const root=$('[data-game-voice-wrapper]'),surface=root.querySelector('[data-game-voice-surface]');
@@ -1840,7 +1843,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=build-all-r47', { cache: 'reload' })).then(() => fetch('/app.css', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r58p', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },

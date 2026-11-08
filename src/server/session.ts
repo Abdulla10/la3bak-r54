@@ -1,3 +1,4 @@
+import { moderateText } from './moderation-r58.js';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { User } from './rooms.js';
 
@@ -34,7 +35,9 @@ export function nameProblem(name: string): string | null {
   if (BAD_WORDS.some((w) => { const k = norm(w); return k.includes(' ') ? n.includes(k) : tokens.includes(k); })) {
     return 'الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';
   }
-  return null;
+  // R58: المراجعة التلقائية الموحّدة (روابط، أرقام تواصل، انتحال صفة الإدارة، كلمات مسيئة إضافية)
+  const m = moderateText(name, 'profile-name');
+  return m.ok ? null : m.message;
 }
 
 /** الأوقات بالملّي ثانية؛ كل إصدار له معرّف مستقل حتى لو الحساب نفسه. */

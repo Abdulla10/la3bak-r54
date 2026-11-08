@@ -2,15 +2,15 @@
  * Color only: no geometry, art filters, gameplay, profile-layout or status rules.
  * is-brand-site belongs only to NON-game routes. Page skin uses an explicit allowlist. */
 :root {
-  --la3bak-royal-bg: #f6f1e5;
-  --la3bak-royal-surface: #f6f1e5;
-  --la3bak-royal-panel: #f6f1e5;
-  --la3bak-royal-panel-raised: #f6f1e5;
-  --la3bak-royal-violet: #176b50;
-  --la3bak-royal-muted: #506c5b;
-  --la3bak-royal-gold: #b98a3d;
-  --la3bak-royal-gold-dim: #b98a3d;
-  --la3bak-royal-ink: #264d3b;
+  --la3bak-royal-bg: #f4eee6;
+  --la3bak-royal-surface: #f4eee6;
+  --la3bak-royal-panel: #f4eee6;
+  --la3bak-royal-panel-raised: #f4eee6;
+  --la3bak-royal-violet: #5a2a8c;
+  --la3bak-royal-muted: #6a5a80;
+  --la3bak-royal-gold: #c49a3a;
+  --la3bak-royal-gold-dim: #c49a3a;
+  --la3bak-royal-ink: #2c1a4a;
   --la3bak-royal-line: #d4e4d840;
   --la3bak-royal-gold-line: #b98a3d60;
 }

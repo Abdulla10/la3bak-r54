@@ -2,7 +2,7 @@
  * Reuses accountToolsView: no new persistence, account, wallet or API transport.
  */
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
-import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const mounts = new WeakMap();

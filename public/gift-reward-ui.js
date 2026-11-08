@@ -3,7 +3,7 @@ import { giftArt } from './giftart.js?v=release-r14';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const amount = value => Number.isSafeInteger(value) && value >= 0;
 const currency = value => value === 'coins' || value === 'gems';
-const number = value => amount(value) ? value.toLocaleString('ar-EG') : 'غير متاح';
+const number = value => amount(value) ? value.toLocaleString('ar-EG-u-nu-latn') : 'غير متاح';
 export const giftCurrencyName = cur => cur === 'gems' ? 'جوهرة' : 'عملة ذهبية';
 export function giftCurrencyIcon(cur = 'coins') {
   const path = cur === 'gems' ? 'M3 8l4-5h10l4 5-9 13ZM3 8h18M7 3l5 18 5-18' : 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 6v12M15 8h-4a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4H9';

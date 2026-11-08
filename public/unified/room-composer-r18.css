@@ -20,7 +20,7 @@
 .so-page .so-room-composer-r18 .so-circle-button {
   display:inline-flex;align-items:center;justify-content:center;flex:none;
   height:44px;min-height:44px;margin:0;padding:3px;
-  border:0;border-radius:0;background:none;box-shadow:none;color:#264d3b;
+  border:0;border-radius:0;background:none;box-shadow:none;color:#2c1a4a;
   appearance:none;cursor:pointer;transform:none;-webkit-tap-highlight-color:transparent;
 }
 .so-page .so-room-composer-r18 .so-circle-button:hover:not(:disabled),
@@ -35,7 +35,7 @@
   display:block;flex:none;width:26px;height:26px;fill:none;stroke-width:1.65;filter:none;
 }
 .so-page .so-room-composer-r18 :is(button,input):focus-visible {
-  outline:2px solid #b98a3d;outline-offset:-2px;
+  outline:2px solid #c49a3a;outline-offset:-2px;
 }
 .so-page .so-room-composer-r18 .so-chat-form {
   display:flex;align-items:center;direction:ltr;gap:0;min-width:0;width:100%;
@@ -49,16 +49,16 @@
 .so-page .so-room-composer-r18 .so-chat-input-wrap input {
   flex:1 1 0%;width:100%;min-width:0;height:44px;min-height:44px;
   box-sizing:border-box;margin:0;padding:6px 3px;border:0;border-radius:0;
-  background:transparent;box-shadow:none;color:#264d3b;font:inherit;font-size:16px;
+  background:transparent;box-shadow:none;color:#2c1a4a;font:inherit;font-size:16px;
   line-height:1.5;text-align:right;direction:revert;unicode-bidi:plaintext;outline:none;
 }
 .so-page .so-room-composer-r18 .so-chat-input-wrap input::placeholder {
-  color:#264d3b;font-size:16px;opacity:1;
+  color:#2c1a4a;font-size:16px;opacity:1;
 }
 /* Retain the submit control in the DOM, but collapse its space when empty. */
 .so-page .so-room-composer-r18 .so-chat-input-wrap>.so-send-button {
   display:inline-flex;flex:0 0 auto;width:0;min-width:0;height:44px;min-height:44px;
-  padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#264d3b;
+  padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#2c1a4a;
   visibility:hidden;opacity:0;overflow:hidden;pointer-events:none;
 }
 .so-page .so-room-composer-r18 .so-chat-input-wrap.has-text>.so-send-button {
@@ -90,8 +90,8 @@
 .so-page .so-room-composer-r18 .so-chat-unread {
   position:absolute;top:2px;left:1px;display:flex;align-items:center;justify-content:center;
   box-sizing:border-box;min-width:17px;height:17px;padding:0 3px;border:0;border-radius:9px;
-  background:#176b50;color:#fffaf0;font:400 12px/17px Arial,sans-serif;pointer-events:none;
+  background:#5a2a8c;color:#fcf9f4;font:400 12px/17px Arial,sans-serif;pointer-events:none;
 }
 .so-page .so-room-composer-r18 .so-chat-input-wrap input:focus-visible {
-  outline:2px solid #b98a3d;outline-offset:-2px;
+  outline:2px solid #c49a3a;outline-offset:-2px;
 }

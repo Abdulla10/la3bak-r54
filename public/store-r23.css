@@ -1,11 +1,11 @@
 /* R23 storefront presentation only. Every rule is scoped beneath .r23-store.
  * Geometry overrides older reference/shop skins; no global shell or gameplay changes. */
 .r23-store {
-  --r23-bg: #fffaf0;
+  --r23-bg: #fcf9f4;
   --r23-tile: #2b1041;
-  --r23-gold: #b98a3d;
-  --r23-ink: #264d3b;
-  --r23-muted: #506c5b;
+  --r23-gold: #c49a3a;
+  --r23-ink: #2c1a4a;
+  --r23-muted: #6a5a80;
   --r23-line: #b98a3d35;
   width: 100% !important;
   max-width: 960px !important;
@@ -37,7 +37,7 @@
 }
 .r23-store .r23-store-header h1 { margin: 0 !important; font-size: 17px !important; line-height: 1.5; font-weight: 700; color: var(--r23-ink) !important; text-align: center; text-shadow: none !important; }
 .r23-store .r23-store-back { display: grid; place-items: center; width: 40px; height: 40px; color: var(--r23-gold); text-decoration: none; border-radius: 10px; }
-.r23-store .r23-my-items { min-height: 36px; padding: 5px 12px; border: 1px solid var(--r23-line) !important; border-radius: 9px; color: var(--r23-gold) !important; background: #fffaf0 !important; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: none !important; }
+.r23-store .r23-my-items { min-height: 36px; padding: 5px 12px; border: 1px solid var(--r23-line) !important; border-radius: 9px; color: var(--r23-gold) !important; background: #fcf9f4 !important; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: none !important; }
 .r23-store .r23-my-items.on { border-color: var(--r23-gold) !important; }
 .r23-store .r23-store-tabs {
   display: flex !important;
@@ -84,9 +84,9 @@
 .r23-store :is(.r23-more, .r23-filters, .r23-appearance, .r23-policy)[open] > summary::after { transform: rotate(225deg); }
 .r23-store :is(.r23-more, .r23-filters, .r23-appearance, .r23-policy) > summary .pvp-icon { width: 16px; height: 16px; }
 .r23-store .r23-more > summary small { font-size: 10px; color: var(--r23-gold); }
-.r23-store .r23-more-panel { display: grid; gap: 12px; padding: 12px; margin-block-end: 10px; border: 1px solid var(--r23-line); border-radius: 12px; background: #fffaf0; }
+.r23-store .r23-more-panel { display: grid; gap: 12px; padding: 12px; margin-block-end: 10px; border: 1px solid var(--r23-line); border-radius: 12px; background: #fcf9f4; }
 .r23-store .ref-worlds { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important; }
-.r23-store .ref-worlds button { display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 5px !important; min-height: 56px !important; padding: 8px 4px !important; font-size: 11px !important; background: #fffaf0 !important; color: var(--r23-muted) !important; border: 1px solid var(--r23-line) !important; border-radius: 9px !important; box-shadow: none !important; cursor: pointer; }
+.r23-store .ref-worlds button { display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 5px !important; min-height: 56px !important; padding: 8px 4px !important; font-size: 11px !important; background: #fcf9f4 !important; color: var(--r23-muted) !important; border: 1px solid var(--r23-line) !important; border-radius: 9px !important; box-shadow: none !important; cursor: pointer; }
 .r23-store .ref-worlds button.on { color: var(--r23-gold) !important; border-color: var(--r23-gold) !important; }
 .r23-store .ref-worlds .pvp-icon { width: 19px; height: 19px; }
 .r23-store .r23-legacy-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -96,7 +96,7 @@
 .r23-store .r23-policy p { color: var(--r23-muted); font-size: 12px; line-height: 1.8; margin: 6px 0; }
 .r23-store .r23-store-body { display: grid; align-content: start; gap: 8px; min-width: 0; padding-block-end: 18px; }
 .r23-store .r23-filters { margin-block: -5px 0; }
-.r23-store .cx-filters { padding: 10px !important; border-radius: 10px !important; background: #fffaf0 !important; border: 1px solid var(--r23-line) !important; }
+.r23-store .cx-filters { padding: 10px !important; border-radius: 10px !important; background: #fcf9f4 !important; border: 1px solid var(--r23-line) !important; }
 .r23-store .cx-row { flex-wrap: wrap !important; gap: 6px !important; overflow: visible !important; }
 .r23-store .cx-chip { font-size: 11px !important; min-height: 32px !important; box-shadow: none !important; }
 .r23-store .cx-sort { min-width: 0; max-width: 100%; font-size: 11px; }
@@ -141,7 +141,7 @@
   overflow: hidden;
   border: 1px solid #d4e4d833 !important;
   border-radius: 12px !important;
-  background: radial-gradient(ellipse at 50% 38%, #fffaf0 0, #fffaf0 66%, #fffaf0 100%) !important;
+  background: radial-gradient(ellipse at 50% 38%, #fcf9f4 0, #fcf9f4 66%, #fcf9f4 100%) !important;
   color: var(--r23-gold) !important;
   box-shadow: none !important;
   cursor: pointer;
@@ -155,9 +155,9 @@
 .r23-store .r23-product-art .cx-bgthumb { display: block; position: relative; width: 100% !important; height: 100% !important; aspect-ratio: auto !important; border-radius: 8px; overflow: hidden; }
 .r23-store .r23-product-art .cx-title { max-width: 100%; overflow-wrap: anywhere; font-size: 12px; }
 .r23-store .r23-product-art > .pvp-icon { width: 42px; height: 42px; }
-.r23-store .cx-ghost { display: grid !important; place-items: center; background: #fffaf0 !important; color: #264d3b; border-radius: 50% !important; }
+.r23-store .cx-ghost { display: grid !important; place-items: center; background: #fcf9f4 !important; color: #2c1a4a; border-radius: 50% !important; }
 .r23-store .cx-ghost > .pvp-icon { width: 65%; height: 65%; }
-.r23-store .r23-owned-mark { position: absolute; inset-inline-end: 5px; inset-block-end: 5px; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; color: var(--r23-ink); background: #b98a3d; }
+.r23-store .r23-owned-mark { position: absolute; inset-inline-end: 5px; inset-block-end: 5px; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; color: var(--r23-ink); background: #c49a3a; }
 .r23-store .r23-owned-mark .pvp-icon { width: 11px; height: 11px; }
 .r23-store .r23-price { display: flex; justify-content: center; align-items: center; min-height: 28px; padding: 5px 0 0; margin: 0; }
 .r23-store .r23-price-value { display: inline-flex; align-items: center; justify-content: center; gap: 4px; direction: ltr; color: var(--r23-gold); font-size: 12px; line-height: 1.4; font-variant-numeric: tabular-nums; }
@@ -165,27 +165,27 @@
 .r23-store .r23-price-note { font-size: 10px; line-height: 1.5; color: var(--r23-muted); }
 .r23-store .r23-product-state { font-size: 9px !important; line-height: 1.4; color: var(--r23-muted); margin: 0 !important; }
 .r23-store .r23-art-missing { display: grid; justify-items: center; gap: 4px; font-size: 10px; color: var(--r23-muted); }
-.r23-store .r23-empty { display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 190px; padding: 22px 16px !important; border: 1px solid var(--r23-line) !important; border-radius: 12px !important; background: #fffaf0 !important; text-align: center; box-shadow: none !important; }
+.r23-store .r23-empty { display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 190px; padding: 22px 16px !important; border: 1px solid var(--r23-line) !important; border-radius: 12px !important; background: #fcf9f4 !important; text-align: center; box-shadow: none !important; }
 .r23-store .r23-empty > .pvp-icon { width: 32px; height: 32px; color: var(--r23-gold); }
 .r23-store .r23-empty h2 { font-size: 15px !important; color: var(--r23-gold); margin: 0; }
 .r23-store .r23-empty p { max-width: 360px; color: var(--r23-muted); font-size: 12px; line-height: 1.8; margin: 0; }
 .r23-store .r23-current-id { font-size: 20px; letter-spacing: 1px; color: var(--r23-gold); overflow-wrap: anywhere; }
 .r23-store .sh-modal { position: fixed !important; inset: 0 !important; z-index: 1000 !important; display: grid !important; place-items: center !important; padding: 16px !important; background: #fffaf0bf !important; backdrop-filter: blur(5px); }
-.r23-store .sh-modal > .card { width: min(390px, 100%) !important; max-width: 390px !important; max-height: calc(100dvh - 32px) !important; overflow: auto !important; padding: 15px !important; margin: 0 !important; border: 1px solid #b98a3d80 !important; border-radius: 18px !important; background: #fffaf0 !important; color: var(--r23-ink); box-shadow: none !important; text-align: start !important; }
+.r23-store .sh-modal > .card { width: min(390px, 100%) !important; max-width: 390px !important; max-height: calc(100dvh - 32px) !important; overflow: auto !important; padding: 15px !important; margin: 0 !important; border: 1px solid #b98a3d80 !important; border-radius: 18px !important; background: #fcf9f4 !important; color: var(--r23-ink); box-shadow: none !important; text-align: start !important; }
 .r23-store .r23-details-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-block-end: 12px; }
 .r23-store .r23-details-head small { color: var(--r23-muted); font-size: 10px; }
 .r23-store .r23-details-head h2 { margin: 3px 0 0 !important; font-size: 17px !important; line-height: 1.5; color: var(--r23-gold) !important; }
 .r23-store .r23-dialog-close { display: grid; place-items: center; width: 32px; min-width: 32px; height: 32px; padding: 5px; border: 1px solid var(--r23-line); border-radius: 50%; background: transparent !important; color: var(--r23-muted) !important; cursor: pointer; }
 .r23-store .r23-dialog-close .pvp-icon { width: 16px; height: 16px; }
 .r23-store .cx-preview { display: block !important; padding: 0 !important; border: 0 !important; border-radius: 12px !important; overflow: hidden; background: transparent !important; box-shadow: none !important; }
-.r23-store .cx-stage { display: grid; place-items: center; position: relative; height: 170px !important; background: radial-gradient(ellipse, #fffaf0, #fffaf0) !important; overflow: hidden; }
+.r23-store .cx-stage { display: grid; place-items: center; position: relative; height: 170px !important; background: radial-gradient(ellipse, #fcf9f4, #fcf9f4) !important; overflow: hidden; }
 .r23-store .cx-who { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 2; gap: 8px !important; }
 .r23-store .cx-who .cx-fw { margin: 15px 0 8px; }
 .r23-store .cx-who .avatar-wrap { --sz: 72px !important; }
 .r23-store .cx-who > b { color: var(--r23-ink) !important; font-size: 12px; max-width: 100%; overflow-wrap: anywhere; }
 .r23-store .cx-who > .cx-title { max-width: 100%; font-size: 11px; }
 .r23-store .cx-fw.has > .ref-frame { mix-blend-mode: normal !important; filter: none !important; }
-.r23-store .cx-pnote { margin: 0 !important; padding: 8px 10px !important; color: var(--r23-muted); background: #fffaf0 !important; font-size: 10px !important; line-height: 1.7; text-align: center; }
+.r23-store .cx-pnote { margin: 0 !important; padding: 8px 10px !important; color: var(--r23-muted); background: #fcf9f4 !important; font-size: 10px !important; line-height: 1.7; text-align: center; }
 .r23-store .r23-entrance-preview { display: grid; place-items: center; gap: 3px; min-height: 170px; padding: 10px; border-radius: 12px 12px 0 0; background: radial-gradient(ellipse, #492560, #1c0b2c); }
 .r23-store .r23-entrance-preview > .r23-entrance-art { display: block; width: 100%; max-width: 300px; height: 132px; object-fit: contain; }
 .r23-store .r23-entrance-preview > span { display: flex; align-items: center; gap: 5px; color: var(--r23-muted); font-size: 11px; }
@@ -202,8 +202,8 @@
 .r23-store .r23-confirm-note .sh-currency { width: 16px; height: 16px; vertical-align: middle; }
 .r23-store .r23-preview-sheet .btn-row { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; margin-block-start: 12px !important; }
 .r23-store .r23-preview-sheet .btn-row > :is(.btn, a) { flex: 1 1 120px; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px !important; margin: 0 !important; padding: 8px 10px !important; font-size: 12px !important; line-height: 1.5; border-radius: 10px !important; box-shadow: none !important; text-decoration: none; }
-.r23-store .r23-preview-sheet .btn.gold { color: #264d3b !important; background: var(--r23-gold) !important; border-color: #b98a3d !important; }
-.r23-store .r23-preview-sheet .btn.ghost { color: var(--r23-muted) !important; background: #fffaf0 !important; border-color: var(--r23-line) !important; }
+.r23-store .r23-preview-sheet .btn.gold { color: #2c1a4a !important; background: var(--r23-gold) !important; border-color: #c49a3a !important; }
+.r23-store .r23-preview-sheet .btn.ghost { color: var(--r23-muted) !important; background: #fcf9f4 !important; border-color: var(--r23-line) !important; }
 .r23-store .r23-preview-sheet .btn-row .pvp-icon { width: 16px; height: 16px; }
 .r23-store .cx-setrow > li > span > :is(.r23-frame-art, .r23-entrance-art, .r23-item-art) { width: 80px; height: 80px; max-width: 100%; object-fit: contain; }
 @media (min-width: 700px) {

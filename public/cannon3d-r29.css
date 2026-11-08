@@ -18,7 +18,7 @@
 .so-room-detail [data-cannon3d-placeholder][hidden] {display:none;}
 .so-room-detail [data-cannon3d-state="unavailable"] .cannon3d-r29-status,
 .so-room-detail [data-cannon3d-state="unavailable"] > [data-cannon3d-placeholder] {
-  color:#7b253b;background:#d4e4d8;border-radius:8px;
+  color:#7b253b;background:#e6ddf3;border-radius:8px;
 }
 /* Miniature must never become a second canvas or take the shortcut's tap. */
 .so-room-detail .so-cannon-shortcut .cannon3d-r29-mount {
@@ -39,13 +39,13 @@
   cursor:grab;touch-action:none;pointer-events:auto;
 }
 .so-room-detail [data-cannon3d-mount="hero"] .cannon3d-r29-canvas:active {cursor:grabbing;}
-.so-room-detail [data-cannon3d-mount="hero"] .cannon3d-r29-canvas:focus-visible {outline:2px solid #d4e4d8;}
+.so-room-detail [data-cannon3d-mount="hero"] .cannon3d-r29-canvas:focus-visible {outline:2px solid #e6ddf3;}
 .so-page[data-so-social-voice="true"] .so-room-detail .so-cannon-hero > .cannon3d-r29-level {
   position:absolute;inset:auto auto 22px 50%;transform:translateX(-50%);white-space:nowrap;
   font:700 10px/1.4 system-ui,sans-serif;padding:2px 10px;pointer-events:none;
 }
 .so-room-detail .cannon3d-r29-hint {
-  position:absolute;inset:auto 5px 0;text-align:center;color:#264d3b;
+  position:absolute;inset:auto 5px 0;text-align:center;color:#2c1a4a;
   font:500 10px/1.6 system-ui,sans-serif;pointer-events:none;
 }
 /* Burst icon is replaced by the SAME live canvas and real 3D particles. */

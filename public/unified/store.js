@@ -2,9 +2,9 @@
  * The versioned import deliberately shares the host's canonical SHOP singleton.
  * No catalogue, balances, cash prices, exchange rate or account is invented here.
  */
-import * as SHOP from '../shop.js?v=frame-gems-r24';
-import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
-import * as BACKGROUNDS from './backgrounds.js?v=frame-gems-r24';
+import * as SHOP from '../shop.js?v=r58r';
+import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
+import * as BACKGROUNDS from './backgrounds.js?v=r58r';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -103,7 +103,7 @@ function replaceParagraph(dialog, text) {
 
 function withoutBalanceProjections(content) {
   const d = SHOP.SH.data;
-  const nf = number => Number.isSafeInteger(number) && number >= 0 ? new Intl.NumberFormat('ar-AE').format(number) : '—';
+  const nf = number => Number.isSafeInteger(number) && number >= 0 ? new Intl.NumberFormat('ar-AE-u-nu-latn').format(number) : '—';
   const purchase = content.querySelector('[data-act="shop-buy"]')?.closest('[role="dialog"]');
   if (purchase) {
     const item = d?.items?.find(entry => entry.id === SHOP.SH.confirm);

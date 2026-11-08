@@ -24,8 +24,8 @@
   transition: border-color .15s ease, background-color .15s ease;
 }
 .lb-unified [data-lb-page="settings"] .lb-settings-link:hover {
-  border-color: #b98a3d;
-  background: linear-gradient(90deg, #fffaf0, #fffaf0);
+  border-color: #c49a3a;
+  background: linear-gradient(90deg, #fcf9f4, #fcf9f4);
 }
 .lb-unified [data-lb-page="settings"] .lb-settings-link > .pvp-icon {
   flex: none;
@@ -35,7 +35,7 @@
 .lb-unified [data-lb-page="settings"] .list-row small {
   display: block;
   line-height: 1.7;
-  color: #264d3b;
+  color: #2c1a4a;
 }
 .lb-unified [data-lb-page="settings"] .list-row b,
 .lb-unified [data-lb-page="settings"] .lb-settings-note {
@@ -64,8 +64,8 @@
   border-style: dashed;
 }
 .lb-unified [data-lb-page="settings"] .lb-settings-unavailable .tag {
-  color: #264d3b;
-  border-color: #d4e4d8;
+  color: #2c1a4a;
+  border-color: #e6ddf3;
   white-space: nowrap;
   flex: none;
 }
@@ -87,9 +87,9 @@
   min-width: 48px;
   margin: 0;
   padding: 0;
-  border: 1px solid #d4e4d8;
+  border: 1px solid #e6ddf3;
   border-radius: 20px;
-  background: #fffaf0;
+  background: #fcf9f4;
   box-shadow: none;
   cursor: pointer;
 }
@@ -101,12 +101,12 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #fffaf0;
+  background: #fcf9f4;
   transition: transform .15s ease;
 }
 .lb-unified [data-lb-page="settings"] .lb-settings-option .switch:checked {
-  background: #e8c987;
-  border-color: #b98a3d;
+  background: #ead18e;
+  border-color: #c49a3a;
   box-shadow: 0 0 8px #b98a3d2e;
 }
 .lb-unified [data-lb-page="settings"] .lb-settings-option .switch:checked::before {
@@ -120,7 +120,7 @@
 .lb-unified [data-lb-page="settings"] a:focus-visible,
 .lb-unified [data-lb-page="settings"] button:focus-visible,
 .lb-unified [data-lb-page="settings"] input:focus-visible {
-  outline: 2px solid #b98a3d;
+  outline: 2px solid #c49a3a;
   outline-offset: 4px;
 }
 .lb-unified [data-lb-page="settings"] .lb-settings-note,
@@ -142,18 +142,18 @@
 .lb-unified [data-lb-page="settings"] [data-lb-settings-tools] > .stack > .hint {
   margin: 10px 0;
   padding: 11px 14px;
-  background: #fffaf0;
-  border: 1px solid #d4e4d8;
+  background: #fcf9f4;
+  border: 1px solid #e6ddf3;
   border-radius: 14px;
-  color: #264d3b;
+  color: #2c1a4a;
   line-height: 1.8;
 }
 .lb-unified [data-lb-page="settings"] [data-lb-settings-tools] > .stack > .hint:empty {
   display: none;
 }
 .lb-unified [data-lb-page="settings"] [data-lb-settings-tools] [role="alert"] {
-  border-color: #d4e4d8;
-  color: #264d3b;
+  border-color: #e6ddf3;
+  color: #2c1a4a;
 }
 .lb-unified [data-lb-page="settings"] .lb-settings-save .gold-btn,
 .lb-unified [data-lb-page="settings"] .lb-settings-state .gold-btn {

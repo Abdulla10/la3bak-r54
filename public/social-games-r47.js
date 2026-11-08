@@ -14,11 +14,11 @@ export function renderSocialGame(mode,view,{esc=escapeHTML,nameOf=id=>String(id?
  const action=(type,label,fields={})=>`<button type="button" class="so-button" data-so-action="mode-action" data-mode="${mode}" data-payload="${esc(JSON.stringify({type,version:v,...fields}))}">${esc(label)}</button>`;
  const form=(type,body,label)=>`<form class="so-form sg47-form" data-so-form="mode" data-mode="${mode}" data-type="${type}"><input type="number" name="version" value="${v}" hidden>${body}<button class="so-button so-primary" type="submit">${esc(label)}</button></form>`;
  let body=`<p class="sg47-note">المشاركة اختيارية · 2–6 أعضاء · بلا Coins أو Gems أو XP أو جوائز.</p><div class="sg47-actions">${p.participate?action('participate','أرغب بالمشاركة',{enabled:true}):''}${p.withdraw?action('participate','الانسحاب',{enabled:false}):''}${p.start?action('start','بدء جلسة جديدة'):''}${p.cancel?action('cancel','إلغاء الجلسة'):''}</div><p role="status">${esc(PHASES[phase]||phase)} · ${Number(view.participants?.length)||0} مشاركين</p>`;
- if(view.deadline)body+=`<p class="sg47-note">نهاية المرحلة وفق الخادم: <time datetime="${new Date(view.deadline).toISOString()}">${esc(new Date(view.deadline).toLocaleTimeString('ar'))}</time> · مدة متبقية عند التحديث ${Math.max(0,Math.ceil((view.deadline-view.serverNow)/1000))} ثانية</p>`;
+ if(view.deadline)body+=`<p class="sg47-note">نهاية المرحلة وفق الخادم: <time datetime="${new Date(view.deadline).toISOString()}">${esc(new Date(view.deadline).toLocaleTimeString('ar-u-nu-latn'))}</time> · مدة متبقية عند التحديث ${Math.max(0,Math.ceil((view.deadline-view.serverNow)/1000))} ثانية</p>`;
  if(view.memberId)body+=`<p>دور ${esc(nameOf(view.memberId))}</p>`;
  if(mode==='draw-story'){
   body+=`<p>${esc(view.prompt||'كل مشارك يرسم خطًا واحدًا متصلًا أو يمرر دوره خلال 20 ثانية.')}</p>${drawStorySvgR47(view.strokes||[])}<p class="sg47-note">عنوان اختياري خلال 15 ثانية ثم تصويت 10 ثوانٍ. التعادل يبقى مشتركًا.</p>`;
-  if(p.stroke)body+=`<div class="sg47-draw" data-sg47-draw data-version="${v}" data-turn="${Number(view.round)}" data-session="${esc(view.sessionId)}"><label>لون الخط<select data-sg47-color><option value="#065f46">زمردي</option><option value="#c9a84c">ذهبي</option><option value="#fff9e8">عاجي</option></select></label><canvas data-sg47-canvas width="640" height="360" aria-label="ارسم خطًا واحدًا متصلًا" tabindex="0"></canvas><p class="sg47-note">رفع القلم يرسل خطك وينهي دورك. بديل دون رسم:</p>${action('pass','تمرير الدور',{turn:Number(view.round)})}</div>`;
+  if(p.stroke)body+=`<div class="sg47-draw" data-sg47-draw data-version="${v}" data-turn="${Number(view.round)}" data-session="${esc(view.sessionId)}"><label>لون الخط<select data-sg47-color><option value="#4a2277">زمردي</option><option value="#c9a84c">ذهبي</option><option value="#fff9e8">عاجي</option></select></label><canvas data-sg47-canvas width="640" height="360" aria-label="ارسم خطًا واحدًا متصلًا" tabindex="0"></canvas><p class="sg47-note">رفع القلم يرسل خطك وينهي دورك. بديل دون رسم:</p>${action('pass','تمرير الدور',{turn:Number(view.round)})}</div>`;
   if(p.title)body+=form('title','<label>عنوانك الخاص<input name="text" maxlength="40" required autocomplete="off"></label>','إرسال عنوان واحد');
   if(view.hasTitle&&phase==='titles')body+='<p>حُفظ عنوانك؛ لا تظهر العناوين قبل إغلاق النافذة.</p>';
   if(phase==='voting')body+=`<div class="sg47-options">${(view.titles||[]).map(t=>t.canVote?action('vote',t.text,{titleId:t.id}):`<span>${esc(t.text)}</span>`).join('')}</div>${view.hasVoted?'<p>حُفظ صوتك النهائي.</p>':''}`;
@@ -58,7 +58,7 @@ export function normalizeSocialGameActionR47(mode,action){
  return out;
 }
 export function drawStorySvgR47(strokes){
- const colors=['#065f46','#fff9e8','#c9a84c'];
+ const colors=['#4a2277','#fff9e8','#c9a84c'];
  const lines=(Array.isArray(strokes)?strokes:[]).slice(0,6).filter(s=>colors.includes(s.color)&&Array.isArray(s.points)&&s.points.length<=128).map(s=>{
   const ps=s.points.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1);
   if(ps.length===1)return `<circle cx="${ps[0].x*640}" cy="${ps[0].y*360}" r="2.5" fill="${s.color}"/>`;

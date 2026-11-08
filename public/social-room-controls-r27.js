@@ -1,8 +1,8 @@
 export const ROOM_THEMES=Object.freeze({
- royal:Object.freeze({name:'زمردي وعاجي',gradient:'linear-gradient(155deg,#d4e4d8 0%,#f6f1e5 58%,#bdd4c5 100%)'}),
- amethyst:Object.freeze({name:'عاجي وذهبي',gradient:'radial-gradient(ellipse at 80% 15%,#e8c98755,transparent 65%),linear-gradient(145deg,#fffaf0,#f6f1e5 60%,#d4e4d8)'}),
- gold:Object.freeze({name:'زمردي وعاجي',gradient:'linear-gradient(155deg,#d4e4d8 0%,#f6f1e5 58%,#bdd4c5 100%)',legacy:true}),
- dusk:Object.freeze({name:'عاجي وذهبي',gradient:'radial-gradient(ellipse at 80% 15%,#e8c98755,transparent 65%),linear-gradient(145deg,#fffaf0,#f6f1e5 60%,#d4e4d8)',legacy:true})
+ royal:Object.freeze({name:'زمردي وعاجي',gradient:'linear-gradient(155deg,#e6ddf3 0%,#f4eee6 58%,#d3c6e6 100%)'}),
+ amethyst:Object.freeze({name:'عاجي وذهبي',gradient:'radial-gradient(ellipse at 80% 15%,#e8c98755,transparent 65%),linear-gradient(145deg,#fcf9f4,#f4eee6 60%,#e6ddf3)'}),
+ gold:Object.freeze({name:'زمردي وعاجي',gradient:'linear-gradient(155deg,#e6ddf3 0%,#f4eee6 58%,#d3c6e6 100%)',legacy:true}),
+ dusk:Object.freeze({name:'عاجي وذهبي',gradient:'radial-gradient(ellipse at 80% 15%,#e8c98755,transparent 65%),linear-gradient(145deg,#fcf9f4,#f4eee6 60%,#e6ddf3)',legacy:true})
 });
 const valid=v=>Object.prototype.hasOwnProperty.call(ROOM_THEMES,v);
 export const themeName=id=>valid(id)?ROOM_THEMES[id].name:ROOM_THEMES.royal.name;

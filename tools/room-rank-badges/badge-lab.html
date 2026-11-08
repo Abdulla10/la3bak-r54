@@ -1,0 +1,75 @@
+<!doctype html><body style="margin:0;background:transparent">
+<script type="module">
+const { THREE, RoomEnvironment } = await import('/vendor/gift3d-three.mjs');
+window.renderBadge = async (kind) => {
+  const W = 640, H = 640;
+  const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r.setSize(W, H); r.setPixelRatio(1);
+  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.15; r.outputColorSpace = THREE.SRGBColorSpace;
+  const scene = new THREE.Scene(); const pm = new THREE.PMREMGenerator(r); scene.environment = pm.fromScene(new RoomEnvironment(), .02).texture;
+  const key = new THREE.DirectionalLight('#fff4dd', 2.4); key.position.set(-3, 4, 6); scene.add(key);
+  const rim = new THREE.DirectionalLight('#b0d0ff', 1.2); rim.position.set(4, -2, 3); scene.add(rim);
+  const P = { gold: { color: '#ffc63a', metalness: 1, roughness: .14 }, goldDark: { color: '#b27a12', metalness: 1, roughness: .28 }, silver: { color: '#e8edf5', metalness: 1, roughness: .15 }, red: { color: '#a50d18', metalness: .35, roughness: .16, clearcoat: 1, clearcoatRoughness: .05 }, purple: { color: '#6a2fb0', metalness: .35, roughness: .15, clearcoat: 1 }, green: { color: '#0f7a52', metalness: .3, roughness: .2, clearcoat: 1 }, black: { color: '#15121a', metalness: .6, roughness: .2, clearcoat: 1 } };
+  const M = (k, extra = {}) => new THREE.MeshPhysicalMaterial({ ...P[k], ...extra });
+  const gem = (color) => new THREE.MeshPhysicalMaterial({ color, metalness: 0, roughness: 0, transmission: .6, thickness: .5, ior: 2.2, clearcoat: 1, iridescence: .4, emissive: color, emissiveIntensity: .15 });
+  const ext = (shape, depth, bevel, mat) => { const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 6, curveSegments: 48 }); g.center(); return new THREE.Mesh(g, mat); };
+  const shapeFrom = (pts, closed = true) => { const s = new THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) s.lineTo(p[0], p[1]); return s; };
+  const star = (R, r0, n = 5) => { const s = new THREE.Shape(); for (let i = 0; i < n * 2; i++) { const a = Math.PI / 2 + i * Math.PI / n; const rr = i % 2 ? r0 : R; const x = Math.cos(a) * rr, y = Math.sin(a) * rr; i ? s.lineTo(x, y) : s.moveTo(x, y); } return s; };
+  const shieldShape = (w, h) => { const s = new THREE.Shape(); s.moveTo(0, h * .55); s.quadraticCurveTo(w * .55, h * .62, w, h * .45); s.lineTo(w, 0); s.quadraticCurveTo(w * .95, -h * .6, 0, -h); s.quadraticCurveTo(-w * .95, -h * .6, -w, 0); s.lineTo(-w, h * .45); s.quadraticCurveTo(-w * .55, h * .62, 0, h * .55); return s; };
+  const crown = (w, h, mat, gems) => { const g = new THREE.Group(); const s = new THREE.Shape(); s.moveTo(-w, 0); s.lineTo(-w * 1.1, h); s.lineTo(-w * .5, h * .55); s.lineTo(0, h * 1.25); s.lineTo(w * .5, h * .55); s.lineTo(w * 1.1, h); s.lineTo(w, 0); s.lineTo(-w, 0); const m = ext(s, .18, .06, mat); g.add(m); const band = ext(shapeFrom([[-w * 1.05, -.12], [w * 1.05, -.12], [w * 1.05, .14], [-w * 1.05, .14]]), .24, .05, mat); band.position.y = -h * .45; g.add(band);
+    [[-w * 1.1, h * .55], [0, h * .8], [w * 1.1, h * .55]].forEach(([x, y], i) => { const b = new THREE.Mesh(new THREE.SphereGeometry(.09, 24, 16), gem(gems[i % gems.length])); b.position.set(x, y, .2); g.add(b); });
+    for (let k = -2; k <= 2; k++) { const b = new THREE.Mesh(new THREE.SphereGeometry(.06, 20, 14), gem(gems[(k + 2) % gems.length])); b.position.set(k * w * .4, -h * .45, .22); g.add(b); } return g; };
+  const wing = (mat, n = 6, len = 1.4) => { const g = new THREE.Group(); for (let i = 0; i < n; i++) { const L = len * (1 - i * .09); const s = new THREE.Shape(); s.moveTo(0, 0); s.quadraticCurveTo(L * .45, .22, L, .05); s.quadraticCurveTo(L * .5, -.12, 0, -.1); const f = ext(s, .05, .03, mat); f.geometry.translate(L / 2, 0, 0); f.rotation.z = .9 - i * .26; f.position.z = -i * .02; g.add(f); } return g; };
+  const root = new THREE.Group(); scene.add(root);
+  if (kind === 'gold') {
+    const sh = ext(shieldShape(1, 1.2), .25, .1, M('gold')); root.add(sh);
+    const inner = ext(shieldShape(.78, .98), .2, .05, M('red')); inner.position.z = .14; root.add(inner);
+    const st = ext(star(.42, .18), .15, .05, M('gold')); st.position.set(0, .05, .3); root.add(st);
+    const cr = crown(.62, .55, M('gold'), ['#3ad1ff', '#e5484d', '#3ad1ff']); cr.position.set(0, 1.28, .1); root.add(cr);
+    const wl = wing(M('silver')); wl.position.set(-.85, .25, -.15); wl.scale.set(-1, 1, 1); root.add(wl); const wr = wing(M('silver')); wr.position.set(.85, .25, -.15); root.add(wr);
+  }
+  const ring = (R, tube, mat) => new THREE.Mesh(new THREE.TorusGeometry(R, tube, 24, 96), mat);
+  const disc = (R, d, mat, seg = 96) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(R, R, d, seg), mat); m.rotation.x = Math.PI / 2; return m; };
+  const leaf = (mat) => { const s = new THREE.Shape(); s.moveTo(0, 0); s.quadraticCurveTo(.12, .1, .26, 0); s.quadraticCurveTo(.12, -.1, 0, 0); const m = ext(s, .03, .02, mat); return m; };
+  const laurel = (R, mat, from, to, n) => { const g = new THREE.Group(); for (const side of [-1, 1]) for (let i = 0; i < n; i++) { const a = from + (to - from) * i / (n - 1); const l = leaf(mat); const x = Math.cos(a) * R * side, y = Math.sin(a) * R; l.position.set(x, y, .05); l.rotation.z = side > 0 ? a + Math.PI / 2 + .5 : Math.PI - a - Math.PI / 2 - .5; g.add(l); } return g; };
+  if (kind === 'silver') {
+    const sc = ext(star(1.05, .96, 32), .18, .06, M('silver')); root.add(sc);
+    const d = disc(.82, .26, M('silver', { color: '#c9d2de', roughness: .25 })); d.position.z = .06; root.add(d);
+    const rr = ring(.82, .05, M('silver')); rr.position.z = .2; root.add(rr);
+    const la = laurel(.62, M('silver', { color: '#f4f7fb' }), -1.25, .3, 6); la.position.z = .16; root.add(la);
+    const st = ext(star(.36, .15), .14, .05, M('silver', { color: '#ffffff', roughness: .1 })); st.position.set(0, .05, .3); root.add(st);
+    for (const s of [-1, 1]) { const rb = ext(shapeFrom([[0, 0], [.32, 0], [.4, -.9], [.18, -.74], [.02, -.95]]), .05, .02, M('green')); rb.position.set(s * .32 - (s < 0 ? .2 : .2), -1.05, -.15); rb.rotation.z = s * .22; if (s < 0) rb.scale.x = -1; root.add(rb); }
+  }
+  if (kind === 'diamond') {
+    const pts = [new THREE.Vector2(0, -1.05), new THREE.Vector2(.95, .18), new THREE.Vector2(.72, .48), new THREE.Vector2(0, .52)];
+    const lg = new THREE.LatheGeometry(pts, 10); const gm = new THREE.Mesh(lg, new THREE.MeshPhysicalMaterial({ color: '#9b5cff', metalness: .2, roughness: .04, transmission: .15, thickness: 1.2, ior: 2.4, clearcoat: 1, iridescence: .9, iridescenceIOR: 1.8, flatShading: true, emissive: '#4a1590', emissiveIntensity: .45 }));
+    gm.rotation.x = .25; gm.scale.set(1, 1, .7); root.add(gm);
+    const cr = ring(.98, .06, M('silver', { color: '#f2ecff' })); cr.position.set(0, .2, 0); cr.rotation.x = Math.PI / 2 - .25; cr.scale.set(1, 1, .7); root.add(cr);
+    const glass = new THREE.MeshPhysicalMaterial({ color: '#c7a6ff', metalness: .6, roughness: .12, clearcoat: 1, iridescence: .8, emissive: '#3a1070', emissiveIntensity: .2 });
+    const wl = wing(glass, 7, 1.5); wl.position.set(-.75, .15, -.3); wl.scale.set(-1, 1, 1); root.add(wl); const wr = wing(glass, 7, 1.5); wr.position.set(.75, .15, -.3); root.add(wr);
+    for (const [x, y, s] of [[1.05, .95, .12], [-1.0, -.55, .09], [.2, 1.0, .07]]) { const sp = ext(star(s, s * .3, 4), .02, .01, new THREE.MeshBasicMaterial({ color: '#ffffff' })); sp.position.set(x, y, .6); root.add(sp); }
+  }
+  if (kind === 'royal') {
+    const cols = ['#ffd04a', '#ff9a2b', '#ff5a1f', '#e0262f', '#b5121b'];
+    for (const side of [-1, 1]) for (let i = 0; i < 9; i++) { const L = 1.55 - Math.abs(i - 3) * .1; const s = new THREE.Shape(); s.moveTo(0, 0); s.quadraticCurveTo(L * .4, .2, L, 0); s.quadraticCurveTo(L * .4, -.16, 0, 0); const f = ext(s, .04, .025, M('red', { color: cols[i % cols.length], metalness: .5, roughness: .2, emissive: cols[i % cols.length], emissiveIntensity: .12 })); f.geometry.translate(L / 2, 0, 0); const a = (side > 0 ? 0 : Math.PI) + side * (.05 + i * .2); f.rotation.z = a; f.position.set(side * .25, .05, -.1 - i * .01); root.add(f); }
+    for (let i = -2; i <= 2; i++) { const L = 1.0 - Math.abs(i) * .12; const s = new THREE.Shape(); s.moveTo(0, 0); s.quadraticCurveTo(L * .4, .14, L, 0); s.quadraticCurveTo(L * .4, -.12, 0, 0); const f = ext(s, .04, .02, M('red', { color: cols[(i + 2) % cols.length], metalness: .5, roughness: .2 })); f.geometry.translate(L / 2, 0, 0); f.rotation.z = -Math.PI / 2 + i * .22; f.position.set(0, -.35, -.15); root.add(f); }
+    const r0 = ring(.48, .09, M('gold')); r0.position.z = .1; root.add(r0); const d0 = disc(.44, .14, M('red')); d0.position.z = .05; root.add(d0);
+    const rb = new THREE.Mesh(new THREE.OctahedronGeometry(.26, 0), new THREE.MeshPhysicalMaterial({ color: '#ff2440', roughness: 0, transmission: .4, thickness: .6, ior: 2.3, clearcoat: 1, flatShading: true, emissive: '#7a0010', emissiveIntensity: .3 })); rb.position.z = .3; rb.scale.set(1, 1.2, .6); root.add(rb);
+    const cr = crown(.4, .38, M('gold'), ['#3ad1ff', '#ffffff', '#3ad1ff']); cr.position.set(0, .8, .1); root.add(cr);
+  }
+  if (kind === 'legend') {
+    const bat = (side) => { const s = new THREE.Shape(); s.moveTo(0, 0); s.lineTo(.5, .55); s.lineTo(1.5, .95); s.lineTo(1.35, .55); s.lineTo(1.7, .35); s.lineTo(1.35, .15); s.lineTo(1.55, -.15); s.lineTo(1.1, -.12); s.lineTo(1.15, -.45); s.lineTo(.7, -.3); s.lineTo(.3, -.45); s.lineTo(0, -.2); const w = ext(s, .08, .04, M('black')); w.geometry.translate(.85, .25, 0); const g = new THREE.Group(); g.add(w); const edge = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[0, 0], [.5, .55], [1.5, .95]].map(([x, y]) => new THREE.Vector3(x - .85 + .85, y + 0, .07))), 40, .035, 10), M('gold')); g.add(edge); g.scale.x = side; g.position.set(side * .45, .1, -.2); return g; };
+    root.add(bat(-1)); root.add(bat(1));
+    const hex = new THREE.Shape(); for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; const x = Math.cos(a) * .95, y = Math.sin(a) * .95; i ? hex.lineTo(x, y) : hex.moveTo(x, y); }
+    const hx = ext(hex, .24, .1, M('gold')); root.add(hx);
+    const inner = disc(.66, .2, M('black')); inner.position.z = .12; root.add(inner); const rr = ring(.68, .045, M('gold')); rr.position.z = .23; root.add(rr);
+    const dm = new THREE.Mesh(new THREE.OctahedronGeometry(.34, 0), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0, transmission: .7, thickness: .8, ior: 2.4, clearcoat: 1, iridescence: .8, flatShading: true })); dm.position.z = .38; dm.scale.set(1, 1.25, .6); root.add(dm);
+    const cr = crown(.62, .55, M('gold'), ['#e5484d', '#3ad1ff', '#e5484d']); cr.position.set(0, 1.25, .12); cr.scale.setScalar(1.15); root.add(cr);
+    const la = laurel(1.05, M('gold'), -1.45, -.35, 6); la.position.set(0, .05, .15); root.add(la);
+  }
+  const box = new THREE.Box3().setFromObject(root); const c = box.getCenter(new THREE.Vector3()); root.position.sub(c);
+  root.rotation.y = -.22; root.rotation.x = .08;
+  const size = box.getSize(new THREE.Vector3()); const cam = new THREE.PerspectiveCamera(30, 1, .1, 100); cam.position.set(0, 0, Math.max(size.x, size.y) / (2 * Math.tan(THREE.MathUtils.degToRad(15))) * 1.12); cam.lookAt(0, 0, 0);
+  r.render(scene, cam); const url = r.domElement.toDataURL('image/png'); r.dispose(); return url;
+};
+window.ready = true;
+</script></body>

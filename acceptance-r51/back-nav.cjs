@@ -61,16 +61,24 @@ async function run(label, opts) {
   await ensure('#/profile');
   // 4) صفحة فرعية داخل NOBLE (R52: تفاصيل امتياز N4 ← «عرض في المتجر») ورجوع → NOBLE
   await clickRoute('#/ranks'); await settle(p, '#/ranks');
-  await p.click('.nx-tabs button[data-lbr-tier="4"]').catch(() => {}); await sleep(400);
-  await p.click('.nx-perk >> text=مركبة دخول').catch(() => {}); await sleep(500);
-  const sub = await p.$('.vn-sheet a[href="#/shop"]');
+  // R58e: السيارات (اللي كانت عنصر متجر بـ N4) انشالت؛ ندوّر بكل مستويات نوبل على امتياز فيه رابط «عرض في المتجر»
+  let sub = null;
+  for (let tier = 1; tier <= 9 && !sub; tier++) {
+    await p.click(`.nx-tabs button[data-lbr-tier="${tier}"]`).catch(() => {}); await sleep(400);
+    const cards = (await p.$$('.nx-perk')).length;
+    for (let k = 0; k < cards; k++) {
+      await p.locator('.nx-perk').nth(k).click().catch(() => {}); await sleep(450);
+      sub = await p.$('.vn-sheet a[href="#/shop"]'); if (sub) break;
+      await p.click('.vn-sheet [data-vn-action="close"]').catch(() => {}); await sleep(250);
+    }
+  }
   if (sub) {
     await sub.click(); await settle(p, '#/shop');
     await back(); await settle(p, '#/ranks');
     ok(`${label}: الملف → NOBLE → صفحة فرعية (المتجر) → رجوع → NOBLE`, (await route(p)) === '#/ranks', await route(p));
     await back(); await settle(p, '#/profile');
     ok(`${label}: …ثم رجوع ثاني → الملف`, (await route(p)) === '#/profile', await route(p));
-  } else ok(`${label}: رابط فرعي داخل NOBLE موجود`, false, 'ما ظهر رابط المتجر بتفاصيل امتياز N4 (يحتاج إعداد الاختبار المحلي seed-local)');
+  } else console.log(`SKIP ${label}: ما فيه بالبيانات المحلية عنصر متجر مربوط برتبة نوبل (كانت السيارة بـ N4 وانشالت) — خطوة الرابط الفرعي ما تنطبق`);
 
   await ensure('#/profile');
   // 5) صفحة فرعية داخل VIP (R52: تفاصيل امتياز ← رابطه، مثل «مكافآت الرتب» أو «المتجر») ورجوع → VIP

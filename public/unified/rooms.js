@@ -1,5 +1,5 @@
 /* Rooms-only integration. No accounts, wallet logic, demo data or new data source. */
-import {renderProfileIcon} from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import {renderProfileIcon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 const CODE_RE = /^[A-HJ-NP-Z2-9]{5}$/;
 const STATUS = { lobby: 'تنتظر اللاعبين', playing: 'اللعب شغّال', finished: 'انتهت الجولة' };
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -107,7 +107,7 @@ export function render(ctx = {}) {
     <div class="grid2 lb-room-bottom-panels">
       <section class="panel" data-lb-room-panel="join" tabindex="-1"><h2 class="panel-title">دخول برمز</h2>
         <form class="form" data-form="join"><div class="field"><label for="joinCode">رمز الغرفة</label><div class="join-row">
-          <input class="input code" id="joinCode" name="code" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="رمز من ٥ خانات" required aria-describedby="joinHelp">
+          <input class="input code" id="joinCode" name="code" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="رمز من 5 خانات" required aria-describedby="joinHelp">
           <button class="gold-btn" type="submit"${disabled(ctx)}>دخول</button></div>
           <label for="joinPassword">كلمة مرور الغرفة الخاصة (إن وجدت)</label><input class="input" type="password" id="joinPassword" name="password" maxlength="128" autocomplete="off">
           <p class="hint" id="joinHelp">اكتب الرمز كامل: خمس خانات من الحروف الإنجليزية والأرقام. الغرفة لازم تنتظر لاعبين وعندها مكان؛ غرف الكمبيوتر ما تقبل دخول ربعك.</p></div>

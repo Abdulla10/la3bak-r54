@@ -4,9 +4,9 @@
   max-width: 100%;
   margin-inline: auto;
   padding: 20px 18px;
-  color: #264d3b;
-  background: linear-gradient(180deg, #fffaf0 0%, #fffaf0 65%, #fffaf0 100%);
-  border: 1px solid #d4e4d8;
+  color: #2c1a4a;
+  background: linear-gradient(180deg, #fcf9f4 0%, #fcf9f4 65%, #fcf9f4 100%);
+  border: 1px solid #e6ddf3;
   border-radius: 24px;
   box-shadow: 0 0 22px #264d3b2e, inset 0 0 22px #264d3b1f;
   font: inherit;
@@ -38,7 +38,7 @@
 }
 .lb-unified .lb-drawer .lb-drawer-brand p {
   margin: 6px 0 0;
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 12px;
 }
 .lb-unified .lb-drawer .lb-drawer-user {
@@ -47,8 +47,8 @@
   gap: 12px;
   margin: 14px 0;
   padding: 13px;
-  background: linear-gradient(135deg, #fffaf0, #fffaf0);
-  border: 1px solid #d4e4d8;
+  background: linear-gradient(135deg, #fcf9f4, #fcf9f4);
+  border: 1px solid #e6ddf3;
   border-radius: 18px;
   box-shadow: inset 0 0 16px #264d3b18;
 }
@@ -62,9 +62,9 @@
   flex: none;
   width: 62px;
   height: 62px;
-  border: 2px solid #b98a3d;
+  border: 2px solid #c49a3a;
   border-radius: 50%;
-  background: linear-gradient(145deg, #754222, #fffaf0);
+  background: linear-gradient(145deg, #754222, #fcf9f4);
   box-shadow: 0 0 12px #b98a3d2e;
   overflow: hidden;
 }
@@ -99,7 +99,7 @@
 .lb-unified .lb-drawer .lb-drawer-user small {
   display: block;
   margin-top: 4px;
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 12px;
   overflow-wrap: anywhere;
 }
@@ -119,10 +119,10 @@
   min-height: 47px;
   margin: 0;
   padding: 10px 13px;
-  background: linear-gradient(90deg, #fffaf0, #fffaf0);
-  border: 1px solid #d4e4d8;
+  background: linear-gradient(90deg, #fcf9f4, #fcf9f4);
+  border: 1px solid #e6ddf3;
   border-radius: 22px;
-  color: #264d3b;
+  color: #2c1a4a;
   text-decoration: none;
   font: inherit;
 }
@@ -137,7 +137,7 @@
   display: block;
   margin-top: 3px;
   font-size: 11px;
-  color: #264d3b;
+  color: #2c1a4a;
 }
 .lb-unified .lb-drawer .lb-drawer-link > svg,
 .lb-unified .lb-drawer .lb-drawer-unavailable > svg {
@@ -152,22 +152,22 @@
   transform: rotate(180deg);
 }
 .lb-unified .lb-drawer .lb-drawer-link.active {
-  background: linear-gradient(90deg, #e8c987, #e8c987);
-  border-color: #b98a3d;
-  color: #264d3b;
+  background: linear-gradient(90deg, #ead18e, #ead18e);
+  border-color: #c49a3a;
+  color: #2c1a4a;
   box-shadow: 0 0 13px #b98a3d2e;
 }
 .lb-unified .lb-drawer .lb-drawer-link.active small {
-  color: #264d3b;
+  color: #2c1a4a;
 }
 .lb-unified .lb-drawer .lb-drawer-link:not(.active):hover {
-  border-color: #d4e4d8;
-  background: linear-gradient(90deg, #fffaf0, #fffaf0);
+  border-color: #e6ddf3;
+  background: linear-gradient(90deg, #fcf9f4, #fcf9f4);
 }
 .lb-unified .lb-drawer .lb-drawer-unavailable {
-  background: #fffaf0;
+  background: #fcf9f4;
   border-style: dashed;
-  color: #264d3b;
+  color: #2c1a4a;
 }
 .lb-unified .lb-drawer .lb-drawer-logout {
   display: flex;
@@ -178,10 +178,10 @@
   min-height: 47px;
   margin-top: 20px;
   padding: 12px;
-  background: #fffaf0;
-  border: 1px solid #d4e4d8;
+  background: #fcf9f4;
+  border: 1px solid #e6ddf3;
   border-radius: 25px;
-  color: #264d3b;
+  color: #2c1a4a;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -189,14 +189,14 @@
 .lb-unified .lb-drawer .lb-drawer-status {
   margin: 0 0 12px;
   padding: 10px 12px;
-  border: 1px solid #d4e4d8;
+  border: 1px solid #e6ddf3;
   border-radius: 12px;
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 12px;
 }
 .lb-unified .lb-drawer .lb-drawer-error {
-  border-color: #d4e4d8;
-  color: #264d3b;
+  border-color: #e6ddf3;
+  color: #2c1a4a;
 }
 .lb-unified .lb-drawer .lb-drawer-retry,
 .lb-unified .lb-drawer .lb-drawer-login {
@@ -205,8 +205,8 @@
   min-height: 40px;
   margin: 8px 0;
   padding: 7px 14px;
-  background: #fffaf0;
-  border: 1px solid #d4e4d8;
+  background: #fcf9f4;
+  border: 1px solid #e6ddf3;
   border-radius: 20px;
   color: #fff;
   text-decoration: none;
@@ -216,7 +216,7 @@
 }
 .lb-unified .lb-drawer a:focus-visible,
 .lb-unified .lb-drawer button:focus-visible {
-  outline: 3px solid #b98a3d;
+  outline: 3px solid #c49a3a;
   outline-offset: 3px;
 }
 @media (max-width: 420px) {
@@ -238,4 +238,4 @@
   }
 }
 
-.lb-unified .lb-drawer .lb-drawer-close{display:grid;place-items:center;margin:0 0 0 auto;width:40px;height:40px;padding:7px;border:1px solid #d4e4d8;border-radius:50%;background:radial-gradient(#fffaf0,#fffaf0);color:#264d3b;cursor:pointer;box-shadow:0 0 8px #264d3b2e;}
+.lb-unified .lb-drawer .lb-drawer-close{display:grid;place-items:center;margin:0 0 0 auto;width:40px;height:40px;padding:7px;border:1px solid #e6ddf3;border-radius:50%;background:radial-gradient(#fcf9f4,#fcf9f4);color:#2c1a4a;cursor:pointer;box-shadow:0 0 8px #264d3b2e;}

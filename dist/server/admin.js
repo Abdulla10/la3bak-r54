@@ -3,7 +3,7 @@ import { BulkGrantError } from './bulk-grants.js';
 import { EconomyInputError } from './economy.js';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { MILESTONES } from './catalog.js';
-import { PRESETS, ShopInputError, PRICE_MAX } from './shopcatalog.js';
+import { PRESETS, ShopInputError, SHOP_PRICE_MAX as PRICE_MAX } from './shopcatalog.js';
 import { StorageError, STORAGE_MSG, StorageMonitor, Persister, loadJsonFile, isObj } from './datafile.js';
 import { START_COINS } from './wallet.js';
 import { CommunityError } from './community.js';

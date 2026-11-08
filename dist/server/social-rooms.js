@@ -1,3 +1,5 @@
+import { roomCodeOf, roomLevelOf, ROOM_VANITY, ROOM_ADS_MAX, currentRoomMonth, roomRankView, validRoomMonth, ROOM_MONTH_SENDERS_MAX } from './room-extras-r58.js';
+import { ENTRANCE_ART_PATHS } from './entrance-catalog.js';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
@@ -51,9 +53,17 @@ export function validSocialRooms(d) {
     const roomIds = new Set(), councilIds = new Set(), users = new Set(), channels = new Set(), challengeIds = new Set(), scoredIds = new Set();
     const cannonIds = new Set(), cannonReceiptIds = new Set();
     for (const r of d.rooms) {
-        if (!isObj(r) || !keys(r, ['id', 'name', 'description', 'privacy', 'memory', 'maxMembers', 'ownerId', 'hostId', 'moderators', 'invites', 'bans', 'members', 'councils', 'memories', 'activity', 'createdAt', 'updatedAt', 'settings', 'micRequests', 'micApprovals', 'cover', 'challenge', 'cannon', 'roomMode', 'roomTag', 'country', 'password', 'upgrade']) || !uuid(r.id) || roomIds.has(r.id) || !str(r.name, 80) || !r.name.trim() || !str(r.description, 400) || !privacy(r.privacy) || typeof r.memory !== 'boolean' || !num(r.maxMembers, 2, 50) || !ident(r.ownerId) || !(r.hostId === null || ident(r.hostId)) || !strings(r.moderators, ident, 50) || r.moderators.includes(r.ownerId) || !strings(r.invites, ident, 200) || !Array.isArray(r.bans) || r.bans.length > 500 || !Array.isArray(r.members) || r.members.length > r.maxMembers || !Array.isArray(r.councils) || r.councils.length > 50 || !Array.isArray(r.memories) || r.memories.length > 100 || !Array.isArray(r.activity) || r.activity.length > 100 || !stamp(r.createdAt) || !stamp(r.updatedAt))
+        if (!isObj(r) || !keys(r, ['id', 'name', 'description', 'privacy', 'memory', 'maxMembers', 'ownerId', 'hostId', 'moderators', 'invites', 'bans', 'members', 'councils', 'memories', 'activity', 'createdAt', 'updatedAt', 'settings', 'micRequests', 'micApprovals', 'cover', 'challenge', 'cannon', 'roomMode', 'roomTag', 'country', 'password', 'upgrade', 'vanity', 'vanityItem', 'support', 'ads', 'month']) || !uuid(r.id) || roomIds.has(r.id) || !str(r.name, 80) || !r.name.trim() || !str(r.description, 400) || !privacy(r.privacy) || typeof r.memory !== 'boolean' || !num(r.maxMembers, 2, 50) || !ident(r.ownerId) || !(r.hostId === null || ident(r.hostId)) || !strings(r.moderators, ident, 50) || r.moderators.includes(r.ownerId) || !strings(r.invites, ident, 200) || !Array.isArray(r.bans) || r.bans.length > 500 || !Array.isArray(r.members) || r.members.length > r.maxMembers || !Array.isArray(r.councils) || r.councils.length > 50 || !Array.isArray(r.memories) || r.memories.length > 100 || !Array.isArray(r.activity) || r.activity.length > 100 || !stamp(r.createdAt) || !stamp(r.updatedAt))
             return false;
         if (Object.hasOwn(r, 'upgrade') && !validRoomUpgradeMetadataR47(r.upgrade))
+            return false;
+        if (Object.hasOwn(r, 'vanity') && (typeof r.vanity !== 'string' || !ROOM_VANITY.test(r.vanity) || typeof r.vanityItem !== 'string'))
+            return false;
+        if (Object.hasOwn(r, 'support') && !nat(r.support))
+            return false;
+        if (Object.hasOwn(r, 'month') && !validRoomMonth(r.month))
+            return false;
+        if (Object.hasOwn(r, 'ads') && (!Array.isArray(r.ads) || r.ads.length > ROOM_ADS_MAX || r.ads.some((a) => !isObj(a) || !keys(a, ['id', 'text', 'at']) || !uuid(a.id) || !str(a.text, 200) || !a.text.trim() || !nat(a.at))))
             return false;
         if (Object.hasOwn(r, 'roomMode') && !validDirectoryMode(r.roomMode) || Object.hasOwn(r, 'roomTag') && !validDirectoryTag(r.roomTag) || Object.hasOwn(r, 'country') && !validDirectoryCountry(r.country) || Object.hasOwn(r, 'password') && !validRoomPasswordR30(r.password))
             return false;
@@ -464,6 +474,8 @@ export class SocialRooms {
                     this.opts.reconcileGift?.(sender, recipient, result.ev.tx);
                 }
                 catch { /* wallet already committed */ }
+            if (result.ok && result.dup === false && isObj(result.ev) && typeof result.ev.tx === 'string')
+                this.addRoomSupport(roomId, sender, recipient, result.ev.tx);
             if (result.ok && result.dup === false && result.ev) {
                 try {
                     const r = this.state.rooms.find(r => r.id === roomId);
@@ -508,6 +520,8 @@ export class SocialRooms {
                         this.opts.reconcileGift?.(sender, recipient, ev.tx);
                     }
                     catch { /* existing committed source retries independently */ }
+                    if (result.dup === false)
+                        this.addRoomSupport(roomId, sender, recipient, ev.tx);
                     if (result.dup === false)
                         try {
                             const r = this.state.rooms.find(r => r.id === roomId);
@@ -562,6 +576,46 @@ export class SocialRooms {
             fail('challenge_receipt_capacity', 409);
         return Object.freeze({ roomId: r.id, councilId: c.id, challengeId, sourcePublic: r.privacy === 'public' && c.privacy === 'public' && [sender, recipient].every(id => this.opts.supportPublicActivity?.(id) !== false) && !this.state.receipts.some(p => p.command === 'game:bind' && p.key === r.id) });
     }
+    /** R58: يزيد دعم الغرفة (ليفلها) بقيمة هدية ملتزمة بالمحفظة. فشل الحفظ ما يأثر على الهدية نفسها. */
+    addRoomSupport(roomId, sender, recipient, tx) {
+        try {
+            const value = this.opts.giftValue?.(sender, recipient, tx, roomId);
+            if (!nat(value) || !value)
+                return;
+            const r = this.state.rooms.find((x) => x.id === roomId);
+            if (!r)
+                return;
+            const before = this.state, d = structuredClone(before), room = this.room(d, roomId), now = this.clock();
+            const next = (room.support ?? 0) + value;
+            if (!nat(next))
+                return;
+            room.support = next;
+            // R58c: نقاط رتبة الشهر + بيانات الشهر لأداة مراجعة بيانات الغرفة
+            const m = structuredClone(currentRoomMonth(room.month, now));
+            const pts = m.pts + value;
+            if (nat(pts)) {
+                m.pts = pts;
+                m.gifts += 1;
+                const prev = m.senders[sender] ?? 0;
+                if (prev || Object.keys(m.senders).length < ROOM_MONTH_SENDERS_MAX)
+                    m.senders[sender] = prev + value;
+                room.month = m;
+            }
+            this.save(d, now);
+            this.state = d;
+            this.notice(before, d);
+        }
+        catch { /* الهدية انصرفت؛ الليفل يكمل مع الهدايا الجاية */ }
+    }
+    /** R58c: أداة مراجعة بيانات الغرفة (للمالك والمشرفين): نقاط الشهر وعدد الهدايا وأكثر الداعمين */
+    rankStatsView(r, viewer) {
+        const m = currentRoomMonth(r.month, this.clock());
+        const top = Object.entries(m.senders).sort((a, b) => b[1] - a[1]).slice(0, 10).filter(([id]) => !this.blocked(viewer, id)).map(([id, pts]) => ({ ...this.who(id), pts }));
+        return { month: m.key, pts: m.pts, gifts: m.gifts, supporters: Object.keys(m.senders).length, top, members: r.members.length, totalSupport: r.support ?? 0 };
+    }
+    /** R58: الرقم الظاهر للغرفة: الأيدي المميز إذا موجود، وإلا رقم 8 خانات الثابت */
+    roomCode(r) { return r.vanity ?? roomCodeOf(r.id); }
+    roomExtrasView(r) { const lv = roomLevelOf(r.support ?? 0); return { rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })) }; }
     /** R55: فحص جوائز المدفع بدون رمي خطأ. لو عنصر جائزة صار مقفول برتبة أو موقوف بالمتجر، الغرف والدردشة والهدايا تكمل عادي والمدفع ما ينفعّل لين ترجع الجوائز صالحة. */
     cannonCatalogReady() {
         if (!this.opts.cannon)
@@ -1328,6 +1382,14 @@ export class SocialRooms {
         const admission = {};
         if (command === 'room:create' || command === 'room:update')
             this.directoryMetadata(b);
+        if ((command === 'room:create' || command === 'room:update') && this.opts.moderate) {
+            for (const [k, kind] of [['name', 'room-name'], ['description', 'room-ad']])
+                if (typeof b[k] === 'string' && b[k].trim()) {
+                    const m = this.opts.moderate(b[k], kind);
+                    if (!m.ok)
+                        fail(m.code, 422);
+                }
+        }
         if (command === 'room:update' && Object.hasOwn(b, 'password')) {
             const r = this.room(this.state, b.roomId);
             if (!this.visibleRoom(r, id))
@@ -1655,6 +1717,62 @@ export class SocialRooms {
         }
         if (!this.visibleRoom(r, id))
             fail('room_not_found', 404);
+        /* R58: إعلانات الغرفة (حتى 10) — كل إعلان يمر على المراجعة التلقائية وينقبل فورًا إذا سليم */
+        if (command === 'room:ads') {
+            if (!keys(b, ['roomId', 'ads']) || !Array.isArray(b.ads) || b.ads.length > ROOM_ADS_MAX)
+                fail('invalid_room_ads');
+            this.requireMod(r, id, undefined, 'identity');
+            const ads = [];
+            for (const raw of b.ads) {
+                if (typeof raw !== 'string')
+                    fail('invalid_room_ads');
+                const t = raw.trim().slice(0, 200);
+                if (!t)
+                    continue;
+                if (this.opts.moderate) {
+                    const m = this.opts.moderate(t, 'room-ad');
+                    if (!m.ok)
+                        fail(m.code, 422);
+                }
+                const old = (r.ads ?? []).find(a => a.text === t);
+                ads.push(old ?? { id: randomUUID(), text: t, at: now });
+            }
+            if (ads.length)
+                r.ads = ads;
+            else
+                delete r.ads;
+            this.activity(r, command, now);
+            return success({ roomId: r.id, updated: true });
+        }
+        /* R58: أيدي غرفة مميز (من المتجر) — للمالك فقط، والرقم ما يتكرر بين الغرف */
+        if (command === 'room:vanity') {
+            if (!keys(b, ['roomId', 'itemId']))
+                fail('invalid_room_vanity');
+            if (r.ownerId !== id)
+                fail('owner_required', 403);
+            if (b.itemId === null) {
+                delete r.vanity;
+                delete r.vanityItem;
+                this.activity(r, command, now);
+                return success({ roomId: r.id, updated: true });
+            }
+            if (typeof b.itemId !== 'string')
+                fail('invalid_room_vanity');
+            const code = this.opts.roomIdItem?.(id, b.itemId);
+            if (!code || !ROOM_VANITY.test(code))
+                fail('room_vanity_not_owned', 403);
+            if (d.rooms.some(x => x.id !== r.id && (x.vanity === code || roomCodeOf(x.id) === code)))
+                fail('room_vanity_taken', 409);
+            for (const x of d.rooms)
+                if (x.id !== r.id && x.vanityItem === b.itemId && x.ownerId === id) {
+                    delete x.vanity;
+                    delete x.vanityItem;
+                }
+            r.vanity = code;
+            r.vanityItem = b.itemId;
+            this.activity(r, command, now);
+            return success({ roomId: r.id, updated: true });
+        }
         /* R55: صاحب الغرفة يحذف غرفته بنفسه — نفس حماية الإدارة: ما تنحذف وفيه جائزة مدفع معلّقة، ولا غرفة مربوطة بلعبة. */
         if (command === 'room:delete') {
             if (!keys(b, ['roomId']))
@@ -2233,7 +2351,11 @@ export class SocialRooms {
         const r = p.ranks;
         const ranks = r ? { level: num(r.level, 1, 100) ? r.level : null, vip: num(r.vip, 0, 15) ? r.vip : null, noble: num(r.noble, 0, 9) ? r.noble : null } : undefined;
         const frame = typeof p.frame === 'string' && /^[A-Za-z_][A-Za-z0-9_-]{0,79}$/.test(p.frame) ? p.frame : null;
-        return { id: p.publicId ?? p.id, name: p.name, ...(p.avatar ? { avatar: p.avatar } : {}), ...(frame ? { frame } : {}), ...(ranks ? { ranks } : {}), ...(p.entrance && ['entrance-sport', 'entrance-royal'].includes(p.entrance.id) && p.entrance.art === `/assets/store-r23/${p.entrance.id}.webp` ? { entrance: { id: p.entrance.id, name: p.entrance.name, art: p.entrance.art } } : {}) };
+        const cosmetic = (v) => typeof v === 'string' && /^[a-z][a-z0-9-]{0,39}$/.test(v) ? v : null;
+        const bubble = cosmetic(p.bubble), board = cosmetic(p.board);
+        // R57: مركبات الدخول من كتالوج الخادم فقط (المسار لازم يطابق صورة العنصر نفسه)
+        const entranceOk = !!p.entrance && ENTRANCE_ART_PATHS[p.entrance.id] === p.entrance.art;
+        return { id: p.publicId ?? p.id, name: p.name, ...(p.avatar ? { avatar: p.avatar } : {}), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ...(ranks ? { ranks } : {}), ...(entranceOk ? { entrance: { id: p.entrance.id, name: p.entrance.name, art: p.entrance.art } } : {}) };
     }
     role(r, id, c) { return r.ownerId === id ? 'owner' : r.moderators.includes(id) ? 'moderator' : c?.ownerId === id ? 'council-owner' : c?.hostId === id ? 'council-host' : r.hostId === id ? 'host' : 'member'; }
     memberView(r, m, viewer, c) {
@@ -2242,6 +2364,21 @@ export class SocialRooms {
         const who = this.who(m.id), seatCouncil = m.councilId ? this.council(r, m.councilId) : null;
         const seatVisible = seatCouncil && (seatCouncil.privacy === 'public' || r.members.some(peer => peer.id === viewer && peer.councilId === seatCouncil.id));
         return who ? { ...who, seatIndex: seatVisible ? this.memberSeat(r, m) : null, joinedAt: m.joinedAt, muted: m.muted, connected: (this.connections.get(m.id) ?? 0) > 0, role: this.role(r, m.id, c), ...(this.pref(this.state, m.id, false)?.interests ? { interests: this.pref(this.state, m.id, false).interests } : {}) } : null;
+    }
+    /** R58f: الغرفة اللي فيها الصديق الحين، بس إذا الغرفة ظاهرة للمشاهد وما بينهم حظر */
+    friendRoom(viewer, target) {
+        try {
+            const x = this.member(this.state, target);
+            if (!x || (x.member.deadline !== null && x.member.deadline <= this.clock()))
+                return null;
+            const r = x.room;
+            if (this.blocked(viewer, target) || !this.directoryVisibleRoom(r, viewer))
+                return null;
+            return { id: r.id, name: r.name, code: this.roomCode(r), photo: this.photo(r), count: r.members.length, tier: roomRankView(r.month, this.clock()).tier, locked: !!r.password || r.privacy !== 'public' };
+        }
+        catch {
+            return null;
+        }
     }
     current(id) { const x = this.member(this.state, id); if (!x || !this.directoryVisibleRoom(x.room, id) || x.member.deadline !== null && x.member.deadline <= this.clock())
         return null; const muted = this.audioMuted(x.room, x.member); return { roomId: x.room.id, councilId: x.member.councilId, seatIndex: this.memberSeat(x.room, x.member), muted, serverMuted: x.member.muted, canSpeak: !muted && !!x.member.councilId, micRequested: (x.room.micRequests ?? []).includes(id), micApproved: (x.room.micApprovals ?? []).includes(id) }; }
@@ -2271,7 +2408,7 @@ export class SocialRooms {
         const p = this.pref(this.state, id, false);
         return { recent: (p?.remember ? p.recentRoomIds ?? [] : []).filter(roomId => visible.has(roomId)), followed: (p?.followedRoomIds ?? []).filter(roomId => visible.has(roomId)), joined: this.state.rooms.filter(r => visible.has(r.id) && r.members.some(m => m.id === id && (m.deadline === null || m.deadline > this.clock()))).map(r => r.id), owned: this.state.rooms.filter(r => visible.has(r.id) && r.ownerId === id).map(r => r.id) };
     }
-    directoryRoomView(r) { return { roomMode: r.roomMode ?? 'normal', roomTag: r.roomTag ?? '', country: r.country ?? '', hasPassword: !!r.password }; }
+    directoryRoomView(r) { return { roomMode: r.roomMode ?? 'normal', roomTag: r.roomTag ?? '', country: r.country ?? '', hasPassword: !!r.password, ...this.roomExtrasView(r) }; }
     prefsView(id) { const p = this.pref(this.state, id, false), directory = this.directoryView(id); return p ? { invitations: p.invitations, interests: p.interests, remember: p.remember, adultConsent: p.adultConsent, adultAcknowledged: p.adultConsent, favorites: p.favorites.filter(f => this.visibleCouncilRef(id, f)).map(f => ({ ...f })), previous: p.previous && this.visibleCouncilRef(id, p.previous) ? { ...p.previous } : null, recentRoomIds: directory.recent, followedRoomIds: directory.followed } : { invitations: true, interests: '', remember: false, adultConsent: false, adultAcknowledged: false, favorites: [], previous: null, recentRoomIds: [], followedRoomIds: [] }; }
     councilView(r, c, id) {
         const joined = r.members.some(m => m.id === id && m.councilId === c.id), mod = this.councilMod(r, c, id), members = r.members.filter(m => m.councilId === c.id);
@@ -2339,7 +2476,7 @@ export class SocialRooms {
             const permissions = this.permissions(r, userId);
             const base = { id: r.id, name: r.name, description: r.description, photo: this.photo(r), settings: this.settings(r), permissions, privacy: r.privacy, memory: r.memory, maxMembers: r.maxMembers, ...this.directoryRoomView(r), owner: this.who(r.ownerId), host: r.hostId && !this.blocked(userId, r.hostId) ? this.who(r.hostId) : null, createdAt: r.createdAt, updatedAt: r.updatedAt, count: r.members.length, role: this.role(r, userId) };
             const room = { ...base, moderators: member || privileged ? r.moderators.map(id => this.who(id)) : [], members: member ? r.members.map(m => this.memberView(r, m, userId)).filter(Boolean) : [], councils: member ? r.councils.map(c => this.councilView(r, c, userId)) : [], memories: member ? r.memories.filter(m => m.text !== null || m.authors.includes(userId)).map(m => ({ id: m.id, councilId: m.councilId, text: m.text ?? this.pendingMemory.get(m.id) ?? null, saved: m.text !== null, authors: m.authors.map(uid => this.who(uid)), approved: m.approved.map(uid => this.who(uid)), at: m.at })) : [], activity: member ? structuredClone(r.activity) : [], ...(permissions.audio ? { microphoneRequests: (r.micRequests ?? []).map(id => this.privateWho(id)).filter(Boolean), microphoneApprovals: (r.micApprovals ?? []).map(id => this.privateWho(id)).filter(Boolean) } : {}), ...(permissions.moderation ? { mutedMembers: r.members.filter(m => m.muted).map(m => this.privateWho(m.id) ? this.memberView(r, m, userId) : null).filter(Boolean), bannedMembers: r.bans.map(b => { const who = this.privateWho(b.id); return who ? { ...who, reason: b.reason } : null; }).filter(Boolean) } : {}), ...(permissions.audit ? { audit: this.auditView(r) } : {}) };
-            return { ok: true, room: { ...room, cannon: member ? this.cannonView(r, userId) : null, challenge: member ? this.challengeView(r, userId) : null, supportEvents: member ? (this.state.supportEvents ?? []).map(e => this.supportEventView(e, userId)).filter(Boolean) : [] }, publicSupport: this.publicSupportView(r, userId), current: this.current(userId), preferences: this.prefsView(userId) };
+            return { ok: true, room: { ...room, cannon: member ? this.cannonView(r, userId) : null, challenge: member ? this.challengeView(r, userId) : null, supportEvents: member ? (this.state.supportEvents ?? []).map(e => this.supportEventView(e, userId)).filter(Boolean) : [], rankStats: privileged ? this.rankStatsView(r, userId) : null }, publicSupport: this.publicSupportView(r, userId), current: this.current(userId), preferences: this.prefsView(userId) };
         }));
     }
     mediaAccess(userId) {

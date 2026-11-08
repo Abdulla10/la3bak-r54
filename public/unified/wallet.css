@@ -4,9 +4,9 @@
 .lb-unified [data-lb-page="wallet"] .lbw-hero-symbol .lbw-currency-art:first-child { transform: rotate(-12deg); }
 .lb-unified [data-lb-page="wallet"] .lbw-hero-symbol .lbw-currency-art:last-child { transform: rotate(9deg); }
 .lb-unified [data-lb-page="wallet"] .lbw-balances { margin-bottom: 16px; }
-.lb-unified [data-lb-page="wallet"] .lbw-balance { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; background: radial-gradient(ellipse at 50% 0, #fffaf099, transparent 68%), linear-gradient(145deg, #fffaf0, #fffaf0); }
+.lb-unified [data-lb-page="wallet"] .lbw-balance { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; background: radial-gradient(ellipse at 50% 0, #fffaf099, transparent 68%), linear-gradient(145deg, #fcf9f4, #fcf9f4); }
 .lb-unified [data-lb-page="wallet"] .lbw-balance h2 { margin: 0; font-size: 20px; color: #8a641f; }
-.lb-unified [data-lb-page="wallet"] .lbw-balance small { color: #264d3b; font-size: 12px; }
+.lb-unified [data-lb-page="wallet"] .lbw-balance small { color: #2c1a4a; font-size: 12px; }
 .lb-unified [data-lb-page="wallet"] .lbw-balance .lbw-value { font-size: clamp(25px, 4vw, 34px); line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .lb-unified [data-lb-page="wallet"] .lbw-balance .btn { margin-top: 6px; }
 .lb-unified [data-lb-page="wallet"] .lbw-currency-art { display: inline-block; object-fit: contain; flex-shrink: 0; vertical-align: middle; }
@@ -18,9 +18,9 @@
 .lb-unified [data-lb-page="wallet"] .lbw-tabs button { cursor: pointer; }
 .lb-unified [data-lb-page="wallet"] .panel-title { justify-content: flex-start; font-size: 20px; }
 .lb-unified [data-lb-page="wallet"] .pvp-icon { flex-shrink: 0; width: 22px; height: 22px; }
-.lb-unified [data-lb-page="wallet"] .lbw-muted { color: #264d3b; font-size: 13px; line-height: 1.8; }
-.lb-unified [data-lb-page="wallet"] .lbw-note { border: 1px solid #d4e4d8; border-radius: 14px; background: #fffaf077; padding: 12px 14px; line-height: 1.9; margin: 10px 0; overflow-wrap: anywhere; }
-.lb-unified [data-lb-page="wallet"] .lbw-error { border-color: #d4e4d8; color: #264d3b; background: #fffaf077; }
+.lb-unified [data-lb-page="wallet"] .lbw-muted { color: #2c1a4a; font-size: 13px; line-height: 1.8; }
+.lb-unified [data-lb-page="wallet"] .lbw-note { border: 1px solid #e6ddf3; border-radius: 14px; background: #fffaf077; padding: 12px 14px; line-height: 1.9; margin: 10px 0; overflow-wrap: anywhere; }
+.lb-unified [data-lb-page="wallet"] .lbw-error { border-color: #e6ddf3; color: #2c1a4a; background: #fffaf077; }
 .lb-unified [data-lb-page="wallet"] .lbw-transactions { margin: 0; padding: 0; list-style: none; }
 .lb-unified [data-lb-page="wallet"] .lbw-transactions .list-row { align-items: flex-start; }
 .lb-unified [data-lb-page="wallet"] .lbw-transactions .grow { overflow-wrap: anywhere; line-height: 1.7; }
@@ -28,25 +28,25 @@
 .lb-unified [data-lb-page="wallet"] .lbw-transactions .lbw-currency-art { margin-top: 6px; }
 .lb-unified [data-lb-page="wallet"] .lbw-delta { flex-shrink: 0; text-align: end; font-size: 18px; font-variant-numeric: tabular-nums; }
 .lb-unified [data-lb-page="wallet"] .lbw-delta small { font-size: 12px; color: inherit; }
-.lb-unified [data-lb-page="wallet"] .lbw-positive { color: #506c5b; }
-.lb-unified [data-lb-page="wallet"] .lbw-negative { color: #264d3b; }
+.lb-unified [data-lb-page="wallet"] .lbw-positive { color: #6a5a80; }
+.lb-unified [data-lb-page="wallet"] .lbw-negative { color: #2c1a4a; }
 .lb-unified [data-lb-page="wallet"] .lbw-reference { font-size: 12px; margin-top: 4px; }
-.lb-unified [data-lb-page="wallet"] .lbw-reference summary { color: #264d3b; cursor: pointer; }
-.lb-unified [data-lb-page="wallet"] .lbw-reference span { display: block; word-break: break-all; color: #264d3b; }
+.lb-unified [data-lb-page="wallet"] .lbw-reference summary { color: #2c1a4a; cursor: pointer; }
+.lb-unified [data-lb-page="wallet"] .lbw-reference span { display: block; word-break: break-all; color: #2c1a4a; }
 .lb-unified [data-lb-page="wallet"] .pagination { align-items: center; flex-wrap: wrap; gap: 10px; }
-.lb-unified [data-lb-page="wallet"] .pagination span { color: #264d3b; font-size: 12px; }
+.lb-unified [data-lb-page="wallet"] .pagination span { color: #2c1a4a; font-size: 12px; }
 .lb-unified [data-lb-page="wallet"] .lbw-packs .card { text-align: center; display: flex; flex-direction: column; gap: 9px; }
-.lb-unified [data-lb-page="wallet"] .lbw-packs small { font-size: 11px; color: #264d3b; overflow-wrap: anywhere; }
+.lb-unified [data-lb-page="wallet"] .lbw-packs small { font-size: 11px; color: #2c1a4a; overflow-wrap: anywhere; }
 .lb-unified [data-lb-page="wallet"] .lbw-packs p { font-size: 13px; line-height: 1.8; }
 .lb-unified [data-lb-page="wallet"] .lbw-packs button { margin-top: auto; }
 .lb-unified [data-lb-page="wallet"] [data-lbw-form="convert"] { display: grid; max-width: 460px; gap: 14px; margin-block: 16px; }
 .lb-unified [data-lb-page="wallet"] [data-lbw-form="convert"] label { display: grid; gap: 8px; }
-.lb-unified [data-lb-page="wallet"] [data-lbw-form="convert"] input { width: 100%; min-height: 46px; padding: 10px 14px; border-radius: 13px; border: 1px solid #d4e4d8; background: #fffaf0; color: #fff; font: inherit; }
-.lb-unified [data-lb-page="wallet"] .lbw-confirm { border-color: #b98a3d; margin-block: 14px; }
+.lb-unified [data-lb-page="wallet"] [data-lbw-form="convert"] input { width: 100%; min-height: 46px; padding: 10px 14px; border-radius: 13px; border: 1px solid #e6ddf3; background: #fcf9f4; color: #fff; font: inherit; }
+.lb-unified [data-lb-page="wallet"] .lbw-confirm { border-color: #c49a3a; margin-block: 14px; }
 .lb-unified [data-lb-page="wallet"] .lbw-confirm p { font-size: 14px; line-height: 1.8; }
 .lb-unified [data-lb-page="wallet"] .action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 12px; }
 .lb-unified [data-lb-page="wallet"] button:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
-.lb-unified [data-lb-page="wallet"] :is(button, a, input, summary):focus-visible { outline: 2px solid #b98a3d; outline-offset: 4px; }
+.lb-unified [data-lb-page="wallet"] :is(button, a, input, summary):focus-visible { outline: 2px solid #c49a3a; outline-offset: 4px; }
 .lb-unified [data-lb-page="wallet"] .lbw-tab-content { min-height: 140px; }
 @media (max-width: 600px) {
   .lb-unified [data-lb-page="wallet"] .lbw-tabs { gap: 6px; }

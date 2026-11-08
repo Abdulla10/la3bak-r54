@@ -124,6 +124,6 @@ export function createRoomToolsR33({ getSnapshot, getCouncil, send, onError = ()
     }
     if (tab === 'timer') { updateClock(); interval = setInterval(updateClock, 250); }
   }
-  if (globalThis.document && !document.querySelector('link[data-room-tools-r33]')) { const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/social-room-tools-r33.css?v=complete-r46'; link.dataset.roomToolsR33 = ''; document.head.append(link); }
+  if (globalThis.document && !document.querySelector('link[data-room-tools-r33]')) { const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/social-room-tools-r33.css?v=r58p'; link.dataset.roomToolsR33 = ''; document.head.append(link); }
   return { render: markup, restore, destroy() { disposed = true; dispose(); clearInterval(interval); interval = null; stopDraft(); panel = null; host = null; }, metrics: () => ({ disposed, timerIntervals: interval ? 1 : 0, draftPoints: draft?.points.length || 0, scope }) };
 }

@@ -12,6 +12,9 @@ export type Cur = 'coins' | 'gems';
 export interface LedgerEntry { id: string; ts: number; cur: Cur; kind: TxKind | 'transfer'; delta: number; before: number; after: number; reason: string; ref: string; giftTx?: string }
 /** سقف سعر أي عنصر بالمتجر لكل عملة: مصدر واحد يُستخدم عند الإنشاء والتعديل وعند تنفيذ الشراء */
 export const PRICE_MAX: Record<Cur, number> = { coins: 1_000_000, gems: 100_000 };
+/** R58b: سقف أسعار عناصر المتجر فقط (أيديات مميزة بـ45 مليون وفوق، إطارات وسيارات فخمة).
+ * الهدايا والحقائب والعضويات تبقى على PRICE_MAX كما هي. */
+export const SHOP_PRICE_MAX: Record<Cur, number> = { coins: 1_000_000, gems: 1_000_000_000 };
 export interface ShopItemRef { id: string; slot: string; price: number; currency: Cur; permanent: boolean }
 export type BuyResult = { ok: true; dup: boolean; coins: number; gems: number } | { ok: false; code: 'owned' | 'poor' | 'bad' | typeof MANUAL_CONVERSION_DISABLED };
 export type BuyKind = 'item' | 'gems' | 'conversion';
@@ -109,7 +112,7 @@ const validAcc = (v: unknown) => isObj(v) && nat(v.coins) && optional(v.gems, na
   && optional(v.prepaidGifts, (x) => record(x, validCredit));
 const validBuyOp = (v: unknown) => {
   if (!isObj(v) || !str(v.itemId)) return false;
-  if (v.kind === 'item') return currency(v.cur) && nat(v.price) && v.price <= PRICE_MAX[v.cur];
+  if (v.kind === 'item') return currency(v.cur) && nat(v.price) && v.price <= SHOP_PRICE_MAX[v.cur];
   if (v.kind === 'gems') return pos(v.coins) && pos(v.gems);
   return v.kind === 'conversion' && pos(v.gems) && pos(v.rate) && pos(v.coins) && Number.isSafeInteger(v.gems * v.rate)
     && v.coins === v.gems * v.rate && v.itemId === JSON.stringify([v.gems, v.rate]);
@@ -394,6 +397,8 @@ export class Wallet {
   balance(id: string) { this.recoverAuctionsR47(); return this.a(id).coins; }
   gems(id: string) { this.recoverAuctionsR47(); return this.a(id).gems ?? 0; }
   owned(id: string): string[] { this.recoverAuctionsR47(); return [...(this.a(id).owned ?? [])]; }
+  /** R58: هل يملك هذا العنصر حساب غير exceptId؟ (للمقتنيات الفريدة مثل أيدي الغرف) — قراءة فقط */
+  anyOwner(itemId: string, exceptId: string): boolean { for (const [key, acc] of Object.entries(this.d.acc)) if (key !== exceptId && acc.owned?.includes(itemId)) return true; return false; }
   /** الأفاتار المجهّز (معرّف عنصر) أو null؛ قراءة فقط ولا تنشئ حساباً للمعرّف */
   equippedAvatar(id: string): string | null { return this.d.acc[id]?.equipped?.avatar ?? null; }
   equipped(id: string): Record<string, string> { return { ...(this.a(id).equipped ?? {}) }; }
@@ -931,7 +936,7 @@ export class Wallet {
     // عنصر مجاني بسعر صفر يستخدم الملكية والسجل والمفتاح أنفسها، دون منح عملات.
     if (!nat(item.price)) return { ok: false, code: 'bad' };
     // خط دفاع أخير: عملة معروفة وسعر ضمن السقف حتى لو ملف المتجر تعدّل يدوياً أو بخلل
-    if ((item.currency !== 'coins' && item.currency !== 'gems') || item.price > PRICE_MAX[item.currency]) return { ok: false, code: 'bad' };
+    if ((item.currency !== 'coins' && item.currency !== 'gems') || item.price > SHOP_PRICE_MAX[item.currency]) return { ok: false, code: 'bad' };
     const k = this.opKey(id, key);
     const a = this.a(id);
     if (item.permanent && (a.owned ?? []).includes(item.id)) return { ok: false, code: 'owned' };

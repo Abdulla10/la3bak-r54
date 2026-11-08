@@ -2,8 +2,8 @@
  * All mutations target an explicitly selected canonical UUID; never infer an owner account.
  * The server remains authoritative for policy, ownership, permissions and idempotency.
  */
-import { framed, bgLayer } from './shop.js?v=reference-r15';
-import { avatarArt } from './avatars.js?v=shell-r6';
+import { framed, bgLayer } from './shop.js?v=r58r';
+import { avatarArt } from './avatars.js?v=r58c';
 import { referenceOf, referenceImage } from './reference-assets.js?v=shell-r6';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -23,7 +23,7 @@ const isOwner = actor => actor?.role === 'owner';
 export const ownerToolsVisible = isOwner;
 export function ensureOwnerToolsCss() {
   if (document.querySelector('link[data-owner-tools-css]')) return;
-  const link=document.createElement('link'); link.rel='stylesheet'; link.href='/owner-player-tools.css?v=emerald-r44'; link.dataset.ownerToolsCss='1'; document.head.appendChild(link);
+  const link=document.createElement('link'); link.rel='stylesheet'; link.href='/owner-player-tools.css?v=r58q'; link.dataset.ownerToolsCss='1'; document.head.appendChild(link);
 }
 export function ownerToolsEntryHTML(actor, uuid) {
   if (!isOwner(actor)) return '';

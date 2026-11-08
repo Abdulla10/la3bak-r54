@@ -3,10 +3,10 @@
  * اللوحة تدور بحيث خطك دائماً تحت. التصويب: اسحب من الضاربة للخلف (مثل النبّالة) وأفلت؛ الخط المنقّط يوضح الاتجاه وأول اصطدام.
  * التحريك على الخط: اسحب الضاربة يمين/يسار أو استعمل المنزلق تحت اللوحة. */
 import { faceHtml } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=shell-r6';
+import { avatarArt } from './avatars.js?v=r58c';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const nf = (n) => Number(n).toLocaleString('ar-EG');
+const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 export const CR = { room: '', gameNo: null, epoch: 0, pos: 0.5, seenShot: -1, busy: false, rules: false, anim: false, send: null, evSeq: -1 };
 let cancelShot = null, cancelAim = null;
 function syncMatch(room) {
@@ -68,7 +68,7 @@ function boardSVG(g) {
   const arrows = [[160, 160, 45], [840, 160, 135], [840, 840, 225], [160, 840, 315]].map(([x, y, a]) => `<path class="cr-arrow" d="M0 0h130" transform="translate(${x} ${y}) rotate(${a})"/>`).join('');
   const st = strikerAt(G, side, CR.pos);
   return `<svg class="cr-board" viewBox="-40 -40 1080 1080" role="img" aria-label="لوحة الكيرم" style="direction:ltr" data-side="${side}">
-    <defs><radialGradient id="crW" cx="40%" cy="35%"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e8dcc2"/></radialGradient><radialGradient id="crB" cx="40%" cy="35%"><stop offset="0" stop-color="#5a5a66"/><stop offset="1" stop-color="#14141a"/></radialGradient><radialGradient id="crQ" cx="40%" cy="35%"><stop offset="0" stop-color="#ff6a6a"/><stop offset="1" stop-color="#b3141c"/></radialGradient><radialGradient id="crS" cx="40%" cy="35%"><stop offset="0" stop-color="#e6f6ff"/><stop offset="1" stop-color="#7fb2d9"/></radialGradient><linearGradient id="crWood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a3e17"/><stop offset=".5" stop-color="#5a2a0e"/><stop offset="1" stop-color="#7a3e17"/></linearGradient><radialGradient id="crFelt" cx="50%" cy="50%" r="70%"><stop offset="0" stop-color="#f6dfb0"/><stop offset="1" stop-color="#e2bd7c"/></radialGradient></defs>
+    <defs><radialGradient id="crW" cx="40%" cy="35%"><stop offset="0" stop-color="#fcf9f4"/><stop offset="1" stop-color="#e8dcc2"/></radialGradient><radialGradient id="crB" cx="40%" cy="35%"><stop offset="0" stop-color="#5a5a66"/><stop offset="1" stop-color="#14141a"/></radialGradient><radialGradient id="crQ" cx="40%" cy="35%"><stop offset="0" stop-color="#ff6a6a"/><stop offset="1" stop-color="#b3141c"/></radialGradient><radialGradient id="crS" cx="40%" cy="35%"><stop offset="0" stop-color="#e6f6ff"/><stop offset="1" stop-color="#7fb2d9"/></radialGradient><linearGradient id="crWood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a3e17"/><stop offset=".5" stop-color="#5a2a0e"/><stop offset="1" stop-color="#7a3e17"/></linearGradient><radialGradient id="crFelt" cx="50%" cy="50%" r="70%"><stop offset="0" stop-color="#f6dfb0"/><stop offset="1" stop-color="#e2bd7c"/></radialGradient></defs>
     <g transform="rotate(${rot(side)} 500 500)">
       <rect x="-40" y="-40" width="1080" height="1080" rx="40" fill="url(#crWood)"/><rect x="0" y="0" width="${S}" height="${S}" fill="url(#crFelt)"/>
       <g class="cr-lines"><circle cx="500" cy="500" r="120"/><circle cx="500" cy="500" r="30"/>${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<path d="M500 500l0 -112" transform="rotate(${a} 500 500)" opacity=".5"/>`).join('')}</g>
@@ -101,7 +101,7 @@ function lastText(room, g) {
   if (L.foul) return `${who}: مخالفة! الضاربة دخلت الجيب ${L.delta ? `(${nf(L.delta)})` : ''}`;
   if (!L.pocketed.length) return `${who}: ما دخلت شي`;
   const parts = L.pocketed.map((p) => KIND[p.k]).join('، ');
-  const q = L.queen === 'pending' ? ' — الملكة تنتظر التغطية' : L.queen === 'covered' ? ' — غطّى الملكة +٥٠' : L.queen === 'returned' ? ' — الملكة رجعت للوسط' : '';
+  const q = L.queen === 'pending' ? ' — الملكة تنتظر التغطية' : L.queen === 'covered' ? ' — غطّى الملكة +50' : L.queen === 'returned' ? ' — الملكة رجعت للوسط' : '';
   return `${who}: دخّل ${parts} (+${nf(L.delta)})${q}`;
 }
 
@@ -113,7 +113,7 @@ export function carrom(room) {
     const turn = g.phase === 'aim' && g.turnId === id;
     return `<li class="cr-seat ${turn ? 'turn' : ''} ${g.out[i] ? 'out' : ''} ${g.winners.includes(id) ? 'won' : ''}" data-seat="${i}"><span class="cr-av">${faceOf(room, id, i)}${turn ? clockEl(g) : ''}</span><span class="cr-nm">${id === room.you ? 'أنت' : esc(nm(room, id))}${g.out[i] ? ' <em>انسحب</em>' : ''}${g.queenBy === id ? ' <em class="q">♛</em>' : ''}</span><b class="cr-sc">${nf(g.scores[i])}</b></li>`;
   }).join('');
-  const counts = `<div class="cr-counts" aria-label="القطع الباقية"><span><i class="k-w"></i>${nf(g.counts.w)}</span><span><i class="k-b"></i>${nf(g.counts.b)}</span><span><i class="k-q"></i>${g.counts.q ? '١' : (g.queenBy ? '⏳' : '٠')}</span></div>`;
+  const counts = `<div class="cr-counts" aria-label="القطع الباقية"><span><i class="k-w"></i>${nf(g.counts.w)}</span><span><i class="k-b"></i>${nf(g.counts.b)}</span><span><i class="k-q"></i>${g.counts.q ? '1' : (g.queenBy ? '⏳' : '0')}</span></div>`;
   const slider = g.canShoot && !CR.anim && !pending(g) ? `<label class="cr-slide"><span>حرّك الضاربة</span><input type="range" min="0" max="100" step="1" value="${Math.round(CR.pos * 100)}" data-input="cr-pos" aria-label="موقع الضاربة على الخط"></label>` : '';
   let finalPanel = '';
   if (g.phase === 'final') {

@@ -220,7 +220,7 @@ const previewItem=(item)=>item?`<div class="rv-item-preview">${imagePreview(item
 const tabs=[['ranks','الرتب وحدودها'],['events','قواعد النقاط'],['rewards','مكافآت الرتب'],['seasons','المواسم'],['vip','سياسة VIP'],['packages','باقات VIP'],['benefits','المزايا'],['review','الأعضاء والسجلات']];
 export function ensureRankVipAdminCss(doc=globalThis.document) {
   if(!doc||doc.querySelector('link[data-rank-vip-admin-css]')) return;
-  const link=doc.createElement('link');link.rel='stylesheet';link.href='/rank-vip-admin.css?v=emerald-r44';link.dataset.rankVipAdminCss='1';doc.head.appendChild(link);
+  const link=doc.createElement('link');link.rel='stylesheet';link.href='/rank-vip-admin.css?v=r58p';link.dataset.rankVipAdminCss='1';doc.head.appendChild(link);
 }
 function rankEditor(model) {
   if(!model.config?.noble) return empty('سياسة الرتب غير متاحة من الخادم.');

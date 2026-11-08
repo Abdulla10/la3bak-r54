@@ -1,9 +1,9 @@
 /* Embedded profile content only. Never styles the profile hero or navigation. */
 .pvp-rank-overview {
-  --rank-purple: #176b50;
-  --rank-gold: #b98a3d;
-  --rank-muted: #506c5b;
-  --rank-line: #d4e4d8;
+  --rank-purple: #5a2a8c;
+  --rank-gold: #c49a3a;
+  --rank-muted: #6a5a80;
+  --rank-line: #e6ddf3;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -11,8 +11,8 @@
   padding: clamp(12px, 2.6vw, 22px);
   border: 1px solid var(--rank-line);
   border-radius: 18px;
-  color: #264d3b;
-  background: linear-gradient(145deg, #fffaf0, #fffaf0 75%);
+  color: #2c1a4a;
+  background: linear-gradient(145deg, #fcf9f4, #fcf9f4 75%);
   box-shadow: 0 0 20px #264d3b1a, inset 0 1px 0 #264d3b20;
   font: 400 14px/1.65 Cairo, Arial, sans-serif;
   overflow-wrap: anywhere;
@@ -32,53 +32,53 @@
   border: 1px solid var(--rank-line);
   border-radius: 10px;
   padding: 8px 12px;
-  background: #fffaf0;
-  color: #264d3b;
+  background: #fcf9f4;
+  color: #2c1a4a;
   font: 600 13px/1.5 Cairo, Arial, sans-serif;
   text-align: center;
   cursor: pointer;
   touch-action: manipulation;
 }
-.pvp-rank-overview button:hover { background: #fffaf0; border-color: var(--rank-gold); }
+.pvp-rank-overview button:hover { background: #fcf9f4; border-color: var(--rank-gold); }
 .pvp-rank-overview button:focus-visible, .pvp-rank-overview [tabindex]:focus-visible { outline: 3px solid var(--rank-gold); outline-offset: 3px; }
 .pvp-rank-overview .pvp-rank-overview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .pvp-rank-overview .pvp-rank-overview-head > div { min-width: 0; }
 .pvp-rank-overview .pvp-rank-overview-head small { font-size: 12px; color: var(--rank-muted); }
-.pvp-rank-overview .pvp-rank-close { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; background: #fffaf0; }
+.pvp-rank-overview .pvp-rank-close { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; background: #fcf9f4; }
 .pvp-rank-overview .pvp-rank-close span { font: 24px/1 Arial, sans-serif; }
 .pvp-rank-overview .pvp-rank-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; direction: ltr; }
 .pvp-rank-overview .pvp-rank-system { display: grid; gap: 2px; font: 700 14px/1.5 Arial, sans-serif; min-width: 0; }
 .pvp-rank-overview .pvp-rank-system small { font-size: 12px; font-weight: 400; color: var(--rank-muted); }
-.pvp-rank-overview .pvp-rank-system.is-active { color: var(--rank-gold); border-color: var(--rank-gold); background: linear-gradient(150deg, #fffaf0, #fffaf0); box-shadow: inset 0 -2px 0 var(--rank-gold); }
+.pvp-rank-overview .pvp-rank-system.is-active { color: var(--rank-gold); border-color: var(--rank-gold); background: linear-gradient(150deg, #fcf9f4, #fcf9f4); box-shadow: inset 0 -2px 0 var(--rank-gold); }
 .pvp-rank-overview .pvp-rank-panel { min-width: 0; }
-.pvp-rank-overview [data-rank-theme="silver"] { --rank-accent: #176b50; }
-.pvp-rank-overview [data-rank-theme="blue"] { --rank-accent: #176b50; }
-.pvp-rank-overview [data-rank-theme="purple"] { --rank-accent: #176b50; }
-.pvp-rank-overview [data-rank-theme="gold"] { --rank-accent: #b98a3d; }
-.pvp-rank-overview [data-rank-theme="red"] { --rank-accent: #176b50; }
-.pvp-rank-overview [data-rank-theme="max"] { --rank-accent: #b98a3d; }
-.pvp-rank-overview [data-rank-theme="neutral"] { --rank-accent: #176b50; }
-.pvp-rank-overview .pvp-rank-current { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 14px; padding: 14px; border: 1px solid #d4e4d8; border-radius: 14px; background: #fffaf055; margin-bottom: 16px; }
+.pvp-rank-overview [data-rank-theme="silver"] { --rank-accent: #5a2a8c; }
+.pvp-rank-overview [data-rank-theme="blue"] { --rank-accent: #5a2a8c; }
+.pvp-rank-overview [data-rank-theme="purple"] { --rank-accent: #5a2a8c; }
+.pvp-rank-overview [data-rank-theme="gold"] { --rank-accent: #c49a3a; }
+.pvp-rank-overview [data-rank-theme="red"] { --rank-accent: #5a2a8c; }
+.pvp-rank-overview [data-rank-theme="max"] { --rank-accent: #c49a3a; }
+.pvp-rank-overview [data-rank-theme="neutral"] { --rank-accent: #5a2a8c; }
+.pvp-rank-overview .pvp-rank-current { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 14px; padding: 14px; border: 1px solid #e6ddf3; border-radius: 14px; background: #fffaf055; margin-bottom: 16px; }
 .pvp-rank-overview .pvp-rank-current h3 { color: var(--rank-accent); }
 .pvp-rank-overview .pvp-rank-current > div { min-width: 0; }
 .pvp-rank-overview .pvp-rank-current > div > small { font-size: 12px; color: var(--rank-muted); }
 .pvp-rank-overview .pvp-rank-current-art { width: 100%; height: 108px; object-fit: contain; filter: drop-shadow(0 2px 7px #264d3b2e); }
-.pvp-rank-overview .pvp-rank-no-art { display: grid; place-items: center; width: 100%; height: 94px; color: #264d3b; font-size: 32px; border: 1px dashed #d4e4d8; border-radius: 12px; }
+.pvp-rank-overview .pvp-rank-no-art { display: grid; place-items: center; width: 100%; height: 94px; color: #2c1a4a; font-size: 32px; border: 1px dashed #e6ddf3; border-radius: 12px; }
 .pvp-rank-overview .pvp-rank-values { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font-size: 13px; color: var(--rank-muted); }
-.pvp-rank-overview .pvp-rank-values b { color: #264d3b; }
+.pvp-rank-overview .pvp-rank-values b { color: #2c1a4a; }
 .pvp-rank-overview .pvp-rank-next, .pvp-rank-overview .pvp-rank-cap { margin-top: 8px; font-size: 13px; }
 .pvp-rank-overview .pvp-rank-cap { color: var(--rank-gold); }
 .pvp-rank-overview .pvp-rank-note { color: var(--rank-muted); font-size: 12px; line-height: 1.8; margin-block: 6px; }
 .pvp-rank-overview .pvp-rank-meter { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; margin-block: 10px; }
 .pvp-rank-overview .pvp-rank-meter span { font: 700 12px/1.5 Arial, sans-serif; color: var(--rank-gold); }
-.pvp-rank-overview progress { display: block; width: 100%; min-width: 0; height: 10px; appearance: none; overflow: hidden; border: 0; border-radius: 10px; background: #fffaf0; accent-color: var(--rank-purple); }
-.pvp-rank-overview progress::-webkit-progress-bar { background: #fffaf0; border-radius: 10px; }
-.pvp-rank-overview progress::-webkit-progress-value { background: linear-gradient(90deg, #fffaf0, #fffaf0, #e8c987); border-radius: 10px; }
-.pvp-rank-overview progress::-moz-progress-bar { background: linear-gradient(90deg, #fffaf0, #fffaf0, #e8c987); border-radius: 10px; }
+.pvp-rank-overview progress { display: block; width: 100%; min-width: 0; height: 10px; appearance: none; overflow: hidden; border: 0; border-radius: 10px; background: #fcf9f4; accent-color: var(--rank-purple); }
+.pvp-rank-overview progress::-webkit-progress-bar { background: #fcf9f4; border-radius: 10px; }
+.pvp-rank-overview progress::-webkit-progress-value { background: linear-gradient(90deg, #fcf9f4, #fcf9f4, #ead18e); border-radius: 10px; }
+.pvp-rank-overview progress::-moz-progress-bar { background: linear-gradient(90deg, #fcf9f4, #fcf9f4, #ead18e); border-radius: 10px; }
 .pvp-rank-overview .pvp-rank-milestones { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 10px; margin-block: 16px 20px; direction: ltr; }
-.pvp-rank-overview .pvp-rank-milestone { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; text-align: center; min-width: 0; border: 1px solid #d4e4d8; border-radius: 12px; background: #fffaf0; }
+.pvp-rank-overview .pvp-rank-milestone { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; text-align: center; min-width: 0; border: 1px solid #e6ddf3; border-radius: 12px; background: #fcf9f4; }
 .pvp-rank-overview .pvp-rank-milestone img { width: 100%; max-width: 140px; height: 100px; object-fit: contain; }
-.pvp-rank-overview .pvp-rank-milestone b { font: 700 12px/1.5 Arial, sans-serif; color: #264d3b; }
+.pvp-rank-overview .pvp-rank-milestone b { font: 700 12px/1.5 Arial, sans-serif; color: #2c1a4a; }
 .pvp-rank-overview .pvp-rank-milestone small { color: var(--rank-muted); font-size: 11px; line-height: 1.8; direction: rtl; }
 .pvp-rank-overview .pvp-rank-milestone.is-symbolic img { opacity: .55; filter: grayscale(.75); }
 .pvp-rank-overview .pvp-rank-milestone.is-earned { border-color: var(--rank-accent); background: #fffaf04d; }
@@ -86,22 +86,22 @@
 .pvp-rank-overview .pvp-rank-milestone.is-current { box-shadow: inset 0 0 0 1px var(--rank-accent); }
 .pvp-rank-overview .pvp-rank-catalogue { padding-block: 16px; border-block: 1px solid #d4e4d880; }
 .pvp-rank-overview .pvp-rank-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; direction: ltr; }
-.pvp-rank-overview .pvp-rank-step { display: grid; place-content: center; gap: 2px; min-width: 0; min-height: 38px; padding: 4px 2px; text-align: center; border: 1px solid #d4e4d8; border-radius: 7px; background: #fffaf0; color: #264d3b; font: 500 12px/1.4 Arial, sans-serif; }
+.pvp-rank-overview .pvp-rank-step { display: grid; place-content: center; gap: 2px; min-width: 0; min-height: 38px; padding: 4px 2px; text-align: center; border: 1px solid #e6ddf3; border-radius: 7px; background: #fcf9f4; color: #2c1a4a; font: 500 12px/1.4 Arial, sans-serif; }
 .pvp-rank-overview .pvp-rank-step small { font: 400 10px/1.3 Arial, sans-serif; }
-.pvp-rank-overview .pvp-rank-step.is-earned { color: var(--rank-accent); border-color: var(--rank-accent); background: #fffaf0; }
-.pvp-rank-overview .pvp-rank-step.is-current { color: #264d3b; background: var(--rank-accent); font-weight: 800; box-shadow: 0 0 0 2px #264d3b2e, 0 0 0 3px var(--rank-accent); }
+.pvp-rank-overview .pvp-rank-step.is-earned { color: var(--rank-accent); border-color: var(--rank-accent); background: #fcf9f4; }
+.pvp-rank-overview .pvp-rank-step.is-current { color: #2c1a4a; background: var(--rank-accent); font-weight: 800; box-shadow: 0 0 0 2px #264d3b2e, 0 0 0 3px var(--rank-accent); }
 .pvp-rank-overview .pvp-rank-rewards { padding-top: 16px; }
-.pvp-rank-overview .pvp-rank-reward { margin-top: 10px; padding: 14px; border: 1px solid #d4e4d888; border-radius: 12px; background: #fffaf0; }
+.pvp-rank-overview .pvp-rank-reward { margin-top: 10px; padding: 14px; border: 1px solid #d4e4d888; border-radius: 12px; background: #fcf9f4; }
 .pvp-rank-overview .pvp-rank-reward-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 8px; }
 .pvp-rank-overview .pvp-rank-reward-head > span { color: var(--rank-muted); font-size: 12px; }
 .pvp-rank-overview .pvp-rank-reward-content { margin: 8px 0; padding-inline-start: 20px; font-size: 13px; }
 .pvp-rank-overview .pvp-rank-reward-content li { margin-bottom: 6px; }
 .pvp-rank-overview .pvp-rank-reward-content code { display: block; max-width: 100%; font-size: 11px; color: var(--rank-muted); overflow-wrap: anywhere; }
 .pvp-rank-overview .pvp-rank-inventory { display: block; margin-block: 8px; width: fit-content; font-size: 12px; }
-.pvp-rank-overview .pvp-rank-claim { border-color: var(--rank-gold); color: #264d3b; background: linear-gradient(110deg, #e8c987, #fffaf0); font-weight: 800; margin-top: 6px; }
-.pvp-rank-overview .pvp-rank-claim:hover { color: #264d3b; background: #e8c987; }
-.pvp-rank-overview .pvp-rank-reward-label { color: #264d3b; font-size: 13px; margin-bottom: 6px; }
-.pvp-rank-overview button:disabled, .pvp-rank-overview button:disabled:hover { background: #fffaf0; border-color: #d4e4d8; color: #264d3b; cursor: not-allowed; }
+.pvp-rank-overview .pvp-rank-claim { border-color: var(--rank-gold); color: #2c1a4a; background: linear-gradient(110deg, #ead18e, #fcf9f4); font-weight: 800; margin-top: 6px; }
+.pvp-rank-overview .pvp-rank-claim:hover { color: #2c1a4a; background: #ead18e; }
+.pvp-rank-overview .pvp-rank-reward-label { color: #2c1a4a; font-size: 13px; margin-bottom: 6px; }
+.pvp-rank-overview button:disabled, .pvp-rank-overview button:disabled:hover { background: #fcf9f4; border-color: #e6ddf3; color: #2c1a4a; cursor: not-allowed; }
 @media (max-width: 420px) {
   .pvp-rank-overview { padding: 12px; border-radius: 14px; font-size: 13px; }
   .pvp-rank-overview .pvp-rank-current { grid-template-columns: 76px minmax(0, 1fr); gap: 10px; padding: 10px; }

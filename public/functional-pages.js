@@ -1,5 +1,5 @@
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const date = (at) => new Date(at).toLocaleString('ar-AE');
+const date = (at) => new Date(at).toLocaleString('ar-AE-u-nu-latn');
 const error = (root, e) => { const el = root.querySelector('[data-functional-status]'); if (el) { el.textContent = e.message || 'تعذّر تنفيذ الطلب.'; el.setAttribute('role', 'alert'); } };
 const key = () => crypto.randomUUID();
 
@@ -42,7 +42,7 @@ export async function rankRewardsView(root, { api }) {
   try {
     const d = await api('/api/rank-rewards'); if (!root.isConnected) return;
     const rows = [...d.list, ...(d.claims || []).filter((c) => !d.list.some((r) => r.id === c.id))];
-    const rewards = (r) => r.rewards ? r.rewards.map((v) => v.type === 'currency' ? `${Number(v.amount).toLocaleString('ar-AE')} ${v.cur === 'gems' ? 'جوهرة' : 'عملة'}` : `مقتنى: ${v.itemId}`).join(' + ') : r.description || '';
+    const rewards = (r) => r.rewards ? r.rewards.map((v) => v.type === 'currency' ? `${Number(v.amount).toLocaleString('ar-AE-u-nu-latn')} ${v.cur === 'gems' ? 'جوهرة' : 'عملة'}` : `مقتنى: ${v.itemId}`).join(' + ') : r.description || '';
     const row = (r) => { const claimed = r.claimed === true || r.status === 'claimed', pending = r.pending === true || r.status === 'pending', allowed = !claimed && (r.claimable === true || pending);
       const label = claimed ? 'تم الاستلام' : pending ? 'استكمال المطالبة المحفوظة' : r.status === 'failed' ? 'تعذّر المنح — راجع الدعم' : allowed ? 'استلام المكافأة' : 'الرتبة المطلوبة غير مكتسبة';
       return `<article class="card"><h2>${esc(r.label || r.id)}</h2><p>${esc(r.system)} · ${esc(r.rank)}</p><p>${esc(rewards(r))}</p><button class="btn" data-rank-claim="${esc(r.id)}" data-reward-fp="${esc(r.fingerprint)}" ${allowed ? '' : 'disabled'}>${label}</button></article>`;

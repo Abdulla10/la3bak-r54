@@ -2,8 +2,8 @@
  * Data comes from ctx.me / ctx.user or the existing authenticated GET /api/account.
  * avatarHTML and renderProfileIcon are trusted existing application renderers.
  */
-import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
-import { mini as equippedAvatarHTML } from '../avatars.js?v=shell-r6';
+import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
+import { mini as equippedAvatarHTML } from '../avatars.js?v=r58c';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'

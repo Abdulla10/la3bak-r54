@@ -4,7 +4,7 @@
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const arr = value => Array.isArray(value) ? value : [];
 const integer = value => Number.isSafeInteger(value) && value >= 0;
-const valueHTML = value => integer(value) ? value.toLocaleString('ar') : '—';
+const valueHTML = value => integer(value) ? value.toLocaleString('ar-u-nu-latn') : '—';
 const glyph = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${name==='cannon'?'M4 14h10l5-5-3-3-5 5H4zM6 14l-2 6M13 14l2 6M19 3l2-2M21 7h2':'M3 8h18v5H3zM5 13v8h14v-8M12 8v13M12 8H8a3 3 0 1 1 3-3l1 3ZM12 8h4a3 3 0 1 0-3-3l-1 3Z'}"/></svg>`;
 
 /** Only canonical team totals affect the shared bar; no local gift prediction. */
@@ -94,7 +94,7 @@ export function renderChallenge(model, {renderMember, now=Date.now()}={}) {
 export function renderSetup(members) {
   const seen = new Set();
   const actual = arr(members).filter(m=>m?.id!=null&&typeof m.name==='string'&&m.name.trim()&&!seen.has(String(m.id))&&seen.add(String(m.id)));
-  return `<p class="so-note">اختر أعضاء مجلسك الحالي: من ١ إلى ٥ لكل فريق، دون تكرار. أول عضو مختار في كل فريق هو القائد. مدة التحدي ٣ دقائق؛ التشكيلة ثابتة بعد البدء.</p><div class="so-challenge-setup">${actual.map(m=>`<label class="so-challenge-pick"><span dir="auto">${esc(m.name)}</span><select data-so-challenge-pick="${esc(m.id)}" aria-label="فريق ${esc(m.name)}"><option value="">دون فريق</option><option value="blue">الفريق الأزرق</option><option value="red">الفريق الوردي</option></select></label>`).join('')||'<p class="so-note">لا يوجد أعضاء حاليون ظاهرون للاختيار.</p>'}</div><p class="so-note">زر الدعم يفتح الهدايا للمشارك المحدد. لا يرسل هدية ولا يحجز مقعدًا تلقائيًا.</p>`;
+  return `<p class="so-note">اختر أعضاء مجلسك الحالي: من 1 إلى 5 لكل فريق، دون تكرار. أول عضو مختار في كل فريق هو القائد. مدة التحدي 3 دقائق؛ التشكيلة ثابتة بعد البدء.</p><div class="so-challenge-setup">${actual.map(m=>`<label class="so-challenge-pick"><span dir="auto">${esc(m.name)}</span><select data-so-challenge-pick="${esc(m.id)}" aria-label="فريق ${esc(m.name)}"><option value="">دون فريق</option><option value="blue">الفريق الأزرق</option><option value="red">الفريق الوردي</option></select></label>`).join('')||'<p class="so-note">لا يوجد أعضاء حاليون ظاهرون للاختيار.</p>'}</div><p class="so-note">زر الدعم يفتح الهدايا للمشارك المحدد. لا يرسل هدية ولا يحجز مقعدًا تلقائيًا.</p>`;
 }
 
 function safeFeed(event) {

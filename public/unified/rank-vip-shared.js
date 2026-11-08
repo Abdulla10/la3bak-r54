@@ -1,14 +1,14 @@
 /* Presentation only. Prices, points, entitlement and expiry are server authority.
  * No account storage, wallet projection, reference backgrounds or seeded data. */
-import { rankBadgeArt, rankTheme } from '../preview/rank-overview.js';
-import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import { rankBadgeArt, rankTheme } from '../preview/rank-overview.js?v=r58c';
+import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 
 export const CAPS = Object.freeze({ level: 100, vip: 15, noble: 9 });
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const obj = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 export const list = value => Array.isArray(value) ? value : [];
 export const nat = value => Number.isSafeInteger(value) && value >= 0;
-export const fmt = value => nat(value) ? new Intl.NumberFormat('ar-AE').format(value) : '—';
+export const fmt = value => nat(value) ? new Intl.NumberFormat('ar-AE-u-nu-latn').format(value) : '—';
 export const accountId = ctx => Object.hasOwn(ctx, 'user') ? ctx.user?.id ?? null : ctx.me?.id ?? null;
 export const canRead = ctx => typeof ctx.api === 'function';
 export const canWrite = ctx => Boolean(accountId(ctx)) && canRead(ctx) && ctx.connected !== false;
@@ -93,7 +93,7 @@ export function clockHTML(until, label) {
 }
 export function dateText(value) {
   const at = timestamp(value);
-  return at === null ? 'غير متاح' : new Intl.DateTimeFormat('ar-AE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(at) + ' UTC';
+  return at === null ? 'غير متاح' : new Intl.DateTimeFormat('ar-AE-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(at) + ' UTC';
 }
 export function emptyHTML(title, text, symbol = 'shield') { return `<section class="lbrv-empty" role="status">${icon(symbol)}<h3>${esc(title)}</h3><p>${esc(text)}</p></section>`; }
 export function loginHTML() { return `${emptyHTML('رتبتك تبدأ من حسابك', 'سجّل الدخول لعرض تقدمك ومكافآتك وعضويتك الفعلية.', 'person')}<a class="lbrv-button is-gold" href="#/account">تسجيل الدخول</a>`; }

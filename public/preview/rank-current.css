@@ -1,22 +1,22 @@
 /* R3 rank presentation, scoped to the current profile only. No art files changed. */
 .reference-ui .lpu.lpu-profile-r3 .ranks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;max-width:none;height:auto;margin:0 0 18px;position:relative;pointer-events:auto;}
-.reference-ui .lpu.lpu-profile-r3 .rank[data-pvp="rank-system"]{appearance:none;width:100%;height:auto;min-height:148px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid #d4e4d8;border-radius:16px;background:linear-gradient(145deg,#fffaf0,#fffaf0)!important;filter:none;clip-path:none!important;text-shadow:none;color:#264d3b;font-family:inherit;cursor:pointer;isolation:isolate;position:relative;-webkit-tap-highlight-color:transparent;}
+.reference-ui .lpu.lpu-profile-r3 .rank[data-pvp="rank-system"]{appearance:none;width:100%;height:auto;min-height:148px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid #e6ddf3;border-radius:16px;background:linear-gradient(145deg,#fcf9f4,#fcf9f4)!important;filter:none;clip-path:none!important;text-shadow:none;color:#2c1a4a;font-family:inherit;cursor:pointer;isolation:isolate;position:relative;-webkit-tap-highlight-color:transparent;}
 .reference-ui .lpu.lpu-profile-r3 .rank:before,.reference-ui .lpu.lpu-profile-r3 .rank:after{display:none;}
-.reference-ui .lpu.lpu-profile-r3 .rank.vip{border-color:#d4e4d8;background:linear-gradient(145deg,#fffaf0,#fffaf0)!important;}
-.reference-ui .lpu.lpu-profile-r3 .rank.level{border-color:#d4e4d8;background:linear-gradient(145deg,#233149,#fffaf0)!important;}
-.reference-ui .lpu.lpu-profile-r3 .rank[data-pvp="rank-system"]:hover{border-color:#b98a3d;}
-.reference-ui .lpu.lpu-profile-r3 .rank[data-pvp="rank-system"]:focus-visible{outline:3px solid #b98a3d;outline-offset:3px;}
-.reference-ui .lpu.lpu-profile-r3 .rank[aria-expanded="true"]{box-shadow:inset 0 -3px 0 #b98a3d2e;border-color:#b98a3d;}
+.reference-ui .lpu.lpu-profile-r3 .rank.vip{border-color:#e6ddf3;background:linear-gradient(145deg,#fcf9f4,#fcf9f4)!important;}
+.reference-ui .lpu.lpu-profile-r3 .rank.level{border-color:#e6ddf3;background:linear-gradient(145deg,#233149,#fcf9f4)!important;}
+.reference-ui .lpu.lpu-profile-r3 .rank[data-pvp="rank-system"]:hover{border-color:#c49a3a;}
+.reference-ui .lpu.lpu-profile-r3 .rank[data-pvp="rank-system"]:focus-visible{outline:3px solid #c49a3a;outline-offset:3px;}
+.reference-ui .lpu.lpu-profile-r3 .rank[aria-expanded="true"]{box-shadow:inset 0 -3px 0 #b98a3d2e;border-color:#c49a3a;}
 .reference-ui .lpu.lpu-profile-r3 .rank.lpu-live-rank .lpu-rank-art{position:static;inset:auto;width:100%;max-width:96px;height:82px;object-fit:contain;object-position:center;border-radius:0;filter:none;pointer-events:none;}
 /* Original approved RGB crops have a retained dark rectangle. A soft edge mask
    and screen compositing remove its hard outline without cropping/repainting the lion. */
 .reference-ui .lpu.lpu-profile-r3 .lpu-rank-art,.reference-ui .lpu.lpu-profile-r3 .pvp-rank-current-art,.reference-ui .lpu.lpu-profile-r3 .pvp-rank-milestone img{mix-blend-mode:screen;-webkit-mask-image:radial-gradient(ellipse at 50% 48%,#000 53%,#000c 65%,transparent 76%);mask-image:radial-gradient(ellipse at 50% 48%,#000 53%,#000c 65%,transparent 76%);}
 .reference-ui .lpu.lpu-profile-r3 .rank.lpu-live-rank b,.reference-ui .lpu.lpu-profile-r3 .rank.lpu-live-rank strong{position:static;inset:auto;width:100%;margin:0;text-align:center;font:700 13px/1.5 Arial,Cairo,sans-serif;text-shadow:none;color:#8a641f;white-space:normal;overflow-wrap:anywhere;}
 .reference-ui .lpu.lpu-profile-r3 .rank.lpu-live-rank strong{font-size:15px;color:#8a641f;}
-.reference-ui .lpu.lpu-profile-r3 .lpu-rank-placeholder{display:grid;place-items:center;height:82px;width:72px;color:#264d3b;font-size:28px;border:1px dashed #d4e4d8;border-radius:50%;margin-bottom:2px;}
+.reference-ui .lpu.lpu-profile-r3 .lpu-rank-placeholder{display:grid;place-items:center;height:82px;width:72px;color:#2c1a4a;font-size:28px;border:1px dashed #e6ddf3;border-radius:50%;margin-bottom:2px;}
 .reference-ui .lpu.lpu-profile-r3 .rank[data-rank-state="disabled"],.reference-ui .lpu.lpu-profile-r3 .rank[data-rank-state="unavailable"]{opacity:.8;}
 /* Details are ordinary document content, never fixed/sticky or a covering sheet. */
-.reference-ui .lpu.lpu-profile-r3 .pvp-rank-overview{position:static;inset:auto;transform:none;z-index:auto;width:100%;height:auto;max-height:none;overflow:visible;margin:0 0 18px;padding:16px;border:1px solid #d4e4d8;border-radius:18px;background:linear-gradient(145deg,#fffaf0,#fffaf0);box-shadow:none;font-size:14px;line-height:1.7;overflow-wrap:anywhere;}
+.reference-ui .lpu.lpu-profile-r3 .pvp-rank-overview{position:static;inset:auto;transform:none;z-index:auto;width:100%;height:auto;max-height:none;overflow:visible;margin:0 0 18px;padding:16px;border:1px solid #e6ddf3;border-radius:18px;background:linear-gradient(145deg,#fcf9f4,#fcf9f4);box-shadow:none;font-size:14px;line-height:1.7;overflow-wrap:anywhere;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-overview[hidden],.reference-ui .lpu.lpu-profile-r3 .pvp-rank-overview [hidden]{display:none!important;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-overview-head{position:static;display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-overview h2{font-size:18px;margin:0;display:block;}
@@ -24,17 +24,17 @@
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-close{min-width:64px;min-height:44px;flex-shrink:0;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-tabs{gap:6px;margin-bottom:12px;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-tabs button{padding:8px 4px;min-width:0;min-height:52px;}
-.reference-ui .lpu.lpu-profile-r3 .pvp-rank-current{grid-template-columns:76px minmax(0,1fr);gap:10px;padding:10px;margin-bottom:0;border:1px solid #d4e4d8;background:#fffaf0;border-radius:12px;}
+.reference-ui .lpu.lpu-profile-r3 .pvp-rank-current{grid-template-columns:76px minmax(0,1fr);gap:10px;padding:10px;margin-bottom:0;border:1px solid #e6ddf3;background:#fcf9f4;border-radius:12px;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-current-art{height:86px;width:100%;object-fit:contain;filter:none;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-no-art{height:72px;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-values{font-size:13px;gap:4px 8px;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-rewards{padding-top:12px;}
-.reference-ui .lpu.lpu-profile-r3 .pvp-rank-reward{padding:12px;box-shadow:none;background:#fffaf0;}
+.reference-ui .lpu.lpu-profile-r3 .pvp-rank-reward{padding:12px;box-shadow:none;background:#fcf9f4;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-reward button{max-width:100%;white-space:normal;overflow-wrap:anywhere;}
-.reference-ui .lpu.lpu-profile-r3 .pvp-rank-catalogue-disclosure{margin-top:14px;border-top:1px solid #d4e4d8;padding-top:4px;}
+.reference-ui .lpu.lpu-profile-r3 .pvp-rank-catalogue-disclosure{margin-top:14px;border-top:1px solid #e6ddf3;padding-top:4px;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-catalogue-disclosure>summary{min-height:44px;font-size:13px;padding:10px 4px;color:#8a641f;cursor:pointer;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-milestones{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-block:12px;}
-.reference-ui .lpu.lpu-profile-r3 .pvp-rank-milestone{background:#fffaf0;}
+.reference-ui .lpu.lpu-profile-r3 .pvp-rank-milestone{background:#fcf9f4;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-milestone img{height:88px;}
 .reference-ui .lpu.lpu-profile-r3 .pvp-rank-step{min-height:44px;}
 @media(min-width:600px){.reference-ui .lpu.lpu-profile-r3 .rank[data-pvp="rank-system"]{min-height:170px;}.reference-ui .lpu.lpu-profile-r3 .rank.lpu-live-rank .lpu-rank-art{height:100px;max-width:120px;}.reference-ui .lpu.lpu-profile-r3 .pvp-rank-current{grid-template-columns:100px minmax(0,1fr);padding:14px;gap:16px;}.reference-ui .lpu.lpu-profile-r3 .pvp-rank-current-art{height:108px;}.reference-ui .lpu.lpu-profile-r3 .pvp-rank-milestones{grid-template-columns:repeat(3,minmax(0,1fr));}}

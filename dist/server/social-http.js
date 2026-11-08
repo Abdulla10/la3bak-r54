@@ -78,7 +78,17 @@ export function wireSocialRoutes(http, deps) {
             throw new FunctionalHttpError(400, 'الأمر الاجتماعي مطلوب.');
         if (!deps.eligible(user.id))
             throw new FunctionalHttpError(403, 'القسم الاجتماعي متاح للحسابات المستوفية لضوابط العمر فقط.');
-        return checked(await deps.rooms.command(user.id, body.command, target(body)));
+        const out = checked(await deps.rooms.command(user.id, body.command, target(body)));
+        // R58f: تنبيه الأصدقاء إن صاحبهم دخل غرفة
+        try {
+            if ((body.command === 'room:join' || body.command === 'room:create') && out?.ok !== false) {
+                const rid = typeof body.roomId === 'string' ? body.roomId : typeof out?.roomId === 'string' ? out.roomId : null;
+                if (rid)
+                    deps.onRoomJoin?.(user.id, rid);
+            }
+        }
+        catch { /* التنبيه شكلي */ }
+        return out;
     });
     http.add('GET', '/api/social/voice', ({ user }) => {
         if (!deps.eligible(user.id))

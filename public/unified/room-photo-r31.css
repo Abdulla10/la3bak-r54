@@ -1,14 +1,14 @@
 /* Local photo controls only; no change to rooms, site colors, sound or gifts. */
-.so-room-photo-r31{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid #d4e4d8;border-radius:18px;background:#fffaf0;margin-block:12px 18px;color:#264d3b;min-width:0;}
-.so-room-photo-preview{width:86px;height:86px;flex:none;display:grid;place-items:center;overflow:hidden;border-radius:18px;border:1px solid #d4e4d8;background:#fffaf0;}
+.so-room-photo-r31{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid #e6ddf3;border-radius:18px;background:#fcf9f4;margin-block:12px 18px;color:#2c1a4a;min-width:0;}
+.so-room-photo-preview{width:86px;height:86px;flex:none;display:grid;place-items:center;overflow:hidden;border-radius:18px;border:1px solid #e6ddf3;background:#fcf9f4;}
 .so-room-photo-preview img{width:100%;height:100%;object-fit:contain;display:block;}
 .so-room-photo-preview img[hidden],.so-room-photo-preview span[hidden],.so-room-photo-r31 [hidden]{display:none!important;}
-.so-room-photo-preview span{font-size:12px;text-align:center;color:#264d3b;padding:6px;}
-.so-room-photo-copy{min-width:0;flex:1;}.so-room-photo-label{display:block;font-weight:700;font-size:14px;color:#264d3b;}
-.so-room-photo-label input{display:block;width:100%;max-width:100%;min-width:0;font-size:12px;margin-top:8px;color:#264d3b;background:#fffaf0;border:1px solid #d4e4d8;border-radius:9px;padding:7px;box-sizing:border-box;}
-.so-room-photo-label input::file-selector-button{color:#28564b;background:#def5ed;border:1px solid #b9e0d3;border-radius:7px;padding:6px 8px;margin-inline-end:7px;font:inherit;}
-.so-room-photo-copy p{font-size:11px;line-height:1.7;margin:7px 0;color:#264d3b;overflow-wrap:anywhere;}
-.so-room-photo-copy [data-so-photo-status]{color:#28564b;font-size:12px;}
+.so-room-photo-preview span{font-size:12px;text-align:center;color:#2c1a4a;padding:6px;}
+.so-room-photo-copy{min-width:0;flex:1;}.so-room-photo-label{display:block;font-weight:700;font-size:14px;color:#2c1a4a;}
+.so-room-photo-label input{display:block;width:100%;max-width:100%;min-width:0;font-size:12px;margin-top:8px;color:#2c1a4a;background:#fcf9f4;border:1px solid #e6ddf3;border-radius:9px;padding:7px;box-sizing:border-box;}
+.so-room-photo-label input::file-selector-button{color:#412856;background:#eadef5;border:1px solid #ceb9e0;border-radius:7px;padding:6px 8px;margin-inline-end:7px;font:inherit;}
+.so-room-photo-copy p{font-size:11px;line-height:1.7;margin:7px 0;color:#2c1a4a;overflow-wrap:anywhere;}
+.so-room-photo-copy [data-so-photo-status]{color:#412856;font-size:12px;}
 .so-room-photo-copy button{font-size:11px;padding:5px 8px;min-height:30px;}
 .so-room-photo-r31[aria-busy="true"] .so-room-photo-preview{opacity:.6;}
 @media(max-width:340px){.so-room-photo-r31{gap:10px;padding:10px;}.so-room-photo-preview{width:68px;height:68px;}.so-room-photo-label input{font-size:10px;}}

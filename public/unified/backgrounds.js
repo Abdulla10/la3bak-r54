@@ -1,11 +1,11 @@
 /* Supplied backgrounds UI integrated into the existing shop singleton and RPC protocol.
  * All balances, ownership, prices and equipped items are authoritative server data.
  */
-import * as SHOP from '../shop.js?v=frame-gems-r24';
-import {backgroundVisual,isSuppliedBackground} from '../background-art.js';
-import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import * as SHOP from '../shop.js?v=r58r';
+import {backgroundVisual,isSuppliedBackground} from '../background-art.js?v=r58p';
+import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const number=v=>Number.isSafeInteger(v)?v.toLocaleString('ar-AE'):'—';
+const number=v=>Number.isSafeInteger(v)?v.toLocaleString('ar-AE-u-nu-latn'):'—';
 const categories=[['all','الكل'],['royal','القصور الملكية'],['beasts','الحيوانات والتنانين'],['space','الفضاء'],['nature','الطبيعة'],['fantasy','الفانتازيا'],['neon','النيون'],['legacy','الخلفيات السابقة']];
 const rarities=[['common','عادي'],['rare','نادر'],['epic','ملحمي'],['legendary','أسطوري']];
 let owner=null;

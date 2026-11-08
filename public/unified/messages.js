@@ -9,7 +9,7 @@ const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="fal
 const stamp = value => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return '';
   const date = new Date(value);
-  return Number.isFinite(date.getTime()) ? date.toLocaleString('ar-AE', { dateStyle: 'short', timeStyle: 'short' }) : '';
+  return Number.isFinite(date.getTime()) ? date.toLocaleString('ar-AE-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' }) : '';
 };
 const hero = () => `<section class="hero"><div class="hero-symbol">${icon('chat')}</div><h1>الرسائل</h1><p class="subtitle">سولف ويا ربعك</p></section>`;
 const limits = () => `<p class="lb-message-limit">الرسائل نصية بين الأصدقاء المقبولين فقط. المجموعات والمرفقات ودعوات اللعب وحالة الاتصال ما تدعمها خدمة الرسائل الحالية. التحديث يدوي.</p>`;

@@ -18,10 +18,10 @@
 .pvp-page.pvp-profile-r15 .pvp-head-r20 .lpu-portrait {
   position: absolute; inset: 0; display: grid; place-items: center;
   width: 100%; height: 100%; border: 0; border-radius: 50%;
-  background: var(--pvp-surface, #fffaf0); box-shadow: none; overflow: visible;
+  background: var(--pvp-surface, #fcf9f4); box-shadow: none; overflow: visible;
 }
 .pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-upload { position: absolute; inset: 0; z-index: 8; display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; appearance: none; }
-.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-upload:focus-visible { outline: 2px solid var(--pvp-violet, #d4e4d8); outline-offset: 4px; }
+.pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-upload:focus-visible { outline: 2px solid var(--pvp-violet, #e6ddf3); outline-offset: 4px; }
 .pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-head-upload > span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 .pvp-page.pvp-profile-r15 .pvp-head-r20 .lpu-camera { display: none !important; }
 .pvp-page.pvp-profile-r15 .pvp-head-r20 > .pvp-identity-copy {
@@ -81,7 +81,7 @@
 }
 .pvp-page.pvp-profile-r15 .pvp-head-r20 > .pvp-edit-profile::before {
   content: ""; position: absolute; inset: 7px 0; z-index: -1;
-  border: 1px solid #d4e4d8; border-radius: 18px; background: #fffaf0;
+  border: 1px solid #e6ddf3; border-radius: 18px; background: #fcf9f4;
 }
 .pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-edit-profile .pvp-icon { width: 14px !important; height: 14px !important; }
 .pvp-page.pvp-profile-r15 .pvp-head-r20 .pvp-upload-note { grid-column: 1 / -1; grid-row: 2; margin: 4px 0 0; padding: 0; border: 0; font-size: 10px; line-height: 1.4; }

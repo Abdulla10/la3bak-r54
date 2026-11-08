@@ -1,9 +1,9 @@
 /* R33 owner creation/voice recovery only; no room dock, gift, game or PK selectors. */
-.so-owner-create-consent-r33 { padding: 14px; margin-block: 0 16px; border: 1px solid #bbdccc; border-radius: 14px; background: #eaf8f1; color: #245c4b; }
+.so-owner-create-consent-r33 { padding: 14px; margin-block: 0 16px; border: 1px solid #cdbbdc; border-radius: 14px; background: #f1eaf8; color: #47206f; }
 .so-owner-create-consent-r33 b { display: block; font-size: 15px; }
 .so-owner-create-consent-r33 p { margin-block: 8px; line-height: 1.7; font-size: 12px; }
-.so-owner-create-consent-r33 .so-dir-check { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px; border: 1px solid #b2cfbd; border-radius: 10px; background: #fffaf0; font-weight: 700; }
-.so-owner-create-consent-r33 input[type="checkbox"] { width: 21px; height: 21px; flex: 0 0 auto; accent-color: #245c4b; }
-.so-owner-start-r33 { margin: 8px 12px; padding: 10px 12px; border: 1px solid #d4e4d8; border-radius: 12px; background: #fffaf0; color: #264d3b; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.so-owner-create-consent-r33 .so-dir-check { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px; border: 1px solid #c1b2cf; border-radius: 10px; background: #fcf9f4; font-weight: 700; }
+.so-owner-create-consent-r33 input[type="checkbox"] { width: 21px; height: 21px; flex: 0 0 auto; accent-color: #47206f; }
+.so-owner-start-r33 { margin: 8px 12px; padding: 10px 12px; border: 1px solid #e6ddf3; border-radius: 12px; background: #fcf9f4; color: #2c1a4a; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .so-owner-start-r33 p { flex: 1 1 220px; margin: 0; font-size: 12px; line-height: 1.7; }
 .so-owner-start-r33 button { min-height: 44px; flex-shrink: 0; }

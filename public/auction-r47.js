@@ -7,7 +7,7 @@ const TEXT = {
   unavailable: 'العنصر لم يعد متاحًا وفق الكتالوج المعتمد.', unconfigured: 'خدمة المزاد لم تتهيأ بعد.', overflow: 'تعذر تنفيذ العملية بأمان.'
 };
 const STATUS = { open: 'مفتوح', settled: 'تم التسليم', cancelled: 'ملغي — أُعيد الحجز', refunded: 'تعذر التسليم — أُعيد الحجز', expired: 'انتهى بلا عروض' };
-const number = n => Number(n).toLocaleString('ar');
+const number = n => Number(n).toLocaleString('ar-u-nu-latn');
 const currency = c => c === 'gems' ? 'جوهرة' : 'عملة';
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
 function key() { return globalThis.crypto.randomUUID(); }
@@ -37,7 +37,7 @@ export function auctionView(root, { api, getUserId, refreshMe = async () => {}, 
     const heading = el('h2', '', names.get(lot.itemId) || lot.itemName || lot.itemId);
     const status = el('span', 'auction-r47-status', STATUS[lot.status] || 'غير معروف');
     const detail = el('dl');
-    for (const [label, value] of [['السعر الاحتياطي', `${number(lot.reservePrice)} ${currency(lot.currency)}`], ['أعلى عرض', lot.highestAmount == null ? 'لا يوجد' : `${number(lot.highestAmount)} ${currency(lot.currency)}`], ['نهاية العرض', new Date(lot.endsAt).toLocaleString('ar')], ['عدد العروض', number(lot.bidCount)]]) detail.append(el('dt', '', label), el('dd', '', value));
+    for (const [label, value] of [['السعر الاحتياطي', `${number(lot.reservePrice)} ${currency(lot.currency)}`], ['أعلى عرض', lot.highestAmount == null ? 'لا يوجد' : `${number(lot.highestAmount)} ${currency(lot.currency)}`], ['نهاية العرض', new Date(lot.endsAt).toLocaleString('ar-u-nu-latn')], ['عدد العروض', number(lot.bidCount)]]) detail.append(el('dt', '', label), el('dd', '', value));
     item.append(heading, status, detail);
     if (lot.held > 0) item.append(el('p', 'auction-r47-held', `حجزك الحالي: ${number(lot.held)} ${currency(lot.currency)} — خارج الرصيد المتاح.`));
     if (lot.won) item.append(el('p', 'auction-r47-held', 'فزت بهذا العنصر وأُضيف إلى مقتنياتك. يمكنك تجهيزه من المتجر.'));
@@ -73,7 +73,7 @@ export function auctionView(root, { api, getUserId, refreshMe = async () => {}, 
       const result = await request(`/api/auction?offset=${page * 30}&limit=30`, { method: 'GET' }); if (destroyed) return;
       const data = result.auction || result; const lots = Array.isArray(data.lots) ? data.lots : [];
       total = Number.isSafeInteger(data.total) ? data.total : lots.length;
-      if (Number.isFinite(data.serverNow)) { serverOffset = data.serverNow - Date.now(); clock.textContent = `وقت الخادم: ${new Date(data.serverNow).toLocaleTimeString('ar')}`; }
+      if (Number.isFinite(data.serverNow)) { serverOffset = data.serverNow - Date.now(); clock.textContent = `وقت الخادم: ${new Date(data.serverNow).toLocaleTimeString('ar-u-nu-latn')}`; }
       const names = new Map((data.items || []).map(i => [i.id, i.name]));
       list.replaceChildren(...lots.map(lot => card(lot, names)));
       if (!lots.length) list.append(el('p', 'auction-r47-empty', 'لا توجد عروض في هذه الصفحة.'));

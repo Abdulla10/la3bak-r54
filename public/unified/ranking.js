@@ -1,14 +1,14 @@
-import { mini } from '../avatars.js?v=shell-r6';
+import { mini } from '../avatars.js?v=r58c';
 
 // Read-only ranking UI. Scoring and ordering belong exclusively to the server.
 const GAME_NAMES = Object.freeze({ jackaro: 'جكارو', baloot: 'بلوت', ludo: 'لودو' });
 const PERIODS = ['all', 'weekly', 'monthly'];
 const SCOPES = [...PERIODS, ...Object.keys(GAME_NAMES)];
-const nf = new Intl.NumberFormat('ar-AE');
-const df = new Intl.DateTimeFormat('ar-AE', {
+const nf = new Intl.NumberFormat('ar-AE-u-nu-latn');
+const df = new Intl.DateTimeFormat('ar-AE-u-nu-latn', {
   timeZone: 'Asia/Dubai', day: 'numeric', month: 'long', year: 'numeric',
 });
-const coverageDf = new Intl.DateTimeFormat('ar-AE', {
+const coverageDf = new Intl.DateTimeFormat('ar-AE-u-nu-latn', {
   timeZone: 'Asia/Dubai', day: 'numeric', month: 'long', year: 'numeric',
   hour: '2-digit', minute: '2-digit', second: '2-digit',
 });
@@ -103,9 +103,9 @@ function stateHTML(state, ctx) {
   return '';
 }
 function periodHTML(data, scope) {
-  if (scope === 'weekly') return `<p class="lb-rank-period">بداية الأسبوع: ${esc(df.format(data.weekStart))}<br>التصفير الجاي: ${esc(df.format(data.resetsAt))}، الساعة ١٢ بالليل بتوقيت الإمارات.</p>`;
+  if (scope === 'weekly') return `<p class="lb-rank-period">بداية الأسبوع: ${esc(df.format(data.weekStart))}<br>التصفير الجاي: ${esc(df.format(data.resetsAt))}، الساعة 12 بالليل بتوقيت الإمارات.</p>`;
   if (scope !== 'monthly') return '<p class="lb-rank-period">هالترتيب تراكمي لكل الفترات، مب ترتيب أسبوعي ولا شهري.</p>';
-  const dates = `<p class="lb-rank-period">بداية الشهر: ${esc(df.format(data.monthStart))}<br>التصفير الجاي: ${esc(df.format(data.resetsAt))}، الساعة ١٢ بالليل بتوقيت الإمارات.</p>`;
+  const dates = `<p class="lb-rank-period">بداية الشهر: ${esc(df.format(data.monthStart))}<br>التصفير الجاي: ${esc(df.format(data.resetsAt))}، الساعة 12 بالليل بتوقيت الإمارات.</p>`;
   if (data.coverage.complete) return `${dates}<p class="lb-rank-note">التتبع يغطي هالشهر من بدايته، والنقاط تتحدث مع المباريات المنتهية.</p>`;
   const from = data.coverage.from;
   return `${dates}<p class="lb-rank-coverage" role="status"><b>بيانات هالشهر غير مكتملة</b><br>${from == null ? 'ما فيه تغطية مسجلة لهالشهر.' : `النقاط المعروضة من ${esc(coverageDf.format(from))} بتوقيت الإمارات فقط.`} نتائج ما قبل بداية التتبع مب داخلة؛ البيانات الأسبوعية القديمة ما تكفي لحساب شهر دقيق.</p>`;
@@ -120,10 +120,10 @@ function standings(state, ctx) {
   const summary = `<div class="grid2 lb-rank-summary"><section class="panel"><h2 class="panel-title">${esc(label(state.scope))}</h2><b class="lb-rank-total">${num(data.total)}</b><span> لاعب في الترتيب</span>${periodHTML(data, state.scope)}</section><section class="panel"><h2 class="panel-title">ترتيبك${partial ? ' — حسب البيانات المتاحة' : ''}</h2>${personal ? `<b class="lb-rank-total">#${num(personal.rank)}</b><p>${num(personal.points)} نقطة تصنيف · ${stats(personal)}</p>` : signedIn(ctx) ? '<p>ما عندك نتائج في البيانات المتاحة لهالترتيب. كمّل مباراة مع لاعب حقيقي عشان نقاطك تنحسب.</p>' : '<p>تقدر تشوف المتصدرين بدون تسجيل. سجّل دخولك عشان تشوف ترتيبك الشخصي.</p><a class="btn" href="#/account">تسجيل الدخول</a>'}</section></div>`;
   if (!data.list.length) return `${summary}<section class="panel lb-rank-state">${trophy()}<h2>ما فيه نتائج متاحة للحين</h2><p>${partial ? 'هذي بيانات جزئية من بداية التتبع، مب دليل على عدم وجود مباريات قبلها.' : 'ما فيه لاعبين في هالترتيب للحين.'} العب مباراة منتهية مع لاعب حقيقي واحد على الأقل عشان تبدأ نقاط التصنيف تنحسب.</p><a class="gold-btn" href="#/rooms">افتح الغرف</a></section>`;
   const ownOutside = personal && !data.list.some((row) => row.rank === personal.rank);
-  return `${summary}<section class="panel lb-rank-standings"><div class="panel-title"><h2>قائمة المتصدرين${partial ? ' — جزئية' : ''}</h2><button class="btn lb-rank-refresh" type="button" data-lb-rank-reload${canRead(ctx) ? '' : ' disabled'}>تحديث</button></div><ol class="lb-rank-list">${data.list.map(rowHTML).join('')}</ol>${ownOutside ? `<div class="lb-rank-own"><h3>مكانك خارج قائمة المتصدرين</h3><ol class="lb-rank-list">${rowHTML(personal)}</ol></div>` : ''}<p class="lb-rank-note">ظاهر ${num(data.list.length)} من ${num(data.total)} لاعب. الخادم يرجّع أول ٢٠ لاعب فقط، ومعهم ترتيبك إذا عندك نقاط تصنيف. ما فيه صفحات إضافية متاحة.</p>${podiumHTML(data.list.slice(0, 3))}</section>`;
+  return `${summary}<section class="panel lb-rank-standings"><div class="panel-title"><h2>قائمة المتصدرين${partial ? ' — جزئية' : ''}</h2><button class="btn lb-rank-refresh" type="button" data-lb-rank-reload${canRead(ctx) ? '' : ' disabled'}>تحديث</button></div><ol class="lb-rank-list">${data.list.map(rowHTML).join('')}</ol>${ownOutside ? `<div class="lb-rank-own"><h3>مكانك خارج قائمة المتصدرين</h3><ol class="lb-rank-list">${rowHTML(personal)}</ol></div>` : ''}<p class="lb-rank-note">ظاهر ${num(data.list.length)} من ${num(data.total)} لاعب. الخادم يرجّع أول 20 لاعب فقط، ومعهم ترتيبك إذا عندك نقاط تصنيف. ما فيه صفحات إضافية متاحة.</p>${podiumHTML(data.list.slice(0, 3))}</section>`;
 }
 function bodyHTML(state, ctx) {
-  return `${controls(state, ctx)}<div class="lb-rank-results" aria-live="polite" aria-busy="${state.loading}">${standings(state, ctx)}</div><section class="panel lb-rank-rules"><h2 class="panel-title">شلون ينحسب الترتيب؟</h2><p>١٠ نقاط لكل مباراة منتهية، و٢٠ نقطة زيادة للفوز، إذا فيها لاعبين حقيقيين أو أكثر. الكمبيوتر واللعب بروحك ما يزيدون نقاط التصنيف.</p><p>الخادم يرتّب حسب النقاط، عقب عدد الفوز، عقب الأقل مباريات، وعقب الاسم. هذي نقاط تصنيف، مب عملات ولا جواهر.</p><p class="lb-rank-note">عام وترتيب الألعاب لكل الفترات. الأسبوع يبدأ السبت، والشهر هو الشهر التقويمي بتوقيت الإمارات، مب آخر ٣٠ يوم ولا مجموع أسابيع. نقاط الشهر تتجمع من بداية التتبع فقط، وأي نقص قديم يظهر فوق بوضوح.</p><p class="lb-rank-note">ترتيب الألعاب متاح لجكارو وبلوت ولودو بس. ترتيب الأصدقاء والدول مب مدعوم بواجهات البيانات الحالية. هالصفحة للعرض فقط، وما فيها استلام جوائز.</p>${!canRead(ctx) && state.data ? '<p class="lb-rank-note" role="status">هذي البيانات الممرّرة من الصفحة الحالية؛ التحديث وتبديل النطاق يحتاجون ربط واجهة القراءة.</p>' : ''}</section>`;
+  return `${controls(state, ctx)}<div class="lb-rank-results" aria-live="polite" aria-busy="${state.loading}">${standings(state, ctx)}</div><section class="panel lb-rank-rules"><h2 class="panel-title">شلون ينحسب الترتيب؟</h2><p>10 نقاط لكل مباراة منتهية، و20 نقطة زيادة للفوز، إذا فيها لاعبين حقيقيين أو أكثر. الكمبيوتر واللعب بروحك ما يزيدون نقاط التصنيف.</p><p>الخادم يرتّب حسب النقاط، عقب عدد الفوز، عقب الأقل مباريات، وعقب الاسم. هذي نقاط تصنيف، مب عملات ولا جواهر.</p><p class="lb-rank-note">عام وترتيب الألعاب لكل الفترات. الأسبوع يبدأ السبت، والشهر هو الشهر التقويمي بتوقيت الإمارات، مب آخر 30 يوم ولا مجموع أسابيع. نقاط الشهر تتجمع من بداية التتبع فقط، وأي نقص قديم يظهر فوق بوضوح.</p><p class="lb-rank-note">ترتيب الألعاب متاح لجكارو وبلوت ولودو بس. ترتيب الأصدقاء والدول مب مدعوم بواجهات البيانات الحالية. هالصفحة للعرض فقط، وما فيها استلام جوائز.</p>${!canRead(ctx) && state.data ? '<p class="lb-rank-note" role="status">هذي البيانات الممرّرة من الصفحة الحالية؛ التحديث وتبديل النطاق يحتاجون ربط واجهة القراءة.</p>' : ''}</section>`;
 }
 
 /** Page BODY only. The common shell owns navigation, auth and wallet balances. */

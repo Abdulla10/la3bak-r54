@@ -1,6 +1,6 @@
-import { CM, faceOf } from '../community.js?v=root-navigation-r50';
+import { CM, faceOf } from '../community.js?v=r58c';
 import { isCommunityRestricted } from '../community-access-r37.js';
-import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 
 // Existing community state is shared with the shell bell; all reads/writes use ctx.api.
 const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -9,7 +9,7 @@ const NOTICE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 const AVATAR_ID = /^[A-Za-z0-9_-]{1,100}$/;
 const count = (value) => Number.isSafeInteger(value) && value >= 0;
 const numericId = (value) => Number.isSafeInteger(value) && value > 0;
-const numberText = (value) => escapeHTML(value.toLocaleString('ar-AE'));
+const numberText = (value) => escapeHTML(value.toLocaleString('ar-AE-u-nu-latn'));
 const sources = {
   community: { label: 'المجتمع', path: '/api/community/notifs', empty: 'ما عندك إشعارات من المجتمع للحين. التفاعل على منشوراتك والمتابعات بيظهر هني.' },
   admin: { label: 'الإدارة والدعم', path: '/api/notifications-internal', empty: 'ما عندك إشعارات من الإدارة أو ردود دعم للحين.' },
@@ -43,7 +43,7 @@ function freshState() {
 function dateHTML(at) {
   const date = typeof at === 'number' && Number.isFinite(at) ? new Date(at) : null;
   if (!date || !Number.isFinite(date.getTime())) return '<small>وقت الإشعار غير متاح</small>';
-  return `<time datetime="${escapeHTML(date.toISOString())}">${escapeHTML(date.toLocaleString('ar-AE', { dateStyle: 'medium', timeStyle: 'short' }))}</time>`;
+  return `<time datetime="${escapeHTML(date.toISOString())}">${escapeHTML(date.toLocaleString('ar-AE-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' }))}</time>`;
 }
 
 function detailHref(notice) {
@@ -106,7 +106,7 @@ function bodyHTML(state) {
       <p class="${state.messageError ? 'lb-notification-error' : 'lb-notification-note'}" data-lb-notification-status role="${state.messageError ? 'alert' : 'status'}">${escapeHTML(state.message)}</p>
     </section>
     ${['community', 'admin'].filter((source) => state.tab === 'all' || state.tab === 'unread' || state.tab === source).map((source) => sourceHTML(source, state)).join('')}
-    <aside class="panel lb-notification-note"><p>القوائم تعرض آخر ٦٠ إشعار مجتمع وآخر ١٠٠ إشعار إدارة ودعم. عدّاد غير المقروء من الخادم وممكن يشمل إشعارات أقدم. ما فيه تحميل صفحات أقدم في المسارات الحالية.</p><p>المتابعات والتفاعل من المجتمع، والتنبيهات وردود الدعم من الإدارة. طلبات الصداقة ودعوات اللعب والجوائز ما لها مصدر إشعارات مخصص في هالمسارات.</p><a class="btn" href="#/support">متابعة طلبات الدعم</a></aside>`;
+    <aside class="panel lb-notification-note"><p>القوائم تعرض آخر 60 إشعار مجتمع وآخر 100 إشعار إدارة ودعم. عدّاد غير المقروء من الخادم وممكن يشمل إشعارات أقدم. ما فيه تحميل صفحات أقدم في المسارات الحالية.</p><p>المتابعات والتفاعل من المجتمع، والتنبيهات وردود الدعم من الإدارة. طلبات الصداقة ودعوات اللعب والجوائز ما لها مصدر إشعارات مخصص في هالمسارات.</p><a class="btn" href="#/support">متابعة طلبات الدعم</a></aside>`;
 }
 
 export function render(ctx = {}) {

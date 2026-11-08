@@ -1,3 +1,4 @@
+import { moderateText } from './moderation-r58.js';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 const COOKIE = 'qa_s';
 const MAX_AGE_S = 60 * 60 * 24 * 365;
@@ -29,7 +30,9 @@ export function nameProblem(name) {
     if (BAD_WORDS.some((w) => { const k = norm(w); return k.includes(' ') ? n.includes(k) : tokens.includes(k); })) {
         return 'الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';
     }
-    return null;
+    // R58: المراجعة التلقائية الموحّدة (روابط، أرقام تواصل، انتحال صفة الإدارة، كلمات مسيئة إضافية)
+    const m = moderateText(name, 'profile-name');
+    return m.ok ? null : m.message;
 }
 /** الأوقات بالملّي ثانية؛ كل إصدار له معرّف مستقل حتى لو الحساب نفسه. */
 export function encodeSession(user, secret, now = Date.now()) {

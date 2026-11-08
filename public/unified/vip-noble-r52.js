@@ -1,9 +1,10 @@
 /* R52: أدوات عرض مشتركة لصفحتي VIP ونوبل بتصميم المرجع (داكن، شبكة امتيازات، أوراق سفلية).
  * عرض فقط: كل رقم ومستوى وامتياز يأتي من بيانات الخادم الموجودة (التقدم، عضوية VIP، مكافآت الرتب، شروط عناصر المتجر)،
  * ولا يُخترع امتياز أو رقم. */
-import * as R from './rank-vip-shared.js';
+import * as R from './rank-vip-shared.js?v=r58p';
 // استيراد كمساحة أسماء: لو المتصفح عنده نسخة أقدم من shop.js بالكاش (بدون itemThumb) ما تنكسر الصفحة
-import * as SHOP from '../shop.js?v=frame-gems-r24';
+import * as SHOP from '../shop.js?v=r58r';
+import { PERK_ITEMS } from '../rank-perks-r56.js?v=r58s';
 const { esc, obj, list, nat } = R;
 
 /* رموز أحادية اللون داخل الشكل السداسي (رسم بسيط خاص بالموقع) */
@@ -53,8 +54,23 @@ export const SLOT_LABEL = Object.freeze({ frame: 'إطار رأس', badge: 'شا
 export const SLOT_GLYPH = Object.freeze({ frame: 'frame', badge: 'badge', bg: 'image', title: 'title', entrance: 'car', avatar: 'person' });
 
 /** صورة عنصر متجر حقيقي (نفس عرض المتجر)، أو رمز سداسي */
+/** R58b: لقب الرتبة كشريط ملكي بنص على سطر واحد (بدل الدائرة اللي كانت تكسر «أسطورة VIP» لسطرين) */
+const TITLE_TONES = [['#f3d6b4', '#9a5a22'], ['#ffffff', '#8d97ab'], ['#fff1b8', '#c58b12'], ['#ffe08a', '#a8700e'], ['#ffe9a0', '#b0141f']];
+function titleArt(item) {
+  const text = String(item.css || item.name || '').replace(/^لقب\s*«|»$/g, '');
+  const m = /^rp-(vip|nb)-t(\d+)$/.exec(String(item.id || '')); const rank = m ? Number(m[2]) : 5;
+  const tier = m && m[1] === 'vip' ? 4 : Math.min(4, Math.max(0, Math.ceil(rank / 2) - 1));
+  const [a, b] = TITLE_TONES[tier]; const g = 'vt' + Math.random().toString(36).slice(2, 8);
+  const w = Math.min(104, 26 + [...text].length * 9.5);
+  return `<span class="vn-item-art vn-title-art"><svg viewBox="2 4 116 48" aria-hidden="true"><defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>`
+    + (tier >= 3 ? `<path d="M48 18l3-9 5 5 4-8 4 8 5-5 3 9z" fill="url(#${g})" stroke="#4a2c06" stroke-width=".8"/>` : '')
+    + `<path d="M${60 - w / 2 - 10} 28l8 9-8 9h10v-18z M${60 + w / 2 + 10} 28l-8 9 8 9h-10v-18z" fill="${b}" opacity=".85"/>`
+    + `<rect x="${60 - w / 2}" y="22" width="${w}" height="26" rx="6" fill="url(#${g})" stroke="#3a2406" stroke-width="1"/><rect x="${60 - w / 2 + 2.5}" y="24.5" width="${w - 5}" height="21" rx="4.5" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>`
+    + `<text x="60" y="40" text-anchor="middle" direction="rtl" font-family="Tajawal,Cairo,Arial,sans-serif" font-size="13" font-weight="800" fill="#2a1704" ${[...text].length > 9 ? `textLength="${w - 12}" lengthAdjust="spacingAndGlyphs"` : ''}>${esc(text)}</text></svg></span>`;
+}
 export function itemArt(item) {
   if (!obj(item)) return hex('gift');
+  if (item.slot === 'title') return titleArt(item);
   try {
     if (typeof SHOP.itemThumb === 'function') return `<span class="vn-item-art">${SHOP.itemThumb(item)}</span>`;
     const art = typeof item.art === 'string' && /^\/assets\/[A-Za-z0-9_./-]+\.(?:webp|png|jpe?g|svg)$/i.test(item.art) && !item.art.includes('..') ? item.art : '';
@@ -79,7 +95,9 @@ export function rewardRows(policy, items) {
   return list(policy?.rewards).map((r) => {
     if (obj(r) && r.type === 'currency' && ['coins', 'gems'].includes(r.cur) && nat(r.amount)) return { kind: 'currency', name: `${num(r.amount)} ${r.cur === 'coins' ? 'عملة' : 'جوهرة'}`, sub: 'مكافأة الرتبة', art: hex(r.cur === 'coins' ? 'coin' : 'gem') };
     if (obj(r) && r.type === 'item' && typeof r.itemId === 'string') {
-      const item = items.find((i) => i.id === r.itemId);
+      // R56: مقتنيات سلّم الرتب ما تنباع (ما تطلع بقائمة المتجر)، فنعرض صورتها من تعريفها المشترك
+      const perk = PERK_ITEMS[r.itemId];
+      const item = items.find((i) => i.id === r.itemId) || (perk ? { id: r.itemId, slot: perk.slot, css: perk.css, name: perk.name, rarity: 'legendary', permanent: true } : null);
       return { kind: 'item', item, name: SLOT_LABEL[item?.slot] || 'مقتنى', sub: item?.name || 'عنصر من المتجر', art: item ? itemArt(item) : hex('gift'), video: item?.slot === 'entrance' };
     }
     return null;

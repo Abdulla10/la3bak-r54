@@ -4,7 +4,7 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp
 const PUB = /^[A-Za-z0-9_-]{16}$/;
 const BASE = '/api/social-private/';
 const emptyPage = () => ({ list: [], more: false, nextBefore: null });
-const stamp = at => Number.isFinite(Number(at)) ? new Date(Number(at)).toLocaleString('ar-EG') : '';
+const stamp = at => Number.isFinite(Number(at)) ? new Date(Number(at)).toLocaleString('ar-EG-u-nu-latn') : '';
 const userName = user => esc(user?.name || 'لاعب');
 const mergePage = (old, next) => ({ ...next, list: [...old.list, ...next.list.filter(item => !old.list.some(x => x.id === item.id))] });
 const publicUser = user => !!user && PUB.test(user.pub);

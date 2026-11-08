@@ -1,7 +1,7 @@
 /* R53: صفحتا «من الذي رآني» و«ادعُ الأصدقاء» من قائمة ملفي.
  * البيانات من الخادم فقط (/api/profile/visitors و/api/profile/invites)، بنفس جلسة الموقع.
  * ما فيه أرقام ثابتة ولا مكافآت: الدعوات بدون أي مكافأة مالية. */
-import { mini } from './avatars.js?v=shell-r6';
+import { mini } from './avatars.js?v=r58c';
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const PUB = /^[A-Za-z0-9_-]{16}$/;
 const INVITE_KEY = 'la3bak:pending-invite';
@@ -14,7 +14,7 @@ function ago(at) {
   if (s < 3600) return `قبل ${Math.round(s / 60)} د`;
   if (s < 86400) return `قبل ${Math.round(s / 3600)} س`;
   if (s < 30 * 86400) return `قبل ${Math.round(s / 86400)} يوم`;
-  return new Date(t).toLocaleDateString('ar-EG');
+  return new Date(t).toLocaleDateString('ar-EG-u-nu-latn');
 }
 function face(u, size = 46) {
   const a = typeof u?.avatar === 'string' ? u.avatar : '';

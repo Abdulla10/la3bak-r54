@@ -1,25 +1,25 @@
 /* R13 gift-only presentation. The shared card contains authoritative server values. */
-.gr13-card{box-sizing:border-box;min-width:0;width:100%;max-width:100%;margin:12px 0;padding:16px;border:1px solid #b98a3d70;border-radius:18px;background:linear-gradient(145deg,#fffaf0,#fffaf0);color:#264d3b;text-align:start;overflow-wrap:anywhere;}
+.gr13-card{box-sizing:border-box;min-width:0;width:100%;max-width:100%;margin:12px 0;padding:16px;border:1px solid #b98a3d70;border-radius:18px;background:linear-gradient(145deg,#fcf9f4,#fcf9f4);color:#2c1a4a;text-align:start;overflow-wrap:anywhere;}
 .gr13-card *{box-sizing:border-box;min-width:0;}
 .gr13-selection{display:flex;align-items:center;justify-content:center;gap:16px;padding:2px 0 15px;border-bottom:1px solid #b98a3d30;}
 .gr13-art{position:relative;display:grid;place-items:center;flex:0 0 92px;width:92px;height:92px;border-radius:22px;background:radial-gradient(circle,#b98a3d20,transparent 70%);}
 .gr13-art>.gift-art{display:block;max-width:100%;height:auto;}
-.gr13-quantity{position:absolute;inset-inline-end:-4px;bottom:0;max-width:100%;padding:3px 9px;border-radius:20px;border:1px solid #b98a3d70;background:#fffaf0;color:#8a641f;font-size:13px;line-height:1.4;}
+.gr13-quantity{position:absolute;inset-inline-end:-4px;bottom:0;max-width:100%;padding:3px 9px;border-radius:20px;border:1px solid #b98a3d70;background:#fcf9f4;color:#8a641f;font-size:13px;line-height:1.4;}
 .gr13-selection-text{flex:1;max-width:310px;}
-.gr13-eyebrow{display:block;color:#264d3b;font-size:11px;font-weight:600;}
+.gr13-eyebrow{display:block;color:#2c1a4a;font-size:11px;font-weight:600;}
 .gr13-card h3{margin:5px 0;color:#8a641f;font-size:18px;line-height:1.4;}
-.gr13-card .gr13-selection-text p{margin:0;color:#264d3b;font-size:13px;line-height:1.7;}
+.gr13-card .gr13-selection-text p{margin:0;color:#2c1a4a;font-size:13px;line-height:1.7;}
 .gr13-rewards{display:grid;gap:10px;padding:15px 0;}
 .gr13-card .gr13-rewards p{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;margin:0;font-size:13px;line-height:1.65;}
 .gr13-rewards strong{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:5px;color:#8a641f;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
 .gr13-card .gr13-bonus{padding:10px 12px;border-radius:12px;background:#b98a3d12;border:1px solid #b98a3d25;}
 .gr13-currency{display:inline-block;width:20px;height:20px;flex:0 0 20px;vertical-align:middle;}
 .gr13-coin{color:#8a641f;}
-.gr13-gem{color:#264d3b;}
+.gr13-gem{color:#2c1a4a;}
 .gr13-card .gr13-total{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:5px 12px;margin:0;padding-top:11px;border-top:1px solid #d4e4d824;font-size:12px;line-height:1.7;}
-.gr13-total strong{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:14px;color:#264d3b;font-variant-numeric:tabular-nums;}
-.gr13-card .gr13-caption{margin:10px 0 0;font-size:11px;line-height:1.75;color:#264d3b;}
-.gr13-art-unavailable{font-size:11px;color:#264d3b;text-align:center;}
+.gr13-total strong{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:14px;color:#2c1a4a;font-variant-numeric:tabular-nums;}
+.gr13-card .gr13-caption{margin:10px 0 0;font-size:11px;line-height:1.75;color:#2c1a4a;}
+.gr13-art-unavailable{font-size:11px;color:#2c1a4a;text-align:center;}
 .gr13-card.is-pending{border-style:dashed;}
 .gr13-card.is-confirmed{border-color:#b98a3d75;}
 .gr13-checkout-preview{grid-column:1/-1;width:100%;min-width:0;}
@@ -60,6 +60,6 @@
 [data-so-panel="gifts"] .so-gift-catalog{flex:0 0 auto;min-height:60px;max-height:min(30dvh,240px);}
 [data-so-panel="gifts"] .gr13-checkout-preview{flex:none;padding:8px 10px;}
 [data-so-panel="gifts"] .so-gift-footer{order:10;}
-[data-so-panel="gifts"] .so-gift-quote-status{margin:0;font-size:10px;line-height:1.4;color:#264d3b;}
+[data-so-panel="gifts"] .so-gift-quote-status{margin:0;font-size:10px;line-height:1.4;color:#2c1a4a;}
 [data-so-panel="gifts"] .so-gift-confirm:has(.gr13-card){flex:none;max-height:min(50dvh,360px);}
 html.has-game-voice :is(#reactDock,#reactFeed){display:none!important;}

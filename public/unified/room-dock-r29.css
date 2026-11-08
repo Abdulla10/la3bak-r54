@@ -8,7 +8,7 @@
 .so-page[data-so-social-voice="true"] .so-room-detail .so-dock-row>.so-circle-button>svg{width:24px;height:24px;flex:none;}
 .so-page[data-so-social-voice="true"] .so-room-detail .so-dock-row>.so-circle-button>img{width:24px;height:24px;flex:none;object-fit:contain;}
 .so-page[data-so-social-voice="true"] .so-room-detail .so-dock-row>.so-dock-luckybag{color:#8a641f;}
-.so-page[data-so-social-voice="true"] .so-room-detail .so-dock-row>.so-dock-pk{color:#264d3b;}
+.so-page[data-so-social-voice="true"] .so-room-detail .so-dock-row>.so-dock-pk{color:#2c1a4a;}
 .so-page[data-so-social-voice="true"] .so-room-detail .so-dock-row>.so-circle-button:disabled{opacity:.42;}
-.so-page[data-so-social-voice="true"] .so-room-detail .so-dock-row>.so-circle-button:focus-visible{outline:2px solid #b98a3d;outline-offset:-3px;border-radius:10px;}
+.so-page[data-so-social-voice="true"] .so-room-detail .so-dock-row>.so-circle-button:focus-visible{outline:2px solid #c49a3a;outline-offset:-3px;border-radius:10px;}
 .so-page[data-so-social-voice="true"] .so-room-detail .so-chat-input-wrap .so-send-button{width:28px;height:28px;padding:4px;flex:none;}

@@ -11,21 +11,21 @@
 }
 .ru47-panel *, .ru47-panel *::before, .ru47-panel *::after { box-sizing: border-box; }
 .ru47-panel header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
-.ru47-panel h3, .ru47-panel h4 { margin: 0; color: var(--emerald, #08614d); font-weight: 700; }
+.ru47-panel h3, .ru47-panel h4 { margin: 0; color: var(--emerald, #4a2277); font-weight: 700; }
 .ru47-panel h3 { font-size: 1.1rem; }
 .ru47-panel h4 { font-size: 1rem; }
-.ru47-free, .ru47-price { color: var(--emerald, #08614d); font-weight: 700; }
+.ru47-free, .ru47-price { color: var(--emerald, #4a2277); font-weight: 700; }
 .ru47-free { border: 1px solid currentColor; border-radius: 2rem; padding: .2rem .75rem; white-space: nowrap; }
 .ru47-current { font-weight: 700; margin-bottom: .35rem; }
 .ru47-selected { margin-top: 0; font-size: .9rem; }
 .ru47-limits, .ru47-note { line-height: 1.8; font-size: .85rem; }
 .ru47-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
 .ru47-card { display: flex; min-width: 0; flex-direction: column; gap: .5rem; border: 1px solid var(--gold, #c7a85a); border-radius: .8rem; padding: .8rem; background: transparent; }
-.ru47-card.is-current { outline: 2px solid var(--emerald, #08614d); outline-offset: -2px; }
+.ru47-card.is-current { outline: 2px solid var(--emerald, #4a2277); outline-offset: -2px; }
 .ru47-card strong { font-size: 1.2rem; }
 .ru47-card p { margin: 0; font-size: .85rem; line-height: 1.6; }
 .ru47-card small { font-size: .8rem; line-height: 1.6; }
-.ru47-apply { margin-top: auto; min-height: 44px; padding: .65rem .7rem; border: 1px solid var(--emerald, #08614d); border-radius: .6rem; background: var(--emerald, #08614d); color: var(--ivory, #fffdf5); font: inherit; font-weight: 600; cursor: pointer; }
+.ru47-apply { margin-top: auto; min-height: 44px; padding: .65rem .7rem; border: 1px solid var(--emerald, #4a2277); border-radius: .6rem; background: var(--emerald, #4a2277); color: var(--ivory, #fffdf5); font: inherit; font-weight: 600; cursor: pointer; }
 .ru47-apply:disabled { opacity: .6; cursor: not-allowed; background: transparent; color: inherit; }
 .ru47-apply:focus-visible { outline: 3px solid var(--gold, #c7a85a); outline-offset: 3px; }
 .ru47-feedback { min-height: 1.5em; line-height: 1.6; font-size: .9rem; }

@@ -1,12 +1,12 @@
 /* Payment body only: the host owns authentication, routing and canonical balances.
  * No redirect/query parameter is evidence of payment; only OrderView is trusted.
  */
-import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from '../giftart.js?v=release-r14';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const nat = value => Number.isSafeInteger(value) && value >= 0;
-const quantity = value => nat(value) ? value.toLocaleString('ar-AE') : '—';
+const quantity = value => nat(value) ? value.toLocaleString('ar-AE-u-nu-latn') : '—';
 const units = Object.freeze({ coins: 'عملة', gems: 'جوهرة' });
 const statuses = Object.freeze({ pending: 'يالس نجهّز الطلب', awaiting_payment: 'بانتظار الدفع', paid: 'الدفع مسجّل', failed: 'الدفع ما تم', cancelled: 'الطلب ملغي', refund_pending: 'الاسترجاع قيد المعالجة', refunded: 'المبلغ مسترجع', review: 'الطلب تحت المراجعة' });
 const TEST_LABEL = 'وضع اختبار — ما فيه أموال حقيقية';
@@ -101,7 +101,7 @@ function banner(state) {
 function dateText(value) {
   if (value == null || (typeof value !== 'string' && typeof value !== 'number')) return 'التاريخ مب متوفر';
   const date = new Date(value);
-  return Number.isFinite(date.getTime()) ? date.toLocaleString('ar-AE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Dubai' }) : 'التاريخ مب متوفر';
+  return Number.isFinite(date.getTime()) ? date.toLocaleString('ar-AE-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Dubai' }) : 'التاريخ مب متوفر';
 }
 function orderSummary(order) {
   return `<dl class="lbp-summary"><div><dt>الكمية</dt><dd>${esc(quantity(order.amount))} ${units[order.cur]}</dd></div><div><dt>المبلغ</dt><dd><bdi dir="ltr">${esc(money(order.priceMinor, order.currency))}</bdi></dd></div><div><dt>رقم الطلب</dt><dd><bdi>${esc(order.id)}</bdi></dd></div><div><dt>وقت الطلب</dt><dd>${esc(dateText(order.createdAt))} · بتوقيت الإمارات</dd></div></dl>`;

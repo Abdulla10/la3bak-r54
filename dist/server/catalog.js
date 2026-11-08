@@ -1,4 +1,7 @@
+import { rankPerkCatalogItems } from './rank-perks-r56.js';
+import { LUX_ITEMS, LUX_SET, SPECIAL_ID_ITEMS, ROOM_ID_ITEMS } from './store-lux-r57.js';
 import { luxuryPricedSeed } from './luxury-pricing-r23.js';
+import { gemsOnlyStorePrice } from './store-gems-r58.js';
 import { REFERENCE_ITEMS, REFERENCE_SETS } from './reference-catalog.js';
 import { BACKGROUND_ITEMS } from './background-catalog.js';
 import { ENTRANCE_ITEMS } from './entrance-catalog.js';
@@ -118,6 +121,20 @@ for (const i of ENTRANCE_ITEMS) {
     entranceIds.add(i.id);
 }
 CATALOG.push(...ENTRANCE_ITEMS);
+const perkIds = new Set(CATALOG.map((i) => i.id));
+for (const i of [...LUX_ITEMS, ...SPECIAL_ID_ITEMS, ...ROOM_ID_ITEMS]) {
+    if (perkIds.has(i.id))
+        throw new Error(`Lux catalog ID collision: ${i.id}`);
+    perkIds.add(i.id);
+    CATALOG.push(i);
+}
+Object.assign(SETS, LUX_SET);
+for (const i of rankPerkCatalogItems()) {
+    if (perkIds.has(i.id))
+        throw new Error(`Rank perk catalog ID collision: ${i.id}`);
+    perkIds.add(i.id);
+    CATALOG.push(i);
+}
 /** ندرة العناصر القديمة (ما تغيّرت أسعارها) */
 const OLD_RARITY = { 'frame-emerald': 'common', 'frame-gold': 'premium', 'frame-royal': 'rare', 'frame-neon': 'epic', 'bg-forest': 'common', 'bg-sunset': 'premium', 'bg-desert': 'rare', 'bg-galaxy': 'epic', 'title-fighter': 'common', 'title-ace': 'rare', 'title-legend': 'epic', 'badge-star': 'common', 'badge-diamond': 'premium', 'badge-falcon': 'rare' };
 for (const i of CATALOG)
@@ -127,10 +144,10 @@ for (const i of CATALOG)
     if (i.id === 'av-emperor')
         i.set = 'emperor';
 for (let index = 0; index < CATALOG.length; index++)
-    CATALOG[index] = luxuryPricedSeed(CATALOG[index]);
+    CATALOG[index] = gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index]));
 const BY_ID = new Map(CATALOG.map((i) => [i.id, i]));
 export const itemOf = (id) => (typeof id === 'string' ? BY_ID.get(id) : undefined);
-export const SLOTS = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance'];
+export const SLOTS = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id'];
 export const MILESTONES = [
     { id: 'm-first-win', label: 'أول فوز', cur: 'coins', amount: 100, goal: 1, metric: 'wins' },
     { id: 'm-played-10', label: 'أكمل 10 مباريات', cur: 'coins', amount: 150, goal: 10, metric: 'played' },

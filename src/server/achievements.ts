@@ -15,7 +15,7 @@ export const ACHIEVEMENTS: Ach[] = [
   A('ach-b-gift', 'badge', 'الكريم', '🎁', 'giftsSent', 10, 'أرسل 10 هدايا', 'premium'),
   A('ach-b-loved', 'badge', 'المحبوب', '💝', 'giftsRecv', 10, 'استلم 10 هدايا', 'premium'),
   A('ach-b-collector', 'badge', 'الجامع', '🧳', 'owned', 10, 'امتلك 10 عناصر من المتجر', 'rare'),
-  A('ach-b-lv10', 'badge', 'مستوى ١٠', '🔟', 'level', 10, 'وصّل المستوى 10', 'rare'),
+  A('ach-b-lv10', 'badge', 'مستوى 10', '🔟', 'level', 10, 'وصّل المستوى 10', 'rare'),
   // شارات الألعاب: أول فوز بكل لعبة
   A('ach-b-baloot', 'badge', 'فارس البلوت', '🃏', 'won:baloot', 1, 'فز بمباراة بلوت', 'common'),
   A('ach-b-domino', 'badge', 'حجر الدومينو', '🁫', 'won:domino', 1, 'فز بمباراة دومينو', 'common'),

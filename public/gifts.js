@@ -1,10 +1,10 @@
-import { mini } from './avatars.js?v=shell-r6';
-import { safeGiftArt as giftArt, giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon } from './gift-reward-ui.js?v=purple-r38';
+import { mini } from './avatars.js?v=r58c';
+import { safeGiftArt as giftArt, giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon } from './gift-reward-ui.js?v=r57';
 /* الهدايا: نافذة اختيار بأقسام وبحث وفرز وعدد، داخل الغرفة (طبقة ثابتة فوق اللعب، ما تقفل الغرفة) أو من المتجر.
    الأسعار وعروض مكافآت العملات والتحقق والخصم من الخادم؛ لا يحسب العميل المكافآت ولا يضيف أرصدة،
    وما يعرض الحركة أو رسالة المحادثة إلا بعد ما يوصل حدث مؤكد من الخادم. */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const nf = (n) => Number(n).toLocaleString('ar-EG');
+const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2));
 const PAGE = 48;
 
@@ -179,7 +179,7 @@ export function giftTabHTML() {
   if (G.view === 'log') return sub + logHTML();
   return sub + `<section class="card gs-inline">${G.open ? '<p class="muted">نافذة الهدايا مفتوحة بالغرفة.</p>' : sheetBody()}</section>`;
 }
-const when = (ts) => new Date(ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
+const when = (ts) => new Date(ts).toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' });
 function rowHTML(r) {
   const mine = r.dir === 'out';
   const costCur = r.currency || 'coins', rewardCur = r.rewardCurrency || r.currency || 'coins';

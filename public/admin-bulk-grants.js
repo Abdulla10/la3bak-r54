@@ -61,7 +61,7 @@ function errorText(e) {
 }
 function ensureCss() {
   if (document.querySelector('link[data-bulk-grants-css]')) return;
-  const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/admin-bulk-grants.css'; link.dataset.bulkGrantsCss = '1'; document.head.appendChild(link);
+  const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/admin-bulk-grants.css?v=r58p'; link.dataset.bulkGrantsCss = '1'; document.head.appendChild(link);
 }
 function invalidate(s) {
   s.bound = false; s.key = ''; s.body = null; s.countText = ''; s.giftAck = false; s.error = ''; s.message = s.campaign?.status === 'preview' ? 'تغيّرت المدخلات؛ التأكيد مخفي حتى تنشئ معاينة صريحة جديدة.' : ''; store(s);

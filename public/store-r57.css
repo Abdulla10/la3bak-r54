@@ -1,0 +1,24 @@
+/* R57: المتجر — فقاعات، لوحات أسماء، أيديات مميزة، وترتيب شبكة الإطارات */
+.lux-thumb{display:grid;place-items:center;width:100%;height:100%;min-height:72px;}
+.r23-lux-preview{display:grid;place-items:center;min-height:150px;margin:8px 0;border-radius:18px;background:radial-gradient(circle at 50% 40%,#2b2150,#120d24);}
+.r23-lux-preview .lux-thumb{transform:scale(1.5);}
+.lux-board{display:inline-block;padding:2px 12px;border-radius:999px;font-weight:800;line-height:1.5;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.lux-board-silver{background:linear-gradient(90deg,#eef2fa,#b9c2d3,#eef2fa);color:#28303f;border:1px solid #8d97ab;}
+.lux-board-sapphire{background:linear-gradient(90deg,#123a9a,#3a7bff,#123a9a);color:#fff;border:1px solid #9fd0ff;box-shadow:0 0 8px #3a7bff66;}
+.lux-board-amethyst{background:linear-gradient(90deg,#3a1466,#7a2fd0,#3a1466);color:#fff;border:1px solid #ffd166;}
+.lux-board-gold{position:relative;background:linear-gradient(90deg,#9a6a08,#ffd36b,#9a6a08);color:#2a1704;border:1px solid #6b3f06;box-shadow:0 0 10px #ffd16677;}
+.lux-board-gold::before{content:"👑";position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:11px;}
+.lux-board-inferno{background:linear-gradient(90deg,#5a0a0a,#ff6b35,#ffd166,#ff6b35,#5a0a0a);background-size:200% 100%;color:#fff;border:1px solid #ffd166;animation:luxFlow 2.4s linear infinite;text-shadow:0 1px 2px #000a;}
+@keyframes luxFlow{to{background-position:-200% 0;}}
+.so-page .so-member-name.lux-board{font-size:11px;padding:1px 8px;margin-top:2px;}
+.lux-sid{display:inline-flex;flex-direction:column;align-items:center;gap:0;padding:6px 12px;border-radius:12px;background:linear-gradient(135deg,#1b1240,#3a1f7a);border:1.5px solid #ffd166;box-shadow:0 0 10px #ffd16655;color:#ffd166;}
+.lux-sid small{font-size:10px;font-weight:800;letter-spacing:2px;opacity:.85;}
+.lux-sid b{font:900 18px/1.1 Georgia,'Times New Roman',serif;letter-spacing:1px;}
+.lux-sid.r-ultra{background:linear-gradient(135deg,#3a0a0a,#8a1c10,#c8661a);border-color:#ffe066;color:#fff4cf;}
+.lux-sid.r-legendary{background:linear-gradient(135deg,#2a1704,#8a5a08);}
+@media (prefers-reduced-motion:reduce){.lux-board-inferno{animation:none;}}
+/* ترتيب شبكة الإطارات: الصورة تبقى بالوسط وما تطلع برا مربعها */
+.r23-store .r23-product-art{display:grid;place-items:center;overflow:hidden;}
+.r23-store .r23-product-art img.r23-frame-art{width:88%;height:88%;object-fit:contain;object-position:center;margin:auto;}
+/* إطارات SVG أكبر داخل مربع المنتج */
+.r23-store .r23-product-art .cx-fw.sm{transform:scale(1.45);}

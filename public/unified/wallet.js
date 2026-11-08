@@ -1,5 +1,5 @@
-import * as PACKS from './payments.js?v=root-navigation-r50';
-import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import * as PACKS from './payments.js?v=r58p';
+import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from '../giftart.js?v=release-r14';
 
 // Presentation-only adapter: all balances, policy and ledger entries come from
@@ -7,7 +7,7 @@ import { giftArt } from '../giftart.js?v=release-r14';
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const nat = (value) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 const positive = (value) => nat(value) && value > 0;
-const number = (value) => typeof value === 'number' && Number.isSafeInteger(value) ? value.toLocaleString('ar-AE') : '—';
+const number = (value) => typeof value === 'number' && Number.isSafeInteger(value) ? value.toLocaleString('ar-AE-u-nu-latn') : '—';
 const currencies = { coins: 'عملة', gems: 'جوهرة' };
 const kinds = { start: 'رصيد البداية', daily: 'مكافأة يومية', entry_fee: 'رسوم دخول', prize: 'جائزة', refund: 'استرجاع رسوم', purchase: 'شراء', reward: 'مكافأة', admin: 'تعديل الإدارة', gift: 'هدية', transfer: 'تحويل الرصيد' };
 const tabs = [['ledger', 'file', 'سجل المعاملات'], ['packs', 'shop', 'شحن الرصيد'], ['vip', 'crown', 'اشتراك VIP'], ['convert', 'back', 'تحويل الرصيد'], ['rewards', 'star', 'المكافآت']];
@@ -39,7 +39,7 @@ function dateText(timestamp) {
   if (!nat(timestamp)) return 'التاريخ مب متوفر';
   const date = new Date(timestamp);
   if (!Number.isFinite(date.getTime())) return 'التاريخ مب متوفر';
-  return date.toLocaleString('ar-AE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Dubai' });
+  return date.toLocaleString('ar-AE-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Dubai' });
 }
 function ledgerView(state, ctx) {
   if (!Array.isArray(state.ledger)) return panel(`${icon('clock')} آخر العمليات`, note(state.error ? 'ما قدرنا نحمّل السجل. جرّب تحدّث المحفظة.' : 'بنحمّل معاملاتك من الخادم…'));
@@ -49,7 +49,7 @@ function ledgerView(state, ctx) {
   const next = state.offset + state.ledger.length;
   const canNext = nat(state.total) && next < state.total && state.ledger.length > 0;
   const count = nat(state.total) ? `عدد العمليات المسجّلة: ${number(state.total)}` : 'عدد العمليات مب متوفر';
-  return panel(`${icon('clock')} آخر العمليات`, `<p class="lbw-muted">${esc(count)} · الأحدث أول · حتى ٦٠ عملية بالصفحة.</p>${list}<nav class="pagination" aria-label="صفحات سجل المحفظة">${button('الأحدث', 'ledger', locked(state, ctx) || state.offset === 0, `data-lbw-offset="${Math.max(0, state.offset - 60)}"`)}<span>بداية الصفحة: ${esc(number(state.offset))}</span>${button('الأقدم', 'ledger', locked(state, ctx) || !canNext, `data-lbw-offset="${next}"`)}</nav><p class="lbw-muted">السجل للعرض بس؛ ما فيه حذف أو تصدير مربوط هنا. الرصيد قبل وبعد من نفس سجل الخادم، مب محسوب عندك.</p>`);
+  return panel(`${icon('clock')} آخر العمليات`, `<p class="lbw-muted">${esc(count)} · الأحدث أول · حتى 60 عملية بالصفحة.</p>${list}<nav class="pagination" aria-label="صفحات سجل المحفظة">${button('الأحدث', 'ledger', locked(state, ctx) || state.offset === 0, `data-lbw-offset="${Math.max(0, state.offset - 60)}"`)}<span>بداية الصفحة: ${esc(number(state.offset))}</span>${button('الأقدم', 'ledger', locked(state, ctx) || !canNext, `data-lbw-offset="${next}"`)}</nav><p class="lbw-muted">السجل للعرض بس؛ ما فيه حذف أو تصدير مربوط هنا. الرصيد قبل وبعد من نفس سجل الخادم، مب محسوب عندك.</p>`);
 }
 function packsView(state, ctx) {
   return `<section class="lbw-packs-section" aria-label="شراء العملات والجواهر داخل المحفظة"><h2>شراء العملات والجواهر</h2><div data-lbw-packs-host></div></section>`;

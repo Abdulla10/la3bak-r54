@@ -1,6 +1,6 @@
 import { referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=shell-r6';
-import { frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=shell-r6';
+import { avatarArt } from './avatars.js?v=r58c';
+import { frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58c';
 /* نظام الشخصية: كل شي محفوظ على جهاز اللاعب فقط (localStorage). ما فيه حسابات ولا يرسل شي للخادم. */
 
 const KEY = 'qa_profile_v1';
@@ -189,7 +189,7 @@ export function avatarHTML(p, size = 96) {
 }
 
 /* ---------------- الواجهات ---------------- */
-const num = (n) => new Intl.NumberFormat('ar-EG').format(n);
+const num = (n) => new Intl.NumberFormat('ar-EG-u-nu-latn').format(n);
 
 function sinceText(p) {
   const d = Math.floor((Date.now() - (p.since || Date.now())) / 86400000);

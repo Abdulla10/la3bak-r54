@@ -55,4 +55,4 @@
   display: inline-grid;
   place-items: center;
 }
-.pvp-page .pvp-fallback { display: grid; place-items: center; width: var(--sz, var(--pvp-avatar-size, 68px)); height: var(--sz, var(--pvp-avatar-size, 68px)); border-radius: 50%; background: #fffaf0; color: #264d3b; font-size: 24px; }
+.pvp-page .pvp-fallback { display: grid; place-items: center; width: var(--sz, var(--pvp-avatar-size, 68px)); height: var(--sz, var(--pvp-avatar-size, 68px)); border-radius: 50%; background: #fcf9f4; color: #2c1a4a; font-size: 24px; }

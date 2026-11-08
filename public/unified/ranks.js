@@ -1,8 +1,9 @@
 /* Rank page BODY only. The unified shell owns header, wallet, auth and navigation.
  * GETs never grant points. Every entitlement and claim remains server-authoritative. */
-import { mini } from '../avatars.js?v=shell-r6';
-import * as R from './rank-vip-shared.js';
-import * as V from './vip-noble-r52.js?v=vip-noble-r52';
+import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r58s';
+import { mini } from '../avatars.js?v=r58c';
+import * as R from './rank-vip-shared.js?v=r58p';
+import * as V from './vip-noble-r52.js?v=r58s';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 
 export function catalogueOf(data) {
@@ -73,6 +74,8 @@ export function noblePerks(state, ctx, level) {
     const claimed = entryRow?.claim?.status === 'claimed' || p.status === 'claimed';
     for (const r of V.rewardRows(p, items)) out.push({ ...r, desc: `مكافأة رتبة N${level} — تُستلم مرة وحدة.`, open, claimId: claimable ? `noble:${level}` : null, claimed });
   }
+  // R56: مؤثرات نوبل التلقائية بالغرف (لون الاسم، فقاعة الدردشة، هالة المقعد)
+  for (const e of PERK_EFFECTS.noble.filter((e) => e.rank === level)) out.push({ name: e.name, sub: effectKindLabel(e.kind), art: effectArt(e), desc: `${e.desc} يشتغل تلقائيًا بدون استلام.`, open });
   for (const item of items.filter((i) => i.minNoble === level && i.status !== 'hidden')) out.push({ name: V.SLOT_LABEL[item.slot] || 'عنصر حصري', sub: item.name, art: V.itemArt(item), video: item.slot === 'entrance', desc: `عنصر من المتجر يتطلب رتبة N${level} للشراء والتجهيز.`, open: item.eligibility ? item.eligibility.eligible === true : open, link: '#/shop', linkText: 'عرض في المتجر' });
   return out.map((p) => ({ ...p, stateText: p.claimed ? 'تم استلامها' : p.open ? 'مفتوح لك' : `يفتح عند N${level}` }));
 }

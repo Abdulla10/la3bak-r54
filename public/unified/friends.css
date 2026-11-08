@@ -22,9 +22,9 @@
   overflow-wrap: anywhere;
 }
 .lb-unified [data-lb-page="friends"] .avatar {
-  background: radial-gradient(circle at 35% 25%, #fffaf0, #fffaf0);
+  background: radial-gradient(circle at 35% 25%, #fcf9f4, #fcf9f4);
   color: #8a641f;
-  border-color: #b98a3d;
+  border-color: #c49a3a;
   overflow: hidden;
 }
 .lb-unified [data-lb-page="friends"] .avatar svg {
@@ -60,11 +60,11 @@
 .lb-unified [data-lb-page="friends"] .lb-friends-page-note {
   justify-content: space-between;
   margin-block-start: 14px;
-  color: #264d3b;
+  color: #2c1a4a;
 }
 .lb-unified [data-lb-page="friends"] .lb-friends-label {
   display: block;
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 14px;
 }
 .lb-unified [data-lb-page="friends"] .btn,
@@ -97,7 +97,7 @@
   padding-block: 22px;
 }
 .lb-unified [data-lb-page="friends"] .lb-friends-empty {
-  color: #264d3b;
+  color: #2c1a4a;
   line-height: 1.9;
 }
 .lb-unified [data-lb-page="friends"] .lb-friends-presence-note {
@@ -106,31 +106,31 @@
 }
 .lb-unified [data-lb-page="friends"] .lb-friends-error,
 .lb-unified [data-lb-page="friends"] .lb-friends-notice {
-  border: 1px solid #d4e4d8;
+  border: 1px solid #e6ddf3;
   border-radius: 14px;
   padding: 12px 14px;
-  background: #fffaf0;
-  color: #264d3b;
+  background: #fcf9f4;
+  color: #2c1a4a;
   line-height: 1.8;
   overflow-wrap: anywhere;
 }
 .lb-unified [data-lb-page="friends"] .lb-friends-notice {
-  border-color: #b98a3d;
-  background: #fffaf0;
+  border-color: #c49a3a;
+  background: #fcf9f4;
   color: #8a641f;
 }
 .lb-unified [data-lb-page="friends"] .lb-friends-confirm {
   width: 100%;
   padding: 10px;
-  background: #fffaf0;
-  border: 1px solid #b98a3d;
+  background: #fcf9f4;
+  border: 1px solid #c49a3a;
   border-radius: 12px;
 }
 .lb-unified [data-lb-page="friends"] .lb-friends-confirm p {
   margin-block: 0 10px;
 }
 .lb-unified [data-lb-page="friends"] .lb-friends-limits p {
-  color: #264d3b;
+  color: #2c1a4a;
   line-height: 1.9;
   font-size: 13px;
 }
@@ -142,7 +142,7 @@
 .lb-unified [data-lb-page="friends"] a:focus-visible,
 .lb-unified [data-lb-page="friends"] button:focus-visible,
 .lb-unified [data-lb-page="friends"] input:focus-visible {
-  outline: 2px solid #b98a3d;
+  outline: 2px solid #c49a3a;
   outline-offset: 3px;
 }
 @media (max-width: 700px) {

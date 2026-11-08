@@ -30,7 +30,7 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: var(--la3bak-royal-ink, #264d3b);
+  color: var(--la3bak-royal-ink, #2c1a4a);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
@@ -55,7 +55,7 @@
   box-sizing: border-box;
   border-radius: 50%;
   background: #fffaf01c;
-  color: #264d3b;
+  color: #2c1a4a;
 }
 .pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-icon { width: 28px; height: 28px; }
 .pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row > .pvp-icon:first-child {
@@ -70,14 +70,14 @@
 .pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row > .pvp-icon:last-child:not(:first-child) {
   flex: 0 0 16px;
   width: 16px !important; height: 16px !important;
-  color: #264d3b;
+  color: #2c1a4a;
   transform: rotate(180deg);
 }
 .pvp-page.pvp-profile-r19 .pvp-profile-list :is(.pvp-menu-value, .pvp-pending-label) {
   flex: 0 1 auto;
   min-width: 0;
   max-width: 35%;
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 11px;
   font-weight: 400;
   line-height: 1.5;
@@ -87,10 +87,10 @@
 }
 .pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row:is(a[href], button):not(:disabled):not([aria-disabled="true"]):not(.pvp-menu-unavailable) { cursor: pointer; }
 .pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row:is(a[href], button):not(:disabled):not([aria-disabled="true"]):not(.pvp-menu-unavailable):hover { background: #fffaf00c; }
-.pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row:is(a[href], button):not(:disabled):not([aria-disabled="true"]):not(.pvp-menu-unavailable):focus-visible { outline: 2px solid #d4e4d8; outline-offset: -2px; }
+.pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row:is(a[href], button):not(:disabled):not([aria-disabled="true"]):not(.pvp-menu-unavailable):focus-visible { outline: 2px solid #e6ddf3; outline-offset: -2px; }
 .pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row:is(.pvp-menu-unavailable, :disabled, [aria-disabled="true"]) {
-  color: #264d3b; font-weight: 400; background: transparent; cursor: default; pointer-events: none;
+  color: #2c1a4a; font-weight: 400; background: transparent; cursor: default; pointer-events: none;
 }
-.pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row:is(.pvp-menu-unavailable, :disabled, [aria-disabled="true"]) :is(.pvp-menu-icon, .pvp-icon, .pvp-menu-value, .pvp-pending-label) { color: #264d3b; opacity: .6; }
+.pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row:is(.pvp-menu-unavailable, :disabled, [aria-disabled="true"]) :is(.pvp-menu-icon, .pvp-icon, .pvp-menu-value, .pvp-pending-label) { color: #2c1a4a; opacity: .6; }
 .pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-unavailable > .pvp-icon:last-child:not(:first-child) { transform: none; }
 .pvp-page.pvp-profile-r19 .pvp-profile-list .pvp-menu-row[data-pvp="logout"] { color: #eac3cc; }

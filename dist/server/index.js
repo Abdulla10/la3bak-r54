@@ -1,3 +1,4 @@
+import { moderateText } from './moderation-r58.js';
 import { Economy, validEconomy, MANUAL_CONVERSION_DISABLED, MANUAL_CONVERSION_CLOSED_MESSAGE } from './economy.js';
 import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
 import { quoteGiftBatch } from './social-gift-batch-r27.js';
@@ -82,8 +83,11 @@ export function validSocialGiftOutbox(d) {
  * Sale status is intentionally independent from owned equipment, as for existing cosmetics.
  * Fixed catalog artwork/name cannot be replaced by a wallet string or custom product URL.
  */
+/** R58e: إيقاف قسم السيارات بالكامل (المالك طلب حذفها). البيانات والملكية ما تنمس، فيقدر يرجع بتغيير هذا العلم. */
+export const CARS_REMOVED = true;
 export function equippedEntranceView(wallet, shopcat, id, ranks) {
-    if (!wallet.has(id))
+    // R58e: السيارات انشالت من الموقع بطلب المالك — ما تنعرض ولا تشتغل بالغرف
+    if (CARS_REMOVED || !wallet.has(id))
         return null;
     const iid = wallet.equipped(id).entrance;
     const base = ENTRANCE_ITEMS.find((i) => i.id === iid);
@@ -453,6 +457,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         /* ---- المتجر: كل التحقق بالخادم. العميل يرسل معرّف العنصر ومفتاح الطلب فقط ---- */
         const progress = (id) => { const pr = canonicalProfile(id, 0); return { wins: pr.wins, played: pr.played, level: pr.level, progression: progression.view(id) }; };
         const achInput = (id) => { const st = accounts.achStats(id); const gc = wallet.giftCounts(id); return { ...st, giftsSent: gc.sent, giftsRecv: gc.recv, owned: wallet.owned(id).length }; };
+        /** R57: هل الرقم مستخدم من حساب ثاني (أيدي عادي أو مميز)؟ */
+        const specialTaken = (id, value) => { const owner = accounts.findByDisplayPlayerId(value); return owner !== null && owner !== id; };
         const shopView = (id) => {
             const pr = progress(id);
             const got = new Set(wallet.claimed(id));
@@ -461,8 +467,9 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             const allItems = shopcat.all().map((i) => ({ id: i.id, slot: i.slot, name: i.name, icon: i.icon, desc: i.desc, price: i.price, currency: i.currency, permanent: i.permanent, css: i.css, art: i.art, active: i.active, retired: !i.active, status: i.status, minLevel: i.minLevel, minVip: i.minVip, minNoble: i.minNoble, eligibility: shopEligibility(i, ranks), rarity: i.rarity ?? 'common', set: i.set ?? null, season: i.season ?? null, kids: !!i.kids, ...(i.backgroundCategory ? { backgroundCategory: i.backgroundCategory, priceApproved: i.priceApproved } : {}), ...(i.slot === 'entrance' ? { proposalOnly: i.proposalOnly, priceApproved: i.priceApproved } : {}) }));
             return {
                 ok: true, canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), equipped: wallet.equipped(id), equippedView: equippedView(id),
-                items: allItems.filter((i) => i.status !== 'hidden' || owned.has(i.id)),
-                collectionItems: allItems.filter((i) => i.set && (i.status !== 'hidden' || owned.has(i.id))),
+                // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
+                items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && specialTaken(id, String(i.css ?? ''))) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
+                collectionItems: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && i.set && (i.status !== 'hidden' || owned.has(i.id))),
                 sets: SETS, rarities: RARITIES, achievements: achView(achInput(id)),
                 economy: economy.view(), gemPacks: [],
                 milestones: MILESTONES.map((x) => ({ ...x, value: pr[x.metric], done: got.has(x.id), ready: !got.has(x.id) && pr[x.metric] >= x.goal })),
@@ -507,6 +514,9 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 const it = shopcat.get(m.item);
                 if (!it)
                     return { ok: false, error: 'عنصر غير موجود.' };
+                // R58e: السيارات انشالت من الموقع بطلب المالك (الملكية القديمة محفوظة بالبيانات)
+                if (it.slot === 'entrance')
+                    return { ok: false, code: 'unavailable', error: 'هذا القسم غير متاح.' };
                 if (achOf(it.id))
                     return { ok: false, code: 'reserved', error: 'هذا المعرّف مخصص لإنجاز مكتسب، ولا يُشترى.' };
                 // السعر دائماً من الخادم. لو العميل أرسل السعر اللي شافه وتغيّر، نرفض ونرجّع المتجر محدّثاً (ما نخصم سعراً ما شافه).
@@ -516,7 +526,29 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                     return { ok: false, error: wallet.owned(id).includes(it.id) ? 'تملك هذا العنصر من قبل.' : 'هذا العنصر غير متاح للشراء حالياً.', code: 'inactive' };
                 if (!eligibleItem(id, it))
                     return { ok: false, code: 'rank_required', error: 'رتبتك الحالية ما تستوفي شرط فتح العنصر.' };
+                // R57: الأيدي المميز: محجوز؟ نرفض. نثبّته قبل الخصم ونرجّعه لو الخصم فشل (كل هذا متزامن بدون انتظار)
+                let prevSpecial;
+                if (it.slot === 'special-id') {
+                    const value = String(it.css ?? '');
+                    if (specialTaken(id, value))
+                        return { ...shopView(id), ok: false, code: 'taken', error: 'هذا الأيدي محجوز لحساب ثاني.' };
+                    prevSpecial = accounts.specialPlayerIdOf(id);
+                    try {
+                        accounts.setSpecialPlayerId(id, value);
+                    }
+                    catch {
+                        return { ...shopView(id), ok: false, code: 'taken', error: 'هذا الأيدي محجوز لحساب ثاني.' };
+                    }
+                }
+                if (it.slot === 'room-id' && wallet.anyOwner(it.id, id))
+                    return { ...shopView(id), ok: false, code: 'taken', error: 'أيدي الغرفة هذا انباع لحساب ثاني.' };
                 const r = wallet.buy(id, it, String(m.key ?? ''));
+                if (!r.ok && prevSpecial !== undefined) {
+                    try {
+                        accounts.setSpecialPlayerId(id, prevSpecial);
+                    }
+                    catch { /* يبقى كما هو؛ ما فيه خصم */ }
+                }
                 if (!r.ok)
                     return { ok: false, error: r.code === 'owned' ? 'تملك هذا العنصر من قبل.' : r.code === 'poor' ? (it.currency === 'gems' ? 'جواهرك ما تكفي.' : 'عملاتك ما تكفي.') : 'طلب غير صالح.', code: r.code };
                 return { ...shopView(id), bought: it.id, dup: r.dup };
@@ -540,6 +572,19 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 const slot = it ? it.slot : String(m.slot ?? '');
                 if (!SLOTS.includes(slot))
                     return { ok: false, error: 'خانة غير صالحة.' };
+                if (slot === 'special-id') {
+                    if (it && !wallet.owned(id).includes(it.id))
+                        return { ok: false, error: 'ما تملك هذا العنصر.' };
+                    const value = it ? String(it.css ?? '') : null;
+                    if (value && specialTaken(id, value))
+                        return { ok: false, code: 'taken', error: 'هذا الأيدي محجوز لحساب ثاني.' };
+                    try {
+                        accounts.setSpecialPlayerId(id, value);
+                    }
+                    catch {
+                        return { ok: false, code: 'taken', error: 'تعذّر تغيير الأيدي الحين.' };
+                    }
+                }
                 return wallet.equip(id, slot, it ? it.id : null) ? shopView(id) : { ok: false, error: 'ما تملك هذا العنصر.' };
             }
             const ms = MILESTONES.find((x) => x.id === m.mid);
@@ -785,6 +830,30 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             }
             send(ws, msg);
         });
+        /** R58f: تنبيهات الأصدقاء (دخل الموقع / دخل غرفة). للأصدقاء المقبولين المتصلين بس، وما تطلع إذا الشخص قفّل «إظهار التواجد» بنفسه. */
+        const friendNoticeAt = new Map();
+        const notifyFriends = (userId, build, key, gap) => {
+            try {
+                if (accountTools.explicitSetting(userId, 'showPresence') === false)
+                    return;
+                const now = Date.now(), last = friendNoticeAt.get(key) ?? 0;
+                if (now - last < gap)
+                    return;
+                friendNoticeAt.set(key, now);
+                if (friendNoticeAt.size > 20000)
+                    for (const [k, t] of friendNoticeAt)
+                        if (now - t > 3600_000)
+                            friendNoticeAt.delete(k);
+                for (const f of social.friendInternalIds(userId)) {
+                    if (!sockets.has(f))
+                        continue;
+                    const msg = build(f);
+                    if (msg)
+                        sendToUser(f, msg);
+                }
+            }
+            catch { /* التنبيه شكلي، ما يوقف شي */ }
+        };
         const service = new RoomService(store, registry, cfg, {
             onBeforeGameFinished(room, players, winners, ref, ts) {
                 return reserveGame(ref, players, winners, ts);
@@ -967,6 +1036,11 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             pendingSupportCount: id => outbox.pending().filter(intent => intent.payload.kind === 'gift' && validGiftSupportContext(intent.payload.socialSupport) && (id === null || intent.payload.socialSupport.challengeId === id)).length,
             reconcileGift: (from, to, ref) => { if (wallet.hasGiftSource(from, to, ref))
                 deliverIntent('gift:' + ref); },
+            // R58: ليفل الغرفة من قيمة الهدايا الملتزمة بالمحفظة (جواهر داخل نفس الغرفة)
+            giftValue: (from, to, ref, roomId) => { const rec = wallet.committedGiftReceipt(from, to, ref); if (!rec || rec.cur !== 'gems' || rec.status !== 'done' || typeof rec.room !== 'string' || !rec.room.startsWith(`social:${roomId}:`))
+                return null; const v = rec.total ?? rec.price * (rec.qty ?? 1); return Number.isSafeInteger(v) && v > 0 ? v : null; },
+            roomIdItem: (userId, itemId) => { const it = shopcat.get(itemId); return it && it.slot === 'room-id' && wallet.owned(userId).includes(it.id) && typeof it.css === 'string' ? it.css : null; },
+            moderate: (text, kind) => { const m = moderateText(text, kind); return m.ok ? { ok: true } : { ok: false, code: m.code }; },
             verifyGiftSupport: (context, rec) => {
                 if (wallet.unsaved() || !wallet.hasGiftSource(rec.from, rec.to, rec.id))
                     return false;
@@ -983,7 +1057,10 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 const photo = avatars.version(id);
                 const entrance = entranceView(id);
                 const frame = equippedFrameView(wallet, shopcat, id);
-                return { id, publicId: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), ...(frame ? { frame } : {}), ranks: { level: p.level.enabled ? p.level.value : null, vip: p.vip.enabled ? vip : null, noble: p.noble.enabled ? noble : null }, ...(entrance ? { entrance } : {}) };
+                // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
+                const eq = wallet.equipped(id), cosm = (slot) => { const it = eq[slot] ? shopcat.get(eq[slot]) : undefined; return it && it.slot === slot && typeof it.css === 'string' ? it.css : null; };
+                const bubble = cosm('chat-bubble'), board = cosm('board');
+                return { id, publicId: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ranks: { level: p.level.enabled ? p.level.value : null, vip: p.vip.enabled ? vip : null, noble: p.noble.enabled ? noble : null }, ...(entrance ? { entrance } : {}) };
             },
             blocked: (a, b) => community.pairBlocked(a, b), eligible: socialEligible, trustedAdmin: id => id === 'token',
             emit: (ids, event) => { for (const id of ids)
@@ -1032,6 +1109,19 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             accounts, platform, community, accountTools, social, missions, rankRewards, support, online: () => [...sockets.keys()],
         });
         wireProfileSocialRoutes(functionalHttp, profileSocial, (id) => community.pub(id));
+        // R58: أيديات الغرف المميزة اللي يملكها اللاعب (لاختيارها من إعدادات غرفته)
+        // R58f: شريط الأصدقاء مثل انستغرام: صورة كل صديق، وإذا هو داخل غرفة ظاهرة تطلع عليه «في غرفة» وتدخل عليها مباشرة
+        functionalHttp.add('GET', '/api/friends/live', ({ user }) => {
+            const ids = social.friendInternalIds(user.id).slice(0, 200);
+            const list = ids.map((f) => {
+                const room = accountTools.explicitSetting(f, 'showPresence') === false ? null : socialRooms.friendRoom(user.id, f);
+                const photo = avatars.version(f);
+                return { id: community.pub(f), name: accounts.nameOf(f), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(f)}&v=${photo}` : null, room };
+            });
+            list.sort((a, b) => Number(!!b.room) - Number(!!a.room) || String(a.name).localeCompare(String(b.name), 'ar'));
+            return { ok: true, list: list.slice(0, 60) };
+        });
+        functionalHttp.add('GET', '/api/room-ids/mine', ({ user }) => ({ ok: true, items: wallet.owned(user.id).map((iid) => shopcat.get(iid)).filter((it) => !!it && it.slot === 'room-id' && typeof it.css === 'string').map((it) => ({ id: it.id, code: it.css, name: it.name })) }));
         wireFeaturesR47(functionalHttp, { auction: auctionR47, social, items: () => shopcat.all(), hasAccount: id => accounts.has(id), asAdmin: (id, run) => { const previous = auctionAdminActorR47; auctionAdminActorR47 = id; try {
                 return run();
             }
@@ -1044,7 +1134,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             catch {
                 return false;
             } } });
-        wireSocialRoutes(functionalHttp, { rooms: socialRooms, voice: socialVoice, platform, eligible: socialEligible, publicId: id => community.pub(id), presentFriends: (id, publicIds) => social.friendsPresent(id, new Set(publicIds)), resolveTarget: value => accounts.has(value) ? value : community.resolvePublicId(value) ?? accounts.findByDisplayPlayerId(value) ?? null,
+        wireSocialRoutes(functionalHttp, { onRoomJoin: (uid, roomId) => notifyFriends(uid, (f) => { const room = socialRooms.friendRoom(f, uid); return room && room.id === roomId ? { t: 'friend:room', id: community.pub(uid), name: accounts.nameOf(uid), room: { id: room.id, name: room.name, locked: room.locked } } : null; }, 'room:' + uid + ':' + roomId, 5 * 60_000), rooms: socialRooms, voice: socialVoice, platform, eligible: socialEligible, publicId: id => community.pub(id), presentFriends: (id, publicIds) => social.friendsPresent(id, new Set(publicIds)), resolveTarget: value => accounts.has(value) ? value : community.resolvePublicId(value) ?? accounts.findByDisplayPlayerId(value) ?? null,
             resolveGiftTarget: value => community.resolvePublicId(value), replayGiftBatch: batchReplayView, replayGift: singleGiftReplayView, quoteGift: (user, body) => { const g = giftcat.get(body.gift); if (!g?.active)
                 return { ok: false, error: 'الهدية غير متاحة.' }; if (body.seen !== g.price || body.seenPolicy !== GIFT_REWARD_POLICY.id)
                 return { ok: false, error: 'تغير عرض الهدية. حدّث الكتالوج.' }; const qty = body.qty, q = Array.isArray(body.to) ? quoteGiftBatch(g.price, qty, body.to.length) : quoteGiftRewards(g.price, qty); if (!q || q.total > 1_000_000)
@@ -1739,8 +1829,10 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         function onConnection(ws, user, cookie) {
             socketSessions.set(ws, { cookie, hash: sessionTokenHash(cookie) ?? '' });
             let set = sockets.get(user.id);
-            if (!set)
+            if (!set) {
                 sockets.set(user.id, (set = new Set()));
+                notifyFriends(user.id, (f) => ({ t: 'friend:online', id: community.pub(user.id), name: accounts.nameOf(user.id) }), 'on:' + user.id, 10 * 60_000);
+            }
             set.add(ws);
             const bucket = new TokenBucket(Number(process.env.WS_BURST) || 20, Number(process.env.WS_RATE) || 6);
             let alive = true;

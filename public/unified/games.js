@@ -24,7 +24,7 @@ const CATEGORY_OF = Object.freeze({
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 })[char]);
-const nf = value => new Intl.NumberFormat('ar-AE').format(value);
+const nf = value => new Intl.NumberFormat('ar-AE-u-nu-latn').format(value);
 const route = id => '#/game/' + encodeURIComponent(String(id));
 const icon = () => `<img src="${ICON}" alt="" width="56" height="56" decoding="async">`;
 const gameList = ctx => visibleGameCatalogue(ctx.games)

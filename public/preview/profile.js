@@ -6,12 +6,12 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=frame-gems-r24';
-import { avatarArt } from '../avatars.js';
-import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=emerald-r44';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=emerald-r44';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r58r';
+import { avatarArt } from '../avatars.js?v=r58c';
+import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58r';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js';
-import { rankSummary, renderRankOverview } from './rank-overview.js?v=ui-correction-r3';
+import { rankSummary, renderRankOverview } from './rank-overview.js?v=r58c';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const arr = v => Array.isArray(v) ? v : [];
@@ -331,7 +331,7 @@ export function profileHTML(ctx={}) {
  if(requestedTab){s.tab=requestedTab;s.collectionOpen=true;requestedTab=null;}
  const journey=s.rankOpen?renderRankOverview({...ctx,rankOverviewOpen:true,profileJourneyDefault:false,rankRewards:s.rankRewards??ctx.rankRewards,rankRewardsLoading:s.rankLoading,rankRewardsError:s.rankError,rankClaimPending:s.rankPending},s.rankSystem):'';
  const error=ctx.error || s.error;
- return `<article class="pv-profile lpu pvp-page pvp-profile-r15 pvp-profile-r19" data-profile-build="profile-list-r19" dir="rtl">${referenceHero(ctx,s)}${familyCard(ctx,s)}${savedRoomsCard(ctx,s)}<div data-pvp-status class="lpu-status" ${error?'role="alert"':'role="status"'} aria-live="polite">${esc(error || s.message || (ctx.loading?'جاري تحميل بيانات حسابك…':''))}${ctx.error&&typeof ctx.refreshMe==='function'?button('account-retry','إعادة تحميل الحساب','','pvp-text-button'):''}</div>${profileGiftLog(ctx)}${profileMenu(ctx,s)}${s.rankOpen?`<div class="pvp-rank-details">${rankCards(ctx,s)}${journey}</div>`:''}${profileDetails(ctx)}${!ctx.user?`<section class="lpu-login">${guestStart(ctx)}${ctx.googleCard?ctx.googleCard():''}</section>`:ctx.google===false&&ctx.googleCard?`<details class="lpu-google-details"><summary>حماية حساب الضيف بربطه بـ Google</summary>${ctx.googleCard()}</details>`:''}${referenceDrawer(ctx,s)}${referenceBottomNav(ctx)}${collection(ctx,s)}${editor(ctx,s)}</article>`;
+ return `<article class="pv-profile lpu pvp-page pvp-profile-r15 pvp-profile-r19" data-profile-build="profile-list-r19" dir="rtl">${referenceHero(ctx,s)}${familyCard(ctx,s)}<div data-pvp-status class="lpu-status" ${error?'role="alert"':'role="status"'} aria-live="polite">${esc(error || s.message || (ctx.loading?'جاري تحميل بيانات حسابك…':''))}${ctx.error&&typeof ctx.refreshMe==='function'?button('account-retry','إعادة تحميل الحساب','','pvp-text-button'):''}</div>${profileGiftLog(ctx)}${profileMenu(ctx,s)}${savedRoomsCard(ctx,s)}${s.rankOpen?`<div class="pvp-rank-details">${rankCards(ctx,s)}${journey}</div>`:''}${profileDetails(ctx)}${!ctx.user?`<section class="lpu-login">${guestStart(ctx)}${ctx.googleCard?ctx.googleCard():''}</section>`:ctx.google===false&&ctx.googleCard?`<details class="lpu-google-details"><summary>حماية حساب الضيف بربطه بـ Google</summary>${ctx.googleCard()}</details>`:''}${referenceDrawer(ctx,s)}${referenceBottomNav(ctx)}${collection(ctx,s)}${editor(ctx,s)}</article>`;
 }
 
 function redraw(s) {

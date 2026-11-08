@@ -1,12 +1,12 @@
 /* تحدي اليوم + السلسلة + المهام. كله محفوظ على الجهاز؛ والنجوم تضيف نقاط لمستوى شخصيتك. */
-import * as PF from './profile.js?v=shell-r6';
+import * as PF from './profile.js?v=r58c';
 
 const MKEY = 'qa_missions_v1';
 const DKEY = 'qa_daily_v1';
 const GULF = 4 * 3600_000;
 const DAY = 86400_000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const num = (n) => new Intl.NumberFormat('ar-EG').format(n);
+const num = (n) => new Intl.NumberFormat('ar-EG-u-nu-latn').format(n);
 
 export const gulfDay = (now = Date.now()) => new Date(now + GULF).toISOString().slice(0, 10);
 const dayNo = (key) => Math.floor(Date.parse(key + 'T00:00:00Z') / DAY);

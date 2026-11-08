@@ -3,12 +3,12 @@
  * المساحات الآمنة: ما نستعمل env() هنا. الشريط العلوي يبدأ من 143u والسفلي ينتهي عند 1915u،
  * وهذا يغطي الجزيرة (حتى 59pt) ومؤشر الرجوع (34pt) على آيفون بمقاس الفيديو، فما فيه احتساب مزدوج. */
 import { faceHtml } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=shell-r6';
+import { avatarArt } from './avatars.js?v=r58c';
 import { layout, slotFor, viewport } from './domino-layout.js?v=shell-r6';
 export { layout, slotFor, viewport };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const nf = (n) => Number(n).toLocaleString('ar-EG');
+const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 
 /** حالة الواجهة المحلية (اختيار قطعة، ورقة الهدايا، منع الإرسال المزدوج) */
 export const DM = { room: '', gameNo: null, you: '', epoch: 0, pending: null, sel: null, busy: false, gift: false, menu: false, rules: false, seen: '' };

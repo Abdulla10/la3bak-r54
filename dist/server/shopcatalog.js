@@ -1,9 +1,9 @@
 import { loadJsonFile, Persister, StorageMonitor, optObj, isObj } from './datafile.js';
 import { CATALOG, SLOTS } from './catalog.js';
-import { PRICE_MAX } from './wallet.js';
+import { PRICE_MAX, SHOP_PRICE_MAX } from './wallet.js';
 import { achOf } from './achievements.js';
 import { frameGemsOnly } from './luxury-pricing-r23.js';
-export { PRICE_MAX };
+export { PRICE_MAX, SHOP_PRICE_MAX };
 /** حالات البيع فقط؛ لا تحذف الملكية ولا تمنع تجهيز المالك بسبب حالة البيع. */
 export const SHOP_STATUSES = ['available', 'unavailable', 'coming-soon', 'hidden'];
 const safeRank = (v) => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
@@ -26,7 +26,7 @@ export function shopEligibility(item, ranks) {
 function effectiveFrameItem(item) {
     const result = frameGemsOnly(item);
     if (item.slot === 'frame' && item.status === 'available' && (!['coins', 'gems'].includes(item.currency) || !Number.isSafeInteger(item.price)
-        || item.price < 0 || item.price > PRICE_MAX.gems))
+        || item.price < 0 || item.price > SHOP_PRICE_MAX.gems))
         return { ...result, status: 'unavailable', active: false };
     return result;
 }
@@ -48,7 +48,7 @@ const approvedProposal = (o) => !!o
     && own(o, 'price') && own(o, 'currency') && own(o, 'status')
     && o.status === 'available' && o.active !== false && typeof o.by === 'string' && !!o.by.trim()
     && (o.currency === 'coins' || o.currency === 'gems')
-    && typeof o.price === 'number' && Number.isSafeInteger(o.price) && o.price >= 0 && o.price <= PRICE_MAX[o.currency];
+    && typeof o.price === 'number' && Number.isSafeInteger(o.price) && o.price >= 0 && o.price <= SHOP_PRICE_MAX[o.currency];
 export class ShopInputError extends Error {
     code;
     constructor(msg, code = 400) {
@@ -103,7 +103,10 @@ export class ShopCatalog {
             return undefined;
         const o = this.d.overrides[base.id];
         const approved = base.proposalOnly ? approvedProposal(o) : undefined;
-        const requestedStatus = shopStatus(o ?? {});
+        // R56: مقتنيات سلّم الرتب مخفية عن البيع افتراضيًا (تظهر وتنجهّز لمالكها فقط)، إلا إذا الإدارة حددت حالة غيرها
+        // R57: «جليدي» صورته الأصلية مقصوصة نصها (تطلع مثل حرف C)، فتنخفي من البيع افتراضيًا. اللي يملكها تبقى له، والإدارة تقدر ترجّعها
+        const brokenArt = base.id === 'ref-p-frame-11';
+        const requestedStatus = o?.status === undefined && o?.active === undefined && (base.rankPerk || brokenArt) ? 'hidden' : shopStatus(o ?? {});
         // Missing/partial/invalid approval can never activate a proposal, including price zero.
         const status = approved === false && (!o?.status || requestedStatus === 'available') ? 'coming-soon' : requestedStatus;
         return effectiveFrameItem({
@@ -155,8 +158,8 @@ export class ShopCatalog {
         }
         if (!partial || 'price' in input) {
             const p = input.price;
-            if (typeof p !== 'number' || !Number.isSafeInteger(p) || p < 0 || p > PRICE_MAX[currency])
-                throw new ShopInputError(`السعر عدد صحيح من 0 إلى ${PRICE_MAX[currency].toLocaleString('en')}.`);
+            if (typeof p !== 'number' || !Number.isSafeInteger(p) || p < 0 || p > SHOP_PRICE_MAX[currency])
+                throw new ShopInputError(`السعر عدد صحيح من 0 إلى ${SHOP_PRICE_MAX[currency].toLocaleString('en')}.`);
             out.price = p;
         }
         if ('active' in input && typeof input.active !== 'boolean')

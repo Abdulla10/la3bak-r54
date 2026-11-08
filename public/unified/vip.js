@@ -1,7 +1,8 @@
 /* VIP BODY only. No client crediting, balance deduction, fake perks or sample packs.
  * Only server-approved offers can proceed to preview and explicit confirmation. */
-import * as R from './rank-vip-shared.js';
-import * as V from './vip-noble-r52.js?v=vip-noble-r52';
+import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r58s';
+import * as R from './rank-vip-shared.js?v=r58p';
+import * as V from './vip-noble-r52.js?v=r58s';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 const STATUS_NAMES = Object.freeze({ active: 'عضوية نشطة', inactive: 'عضوية غير مفعّلة', expired: 'انتهت صلاحية العضوية', legacy: 'رتبة VIP سابقة · دون عضوية مؤرخة' });
 const BENEFIT_SYMBOLS = Object.freeze({ frame: 'frame', title: 'crown', badge: 'medal', bg: 'image', background: 'image', effect: 'star', social: 'users' });
@@ -45,7 +46,7 @@ export function vipPerks(state, ctx) {
   const rank = view.state === 'earned' ? view.rank : 0;
   const items = V.shopItems(state, ctx);
   const out = [];
-  if (entry?.enabled === true) for (const [level, theme, name] of VIP_TIERS) out.push({ level, name, sub: `علامة مستوى VIP${level}`, art: `<img class="vn-rank-art" src="/preview/assets/profile/ranks/vip-${theme}.png" alt="" loading="lazy" decoding="async">`, desc: 'تظهر بجانب اسمك في ملفك الشخصي وفي الغرف، ويتغير لونها حسب مستوى VIP.', open: rank >= level });
+  if (entry?.enabled === true) for (const [level, theme, name] of VIP_TIERS) out.push({ level, name, sub: `علامة مستوى VIP${level}`, art: `<img class="vn-rank-art" src="/preview/assets/profile/ranks/vip-${theme}.png?v=r58b" alt="" loading="lazy" decoding="async">`, desc: 'تظهر بجانب اسمك في ملفك الشخصي وفي الغرف، ويتغير لونها حسب مستوى VIP.', open: rank >= level });
   for (const b of benefitEntries(state.data)) {
     const item = b.itemId ? items.find((i) => i.id === b.itemId) : null;
     const art = R.safeImageURL(b.artwork) ? `<img class="vn-rank-art" src="${esc(R.safeImageURL(b.artwork))}" alt="" loading="lazy" decoding="async">` : item ? V.itemArt(item) : V.hex(BENEFIT_GLYPH[b.type] || BENEFIT_GLYPH[item?.slot] || 'crown');
@@ -55,12 +56,14 @@ export function vipPerks(state, ctx) {
   for (const item of items.filter((i) => Number.isSafeInteger(i.minVip) && i.minVip >= 1 && i.minVip <= 15 && i.status !== 'hidden')) {
     out.push({ level: item.minVip, name: item.name, sub: V.SLOT_LABEL[item.slot] || 'عنصر حصري', art: V.itemArt(item), desc: `عنصر من المتجر يتطلب VIP${item.minVip} للشراء والتجهيز.`, open: item.eligibility ? item.eligibility.eligible === true : rank >= item.minVip, link: '#/shop', linkText: 'عرض في المتجر', video: item.slot === 'entrance' });
   }
+  // R56: كل مقتنى من مكافآت الرتبة امتياز مستقل (إطار، خلفية، لقب، مركبة)، ويُستلم من نفس الصفحة
   for (const p of V.rewardPolicies(state.rewards, 'vip').filter((p) => p.rank >= 1 && p.rank <= 15)) {
-    const rows = V.rewardRows(p, items);
-    if (!rows.length) continue;
-    out.push({ level: p.rank, name: rows.length === 1 ? rows[0].sub === 'مكافأة الرتبة' ? rows[0].name : rows[0].name : `مكافأة VIP${p.rank}`, sub: rows.length === 1 ? rows[0].sub : `${rows.length} عناصر`, art: rows[0].art, desc: `مكافأة تُستلم مرة وحدة عند الوصول إلى VIP${p.rank}: ${rows.map((r) => r.sub === 'مكافأة الرتبة' ? r.name : `${r.name} · ${r.sub}`).join('، ')}.`, open: rank >= p.rank, link: '#/rank-rewards', linkText: p.status === 'claimed' ? 'مستلمة · عرض المكافآت' : rank >= p.rank ? 'استلام من مكافآت الرتب' : 'عرض مكافآت الرتب' });
+    const claimed = p.status === 'claimed';
+    for (const r of V.rewardRows(p, items)) out.push({ level: p.rank, name: r.sub === 'مكافأة الرتبة' ? r.name : r.sub, sub: r.sub === 'مكافأة الرتبة' ? r.sub : r.name, art: r.art, video: r.video, desc: `يوصلك مرة وحدة عند وصولك VIP${p.rank}، ويبقى ملكك للأبد.`, open: rank >= p.rank, claimId: p.claimable === true && rank >= p.rank ? `vip:${p.rank}` : null, claimed, fingerprint: p.fingerprint });
   }
-  return out.sort((x, y) => x.level - y.level).map((p) => ({ ...p, tag: `فتح بعد VIP${p.level}`, stateText: p.open ? (p.active ? 'مفتوح بمستواك · يحتاج عضوية نشطة' : 'مفتوح لك') : `يفتح عند VIP${p.level}` }));
+  // R56: مؤثرات تلقائية (لون الاسم، فقاعة الدردشة، هالة المقعد) تشتغل بالغرف أول ما توصل المستوى
+  if (entry?.enabled === true) for (const e of PERK_EFFECTS.vip) out.push({ level: e.rank, name: e.name, sub: effectKindLabel(e.kind), art: effectArt(e), desc: `${e.desc} يشتغل تلقائيًا بدون استلام.`, open: rank >= e.rank });
+  return out.sort((x, y) => x.level - y.level).map((p) => ({ ...p, tag: `فتح بعد VIP${p.level}`, stateText: p.claimed ? 'تم استلامها' : p.open ? (p.active ? 'مفتوح بمستواك · يحتاج عضوية نشطة' : p.claimId ? 'جاهزة للاستلام' : 'مفتوح لك') : `يفتح عند VIP${p.level}` }));
 }
 function cardHTML(state, ctx) {
   const entry = progressionOf(state, ctx);
@@ -70,7 +73,7 @@ function cardHTML(state, ctx) {
   const earned = view.state === 'earned';
   const theme = earned ? R.theme('vip', view.rank) : 'silver';
   const until = status === 'active' ? V.dateLine(state.data?.membership?.expiresAt) : '';
-  const art = `<img class="vx-badge" src="/preview/assets/profile/ranks/vip-${esc(theme)}.png" alt="${earned ? `شارة VIP ${view.rank}` : ''}" decoding="async">`;
+  const art = `<img class="vx-badge" src="/preview/assets/profile/ranks/vip-${esc(theme)}.png?v=r58b" alt="${earned ? `شارة VIP ${view.rank}` : ''}" decoding="async">`;
   const points = ['earned', 'unranked'].includes(view.state) ? entry?.points : null;
   const hint = !model.valid ? '' : model.capped ? '(وصلت أعلى مستوى VIP)' : `(لا تزال بحاجة إلى ${V.num(model.remaining)} نقطة خبرة لرفع VIP${model.next})`;
   const pct = model.valid ? model.percentage : 0;
@@ -125,7 +128,7 @@ function initial(ctx) { return { data: normalizeMembership(dataOf(ctx)), loading
 function sheetFor(state, ctx) {
   if (state.sheet === 'charge') return packagesSheet(state, ctx);
   if (state.sheet === 'menu') return menuSheet(state);
-  if (state.sheet === 'perk') { const p = vipPerks(state, ctx)[state.perk]; return p ? { title: p.name, body: V.perkSheetBody(p) } : null; }
+  if (state.sheet === 'perk') { const p = vipPerks(state, ctx)[state.perk]; return p ? { title: p.name, body: V.perkSheetBody(p, p.claimId && !p.claimed && R.canWrite(ctx) ? `<button class="vn-gold-btn" type="button" data-lbv-action="claim" data-lbv-id="${esc(p.claimId)}" data-lbv-fp="${esc(p.fingerprint || '')}" ${state.busy ? 'disabled' : ''}>${state.busy === p.claimId ? 'جاري الحفظ…' : 'استلام الآن'}</button>` : '') } : null; }
   return null;
 }
 function bodyHTML(state, ctx) {
@@ -233,9 +236,21 @@ export function mount(root, ctx = {}) {
   async function loadExtras() {
     // صور العناصر وشروطها من المتجر، ومكافآت رتب VIP المنشورة — قراءة فقط
     const tasks = [V.loadShop(state, ctx)];
-    if (!state.rewards && R.canRead(ctx)) tasks.push(R.call(ctx, '/api/rank-rewards').then(r => { if (obj(r)) state.rewards = r; }).catch(() => {}));
+    if (!state.rewards && R.canRead(ctx)) tasks.push(R.call(ctx, '/api/rank-vip').then(r => { if (obj(r?.rewards)) state.rewards = r.rewards; }).catch(() => {})); // R56: صيغة policies (فيها محتوى المكافآت)
     await Promise.all(tasks);
     if (life.current() && !state.purchasing) paint();
+  }
+  async function claimPerk(id, fp) {
+    if (!life.current() || state.busy || !R.canWrite(ctx) || !/^vip:(?:[1-9]|1[0-5])$/.test(String(id))) return;
+    state.busy = id; state.error = ''; state.notice = ''; paint();
+    try {
+      const result = await R.call(ctx, `/api/rank-rewards/${encodeURIComponent(id)}/claim`, 'POST', fp ? { fingerprint: fp } : {});
+      if (!life.current()) return;
+      if (result?.status !== 'claimed') throw new Error('claim_not_saved');
+      state.notice = result.dup === true ? 'مستلمة من قبل؛ ما انصرفت مرة ثانية.' : 'تم! انضافت لمقتنياتك، وتقدر تجهّزها من «المظهر والمقتنيات».';
+      state.rewards = await R.call(ctx, '/api/rank-vip').then((r) => (obj(r?.rewards) ? r.rewards : state.rewards)).catch(() => state.rewards);
+    } catch (e) { if (life.current()) state.error = 'تعذّر الاستلام الآن. حاول مرة ثانية.'; }
+    finally { if (life.current()) { state.busy = null; paint(); } }
   }
   life.on('click', event => {
     const vn = event.target?.closest?.('[data-vn-action]');
@@ -250,6 +265,7 @@ export function mount(root, ctx = {}) {
     if (!button || !life.page?.contains?.(button) || button.disabled || !life.current()) return;
     const action = button.dataset.lbvAction;
     if (action === 'refresh') void load();
+    else if (action === 'claim') void claimPerk(button.dataset.lbvId, button.dataset.lbvFp);
     else if (action === 'preview') void preview(button.dataset.lbvId, button);
     else if (action === 'purchase') void purchase();
     else if (action === 'cancel') cancel();

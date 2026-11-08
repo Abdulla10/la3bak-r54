@@ -1,6 +1,6 @@
 /* R47 original property-board renderer. No RNG, wallet, rules simulation or local balance. */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const num = (v) => Number.isFinite(Number(v)) ? Number(v).toLocaleString('ar-EG') : '—';
+const num = (v) => Number.isFinite(Number(v)) ? Number(v).toLocaleString('ar-EG-u-nu-latn') : '—';
 const nameOf = (room, id) => room.players?.find((p) => p.id === id)?.name ?? 'لاعب غادر';
 const context = (r) => JSON.stringify([r.code, r.gameNo ?? 0, r.you]);
 const contexts = new Map();
@@ -30,9 +30,9 @@ function tileHtml(room, t) {
     <span class="mn-tokens">${tokens}</span></li>`;
 }
 function rules(g) {
-  return `<details class="mn-rules"><summary>قواعد مينابولي الأصلية والمهلة</summary><p>لوحة أصلية من ٢٤ خانة، ٢–٤ مقاعد وبوتات. تبدأ بـ${num(g.rules?.startCash)} من نقود المباراة فقط، ولا شراء أو تحويل بينها وبين Coins/Gems. عبور البداية يمنح ${num(g.rules?.startBonus)}. لا مزاد أملاك أو تجارة أو تحويل يدوي.</p>
-    <p>النرد للحركة داخل المباراة فقط ولا دور إضافي للزوج المتساوي. خانتا الرسائل: +٦٠، أو دفع ٥٠، أو العودة للبداية مع مكافأتها، أو التوقيف؛ يختار الخادم. الشراء اختياري، والرفض يعيد الملك للبنك. امتلاك زوج الحي غير المرهون يضاعف إيجاره دون بناء؛ البناء يرفع الإيجار إلى ٣/٦/١٠ أضعاف الإيجار الأساسي.</p>
-    <p>البناء بالتساوي بعد امتلاك الحي كاملًا، حتى ${num(g.rules?.maxBuildings)} مبانٍ لكل ملك. البيع بالتساوي بنصف تكلفة البناء. الرهن بنصف سعر الملك بعد بيع مباني الحي؛ لا إيجار للملك المرهون. فك الرهن بـ١١٠٪ من قيمة الرهن. لا بناء على حي فيه رهن.</p>
+  return `<details class="mn-rules"><summary>قواعد مينابولي الأصلية والمهلة</summary><p>لوحة أصلية من 24 خانة، 2–4 مقاعد وبوتات. تبدأ بـ${num(g.rules?.startCash)} من نقود المباراة فقط، ولا شراء أو تحويل بينها وبين Coins/Gems. عبور البداية يمنح ${num(g.rules?.startBonus)}. لا مزاد أملاك أو تجارة أو تحويل يدوي.</p>
+    <p>النرد للحركة داخل المباراة فقط ولا دور إضافي للزوج المتساوي. خانتا الرسائل: +60، أو دفع 50، أو العودة للبداية مع مكافأتها، أو التوقيف؛ يختار الخادم. الشراء اختياري، والرفض يعيد الملك للبنك. امتلاك زوج الحي غير المرهون يضاعف إيجاره دون بناء؛ البناء يرفع الإيجار إلى 3/6/10 أضعاف الإيجار الأساسي.</p>
+    <p>البناء بالتساوي بعد امتلاك الحي كاملًا، حتى ${num(g.rules?.maxBuildings)} مبانٍ لكل ملك. البيع بالتساوي بنصف تكلفة البناء. الرهن بنصف سعر الملك بعد بيع مباني الحي؛ لا إيجار للملك المرهون. فك الرهن بـ110٪ من قيمة الرهن. لا بناء على حي فيه رهن.</p>
     <p>التوقيف: ادفع ${num(g.rules?.jailFine)} أو حاول زوجًا متساويًا؛ المحاولة الثالثة الفاشلة تلزم بالكفالة ثم الحركة. يستمر إيجار أملاكك أثناء التوقيف. عند الدين بع مبانيك أو ارهن حتى يسدده الخادم تلقائيًا. إذا لم تكفِ قيمة التصفية تُفلس: المتاح للدائن والأملاك تعود للبنك.</p>
     <p>الدور كاملًا ${num(g.turnMs / 1000)} ثانية ولا تتجدد المهلة بالأزرار. المهلة: حركة آلية ثم رفض الشراء وتصفية الدين وإنهاء الدور؛ ثلاث مهلات متتالية انسحاب. إنهاء دور يدوي يصفّر عداد المهلات. آخر لاعب يفوز، أو بعد ${num(g.maxTurns)} دورًا مكتملًا يُحسم الأعلى بصافي الأصول: النقد + سعر الأرض (نصفه للمرهون) + تكلفة البناء؛ التعادل مشترك. الانسحاب يصفر أصول اللاعب ويعيد أملاكه للبنك.</p></details>`;
 }
@@ -42,7 +42,7 @@ export function html(room, options = {}) {
   const final = g.phase === 'final', mine = g.turnId === room.you;
   const status = final ? (g.winners.length ? `الفائز${g.winners.length > 1 ? 'ون' : ''}: ${g.winners.map((id) => nameOf(room, id)).join('، ')}` : 'انتهت المباراة دون فائز')
     : `${mine ? 'دورك' : `دور ${nameOf(room, g.turnId)}`} · ${phaseName[g.phase] ?? ''}`;
-  const seats = g.players.map((id, i) => `<li class="mn-player mn-seat-${i}${!final && g.turnId === id ? ' mn-turn' : ''}${g.out[i] ? ' mn-out' : ''}">${mark(i)}<span><b>${esc(id === room.you ? 'أنت' : nameOf(room, id))}</b><small>مقعد ${num(i + 1)}${g.bots?.[i] ? ' · بوت' : ''}${g.out[i] ? ' · خارج المباراة' : g.jailed[i] ? ` · موقوف (${num(g.jailTurns[i])}/٣)` : ''}</small></span><dl><div><dt>النقد</dt><dd>${num(g.cash[i])}</dd></div><div><dt>الأصول</dt><dd>${num(g.assets[i])}</dd></div></dl></li>`).join('');
+  const seats = g.players.map((id, i) => `<li class="mn-player mn-seat-${i}${!final && g.turnId === id ? ' mn-turn' : ''}${g.out[i] ? ' mn-out' : ''}">${mark(i)}<span><b>${esc(id === room.you ? 'أنت' : nameOf(room, id))}</b><small>مقعد ${num(i + 1)}${g.bots?.[i] ? ' · بوت' : ''}${g.out[i] ? ' · خارج المباراة' : g.jailed[i] ? ` · موقوف (${num(g.jailTurns[i])}/3)` : ''}</small></span><dl><div><dt>النقد</dt><dd>${num(g.cash[i])}</dd></div><div><dt>الأصول</dt><dd>${num(g.assets[i])}</dd></div></dl></li>`).join('');
   const debt = g.pending?.kind === 'debt' ? `<p class="mn-debt" role="status">مستحقات ${num(g.pending.amount)} · ${esc(g.pending.reason)} · ${g.pending.creditor === null ? 'للبنك' : esc(nameOf(room, g.players[g.pending.creditor]))}. بع مباني أو ارهن؛ السداد تلقائي. لا يمكنك إنهاء الدور قبل التسوية.</p>` : '';
   const decision = g.pending?.kind === 'buy' ? `<p>معروض للشراء: ${esc(g.board[g.pending.tile]?.name)} · ${num(g.board[g.pending.tile]?.price)}</p>` : '';
   const moves = (g.moves ?? []).map((m) => button(room, m, pending)).join('');
@@ -50,7 +50,7 @@ export function html(room, options = {}) {
     <header class="mn-header"><span class="mn-logo">${tileIcon}</span><div><h2>مينابولي</h2><p>أملاك أصلية · نقود المباراة ليست المحفظة</p></div><span class="mn-turn-count">الدور ${num(Math.min(g.completedTurns + 1, g.maxTurns))} / ${num(g.maxTurns)}</span></header>
     <p class="mn-status" role="status" aria-live="polite">${esc(status)}${pending ? ' · جارٍ إرسال الحركة…' : ''}</p>
     <ul class="mn-players" aria-label="معلومات اللاعبين">${seats}</ul>
-    <div class="mn-board-wrap"><ol class="mn-board" aria-label="لوحة مينابولي الأصلية: ٢٤ خانة">${g.board.map((t) => tileHtml(room, t)).join('')}<li class="mn-center"><span class="mn-logo">${tileIcon}</span><b>مينابولي</b><small>${esc(phaseName[g.phase])}</small><span>الحركة ${g.lastRoll ? g.lastRoll.map(num).join(' + ') : '—'}</span>${final ? `<strong>${g.endReason === 'turnLimit' ? 'حسم صافي الأصول' : 'آخر لاعب'}</strong>` : `<span class="mn-deadline jx-clock" role="timer" data-ends="${g.endsAt}" data-total="${g.turnMs}">باقي <b class="jx-sec">${num(Math.max(0, Math.ceil((g.endsAt - g.serverNow) / 1000)))}</b> ث</span>`}</li></ol></div>
+    <div class="mn-board-wrap"><ol class="mn-board" aria-label="لوحة مينابولي الأصلية: 24 خانة">${g.board.map((t) => tileHtml(room, t)).join('')}<li class="mn-center"><span class="mn-logo">${tileIcon}</span><b>مينابولي</b><small>${esc(phaseName[g.phase])}</small><span>الحركة ${g.lastRoll ? g.lastRoll.map(num).join(' + ') : '—'}</span>${final ? `<strong>${g.endReason === 'turnLimit' ? 'حسم صافي الأصول' : 'آخر لاعب'}</strong>` : `<span class="mn-deadline jx-clock" role="timer" data-ends="${g.endsAt}" data-total="${g.turnMs}">باقي <b class="jx-sec">${num(Math.max(0, Math.ceil((g.endsAt - g.serverNow) / 1000)))}</b> ث</span>`}</li></ol></div>
     <section class="mn-controls" aria-label="الحركات القانونية من الخادم">${debt}${decision}<div class="mn-moves">${moves}</div>${!final && !moves ? `<p>${mine ? 'بانتظار تحديث الخادم أو انتهاء المهلة.' : 'بانتظار اللاعب صاحب الدور.'}</p>` : ''}<p class="mn-error" role="alert"></p></section>
     ${rules(g)}<footer class="mn-footer">${g.canSurrender ? button(room, { action: { type: 'surrender' }, label: 'انسحاب من المباراة' }, pending) : ''}${final && room.hostId === room.you ? '<button class="btn" type="button" data-act="rematch">مباراة جديدة</button>' : ''}<button type="button" class="btn ghost" data-act="leave">خروج من الغرفة</button></footer>
   </section>`;

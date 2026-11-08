@@ -29,8 +29,8 @@
 }
 .lb-unified [data-lb-page="messages"] .panel {
   min-width: 0;
-  background: linear-gradient(145deg, #fffaf0ed, #fffaf0);
-  border: 1px solid #d4e4d8;
+  background: linear-gradient(145deg, #fffaf0ed, #fcf9f4);
+  border: 1px solid #e6ddf3;
   border-radius: 22px;
   box-shadow: 0 0 16px #264d3b2e, inset 0 0 18px #264d3b22;
 }
@@ -44,13 +44,13 @@
   gap: 7px;
 }
 .lb-unified [data-lb-page="messages"] .tabs button.active {
-  color: #264d3b;
-  background: linear-gradient(90deg, #e8c987, #e8c987);
-  border-color: #b98a3d;
+  color: #2c1a4a;
+  background: linear-gradient(90deg, #ead18e, #ead18e);
+  border-color: #c49a3a;
 }
 .lb-unified [data-lb-page="messages"] .lb-message-search-label {
   display: block;
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 13px;
 }
 .lb-unified [data-lb-page="messages"] .search {
@@ -67,13 +67,13 @@
   color: #fff;
   font: inherit;
   cursor: pointer;
-  border: 1px solid #d4e4d8;
-  background: linear-gradient(90deg, #fffaf0, #fffaf0);
+  border: 1px solid #e6ddf3;
+  background: linear-gradient(90deg, #fcf9f4, #fcf9f4);
 }
 .lb-unified [data-lb-page="messages"] .lb-message-row.active {
-  border-color: #b98a3d;
+  border-color: #c49a3a;
   box-shadow: 0 0 12px #b98a3d2e;
-  background: linear-gradient(90deg, #fffaf0, #fffaf0);
+  background: linear-gradient(90deg, #fcf9f4, #fcf9f4);
 }
 .lb-unified [data-lb-page="messages"] .lb-message-row .grow {
   min-width: 0;
@@ -89,9 +89,9 @@
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  border: 2px solid #b98a3d;
+  border: 2px solid #c49a3a;
   border-radius: 50%;
-  background: linear-gradient(145deg, #fffaf0, #fffaf0);
+  background: linear-gradient(145deg, #fcf9f4, #fcf9f4);
   color: #8a641f;
 }
 .lb-unified [data-lb-page="messages"] .lb-message-avatar svg {
@@ -125,7 +125,7 @@
   height: 22px;
   padding-inline: 5px;
   border-radius: 20px;
-  background: #d4e4d8;
+  background: #e6ddf3;
   color: #fff;
   font-size: 12px;
 }
@@ -163,16 +163,16 @@
   width: fit-content;
   max-width: 87%;
   align-self: flex-start;
-  border: 1px solid #d4e4d8;
+  border: 1px solid #e6ddf3;
   border-radius: 18px 18px 5px 18px;
-  background: linear-gradient(135deg, #fffaf0, #fffaf0);
+  background: linear-gradient(135deg, #fcf9f4, #fcf9f4);
   padding: 11px 14px;
   overflow-wrap: anywhere;
 }
 .lb-unified [data-lb-page="messages"] .chat-bubble.mine {
   align-self: flex-end;
-  background: linear-gradient(135deg, #fffaf0, #fffaf0);
-  border-color: #d4e4d8;
+  background: linear-gradient(135deg, #fcf9f4, #fcf9f4);
+  border-color: #e6ddf3;
   border-radius: 18px 18px 18px 5px;
 }
 .lb-unified [data-lb-page="messages"] .chat-bubble b {
@@ -186,7 +186,7 @@
 }
 .lb-unified [data-lb-page="messages"] .chat-bubble small {
   display: block;
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 11px;
 }
 .lb-unified [data-lb-page="messages"] .chat-compose {
@@ -194,12 +194,12 @@
   align-items: end;
   gap: 10px;
   padding-top: 14px;
-  border-top: 1px solid #d4e4d8;
+  border-top: 1px solid #e6ddf3;
 }
 .lb-unified [data-lb-page="messages"] .lb-message-draft-label {
   flex: 1;
   min-width: 0;
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 13px;
 }
 .lb-unified [data-lb-page="messages"] .chat-compose textarea {
@@ -210,8 +210,8 @@
   max-height: 240px;
   padding: 12px;
   margin-top: 5px;
-  background: #fffaf0;
-  border: 1px solid #d4e4d8;
+  background: #fcf9f4;
+  border: 1px solid #e6ddf3;
   border-radius: 18px;
   color: #fff;
   font: inherit;
@@ -225,7 +225,7 @@
   cursor: pointer;
 }
 .lb-unified [data-lb-page="messages"] .lb-message-empty {
-  color: #264d3b;
+  color: #2c1a4a;
   text-align: center;
   padding: 20px 10px;
   line-height: 1.9;
@@ -234,15 +234,15 @@
   color: #8a641f;
 }
 .lb-unified [data-lb-page="messages"] .lb-message-limit {
-  color: #264d3b;
+  color: #2c1a4a;
   font-size: 12px;
   line-height: 1.9;
   margin-block: 10px;
 }
 .lb-unified [data-lb-page="messages"] .lb-message-error {
-  background: #fffaf0;
-  color: #264d3b;
-  border: 1px solid #d4e4d8;
+  background: #fcf9f4;
+  color: #2c1a4a;
+  border: 1px solid #e6ddf3;
   border-radius: 14px;
   padding: 12px;
   overflow-wrap: anywhere;
@@ -259,7 +259,7 @@
 .lb-unified [data-lb-page="messages"] a:focus-visible,
 .lb-unified [data-lb-page="messages"] input:focus-visible,
 .lb-unified [data-lb-page="messages"] textarea:focus-visible {
-  outline: 2px solid #b98a3d;
+  outline: 2px solid #c49a3a;
   outline-offset: 3px;
 }
 @media (max-width: 760px) {

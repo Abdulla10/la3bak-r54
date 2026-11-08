@@ -3,7 +3,7 @@
    وشدّته (المدة وعدد الجزيئات والحجم) حسب الندرة. خفيف: عناصر DOM قليلة + WAAPI، وطابور حتى ما تتراكب، ويحترم «تقليل الحركة». */
 import { giftArt } from './giftart.js?v=release-r14';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const nf = (n) => Number(n).toLocaleString('ar-EG');
+const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 const Q = []; let busy = false;
 const reduce = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const rnd = (a, b) => a + Math.random() * (b - a);

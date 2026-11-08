@@ -1,11 +1,11 @@
-import {mountAuctionAdminR47} from './auction-admin-r47.js?v=build-all-r47';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=emerald-r44';
+import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r58p';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=admin-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=emerald-r44';
-import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=merge-ready-2';
-import {mountSocialAdmin} from './social-admin.js?v=emerald-r44';
+import {mountPaymentAdmin} from './payment-admin.js?v=r58p';
+import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r58p';
+import {mountSocialAdmin} from './social-admin.js?v=r58p';
 import { pricingHTML, progressionHTML } from './economy-admin.js?v=emerald-r44';
-import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=emerald-r44';
+import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r58r';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -29,11 +29,11 @@ const STATUS = { lobby: 'انتظار', playing: 'يلعبون', finished: 'من
 const ACTIONS = { 'gift.update': 'تعديل هدية (تفعيل/سعر)', 'community.remove': 'حذف محتوى مُبلّغ عنه', 'community.dismiss': 'رفض بلاغ مجتمع', 'wallet.request': 'طلب تعديل رصيد (فوق الحد)', 'wallet.reject': 'رفض طلب تعديل رصيد', 'wallet.approve-failed': 'فشل تنفيذ طلب موافَق', 'player.clear-suspect': 'رفع اشتباه عن حساب', 'shop.create': 'إضافة منتج', 'shop.update': 'تعديل منتج', 'shop.enable': 'تفعيل بيع منتج', 'shop.disable': 'إيقاف بيع منتج', 'wallet.adjust': 'تعديل رصيد', 'player.ban': 'حظر لاعب', 'player.unban': 'رفع حظر', 'room.close': 'إغلاق غرفة', 'notice.create': 'إنشاء إعلان', 'notice.update': 'تعديل إعلان', 'notice.delete': 'حذف إعلان', 'staff.set': 'تعيين طاقم', 'staff.remove': 'إزالة طاقم', 'maintenance.on': 'تفعيل الصيانة', 'maintenance.off': 'إلغاء الصيانة', 'maintenance.update': 'تعديل رسالة الصيانة' };
 
 function ensureCss() {
-    if(!document.querySelector('link[data-rank-vip-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/rank-vip-admin.css?v=emerald-r44';l.dataset.rankVipAdminCss='1';document.head.appendChild(l);}
-    if (!document.querySelector('link[data-ad-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin.css'; l.dataset.adCss = '1'; document.head.appendChild(l); }
-    if(!document.querySelector('link[data-payment-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/payment-admin.css?v=emerald-r44';l.dataset.paymentAdminCss='1';document.head.appendChild(l);}
-    if (!document.querySelector('link[data-ad-dashboard-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin-dashboard.css?v=emerald-r44'; l.dataset.adDashboardCss = '1'; document.head.appendChild(l); }
-    if (!document.querySelector('link[data-ad-royal-css]')) { const l=document.createElement('link');l.rel='stylesheet';l.href='/admin-royal.css?v=emerald-r44';l.dataset.adRoyalCss='1';document.head.appendChild(l); }
+    if(!document.querySelector('link[data-rank-vip-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/rank-vip-admin.css?v=r58p';l.dataset.rankVipAdminCss='1';document.head.appendChild(l);}
+    if (!document.querySelector('link[data-ad-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin.css?v=r58p'; l.dataset.adCss = '1'; document.head.appendChild(l); }
+    if(!document.querySelector('link[data-payment-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/payment-admin.css?v=r58p';l.dataset.paymentAdminCss='1';document.head.appendChild(l);}
+    if (!document.querySelector('link[data-ad-dashboard-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin-dashboard.css?v=r58p'; l.dataset.adDashboardCss = '1'; document.head.appendChild(l); }
+    if (!document.querySelector('link[data-ad-royal-css]')) { const l=document.createElement('link');l.rel='stylesheet';l.href='/admin-royal.css?v=r58p';l.dataset.adRoyalCss='1';document.head.appendChild(l); }
   }
 
 export function mountAdmin(root) {
@@ -290,7 +290,7 @@ export function mountAdmin(root) {
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=emerald-r44').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r57').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {

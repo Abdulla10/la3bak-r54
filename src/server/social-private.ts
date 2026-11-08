@@ -156,6 +156,8 @@ export class SocialPrivate {
       const who=this.who(other);return publicIds.has(who.pub)?[{id:who.pub,name:who.name}]:[];
     });
   }
+  /** R58f: معرّفات الأصدقاء المقبولين الظاهرين (داخلي) — لشريط «الأصدقاء الحين» */
+  friendInternalIds(me: string): string[] { this.actor(me); return this.d.links.filter(l => l.state === 'accepted' && (l.from === me || l.to === me)).map(l => l.from === me ? l.to : l.from).filter(o => this.visible(me, o)); }
   friends(me: string, opts: PrivatePage = {}) {
     this.actor(me); this.rate('read', me);
     const p = this.page(this.d.links.filter(l => l.state === 'accepted' && (l.from === me || l.to === me) && this.visible(me, l.from === me ? l.to : l.from)), opts);

@@ -1,7 +1,7 @@
 /* المظهر الزمردي المعتمد لجميع الصفحات؛ التفضيلات القديمة تبقى محفوظة دون تطبيقها. */
 const KEY = 'qa_theme_v1';
 export const THEMES = [
-  { id: 'emerald', name: 'زمردي وعاجي وذهبي', bg: '#f6f1e5', a: '#176b50', b: '#b98a3d', meta: '#f6f1e5' },
+  { id: 'emerald', name: 'زمردي وعاجي وذهبي', bg: '#f4eee6', a: '#5a2a8c', b: '#c49a3a', meta: '#f4eee6' },
 ];
 export const DEFAULT = 'emerald';
 

@@ -1,4 +1,4 @@
-import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=emerald-r44';
+import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 
 // Presentation only. The injected admin call owns authentication; the server owns authorization,
 // persistence, refund eligibility, provider access and idempotency. No credentials live here.
@@ -99,7 +99,7 @@ export function paymentAdminHTML(state = {}, { actor, pending = null } = {}) {
 }
 function ensureCSS() {
   if (!document.querySelector('link[data-payment-admin-css]')) {
-    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/payment-admin.css?v=emerald-r44'; link.dataset.paymentAdminCss = '1'; document.head.appendChild(link);
+    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/payment-admin.css?v=r58p'; link.dataset.paymentAdminCss = '1'; document.head.appendChild(link);
   }
 }
 export function mountPaymentAdmin(root, { call, actor } = {}) {

@@ -1,9 +1,9 @@
 /* المجتمع: منشورات وإعجابات وتعليقات ومتابعة وإشعارات وبلاغات. كل التحقق والعدّ والصلاحيات من الخادم (src/server/community.ts).
  * النصوص تُعرض بعد تهريبها دائماً (ما نستعمل HTML من المستخدم)، والروابط داخلية فقط. */
-import { avatarArt } from './avatars.js?v=shell-r6';
+import { avatarArt } from './avatars.js?v=r58c';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const nf = (n) => Number(n).toLocaleString('ar-EG');
+const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 const PUB_RE = /^[A-Za-z0-9_-]{16}$/;
 export const LIMITS = { post: 1000, comment: 400, image: 700 * 1024 };
 
@@ -82,10 +82,10 @@ export async function loadNotifs() {
 export async function loadMe() { const r = await api('me'); if (r.ok) { CM.me = r.pub; CM.unread = r.unread; } return r.ok; }
 
 /* ---------- أدوات العرض ---------- */
-const RTF = typeof Intl !== 'undefined' && Intl.RelativeTimeFormat ? new Intl.RelativeTimeFormat('ar', { numeric: 'auto' }) : null;
+const RTF = typeof Intl !== 'undefined' && Intl.RelativeTimeFormat ? new Intl.RelativeTimeFormat('ar-u-nu-latn', { numeric: 'auto' }) : null;
 export function ago(ts) {
   const s = Math.round((ts - Date.now()) / 1000), a = Math.abs(s);
-  if (!RTF || a > 30 * 86400) return new Date(ts).toLocaleDateString('ar-EG', { dateStyle: 'medium' });
+  if (!RTF || a > 30 * 86400) return new Date(ts).toLocaleDateString('ar-EG-u-nu-latn', { dateStyle: 'medium' });
   if (a < 60) return 'الحين';
   if (a < 3600) return RTF.format(Math.round(s / 60), 'minute');
   if (a < 86400) return RTF.format(Math.round(s / 3600), 'hour');

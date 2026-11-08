@@ -346,6 +346,8 @@ export class Accounts {
   /** Read only: legacy records stay unassigned until a separately approved migration. */
   publicPlayerId(id: string): string | undefined { return this.d.profiles[id]?.playerId; }
   /** Distinguished presentation ID, falling back only to the existing publicPlayerId contract. */
+  /** R57: الأيدي المميز الحالي (أو null) — للقراءة فقط */
+  specialPlayerIdOf(id: string): string | null { return this.d.profiles[id]?.specialPlayerId ?? null; }
   displayPlayerId(id: string): string | undefined { return this.d.profiles[id]?.specialPlayerId ?? this.publicPlayerId(id); }
   /** Numeric lookup only; returns the canonical storage key, never creates or rewrites accounts.
    * Original explicit/legacy numeric IDs remain searchable after an alias is assigned.

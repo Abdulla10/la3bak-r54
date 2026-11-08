@@ -2,7 +2,7 @@
  * الواجهة ترسل «ارمِ» (مع المضاعف ومفتاح طلب فريد) و«رقِّ معلم» و«استلم مهمة»، وتعرض النتيجة وتحرّك القطعة على المسار اللي رجّعه الخادم.
  * ذهب المدينة 🏙️ منفصل عن عملات لعبك 🪙. تصميم أصلي (بدون أي أسماء أو أصول من ألعاب ثانية). */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const nf = (n) => Number(n).toLocaleString('ar-EG');
+const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 export const CT = { data: null, err: '', loading: false, mult: 1, busy: false, sheet: null, tut: 0, last: null, key: null, moving: false, shownPos: null, dice: [3, 4] };
 export const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2));
 
@@ -81,7 +81,7 @@ function sheetHTML(d) {
     return `<h2>🎯 مهام اليوم</h2><ul class="ct-miss">${d.missions.map((m) => `<li class="${m.done ? 'done' : ''}"><div><b>${esc(m.label)}</b><small>${nf(m.value)}/${nf(m.goal)} · المكافأة: ${[m.reward.rolls ? `🎲 ${nf(m.reward.rolls)}` : '', m.reward.coins ? `🏙️ ${nf(m.reward.coins * d.level)}` : '', m.reward.shields ? `🛡️ ${nf(m.reward.shields)}` : ''].filter(Boolean).join(' + ')}</small><span class="cx-bar"><i style="width:${Math.round((m.value / m.goal) * 100)}%"></i></span></div>${m.claimed ? '<em class="ct-done">استلمت ✔</em>' : m.done ? `<button class="btn gold sm" type="button" data-act="city-claim" data-id="${esc(m.id)}">استلم</button>` : ''}</li>`).join('')}</ul><p class="hint" style="text-align:start">تتجدد كل يوم (بتوقيت الخليج). التقدم يحسبه الخادم من رمياتك وترقياتك الفعلية.</p>`;
   }
   if (CT.sheet === 'log') {
-    return `<h2>📜 سجل مدينتك</h2>${d.log.length ? `<ul class="ct-log">${d.log.map((l) => `<li class="k-${l.kind}"><span>${{ raided: '⚔️', blocked: '🛡️', level: '🏆', raid: '💥', event: '❔' }[l.kind] ?? '•'}</span><div><b>${esc(l.text)}</b><small>${new Date(l.ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</small></div>${l.coins ? `<strong class="${l.coins < 0 ? 'neg' : 'pos'}" dir="ltr">${l.coins > 0 ? '+' : ''}${nf(l.coins)}</strong>` : ''}</li>`).join('')}</ul>` : '<p class="muted">ما صار شي للحين.</p>'}`;
+    return `<h2>📜 سجل مدينتك</h2>${d.log.length ? `<ul class="ct-log">${d.log.map((l) => `<li class="k-${l.kind}"><span>${{ raided: '⚔️', blocked: '🛡️', level: '🏆', raid: '💥', event: '❔' }[l.kind] ?? '•'}</span><div><b>${esc(l.text)}</b><small>${new Date(l.ts).toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' })}</small></div>${l.coins ? `<strong class="${l.coins < 0 ? 'neg' : 'pos'}" dir="ltr">${l.coins > 0 ? '+' : ''}${nf(l.coins)}</strong>` : ''}</li>`).join('')}</ul>` : '<p class="muted">ما صار شي للحين.</p>'}`;
   }
   if (CT.sheet === 'help') {
     return `<h2>كيف ألعب «مدينتي»؟</h2><ul class="steps">${TUT.map(([ic, h, t]) => `<li><span>${ic} <b>${h}:</b> ${t}</span></li>`).join('')}

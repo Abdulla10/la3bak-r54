@@ -1,13 +1,13 @@
 /* أونو — تصميم «الطاولة» (إعادة بناء كاملة للواجهة؛ القواعد والتحقق والنتائج كلها من الخادم: src/engine/uno.ts).
  * طاولة بيضاوية بإطار خشبي، الخصوم حول الطاولة على قوس، الرزمة والمرمى بالوسط وحولهما حلقة اتجاه اللعب بلون اللعب الحالي،
- * يدك مروحة منحنية أسفل الشاشة، زر «أونو!» دائري، ومؤثرات من أحداث الخادم (تخطّي، عكس، +٢/+٤، جوكر، أونو، كشف، فوز).
+ * يدك مروحة منحنية أسفل الشاشة، زر «أونو!» دائري، ومؤثرات من أحداث الخادم (تخطّي، عكس، +2/+4، جوكر، أونو، كشف، فوز).
  * وضعان: رأسي (مسرح 921×2000 بنفس حجز المساحات الآمنة) وأفقي (مسرح 2000×1125) — يتبدل تلقائياً مع الشاشة.
  * رسم الأوراق SVG أصلي بالكامل (بدون أي شعار أو أصول منسوخة). */
 import { faceHtml } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=shell-r6';
+import { avatarArt } from './avatars.js?v=r58c';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const nf = (n) => Number(n).toLocaleString('ar-EG');
+const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 
 /** حالة الواجهة المحلية */
 export const UN = { room: '', wild: null, busy: false, menu: false, rules: false, seen: '', evSeq: -1, tops: [] };
@@ -15,7 +15,7 @@ export const uiKey = () => [UN.wild, UN.busy, UN.menu, UN.rules, isWide() ? 'w' 
 export const isWide = () => typeof matchMedia !== 'undefined' && matchMedia('(min-aspect-ratio: 6/5)').matches;
 
 export const COLOR_NAME = { r: 'أحمر', y: 'أصفر', g: 'أخضر', b: 'أزرق' };
-const VAL_NAME = { skip: 'تخطّي', rev: 'عكس', d2: 'اسحب ٢', wild: 'جوكر', wd4: 'جوكر اسحب ٤' };
+const VAL_NAME = { skip: 'تخطّي', rev: 'عكس', d2: 'اسحب 2', wild: 'جوكر', wd4: 'جوكر اسحب 4' };
 export const cardName = (c) => c.c === 'w' ? VAL_NAME[c.v] : `${COLOR_NAME[c.c]} ${VAL_NAME[c.v] ?? nf(c.v)}`;
 const HEX = { r: ['#ff5a4f', '#d32a24'], y: ['#ffd84a', '#f0a90a'], g: ['#4fd37a', '#1f9a4b'], b: ['#4aa8ff', '#1a62d6'], w: ['#3a3550', '#14111f'] };
 
@@ -91,8 +91,8 @@ function lastText(room, g) {
     case 'play': return `${who}: ${cardName(L.card)}${L.card.c === 'w' ? ` ← ${COLOR_NAME[L.color]}` : ''}`;
     case 'draw': return `${who} سحب ورقة`;
     case 'pass': return `${who} مرّر`;
-    case 'accept': return `${who} قبل +٤ وسحب ${nf(L.n)}`;
-    case 'challenge-won': return `${who} تحدّى ونجح! اللي لعب +٤ سحب ${nf(L.n)}`;
+    case 'accept': return `${who} قبل +4 وسحب ${nf(L.n)}`;
+    case 'challenge-won': return `${who} تحدّى ونجح! اللي لعب +4 سحب ${nf(L.n)}`;
     case 'challenge-lost': return `${who} تحدّى وخسر وسحب ${nf(L.n)}`;
     case 'catch': return `${who} مسك لاعب نسي «أونو»: +${nf(L.n)} عليه`;
     case 'color': return `${who} اختار ${COLOR_NAME[L.color]}`;
@@ -105,7 +105,7 @@ function hintOf(room, g) {
   if (g.phase === 'final') return g.winner === room.you ? 'فزت بالمباراة! 🏆' : g.winner ? `فاز ${nm(room, g.winner)} بالمباراة` : 'انتهت المباراة';
   if (g.phase === 'roundEnd' && g.result) { const w = g.players[g.result.winner]; return w === room.you ? `خلّصت أوراقك! +${nf(g.result.points)}` : `${nm(room, w)} خلّص أوراقه +${nf(g.result.points)}`; }
   if (g.pick) return mine ? 'أول ورقة جوكر: اختر لون البداية' : `${nm(room, g.turnId)} يختار لون البداية…`;
-  if (g.phase === 'wd4') return mine ? 'لعبوا عليك +٤: تقبل أو تتحدّى؟' : `${nm(room, g.turnId)} يقرر: يقبل +٤ أو يتحدّى`;
+  if (g.phase === 'wd4') return mine ? 'لعبوا عليك +4: تقبل أو تتحدّى؟' : `${nm(room, g.turnId)} يقرر: يقبل +4 أو يتحدّى`;
   if (mine) {
     if (g.drawn !== null && g.legal.length) return 'سحبت ورقة تنلعب: العبها أو مرّر';
     if (g.legal.length) return g.hand.length === 2 && g.canUno ? 'باقي لك ورقتين: اضغط «أونو!» قبل لا تلعب' : 'دورك: العب ورقة مضيئة';
@@ -172,7 +172,7 @@ export function uno(room) {
   let wd4 = '';
   if (g.wd4) {
     const by = g.last && g.players[g.last.by] ? nm(room, g.players[g.last.by]) : 'الخصم';
-    wd4 = `<div class="u2-modal-back"></div><section class="u2-modal" role="dialog" aria-label="جوكر +٤">${cardHTML({ id: -1, c: 'w', v: 'wd4' }, 70)}<h3>${esc(by)} لعب عليك +٤</h3><p>اللون الجديد: <b style="color:${HEX[g.color]?.[0]}">${COLOR_NAME[g.color]}</b>. لو تشك إن ${esc(by)} كان عنده ورقة من اللون السابق تقدر تتحدّاه.</p><div class="u2-two"><button type="button" class="btn" data-act="un-accept">أقبل وأسحب ٤</button><button type="button" class="btn gold" data-act="un-challenge">أتحدّاه</button></div><p class="hint">لو كان مخالف يسحب هو ٤ وتكمل دورك. ولو مو مخالف تسحب ٦ ويروح دورك.</p></section>`;
+    wd4 = `<div class="u2-modal-back"></div><section class="u2-modal" role="dialog" aria-label="جوكر +4">${cardHTML({ id: -1, c: 'w', v: 'wd4' }, 70)}<h3>${esc(by)} لعب عليك +4</h3><p>اللون الجديد: <b style="color:${HEX[g.color]?.[0]}">${COLOR_NAME[g.color]}</b>. لو تشك إن ${esc(by)} كان عنده ورقة من اللون السابق تقدر تتحدّاه.</p><div class="u2-two"><button type="button" class="btn" data-act="un-accept">أقبل وأسحب 4</button><button type="button" class="btn gold" data-act="un-challenge">أتحدّاه</button></div><p class="hint">لو كان مخالف يسحب هو 4 وتكمل دورك. ولو مو مخالف تسحب 6 ويروح دورك.</p></section>`;
   }
   let roundPanel = '';
   if (g.phase === 'roundEnd' && g.result) {

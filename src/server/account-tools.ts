@@ -251,6 +251,10 @@ export class AccountTools {
   private grantOutput(g: VerificationGrant, dup: boolean) {
     return { ok: true as const, dup, grant: structuredClone(g), ...this.verification(g.playerId) };
   }
+  /** R58f: هل المستخدم اختار بنفسه قيمة لهذا الإعداد؟ (مو القيمة الافتراضية) */
+  explicitSetting<K extends keyof AccountSettings>(id: string, key: K): AccountSettings[K] | undefined {
+    const s = own(this.d.settings, id) ? this.d.settings[id] : undefined; return s && Object.hasOwn(s, key) ? (s as Partial<AccountSettings>)[key] : undefined;
+  }
   settings(id: string): AccountSettings {
     playerId(id);
     return { ...ACCOUNT_SETTINGS_DEFAULTS, ...(own(this.d.settings, id) ? this.d.settings[id] : {}) };

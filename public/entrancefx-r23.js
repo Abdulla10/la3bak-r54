@@ -3,6 +3,13 @@
 export const ENTRANCE_ART = Object.freeze({
   'entrance-sport':'/assets/store-r23/entrance-sport.webp',
   'entrance-royal':'/assets/store-r23/entrance-royal.webp',
+  // R57: مركبات «مجموعة الفخامة»
+  'entrance-lux-gold':'/assets/store-r57/entrance-lux-gold.webp',
+  'entrance-lux-red':'/assets/store-r57/entrance-lux-red.webp',
+  'entrance-lux-blue':'/assets/store-r57/entrance-lux-blue.webp',
+  'entrance-lux-white':'/assets/store-r57/entrance-lux-white.webp',
+  'entrance-lux-rose':'/assets/store-r57/entrance-lux-rose.webp',
+  'entrance-lux-black':'/assets/store-r57/entrance-lux-black.webp',
 });
 export function createEntranceFX({getHost,getScope,now=()=>Date.now()}={}) {
   let scope='',seen=new Map(),initialized=false,active=null,timer=null,disposed=false;

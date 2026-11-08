@@ -1,0 +1,34 @@
+/* R56: مؤثرات سلّم VIP ونوبل (لون الاسم، فقاعة الدردشة، هالة المقعد) + معايناتها */
+.rp-name-vip-silver,.rp-name-vip-silver b{color:#8c97ad !important;text-shadow:0 0 6px #ffffffaa;}
+.rp-name-nb-copper,.rp-name-nb-copper b{color:#b8662e !important;}
+.rp-name-vip-blue,.rp-name-vip-blue b{color:#1f6fe0 !important;text-shadow:0 0 8px #5ab0ff88;}
+.rp-name-vip-purple,.rp-name-vip-purple b{color:#7a2fd0 !important;text-shadow:0 0 8px #c08bff77;}
+.rp-name-nb-gold,.rp-name-nb-gold b,.rp-name-vip-gold,.rp-name-vip-gold b{background:linear-gradient(90deg,#9a6a08,#ffd36b,#b07c10,#ffe9a6,#9a6a08);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent !important;animation:rpShine 3s linear infinite;}
+.rp-name-vip-legend,.rp-name-vip-legend b{background:linear-gradient(90deg,#ff3d3d,#ffb703,#ffe066,#ff6b35,#ff3d3d);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent !important;animation:rpShine 2.2s linear infinite;filter:drop-shadow(0 0 4px #ff8a3d88);}
+.rp-name-nb-imperial,.rp-name-nb-imperial b{background:linear-gradient(90deg,#1aa7ff,#ffd166,#7b4dff,#ffd166,#1aa7ff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent !important;animation:rpShine 2.6s linear infinite;filter:drop-shadow(0 0 4px #3ad1ff77);}
+@keyframes rpShine{to{background-position:-200% 0;}}
+/* فقاعات الدردشة */
+.so-chat-message.rp-bubble-vip-silver > p,.rp-bubble-vip-silver{background:linear-gradient(135deg,#ffffff,#dfe5f0) !important;border:1px solid #b9c2d3 !important;color:#28303f !important;}
+.so-chat-message.rp-bubble-nb-bronze > p,.rp-bubble-nb-bronze{background:linear-gradient(135deg,#fff1e2,#f0c79a) !important;border:1px solid #c9874a !important;color:#4a2a0e !important;}
+.so-chat-message.rp-bubble-vip-purple > p,.rp-bubble-vip-purple{background:linear-gradient(135deg,#f6ecff,#d6b8ff) !important;border:1px solid #9a6ad6 !important;color:#2c0f52 !important;box-shadow:0 0 10px #b98aff55;}
+.so-chat-message.rp-bubble-nb-gold > p,.rp-bubble-nb-gold,.so-chat-message.rp-bubble-vip-gold > p,.rp-bubble-vip-gold{background:linear-gradient(135deg,#fff9e6,#f5d47e) !important;border:1px solid #c9a03a !important;color:#3d2a02 !important;box-shadow:0 0 10px #ffd16666;}
+.so-chat-message.rp-bubble-vip-legend > p,.rp-bubble-vip-legend{background:linear-gradient(135deg,#3a0a0a,#8a1c10 55%,#c8661a) !important;border:1px solid #ffb347 !important;color:#fff4dc !important;box-shadow:0 0 14px #ff6b3577;}
+.so-chat-message.rp-bubble-nb-imperial > p,.rp-bubble-nb-imperial{background:linear-gradient(135deg,#0b0a2a,#2a1a6a 60%,#11406a) !important;border:1px solid #ffd166 !important;color:#fff7dc !important;box-shadow:0 0 14px #3ad1ff55;position:relative;}
+.so-chat-message.rp-bubble-nb-imperial > p::before,.rp-bubble-nb-imperial::before{content:"👑";position:absolute;top:-10px;inset-inline-start:8px;font-size:13px;}
+.so-chat-message[class*="rp-bubble-"] > p{padding:8px 12px;border-radius:14px;display:inline-block;max-width:100%;}
+/* هالة المقعد */
+.so-member[class*="rp-aura-"] .so-portrait::before,.rp-art-aura [class*="rp-aura-"]::before{content:"";position:absolute;inset:-7px;border-radius:50%;pointer-events:none;z-index:0;}
+.so-member.rp-aura-vip-gold .so-portrait::before,.rp-aura-vip-gold::before{background:conic-gradient(#ffd166,#fff3c4,#c58b12,#ffd166);filter:blur(3px);opacity:.85;animation:rpSpin 4s linear infinite;}
+.so-member.rp-aura-nb-silver .so-portrait::before,.rp-aura-nb-silver::before{background:conic-gradient(#ffffff,#9aa3b5,#e8edf7,#ffffff);filter:blur(3px);opacity:.8;animation:rpSpin 5s linear infinite;}
+.so-member.rp-aura-nb-royal .so-portrait::before,.rp-aura-nb-royal::before{background:conic-gradient(#b15cff,#ffd166,#7a2fd0,#ffd166,#b15cff);filter:blur(3px);opacity:.9;animation:rpSpin 3.4s linear infinite;}
+.so-member.rp-aura-vip-legend .so-portrait::before,.rp-aura-vip-legend::before{background:conic-gradient(#ff3d3d,#ffb703,#ffe066,#ff6b35,#ff3d3d);filter:blur(4px);opacity:.95;animation:rpSpin 2.4s linear infinite;}
+.so-member.rp-aura-nb-imperial .so-portrait::before,.rp-aura-nb-imperial::before{background:conic-gradient(#1aa7ff,#ffd166,#7b4dff,#ffd166,#1aa7ff);filter:blur(4px);opacity:.95;animation:rpSpin 2.8s linear infinite;}
+.so-member[class*="rp-aura-"] .so-portrait > *{position:relative;z-index:1;}
+@keyframes rpSpin{to{transform:rotate(1turn);}}
+@media (prefers-reduced-motion:reduce){[class*="rp-name-"],[class*="rp-name-"] b,.so-member[class*="rp-aura-"] .so-portrait::before,[class*="rp-aura-"]::before{animation:none !important;}}
+/* معاينات صفحات VIP/نوبل */
+.rp-art{display:grid;place-items:center;width:100%;height:100%;min-height:64px;}
+.rp-art-name b{font-size:17px;font-weight:900;}
+.rp-art-bubble span{position:relative;display:inline-block;padding:6px 10px;border-radius:12px;font-size:12px;font-weight:700;}
+.rp-art-aura span{position:relative;display:block;width:46px;height:46px;border-radius:50%;}
+.rp-art-aura span i{position:absolute;inset:0;z-index:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#9d86ff,#4b2fa8);}

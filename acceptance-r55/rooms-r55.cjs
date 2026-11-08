@@ -57,7 +57,7 @@ const NAME = 'غرفة R55 ' + Date.now().toString(36).slice(-4);
     const sendBtn = await Bp.$('[data-so-gifts] button:has-text("إرسال"):not([disabled])');
     if (sendBtn) {
       await sendBtn.click(); let played = false;
-      for (let i = 0; i < 8 && !played; i++) { await sleep(400); played = await A.evaluate(async () => { const s = await import('/unified/social.js?v=social-r55'); const m = s.socialGiftEffectMetrics(); return m.state !== 'idle' || m.frames > 0 || m.contexts > 0; }); }
+      for (let i = 0; i < 8 && !played; i++) { await sleep(400); played = await A.evaluate(async () => { const u = performance.getEntriesByType('resource').map((e) => e.name).find((n) => n.includes('/unified/social.js')); const s = await import(u); const m = s.socialGiftEffectMetrics(); return m.state !== 'idle' || m.frames > 0 || m.contexts > 0; }); }
       ok(`${w}: الهدية تشغّل مؤثر ثلاثي الأبعاد عند المستلم افتراضيًا`, played);
     } else ok(`${w}: زر إرسال الهدية متاح (يحتاج رصيد جواهر بحساب b)`, false, 'لا رصيد');
     await Bp.keyboard.press('Escape'); await sleep(300); await Bp.click('[data-so-action=panel-close]').catch(() => {});
@@ -66,11 +66,15 @@ const NAME = 'غرفة R55 ' + Date.now().toString(36).slice(-4);
     ok(`${w}: زر القلب يحفظ الغرفة`, await Bp.evaluate(() => document.querySelector('.so-room-heart')?.getAttribute('aria-pressed') === 'true'));
     // 7) سهم الخروج → حفظ الغرفة → فقاعة → الملف فيه الغرفة → رجوع من الفقاعة
     await Bp.click('[data-so-action=back-room]'); await sleep(800);
-    const choice = await Bp.evaluate(() => [...document.querySelectorAll('.so-exit-option b')].map((b) => b.textContent));
+    const choice = await Bp.evaluate(() => [...document.querySelectorAll('.so-exit-pop-r58 button span')].map((b) => b.textContent));
     ok(`${w}: سهم الخروج يعطي خيارين: حفظ الغرفة ومغادرة الغرفة`, JSON.stringify(choice) === JSON.stringify(['حفظ الغرفة', 'مغادرة الغرفة']), choice.join(' | '));
+    const pop = await Bp.evaluate(() => { const r = document.querySelector('.so-exit-pop-r58').getBoundingClientRect(); const chat = document.querySelector('[data-so-chat-region]'); return { top: r.top, h: r.height, w: r.width, vw: innerWidth, chatVisible: !!chat && getComputedStyle(chat).visibility !== 'hidden', dialog: !!document.querySelector('.so-dialog:not([hidden]) .so-exit-option') }; });
+    ok(`${w}: بطاقة الخروج صغيرة وفوق وما تغطي المحادثة`, pop.top < 140 && pop.h < 130 && pop.w < pop.vw * 0.7 && !pop.dialog, JSON.stringify(pop));
     if (w === 390) await shots(Bp, 'exit-choice-390');
     await Bp.click('[data-so-action=room-minimize]'); await sleep(2000);
     await Bp.evaluate(() => window.__LA3BAK_NAV__.go('#/profile')); await sleep(3500);
+    const order = await Bp.evaluate(() => { const r = document.querySelector('[data-pvp-saved-rooms]'), m = document.querySelector('.pvp-profile-menu, [data-pvp-menu], .lpu-menu'); return { rooms: r ? r.getBoundingClientRect().top + scrollY : -1, menu: m ? m.getBoundingClientRect().top + scrollY : -1 }; });
+    ok(`${w}: غرف الدردشة تحت في الملف الشخصي (بعد القائمة)`, order.rooms > 0 && order.menu > 0 && order.rooms > order.menu, JSON.stringify(order));
     const prof = await Bp.evaluate((n) => ({ bubble: !!document.querySelector('[data-so-mini-room]'), saved: [...document.querySelectorAll('[data-pvp-saved-rooms] .pvp-room-name')].some((e) => e.textContent.includes(n)) }), NAME + w);
     const still = await Bp.evaluate(async () => (await (await fetch('/api/social/rooms')).json()).current?.roomId || null);
     ok(`${w}: بعد «حفظ الغرفة» تبقى عضو بالغرفة وتظهر الفقاعة وأنت تتصفح`, prof.bubble && !!still, JSON.stringify({ ...prof, still }));
