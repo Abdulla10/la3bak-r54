@@ -6,6 +6,27 @@ const freezeEntries = (data) => Object.freeze(Object.fromEntries(
 ));
 export const REFERENCE_ART = freezeEntries({
   /* R58i: سلسلة إطارات VIP1–15 والنبلاء N1–9 (من تصميم المالك) */
+  /* R58k: الشارات الـ20 الجديدة من تصميم المالك */
+  "art-b-01": {"src": "/assets/art58/badges/b01.webp?v=r58k", "slot": "badge", "name": "شارة عادي"},
+  "art-b-02": {"src": "/assets/art58/badges/b02.webp?v=r58k", "slot": "badge", "name": "شارة شائع"},
+  "art-b-03": {"src": "/assets/art58/badges/b03.webp?v=r58k", "slot": "badge", "name": "شارة متقدم"},
+  "art-b-04": {"src": "/assets/art58/badges/b04.webp?v=r58k", "slot": "badge", "name": "شارة محقق"},
+  "art-b-05": {"src": "/assets/art58/badges/b05.webp?v=r58k", "slot": "badge", "name": "شارة مميز"},
+  "art-b-06": {"src": "/assets/art58/badges/b06.webp?v=r58k", "slot": "badge", "name": "شارة غير شائع"},
+  "art-b-07": {"src": "/assets/art58/badges/b07.webp?v=r58k", "slot": "badge", "name": "شارة نادر"},
+  "art-b-08": {"src": "/assets/art58/badges/b08.webp?v=r58k", "slot": "badge", "name": "شارة نادر"},
+  "art-b-09": {"src": "/assets/art58/badges/b09.webp?v=r58k", "slot": "badge", "name": "شارة نادر"},
+  "art-b-10": {"src": "/assets/art58/badges/b10.webp?v=r58k", "slot": "badge", "name": "شارة مميز"},
+  "art-b-11": {"src": "/assets/art58/badges/b11.webp?v=r58k", "slot": "badge", "name": "شارة ملحمي"},
+  "art-b-12": {"src": "/assets/art58/badges/b12.webp?v=r58k", "slot": "badge", "name": "شارة ملحمي"},
+  "art-b-13": {"src": "/assets/art58/badges/b13.webp?v=r58k", "slot": "badge", "name": "شارة ملحمي"},
+  "art-b-14": {"src": "/assets/art58/badges/b14.webp?v=r58k", "slot": "badge", "name": "شارة ملحمي"},
+  "art-b-15": {"src": "/assets/art58/badges/b15.webp?v=r58k", "slot": "badge", "name": "شارة ملحمي"},
+  "art-b-16": {"src": "/assets/art58/badges/b16.webp?v=r58k", "slot": "badge", "name": "شارة أسطوري"},
+  "art-b-17": {"src": "/assets/art58/badges/b17.webp?v=r58k", "slot": "badge", "name": "شارة أسطوري"},
+  "art-b-18": {"src": "/assets/art58/badges/b18.webp?v=r58k", "slot": "badge", "name": "شارة أسطوري"},
+  "art-b-19": {"src": "/assets/art58/badges/b19.webp?v=r58k", "slot": "badge", "name": "شارة أسطوري"},
+  "art-b-20": {"src": "/assets/art58/badges/b20.webp?v=r58k", "slot": "badge", "name": "شارة أسطوري+"},
   "vip-f1": {"src": "/assets/art58/rank/vip01.webp?v=r58i", "slot": "frame", "name": "إطار غار الذهب VIP", "kids": false},
   "vip-f2": {"src": "/assets/art58/rank/vip02.webp?v=r58i", "slot": "frame", "name": "إطار غار الكريستال VIP", "kids": false},
   "vip-f3": {"src": "/assets/art58/rank/vip03.webp?v=r58i", "slot": "frame", "name": "إطار تاج الياقوت VIP", "kids": false},
@@ -824,7 +845,26 @@ export const REFERENCE_ART = freezeEntries({
 
 /** Existing achievement ID -> player crop ID. See manifest for the evidence and limits. */
 export const ACHIEVEMENT_ART = Object.freeze({
-  "ach-b-10": "ref-p-badge-01",
+  /* R58k: كل الشارات (المكتسبة والمتجر) برسومات المالك */
+  "ach-b-first": "art-b-01",
+  "ach-b-win1": "art-b-03",
+  "ach-b-10": "art-b-10",
+  "ach-b-gift": "art-b-16",
+  "ach-b-loved": "art-b-15",
+  "ach-b-collector": "art-b-12",
+  "ach-b-lv10": "art-b-13",
+  "ach-b-baloot": "art-b-08",
+  "ach-b-domino": "art-b-06",
+  "ach-b-jackaro": "art-b-09",
+  "ach-b-ludo": "art-b-14",
+  "ach-b-uno": "art-b-05",
+  "ach-b-carrom": "art-b-04",
+  "badge-star": "art-b-02",
+  "badge-diamond": "art-b-11",
+  "badge-falcon": "art-b-07",
+  "badge2-flame": "art-b-18",
+  "badge2-moon": "art-b-19",
+  "badge2-crown": "art-b-17",
   "ach-t-emperor": "ref-p-title-08",
   "ach-t-galaxy": "ref-p-title-09",
   "ach-t-shadow": "ref-p-title-10",
@@ -836,7 +876,25 @@ export const ACHIEVEMENT_ART = Object.freeze({
 });
 /** Optional child-art alternatives for the SAME existing achievements, not new goals. */
 export const ACHIEVEMENT_ART_KIDS = Object.freeze({
-  "ach-b-win1": "ref-k-badge-08"
+  "ach-b-first": "art-b-01",
+  "ach-b-win1": "art-b-03",
+  "ach-b-10": "art-b-10",
+  "ach-b-gift": "art-b-16",
+  "ach-b-loved": "art-b-15",
+  "ach-b-collector": "art-b-12",
+  "ach-b-lv10": "art-b-13",
+  "ach-b-baloot": "art-b-08",
+  "ach-b-domino": "art-b-06",
+  "ach-b-jackaro": "art-b-09",
+  "ach-b-ludo": "art-b-14",
+  "ach-b-uno": "art-b-05",
+  "ach-b-carrom": "art-b-04",
+  "badge-star": "art-b-02",
+  "badge-diamond": "art-b-11",
+  "badge-falcon": "art-b-07",
+  "badge2-flame": "art-b-18",
+  "badge2-moon": "art-b-19",
+  "badge2-crown": "art-b-17"
 });
 
 /** Direct asset ID/css, or mapped existing achievement ID. Unknown input returns null. */

@@ -6,11 +6,11 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=r58j5';
-import { avatarArt } from '../avatars.js?v=r58i';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r58k';
+import { avatarArt } from '../avatars.js?v=r58k';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58j5';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r58i';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58k';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r58k';
 import { rankSummary, renderRankOverview } from './rank-overview.js?v=r58c';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);

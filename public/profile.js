@@ -1,6 +1,6 @@
-import { referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58i';
-import { avatarArt } from './avatars.js?v=r58i';
-import { frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58i';
+import { referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58k';
+import { avatarArt } from './avatars.js?v=r58k';
+import { frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58k';
 /* نظام الشخصية: كل شي محفوظ على جهاز اللاعب فقط (localStorage). ما فيه حسابات ولا يرسل شي للخادم. */
 
 const KEY = 'qa_profile_v1';

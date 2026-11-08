@@ -1,8 +1,8 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58i';
-import { avatarArt } from './avatars.js?v=r58i';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58k';
+import { avatarArt } from './avatars.js?v=r58k';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58i';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58k';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=release-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
@@ -71,8 +71,10 @@ function thumb(i) {
   if (i.slot === 'frame') return safeArt(i.art) ? `<img class="r23-frame-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : referenceOf(i.css || i.id)?.slot === 'frame' ? referenceImage(i.css || i.id, 'r23-frame-art') : framed(i.css, FACE, 'sm');
   if (i.slot === 'bg') return `<span class="cx-bgthumb">${bgLayer(i)}</span>`;
   if (i.slot === 'title') return referenceOf(i.id)?.slot === 'title' ? referenceImage(i.id, 'r23-item-art') : `<span class="cx-title r-${esc(i.rarity || i.tier || 'common')}">${esc(i.css || i.name)}</span>`;
-  const art = referenceOf(i.css || i.id);
-  return art && art.slot === i.slot ? referenceImage(i.css || i.id, 'r23-item-art') : renderProfileIcon(TAB_ICON[i.slot] || 'image');
+  // R58k: الشارة ترجع لرسمتها برقم العنصر لو الـcss رمز (إيموجي)
+  const key = referenceOf(i.css || i.id) ? (i.css || i.id) : i.id;
+  const art = referenceOf(key);
+  return art && art.slot === i.slot ? referenceImage(key, 'r23-item-art') : renderProfileIcon(TAB_ICON[i.slot] || 'image');
 }
 const curBal = (d, c) => (c === 'coins' ? d.coins : d.gems);
 const itemStatus = (i) => i.status ?? (i.active === false || i.retired ? 'unavailable' : 'available');
@@ -262,6 +264,8 @@ export function shopHTML(me) {
     body = `<details class="r23-appearance"><summary>${renderProfileIcon('camera')} معاينة مظهري</summary>${previewHTML(d)}</details>` + setsHTML(d);
   } else if (tab === 'ach' || (SH.world !== 'legacy' && ['badge','title'].includes(tab))) {
     body = achHTML({ ...d, artWorld: SH.world, achievementKind: tab === 'ach' ? null : tab });
+    // R58k: شارات المتجر الجديدة (مثل «تنين الكون») تنعرض للبيع تحت الشارات المكتسبة
+    if (tab === 'badge' && d.items.some((i) => i.slot === 'badge')) body += `<h3 class="r23-sub">شارات للبيع</h3>` + gridFor(d, 'badge');
   } else if (tab === 'souvenir') {
     body = `<p class="souv-note">التذكار ينعرض تلقائيًا في رف «تذكاراتي» بملفك الشخصي أول ما تشتريه.</p>` + gridFor(d, tab);
   } else if (['profile-card'].includes(tab)) {

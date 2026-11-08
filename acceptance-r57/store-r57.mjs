@@ -21,7 +21,7 @@ async function gems(token, amount, key) {
   return r.ok;
 }
 const t1 = await fresh('مشتري ' + Date.now().toString(36)), t2 = await fresh('منافس ' + Date.now().toString(36));
-ok('رصيد اختبار للحسابين (محلي فقط)', await gems(t1, 50_200_000, 'r57-' + randomUUID().slice(0, 12)) && await gems(t2, 20000, 'r57-' + randomUUID().slice(0, 12)));
+ok('رصيد اختبار للحسابين (محلي فقط)', await gems(t1, 65_200_000, 'r57-' + randomUUID().slice(0, 12)) && await gems(t2, 20000, 'r57-' + randomUUID().slice(0, 12)));
 const c1 = client(t1), c2 = client(t2); await c1.ready; await c2.ready;
 const shop = await c1.req('shop:get');
 const bySlot = (s) => shop.items.filter((i) => i.slot === s);
@@ -45,7 +45,7 @@ const e1 = await c1.req('shop:equip', { item: 'lux-bub-gold' }); ok('تجهيز 
 const b2 = await buy(c1, 'lux-board-amethyst'); const e2 = await c1.req('shop:equip', { item: 'lux-board-amethyst' });
 ok('شراء وتجهيز لوحة الاسم', b2.ok && e2.ok && e2.equipped.board === 'lux-board-amethyst', b2.error || e2.error);
 // أيدي مميز: نختار رقم متاح
-const sid = bySlot('special-id').find((i) => i.price <= 45_000_000);
+const sid = bySlot('special-id').filter((i) => i.price <= 60_000_000 && !shop.owned.includes(i.id)).sort((a, b) => a.price - b.price)[0]; // الأرخص المتاح — الأرخص ينحجز من التشغيلات السابقة
 const before = (await me(t1));
 const s1 = await buy(c1, sid.id); const after = await (await fetch(B + '/api/account', { headers: { cookie: 'qa_s=' + t1 } })).json().catch(() => null);
 const acct = await (await fetch(B + '/api/me', { headers: { cookie: 'qa_s=' + t1 } })).json();
