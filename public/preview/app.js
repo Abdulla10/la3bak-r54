@@ -621,7 +621,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r59d').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r61a').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':

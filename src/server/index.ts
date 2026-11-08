@@ -66,6 +66,7 @@ import { ProfileSocial, validProfileSocial, wireProfileSocialRoutes } from './pr
 import { OwnerPlayerTools } from './owner-player-tools.js';
 import { SocialRooms, validSocialRooms } from './social-rooms.js';
 import { SocialVoice } from './social-voice.js';
+import { Backups } from './backup-r61.js';
 import { BulkGrants } from './bulk-grants.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -253,7 +254,10 @@ export async function createApp(
   const functionalFile = (configured: string | undefined, name: string) => configured || (cfg.walletFile ? path.join(path.dirname(cfg.walletFile), name + '.json') : '');
   const accountToolsFile = functionalFile(cfg.accountToolsFile, 'account-tools');
   const socialFile = functionalFile(cfg.socialPrivateFile, 'social-private');
-  const cpFile = process.env.CP_POINTS_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'cp-points.json') : '');
+  // R61: كانت تعتمد على SOCIAL_PRIVATE_FILE بس — ولو ما كان مضبوط (مثل الإنتاج) نقاط الارتباط والقبائل ما تنحفظ أبدًا. الحين تنحفظ جنب ملف social-private حتى لو مساره محسوب تلقائيًا.
+  const besideSocial = (name: string) => socialFile ? path.join(path.dirname(socialFile), name) : '';
+  const boardFile = functionalFile(cfg.leaderboardFile, 'leaderboard');
+  const cpFile = process.env.CP_POINTS_FILE ?? besideSocial('cp-points.json');
   const missionsFile = functionalFile(cfg.missionsFile, 'missions');
   const rankRewardsFile = functionalFile(cfg.rankRewardsFile, 'rank-rewards');
   const supportFile = functionalFile(cfg.supportNotificationsFile, 'support-notifications');
@@ -266,7 +270,7 @@ export async function createApp(
   if (opts.paymentProvider && (cfg.production || cfg.payments?.mode !== 'test')) throw new Error('PAYMENT_PROVIDER_INJECTION_TEST_ONLY');
   if (cfg.dataDirectoryLock && cfg.walletFile) {
     const root = path.resolve(path.dirname(cfg.walletFile));
-    const writtenPaths = [cfg.walletFile, cfg.leaderboardFile, accFile, platFile, economyFile, progressionFile, shopFile, idFile, giftFile, cityFile, comFile, accountToolsFile, socialFile, socialRoomsFile, profileSocialFile, missionsFile, rankRewardsFile, supportFile, outboxFile, sessionsFile, paymentsFile, vipMembershipFile, cfg.avatarsDir, cfg.communityMediaDir].filter((v): v is string => !!v);
+    const writtenPaths = [cfg.walletFile, boardFile, accFile, platFile, economyFile, progressionFile, shopFile, idFile, giftFile, cityFile, comFile, accountToolsFile, socialFile, socialRoomsFile, profileSocialFile, missionsFile, rankRewardsFile, supportFile, outboxFile, sessionsFile, paymentsFile, vipMembershipFile, cfg.avatarsDir, cfg.communityMediaDir].filter((v): v is string => !!v);
     if (writtenPaths.some((file) => { const relative = path.relative(root, path.resolve(file)); return relative === '..' || relative.startsWith('../') || path.isAbsolute(relative); })) throw new Error('DATA_DIRECTORY_LOCK_REQUIRES_ALL_WRITES_INSIDE_ROOT');
   }
   const writerLock = cfg.dataDirectoryLock && cfg.walletFile ? new DataDirectoryLock(path.dirname(cfg.walletFile)).acquire() : null;
@@ -286,12 +290,12 @@ export async function createApp(
     { file: economyFile, validate: validEconomy },
     { file: progressionFile, validate: validProgression },
     { file: platFile, validate: validPlatform }, { file: shopFile, validate: validShop },
-    { file: cfg.walletFile ?? '', validate: validWallet }, { file: cfg.leaderboardFile ?? '', validate: validBoard },
+    { file: cfg.walletFile ?? '', validate: validWallet }, { file: boardFile, validate: validBoard },
     { file: accFile, validate: validAccounts }, { file: idFile, validate: validIdentities }, { file: comFile, validate: validCommunity }, { file: giftFile, validate: validGiftOverrides }, { file: cityFile, validate: validCity },
   ]);
   const storage = new StorageMonitor(log);
   const sessions = new SessionRegistry(sessionsFile, cfg.cookieSecret, Date.now, storage);
-  const board = new Leaderboard(cfg.leaderboardFile ?? '', Date.now, storage);
+  const board = new Leaderboard(boardFile, Date.now, storage);
   const economy = new Economy(economyFile, Date.now, storage);
   const accounts = new Accounts(accFile, Date.now, storage);
   const progression = new Progression(progressionFile, Date.now, storage, (id) => accounts.rawXp(id));
@@ -858,8 +862,8 @@ export async function createApp(
     pub: (id) => community.pub(id), nameOf: (id) => accounts.nameOf(id),
   });
   const cpPoints = new CpPoints(cpFile, Date.now, storage);
-  const tribes = new Tribes(process.env.TRIBES_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'tribes.json') : ''), Date.now, storage);
-  const treasure = new TribeTreasure(process.env.TRIBE_TREASURE_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'tribe-treasure.json') : ''), Date.now, storage);
+  const tribes = new Tribes(process.env.TRIBES_FILE ?? besideSocial('tribes.json'), Date.now, storage);
+  const treasure = new TribeTreasure(process.env.TRIBE_TREASURE_FILE ?? besideSocial('tribe-treasure.json'), Date.now, storage);
   // R58w: هدية بين طرفين بينهم ارتباط افتراضي (R47) ترفع نقاط CP
   const cpGift = (from: string, to: string, rec: { cur?: string; total?: number; price: number; qty?: number; ts: number }) => { try { if (rec.cur === 'gems') { const tv = rec.total ?? rec.price * (rec.qty ?? 1); tribes.addGift(from, tv); const tt = tribes.of(from); if (tt) { const tr = socialRooms.ownerTopRoom(tt.leader); const inside = !!tr && typeof (rec as any).room === 'string' && (rec as any).room.startsWith(`social:${tr.id}:`); if (treasure.gift(tt.id, from, tv, inside).length) settleTribe(tt.id); } } } catch { /* نقاط القبيلة بس */ } try { if (rec.cur !== 'gems') return; const c = social.coupleOf(from); if (!c || c.partner !== to || rec.ts < c.at) return; const v = rec.total ?? rec.price * (rec.qty ?? 1); if (cpPoints.add(cpKey(c.id, from, to), v)) for (const id of [from, to]) sendToUser(id, { t: 'cp:update', kind: 'points' }); } catch { /* الهدية انحفظت؛ نقاط CP بس */ } };
   /* R53: «من الذي رآني» و«ادعُ الأصدقاء» — نفس الحسابات والمعرّف العام والحظر والخصوصية القائمة؛ بدون أي حركة مالية */
@@ -927,7 +931,34 @@ export async function createApp(
     log,
     autoStart: false,
   });
-  const admin = createAdmin({ community, giftcat, economy, payments,
+  /* R61: نسخة احتياطية يومية (داخل مجلد البيانات/backups) — BACKUP_ENABLED=0 يطفيها، BACKUP_KEEP عدد النسخ، BACKUP_MEDIA=1 يضيف الصور */
+  const backups = cfg.walletFile && process.env.BACKUP_ENABLED !== '0' ? new Backups({ dir: path.dirname(cfg.walletFile), keep: Number(process.env.BACKUP_KEEP) || 14, media: process.env.BACKUP_MEDIA === '1', log, extraFiles: () => [cfg.walletFile, boardFile, accFile, platFile, economyFile, progressionFile, shopFile, idFile, giftFile, cityFile, comFile, accountToolsFile, socialFile, socialRoomsFile, profileSocialFile, missionsFile, rankRewardsFile, supportFile, outboxFile, sessionsFile, paymentsFile, vipMembershipFile, cpFile].filter((v): v is string => !!v) }) : null;
+  backups?.start(Number(process.env.BACKUP_FIRST_DELAY_MS) || 120_000);
+  /* R61: حالة الموقع للوحة التحكم — كل فحص يرجع ok/warn/bad مع شرح بالعربي */
+  const bootAt = Date.now();
+  async function healthReport() {
+    type Check = { key: string; label: string; state: 'ok' | 'warn' | 'bad'; detail: string };
+    const checks: Check[] = [];
+    const st = storage.status().stores as Record<string, string>;
+    const vol = Object.entries(st).filter(([, v]) => v === 'volatile').map(([k]) => k), bad = Object.entries(st).filter(([, v]) => v !== 'ok' && v !== 'volatile').map(([k, v]) => `${k}: ${v}`);
+    checks.push({ key: 'storage', label: 'حفظ البيانات', state: bad.length ? 'bad' : vol.length ? 'warn' : 'ok', detail: bad.length ? `فشل الحفظ: ${bad.join('، ')}` : vol.length ? `ما تنحفظ بملف (تضيع مع إعادة التشغيل): ${vol.join('، ')}` : `كل البيانات تنحفظ (${Object.keys(st).length} ملف)` });
+    const pend = wallet.pendingCount();
+    checks.push({ key: 'payouts', label: 'عمليات الرصيد المعلقة', state: pend > 20 ? 'bad' : pend > 0 ? 'warn' : 'ok', detail: pend ? `${pend} عملية تنتظر الحفظ` : 'ما فيه شي معلّق' });
+    const b = backups?.status();
+    checks.push({ key: 'backup', label: 'النسخة الاحتياطية', state: !b ? 'bad' : b.lastError ? 'bad' : !b.latest ? 'warn' : (b.ageHours ?? 99) > 30 ? 'bad' : 'ok', detail: !b ? 'مطفية (BACKUP_ENABLED=0 أو ما فيه WALLET_FILE)' : b.lastError ? `آخر محاولة فشلت: ${b.lastError}` : !b.latest ? 'ما انسوت أول نسخة للحين (تنسوي بعد دقيقتين من التشغيل)' : `آخر نسخة قبل ${b.ageHours} ساعة · ${b.count} نسخة محفوظة` });
+    const v = socialVoice?.health();
+    let lk: 'ok' | 'down' | 'skip' = 'skip';
+    if (v?.enabled && cfg.socialVoice?.upstream) { try { const r = await fetch(new URL('/', cfg.socialVoice.upstream), { signal: AbortSignal.timeout(2500) }); lk = r.ok ? 'ok' : 'down'; } catch { lk = 'down'; } }
+    checks.push({ key: 'voice', label: 'الصوت بالغرف (LiveKit)', state: !v?.enabled ? 'warn' : !v.ready || lk === 'down' ? 'bad' : 'ok', detail: !v?.enabled ? 'الصوت مطفي بإعدادات الخادم (SOCIAL_VOICE_ENABLED)' : !v.ready ? `الصوت ما اشتغل: ${v.reason ?? 'سبب غير معروف'}` : lk === 'down' ? 'خادم LiveKit ما يرد على العنوان المضبوط' : `شغال · ${v.transports} اتصال صوتي الحين` });
+    checks.push({ key: 'google', label: 'الدخول بـ Google', state: cfg.googleClientId ? 'ok' : 'warn', detail: cfg.googleClientId ? 'مضبوط' : 'مب مضبوط — الضيوف ما يقدرون يربطون حساباتهم' });
+    const pm = cfg.payments?.mode ?? 'disabled';
+    checks.push({ key: 'payments', label: 'الدفع', state: pm === 'live' ? 'ok' : 'warn', detail: pm === 'live' ? 'شغال (حقيقي)' : pm === 'test' ? 'وضع التجربة — ما فيه دفع حقيقي' : 'مطفي' });
+    const m = process.memoryUsage(), rss = Math.round(m.rss / 1048576);
+    checks.push({ key: 'memory', label: 'ذاكرة الخادم', state: rss > 1200 ? 'bad' : rss > 700 ? 'warn' : 'ok', detail: `${rss} MB` });
+    const players = sockets.size;
+    return { ok: true, at: Date.now(), uptimeSec: Math.floor((Date.now() - bootAt) / 1000), players, rooms: (({ rooms, councils, members }) => ({ rooms, councils, members }))(socialRooms.health() as any), guests: { readOnly: GUEST_READONLY, lockAt: guestLockAt }, backups: b ?? null, checks, overall: checks.some((c) => c.state === 'bad') ? 'bad' : checks.some((c) => c.state === 'warn') ? 'warn' : 'ok' };
+  }
+  const admin = createAdmin({ community, giftcat, economy, payments, backups: backups ?? undefined, health: healthReport,
     platform, shopcat, wallet, accounts, board, progression, accountTools, service, bulkGrants, store, storage, cfg, registry, sockets, log, json, readBody: appReadBody, sameOrigin, ipOf,
     kick: (id, why) => sockets.get(id)?.forEach((ws) => ws.close(why === 'banned' ? 4403 : 4503, why)),
     walletChanged: id => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }),
@@ -1577,6 +1608,7 @@ export async function createApp(
     clearInterval(cleanTimer);
     clearInterval(storageTimer);
     admin.stop();
+    backups?.stop();
     bulkGrants.close();
     await socialVoice!.close();
     wss.clients.forEach((c) => c.terminate());

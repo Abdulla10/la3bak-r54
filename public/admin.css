@@ -43,3 +43,11 @@ textarea.ad-in{resize:vertical;min-height:80px;}
 /* بلاغات المجتمع */
 .ad-quote{margin:8px 0;padding:10px 12px;border-inline-start:3px solid #d4e4d899;background:#fffaf00a;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;}
 .ad-link{border:0;background:none;padding:0;color:#2c1a4a;font:inherit;text-decoration:underline;cursor:pointer;}
+/* R61: حالة الموقع */
+.hl-row b{display:block;font-size:14px;}
+.hl-row small{display:block;margin-top:3px;line-height:1.6;}
+.hl-row.hl-bad small{color:#ff8a8a;}
+.hl-row.hl-warn small{color:#ffd27a;}
+.hl-head.hl-ok{border-inline-start:4px solid #3ccf7a;}
+.hl-head.hl-warn{border-inline-start:4px solid #f2b84b;}
+.hl-head.hl-bad{border-inline-start:4px solid #ff6464;}

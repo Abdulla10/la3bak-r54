@@ -87,6 +87,9 @@ export interface AdminDeps {
   log(event: string, data?: Record<string, unknown>): void;
   token(): string;
   now?: () => number;
+  /** R61 */
+  backups?: import('./backup-r61.js').Backups;
+  health?(): Promise<unknown>;
 }
 
 const UUID = /^[0-9a-f-]{36}$/;
@@ -681,6 +684,15 @@ export function createAdmin(d: AdminDeps) {
       }
       if (a === 'audit' && req.method === 'GET') { need(actor, 'audit.view'); const lim = Math.max(1, Math.min(200, Number(url.searchParams.get('limit')) || 100)); const before = Number(url.searchParams.get('before')) || Infinity; return out({ list: P.auditList(lim, before), total: P.auditCount() }), true; }
       if (a === 'system' && req.method === 'GET') { need(actor, 'system.view'); return out(system()), true; }
+      // R61: حالة الموقع + النسخ الاحتياطية
+      if (a === 'health' && req.method === 'GET') { need(actor, 'system.view'); if (!d.health) throw new HttpErr(503, 'غير متاح.'); return out(await d.health()), true; }
+      if (a === 'backups') {
+        if (actor.role !== 'owner') throw new HttpErr(403, 'النسخ الاحتياطية للمالك فقط.');
+        if (!d.backups) throw new HttpErr(503, 'النسخ الاحتياطية مطفية على هالخادم.');
+        if (!id && req.method === 'GET') return out({ ...d.backups.status(), list: d.backups.list() }), true;
+        if (!id && req.method === 'POST') { try { const b = d.backups.run('manual'); safeAudit(actor, 'backup.run', b.name, String(b.size)); return out({ ok: true, backup: b }), true; } catch (e) { throw new HttpErr(String((e as Error).message) === 'backup_running' ? 409 : 500, String((e as Error).message) === 'backup_running' ? 'فيه نسخة تنسوي الحين.' : 'فشلت النسخة الاحتياطية، شوف الأخطاء.'); } }
+        if (id && req.method === 'GET') { safeAudit(actor, 'backup.download', id, ''); if (!d.backups.send(res, id, {})) throw new HttpErr(404, 'النسخة مب موجودة.'); return true; }
+      }
       if (a === 'settings' && req.method === 'GET') { need(actor, 'settings.view'); return out(settings()), true; }
       if (a === 'maintenance') {
         if (req.method === 'GET') { need(actor, 'maint.manage'); return out({ ...P.maintenance(), persistent: P.persistent }), true; }
