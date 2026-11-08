@@ -1,5 +1,5 @@
 /* تحدي اليوم + السلسلة + المهام. كله محفوظ على الجهاز؛ والنجوم تضيف نقاط لمستوى شخصيتك. */
-import * as PF from './profile.js?v=r58o';
+import * as PF from './profile.js?v=r58r';
 
 const MKEY = 'qa_missions_v1';
 const DKEY = 'qa_daily_v1';

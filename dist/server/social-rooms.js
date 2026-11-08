@@ -2352,10 +2352,10 @@ export class SocialRooms {
         const ranks = r ? { level: num(r.level, 1, 100) ? r.level : null, vip: num(r.vip, 0, 15) ? r.vip : null, noble: num(r.noble, 0, 9) ? r.noble : null } : undefined;
         const frame = typeof p.frame === 'string' && /^[A-Za-z_][A-Za-z0-9_-]{0,79}$/.test(p.frame) ? p.frame : null;
         const cosmetic = (v) => typeof v === 'string' && /^[a-z][a-z0-9-]{0,39}$/.test(v) ? v : null;
-        const bubble = cosmetic(p.bubble), board = cosmetic(p.board);
+        const bubble = cosmetic(p.bubble), board = cosmetic(p.board), micFrame = cosmetic(p.micFrame);
         // R57: مركبات الدخول من كتالوج الخادم فقط (المسار لازم يطابق صورة العنصر نفسه)
         const entranceOk = !!p.entrance && ENTRANCE_ART_PATHS[p.entrance.id] === p.entrance.art;
-        return { id: p.publicId ?? p.id, name: p.name, ...(p.avatar ? { avatar: p.avatar } : {}), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ...(ranks ? { ranks } : {}), ...(entranceOk ? { entrance: { id: p.entrance.id, name: p.entrance.name, art: p.entrance.art } } : {}) };
+        return { id: p.publicId ?? p.id, name: p.name, ...(p.avatar ? { avatar: p.avatar } : {}), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ...(micFrame ? { micFrame } : {}), ...(ranks ? { ranks } : {}), ...(entranceOk ? { entrance: { id: p.entrance.id, name: p.entrance.name, art: p.entrance.art } } : {}) };
     }
     role(r, id, c) { return r.ownerId === id ? 'owner' : r.moderators.includes(id) ? 'moderator' : c?.ownerId === id ? 'council-owner' : c?.hostId === id ? 'council-host' : r.hostId === id ? 'host' : 'member'; }
     memberView(r, m, viewer, c) {

@@ -1061,8 +1061,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 const frame = equippedFrameView(wallet, shopcat, id);
                 // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
                 const eq = wallet.equipped(id), cosm = (slot) => { const it = eq[slot] ? shopcat.get(eq[slot]) : undefined; return it && it.slot === slot && typeof it.css === 'string' ? it.css : null; };
-                const bubble = cosm('chat-bubble'), board = cosm('board');
-                return { id, publicId: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ranks: { level: p.level.enabled ? p.level.value : null, vip: p.vip.enabled ? vip : null, noble: p.noble.enabled ? noble : null }, ...(entrance ? { entrance } : {}) };
+                const bubble = cosm('chat-bubble'), board = cosm('board'), micFrame = cosm('mic-frame');
+                return { id, publicId: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ...(micFrame ? { micFrame } : {}), ranks: { level: p.level.enabled ? p.level.value : null, vip: p.vip.enabled ? vip : null, noble: p.noble.enabled ? noble : null }, ...(entrance ? { entrance } : {}) };
             },
             blocked: (a, b) => community.pairBlocked(a, b), eligible: socialEligible, trustedAdmin: id => id === 'token',
             emit: (ids, event) => { for (const id of ids)

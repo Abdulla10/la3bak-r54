@@ -11,7 +11,7 @@ import { ENTRANCE_ITEMS } from './entrance-catalog.js';
  * كتالوج المتجر — المصدر الوحيد للأسعار. العميل يرسل معرّف العنصر فقط والخادم يقرر السعر.
  * كل العناصر تجميلية بالكامل (تظهر بالملف الشخصي وبطاقة اللاعب) وما تعطي أي أفضلية داخل اللعب.
  */
-export type Slot = 'frame' | 'bg' | 'title' | 'badge' | 'avatar' | 'entrance' | 'chat-bubble' | 'board' | 'special-id' | 'room-id' | 'souvenir';
+export type Slot = 'frame' | 'bg' | 'title' | 'badge' | 'avatar' | 'entrance' | 'chat-bubble' | 'board' | 'special-id' | 'room-id' | 'souvenir' | 'mic-frame';
 export type Rarity = 'common' | 'premium' | 'rare' | 'epic' | 'legendary' | 'ultra';
 export const RARITIES: Rarity[] = ['common', 'premium', 'rare', 'epic', 'legendary', 'ultra'];
 /** set = المجموعة المنسّقة، season = وسم موسمي (عرض فقط، بدون انتهاء)، kids = مناسب لعالم الصغار */
@@ -151,7 +151,7 @@ for (const i of CATALOG) if (i.id === 'av-emperor') i.set = 'emperor';
 for (let index=0;index<CATALOG.length;index++) CATALOG[index]=gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index]));
 const BY_ID = new Map(CATALOG.map((i) => [i.id, i]));
 export const itemOf = (id: unknown): ShopItem | undefined => (typeof id === 'string' ? BY_ID.get(id) : undefined);
-export const SLOTS: Slot[] = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir'];
+export const SLOTS: Slot[] = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir', 'mic-frame'];
 
 /** مكافآت إنجازات محددة: الخادم يتحقق من الشرط من سجله هو (مو من العميل) وتنصرف مرة وحدة لكل حساب */
 export interface Milestone { id: string; label: string; cur: Cur; amount: number; goal: number; metric: 'wins' | 'played' | 'level' }

@@ -170,3 +170,31 @@ html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] > span{font-size
 html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate] > span b[data-pvp-player-id]{font-size:12px!important;}
 html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate]{direction:ltr!important;justify-content:center!important;padding:0 10px 0 42px!important;box-sizing:border-box!important;overflow:visible;}
 html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="1"],html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="2"],html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="3"],html body .pvp-identity-copy .id.lpu-special-id[data-sid-plate="6"]{padding:0 18px!important;}
+
+/* R58r: اللوحات 17-20 */
+.lux-board-art17{background:none!important;border-style:solid!important;border-width:0!important;border-color:transparent!important;border-radius:0!important;box-shadow:none!important;border-image:url(/assets/art58/boards/b17.webp?v=r58r) 0 26% fill / 0 28px stretch!important;padding:6px 30px!important;min-width:110px;min-height:28px;line-height:18px;font-weight:800;}
+html body .so-page .so-room-detail .so-member-name.lux-board.lux-board-art17,html body .lux-board.lux-board-art17{color:#fff!important;text-shadow:0 1px 2px #000c!important;}
+.lux-board-art18{background:none!important;border-style:solid!important;border-width:0!important;border-color:transparent!important;border-radius:0!important;box-shadow:none!important;border-image:url(/assets/art58/boards/b18.webp?v=r58r) 0 26% fill / 0 28px stretch!important;padding:6px 30px!important;min-width:110px;min-height:28px;line-height:18px;font-weight:800;}
+html body .so-page .so-room-detail .so-member-name.lux-board.lux-board-art18,html body .lux-board.lux-board-art18{color:#fff!important;text-shadow:0 1px 2px #000c!important;}
+.lux-board-art19{background:none!important;border-style:solid!important;border-width:0!important;border-color:transparent!important;border-radius:0!important;box-shadow:none!important;border-image:url(/assets/art58/boards/b19.webp?v=r58r) 0 26% fill / 0 28px stretch!important;padding:6px 30px!important;min-width:110px;min-height:28px;line-height:18px;font-weight:800;}
+html body .so-page .so-room-detail .so-member-name.lux-board.lux-board-art19,html body .lux-board.lux-board-art19{color:#fff!important;text-shadow:0 1px 2px #000c!important;}
+.lux-board-art20{background:none!important;border-style:solid!important;border-width:0!important;border-color:transparent!important;border-radius:0!important;box-shadow:none!important;border-image:url(/assets/art58/boards/b20.webp?v=r58r) 0 26% fill / 0 28px stretch!important;padding:6px 30px!important;min-width:110px;min-height:28px;line-height:18px;font-weight:800;}
+html body .so-page .so-room-detail .so-member-name.lux-board.lux-board-art20,html body .lux-board.lux-board-art20{color:#fff!important;text-shadow:0 1px 2px #000c!important;}
+/* R58r: إطارات المايك */
+.mf-thumb{position:relative;display:grid;place-items:center;width:100%;aspect-ratio:1;max-width:120px;margin:auto;}
+.mf-thumb i{display:grid;place-items:center;width:52%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#8a6ad8,#4a2d7e);font-style:normal;font-size:20px;}
+.mf-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+.so-avatar:has(> .so-mic-frame-r58){position:relative;overflow:visible!important;}
+img.so-mic-frame-r58{position:absolute;left:-35%;top:-35%;width:170%;height:170%;max-width:none;object-fit:contain;pointer-events:none;z-index:2;}
+/* شبكة الأقسام صارت 9: خمسة بالصف */
+html body .r23-store .r23-store-tabs{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important;}
+html body .r23-store .r23-store-tabs > button{min-height:54px;font-size:11px!important;padding:6px 1px!important;}
+/* R58r: بنر الترحيب الملكي وشريط الإعلانات من تصميم المالك */
+.so-ads-r58{background:url(/assets/art58/adbar.webp?v=r58r) center/100% 100% no-repeat!important;border:0!important;border-radius:0!important;min-height:34px;padding:4px 18px 4px 16%!important;color:#ffe9a8!important;text-shadow:0 1px 2px #000a;}
+.so-ads-r58 > span[aria-hidden]{visibility:hidden;}
+.rr-welcome.rr-welcome-royal,.rr-welcome.rr-welcome-legend{background:url(/assets/art58/welcome.webp?v=r58r) center/100% 100% no-repeat!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:26px 46px 18px!important;min-width:250px;justify-content:center;filter:drop-shadow(0 10px 20px #0007);}
+/* خلفيات الغرف المرسومة: غطاء ناعم عشان الكتابة تبان */
+.so-page[data-so-social-voice="true"] .so-room-detail[data-so-room-theme^="img"]{background-image:linear-gradient(180deg,rgba(252,249,244,.55),rgba(252,249,244,.25) 30%,rgba(252,249,244,.25) 70%,rgba(252,249,244,.6)),var(--so-room-theme)!important;background-size:cover!important;background-position:center!important;}
+.so-room-theme-card[data-theme^="img"]{background-size:cover!important;background-position:center!important;color:#fff;text-shadow:0 1px 3px #000;}
+html body .so-avatar > img.so-mic-frame-r58{position:absolute!important;left:-35%!important;top:-35%!important;right:auto!important;bottom:auto!important;width:170%!important;height:170%!important;max-width:none!important;max-height:none!important;border-radius:0!important;object-fit:contain!important;border:0!important;background:none!important;inset:auto;}
+html body .so-member .so-member-name.lux-board[class*="lux-board-art"]{max-width:118px;margin-inline:auto;}

@@ -2,6 +2,11 @@ export const ROOM_THEMES=Object.freeze({
  royal:Object.freeze({name:'زمردي وعاجي',gradient:'linear-gradient(155deg,#e6ddf3 0%,#f4eee6 58%,#d3c6e6 100%)'}),
  amethyst:Object.freeze({name:'عاجي وذهبي',gradient:'radial-gradient(ellipse at 80% 15%,#e8c98755,transparent 65%),linear-gradient(145deg,#fcf9f4,#f4eee6 60%,#e6ddf3)'}),
  gold:Object.freeze({name:'زمردي وعاجي',gradient:'linear-gradient(155deg,#e6ddf3 0%,#f4eee6 58%,#d3c6e6 100%)',legacy:true}),
+ img1:Object.freeze({name:'قاعة التاج',gradient:'url("/assets/art58/roombg/r1.jpg?v=r58r")',art:true}),
+ img2:Object.freeze({name:'شرفة القمر',gradient:'url("/assets/art58/roombg/r2.jpg?v=r58r")',art:true}),
+ img3:Object.freeze({name:'صالة الجيمر',gradient:'url("/assets/art58/roombg/r3.jpg?v=r58r")',art:true}),
+ img4:Object.freeze({name:'المكتبة الدافئة',gradient:'url("/assets/art58/roombg/r4.jpg?v=r58r")',art:true}),
+ img5:Object.freeze({name:'قاعة الفلك',gradient:'url("/assets/art58/roombg/r5.jpg?v=r58r")',art:true}),
  dusk:Object.freeze({name:'عاجي وذهبي',gradient:'radial-gradient(ellipse at 80% 15%,#e8c98755,transparent 65%),linear-gradient(145deg,#fcf9f4,#f4eee6 60%,#e6ddf3)',legacy:true})
 });
 const valid=v=>Object.prototype.hasOwnProperty.call(ROOM_THEMES,v);

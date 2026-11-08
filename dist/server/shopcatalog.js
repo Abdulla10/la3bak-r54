@@ -187,6 +187,8 @@ export class ShopCatalog {
         // Entrance effects are the two fixed canonical seeds, not arbitrary custom CSS or URLs.
         if (slot === 'entrance')
             throw new ShopInputError('دخول السيارات متاح من العناصر الأساسية المعتمدة فقط.');
+        if (slot === 'mic-frame')
+            throw new ShopInputError('إطارات المايك من رسومات الكتالوج المعتمدة فقط.');
         if (slot === 'souvenir')
             throw new ShopInputError('التذكارات متاحة من رسومات الكتالوج المعتمدة فقط.');
         if (slot === 'frame' || slot === 'bg') {

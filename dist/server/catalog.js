@@ -147,7 +147,7 @@ for (let index = 0; index < CATALOG.length; index++)
     CATALOG[index] = gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index]));
 const BY_ID = new Map(CATALOG.map((i) => [i.id, i]));
 export const itemOf = (id) => (typeof id === 'string' ? BY_ID.get(id) : undefined);
-export const SLOTS = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir'];
+export const SLOTS = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir', 'mic-frame'];
 export const MILESTONES = [
     { id: 'm-first-win', label: 'أول فوز', cur: 'coins', amount: 100, goal: 1, metric: 'wins' },
     { id: 'm-played-10', label: 'أكمل 10 مباريات', cur: 'coins', amount: 150, goal: 10, metric: 'played' },

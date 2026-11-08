@@ -6,15 +6,15 @@ import {renderUpgradePanel,roomUpgradeConfirmationR47,roomUpgradeErrorR47} from 
 import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room-photo-r31';
 import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r58o';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
-import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r58p';
-import {framed as frameOwnedPortrait} from '../shop.js?v=r58p';
+import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r58r';
+import {framed as frameOwnedPortrait} from '../shop.js?v=r58r2';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
 import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics} from '../social-gift-runtime-r27.js?v=r57';
-import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58p';
+import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58r2';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
-import { mini as avatarMini } from '../avatars.js?v=r58o';
+import { mini as avatarMini } from '../avatars.js?v=r58r';
 import { effectStyle as rankEffects } from '../rank-perks-r56.js?v=r58i';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const arr = value => Array.isArray(value) ? value : [];
@@ -115,7 +115,7 @@ async function openOwnBenefits(c,options={}) {
   const epoch=c.epoch,roomId=c.routeRoom;
   if(!roomId||c.snapshot?.current?.roomId!==roomId)throw Error('ادخل الغرفة بحسابك قبل فتح حقيبة الحظ أو المكافأة.');
   if(!c.benefits){
-    const module=await import('../social-benefits.js?v=r58o');
+    const module=await import('../social-benefits.js?v=r58r');
     if(c!==live||c.epoch!==epoch||c.routeRoom!==roomId)return;
     c.benefitsHost=document.createElement('div');c.benefitsHost.dataset.soBenefitsHost='';if(!c.ctx.gameRoom)c.benefitsHost.dataset.soReferenceR28='';document.body.append(c.benefitsHost);
     c.benefits=module.createSocialBenefits({api:(...args)=>c.api(...args),roomId,getUserId:()=>c===live&&c.routeRoom===roomId?c.uid:'',openPacks:currency=>{c.benefits?.close();(globalThis.__LA3BAK_NAV__ || location).hash='#/payments/'+(currency==='gems'?'gems':'coins');},toast:message=>c.ctx.toast?.(message)});
@@ -242,7 +242,9 @@ function memberBadge(m,c) {
   const state=serverMuted?'server-muted':mine?(mic?'local-live':voiceHere?'local-off':'disconnected'):remoteState;
   const label=serverMuted?'كتم إداري':mine?(mic?'مايكك يعمل':voiceHere?'مايكك مغلق':'صوتك غير متصل'):typeof remoteMic==='boolean'?(remoteMic?'المايك يعمل':'المايك مغلق'):'حالة المايك غير معروفة';
   const portrait=portraitHTML(m),frame=typeof m.frame==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(m.frame)?m.frame:null;
-  const face=frame?frameOwnedPortrait(frame,portrait,'so-owned-seat-frame'):portrait;
+  const micFrame=typeof m.micFrame==='string'&&/^mf\d\d$/.test(m.micFrame)?m.micFrame:null;
+  // R58r: إطار المايك (من المتجر) يطلع بدل إطار الملف وأنت على المقعد
+  const face=micFrame?`${portrait}<img class="so-mic-frame-r58" src="/assets/art58/mic/m${micFrame.slice(2)}.webp?v=r58r" alt="" decoding="async">`:frame?frameOwnedPortrait(frame,portrait,'so-owned-seat-frame'):portrait;
   const fx=rankEffects(m.ranks);
   return `<span class="so-member${speaking?' is-speaking':''}${host?' is-host':''}${fx.aura?' rp-aura-'+fx.aura:''}" data-so-member-id="${esc(m.id)}" data-so-role="${role}" data-so-mic-state="${state}" title="${esc(m.name||'عضو')}${ROLE_NAMES[role]?' · '+ROLE_NAMES[role]:''} · ${label}"><span class="so-portrait"><span class="so-avatar">${face}</span>${host?crown():''}${rankBadges(m)}<span class="so-seat-mic so-seat-mic-${state}" aria-label="${label}">${icon(serverMuted||state==='local-off'||state==='remote-off'?'off':'mic')}<small class="so-sr">${label}</small></span></span><span class="so-member-name${typeof m.board==='string'&&/^[a-z][a-z0-9-]{0,39}$/.test(m.board)?' lux-board lux-board-'+m.board:''}">${esc(m.name||'عضو')}</span>${host?'<small class="so-member-role">المضيف</small>':`<small class="so-sr">${esc(ROLE_NAMES[role]||'عضو')}</small>`}</span>`;
 }

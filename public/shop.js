@@ -1,8 +1,8 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58o';
-import { avatarArt } from './avatars.js?v=r58o';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58r';
+import { avatarArt } from './avatars.js?v=r58r';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58o';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58r';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=release-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
@@ -10,8 +10,8 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 export const SH = { data: null, err: '', loading: false, world: 'players', tab: 'frame', preview: null, confirm: null, busy: false, giftTab: null, who: null, try: {}, f: { rar: 'all', own: 'all', sort: 'rar', set: 'all' }, lim: 24 };
 // R58p: أسماء أقصر وترتيب أوضح (شبكة 4×2 بأيقونات)
-export const STOREFRONT_TABS = [['frame', 'الإطارات'], ['chat-bubble', 'الفقاعات'], ['board', 'اللوحات'], ['souvenir', 'التذكارات'], ['special-id', 'أيدي مميز'], ['room-id', 'أيدي الغرف'], ['bg', 'الخلفيات'], ['profile-card', 'البطاقات']];
-const STORE_TAB_ICON = { frame: '💍', 'chat-bubble': '💬', board: '🪧', souvenir: '🎁', 'special-id': '🆔', 'room-id': '🏠', bg: '🖼️', 'profile-card': '🪪' };
+export const STOREFRONT_TABS = [['frame', 'الإطارات'], ['mic-frame', 'المايك'], ['chat-bubble', 'الفقاعات'], ['board', 'اللوحات'], ['souvenir', 'التذكارات'], ['special-id', 'أيدي مميز'], ['room-id', 'أيدي الغرف'], ['bg', 'الخلفيات'], ['profile-card', 'البطاقات']];
+const STORE_TAB_ICON = { 'mic-frame': '🎙️', frame: '💍', 'chat-bubble': '💬', board: '🪧', souvenir: '🎁', 'special-id': '🆔', 'room-id': '🏠', bg: '🖼️', 'profile-card': '🪪' };
 export const SLOT_TABS = [['avatar', 'الأفاتارات'], ['frame', 'الإطارات'], ['bg', 'الخلفيات'], ['owned', 'أغراضي'], ['sets', 'المجموعات'], ['title', 'ألقاب'], ['badge', 'شارات'], ['ach', 'المكتسبة'], ['gift', 'الهدايا'], ['coins', 'عملات'], ['gems', 'الجواهر'], ['convert', 'التحويل'], ['tasks', 'مكافآت'], ['log', 'السجل']];
 const CUR = { coins: renderProfileIcon('coin').replace('class="pvp-icon"','class="sh-currency sh-currency-coins"').replace('<svg','<svg width="24" height="24"'), gems: giftArt({motif:'diamond',cat:'luxury',variant:0,name:'جواهر'},24).replace('class="gift-art','class="sh-currency sh-currency-gems gift-art') };
 const TAB_ICON = { avatar: 'person', frame: 'frame', entrance: 'star', owned: 'shirt', bg: 'image', sets: 'shirt', title: 'crown', badge: 'medal', ach: 'trophy', gift: 'star', convert: 'back', tasks: 'calendar', log: 'file' };
@@ -43,7 +43,7 @@ export function txListHTML(list, emptyMsg = 'ما فيه معاملات بعد.'
 }
 
 /* ---- معاينة مركّبة: خلفية + أفاتار + إطار + لقب + شارة ---- */
-const SLOT_NAME = { souvenir: 'تذكار', avatar: 'أفاتار', frame: 'إطار', entrance: 'دخول مركبة', bg: 'خلفية', title: 'لقب', badge: 'شارة', 'chat-bubble': 'فقاعة دردشة', board: 'لوحة اسم', 'special-id': 'أيدي مميز', 'room-id': 'أيدي غرفة' };
+const SLOT_NAME = { 'mic-frame': 'إطار مايك', souvenir: 'تذكار', avatar: 'أفاتار', frame: 'إطار', entrance: 'دخول مركبة', bg: 'خلفية', title: 'لقب', badge: 'شارة', 'chat-bubble': 'فقاعة دردشة', board: 'لوحة اسم', 'special-id': 'أيدي مميز', 'room-id': 'أيدي غرفة' };
 const FACE = `<span class="avatar-wrap cx-ghost" style="--sz:64px">${renderProfileIcon('person')}</span>`;
 /** إطار حول محتوى (جديد = طبقة SVG، قديم = حلقة CSS) */
 export function framed(css, inner, cls = '') {
@@ -70,6 +70,8 @@ function thumb(i) {
   if (i.slot === 'room-id') return `<span class="lux-thumb"><span class="lux-sid lux-rid art-idp idp-${idPlate(i.price)} r-${esc(i.rarity || 'rare')}"><small>ROOM ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'special-id') return `<span class="lux-thumb"><span class="lux-sid art-idp idp-${idPlate(i.price)} r-${esc(i.rarity || 'rare')}"><small>ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'entrance') return safeArt(i.art) ? `<img class="r23-entrance-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : `<span class="r23-art-missing">${renderProfileIcon('image')}<small>صورة المركبة غير متاحة</small></span>`;
+  // R58r: إطار المايك فوق دائرة تمثّل صورة المتحدث
+  if (i.slot === 'mic-frame') return /^mf\d\d$/.test(i.css || '') ? `<span class="mf-thumb"><i aria-hidden="true">🎙️</i><img src="/assets/art58/mic/m${esc(i.css.slice(2))}.webp?v=r58r" alt="" loading="lazy" decoding="async"></span>` : renderProfileIcon('star');
   if (i.slot === 'souvenir') return safeArt(i.art) ? `<img class="r23-souv-art" src="${esc(safeArt(i.art))}?v=r58o" alt="" loading="lazy" decoding="async">` : renderProfileIcon('star');
   if (i.slot === 'avatar') return avatarArt(i.id, 64, i.css === 'av2' ? undefined : i.css) || renderProfileIcon('person');
   if (i.slot === 'frame') return safeArt(i.art) ? `<img class="r23-frame-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : referenceOf(i.css || i.id)?.slot === 'frame' ? referenceImage(i.css || i.id, 'r23-frame-art') : framed(i.css, FACE, 'sm');
@@ -187,7 +189,7 @@ function gridFor(d, tab) {
   list = [...list].sort(f.sort === 'asc' ? priceOrder : f.sort === 'desc' ? (a, b) => -priceOrder(a, b) : (a, b) => rarityLv(a.rarity) - rarityLv(b.rarity) || priceOrder(a,b));
   if (tab === 'frame' && f.sort === 'rar') list.sort((a, b) => featuredOrder(a) - featuredOrder(b));
   // R57: الخلفيات الجاهزة للبيع (ومنها مجموعة الفخامة) قبل اللي بانتظار اعتماد السعر
-  if (tab === 'bg' && f.sort === 'rar') list.sort((a, b) => (approvedPrice(b) ? 1 : 0) - (approvedPrice(a) ? 1 : 0) || (b.id.startsWith('lux-') ? 1 : 0) - (a.id.startsWith('lux-') ? 1 : 0) || rarityLv(b.rarity) - rarityLv(a.rarity));
+  if (tab === 'bg' && f.sort === 'rar') list.sort((a, b) => (b.id.startsWith('art-pb-') ? 1 : 0) - (a.id.startsWith('art-pb-') ? 1 : 0) || (approvedPrice(b) ? 1 : 0) - (approvedPrice(a) ? 1 : 0) || (b.id.startsWith('lux-') ? 1 : 0) - (a.id.startsWith('lux-') ? 1 : 0) || rarityLv(b.rarity) - rarityLv(a.rarity));
   const have = all.filter((i) => ownsItem(i, d)).length;
   const shownList = list.slice(0, SH.lim);
   const empty = tab === 'owned' ? 'لا توجد أغراض مملوكة متاحة للعرض في بيانات حسابك الحالية.' : !all.length ? tab === 'entrance' ? 'لا توجد مركبات في كتالوج الخادم لهذا القسم حالياً.' : 'لا توجد منتجات لهذا القسم حالياً.' : 'لا توجد عناصر تطابق التصفية الحالية.';
