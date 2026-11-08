@@ -25,9 +25,9 @@ ok('رصيد اختبار للحسابين (محلي فقط)', await gems(t1, 65
 const c1 = client(t1), c2 = client(t2); await c1.ready; await c2.ready;
 const shop = await c1.req('shop:get');
 const bySlot = (s) => shop.items.filter((i) => i.slot === s);
-ok('إطارات المالك (20) معروضة للبيع، وإطارات lux-f القديمة مخفية', shop.items.filter((i) => i.id.startsWith('art-f-') && i.status === 'available').length === 20 && !shop.items.some((i) => i.id.startsWith('lux-f-') && i.status === 'available'), shop.items.filter((i) => i.id.startsWith('art-f-')).length);
+ok('إطارات المالك الجديدة (12) معروضة للبيع، وإطارات lux-f وart-f القديمة مخفية', shop.items.filter((i) => i.id.startsWith('art-f2-') && i.status === 'available').length === 12 && !shop.items.some((i) => /^art-f-\d\d$/.test(i.id) && i.status === 'available') && !shop.items.some((i) => i.id.startsWith('lux-f-') && i.status === 'available'), shop.items.filter((i) => i.id.startsWith('art-f-')).length);
 ok('المتجر فيه 8 خلفيات فخمة جديدة', shop.items.filter((i) => i.id.startsWith('lux-b-')).length === 8);
-ok('فقاعات الدردشة (6 + 20 من تصميم المالك) ولوحات الأسماء (5 + 20)', bySlot('chat-bubble').length === 26 && bySlot('board').length === 25, bySlot('chat-bubble').length + '/' + bySlot('board').length);
+ok('فقاعات الدردشة (6 + 20 من تصميم المالك) ولوحات الأسماء (5 + 16)', bySlot('chat-bubble').length === 26 && bySlot('board').length === 21, bySlot('chat-bubble').length + '/' + bySlot('board').length);
 ok('السيارات انشالت من المتجر بالكامل (طلب المالك)', !shop.items.some((i) => i.slot === 'entrance'), shop.items.filter((i) => i.slot === 'entrance').map((i) => i.id).join(','));
 const carBuy = await c1.req('shop:buy', { item: 'entrance-sport', key: randomUUID() }); ok('شراء سيارة ينرفض من الخادم', !carBuy.ok, carBuy.error);
 ok('أيديات مميزة معروضة للبيع', bySlot('special-id').length >= 20);
@@ -36,7 +36,7 @@ ok('إطار «جليدي» المقصوص ما ينعرض للبيع', !shop.it
 const deco = shop.items.filter((i) => ['frame', 'bg', 'chat-bubble', 'board', 'special-id', 'room-id'].includes(i.slot) && i.price > 0 && i.status === 'available');
 const coinsLeft = deco.filter((i) => i.currency !== 'gems');
 ok('كل الزينة (إطارات/خلفيات/سيارات/فقاعات/لوحات/أيديات) بالمجوهرات فقط', coinsLeft.length === 0, coinsLeft.map((i) => i.id + ':' + i.currency).slice(0, 8).join(','));
-const luxF = shop.items.filter((i) => i.id.startsWith('art-f-'));
+const luxF = shop.items.filter((i) => i.id.startsWith('art-f2-'));
 ok('إطارات المالك بالمجوهرات، والأسطورية والخرافية 100 ألف وفوق', luxF.every((i) => i.currency === 'gems' && i.price >= 2000) && luxF.filter((i) => ['legendary', 'ultra'].includes(i.rarity)).every((i) => i.price >= 100000), luxF.map((i) => i.price).join(','));
 // R58m (طلب المالك): المكرر 45 مليون، والباقي أسعار متنوعة حسب النمط (20–40 مليون)، والأقصر أغلى
 const ids = [...bySlot('special-id'), ...bySlot('room-id')];

@@ -1,8 +1,8 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58l';
-import { avatarArt } from './avatars.js?v=r58l';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r58o';
+import { avatarArt } from './avatars.js?v=r58o';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58l';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r58o';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=release-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
@@ -68,7 +68,7 @@ function thumb(i) {
   if (i.slot === 'room-id') return `<span class="lux-thumb"><span class="lux-sid lux-rid art-idp idp-${idPlate(i.price)} r-${esc(i.rarity || 'rare')}"><small>ROOM ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'special-id') return `<span class="lux-thumb"><span class="lux-sid art-idp idp-${idPlate(i.price)} r-${esc(i.rarity || 'rare')}"><small>ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'entrance') return safeArt(i.art) ? `<img class="r23-entrance-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : `<span class="r23-art-missing">${renderProfileIcon('image')}<small>صورة المركبة غير متاحة</small></span>`;
-  if (i.slot === 'souvenir') return safeArt(i.art) ? `<img class="r23-souv-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : renderProfileIcon('star');
+  if (i.slot === 'souvenir') return safeArt(i.art) ? `<img class="r23-souv-art" src="${esc(safeArt(i.art))}?v=r58o" alt="" loading="lazy" decoding="async">` : renderProfileIcon('star');
   if (i.slot === 'avatar') return avatarArt(i.id, 64, i.css === 'av2' ? undefined : i.css) || renderProfileIcon('person');
   if (i.slot === 'frame') return safeArt(i.art) ? `<img class="r23-frame-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : referenceOf(i.css || i.id)?.slot === 'frame' ? referenceImage(i.css || i.id, 'r23-frame-art') : framed(i.css, FACE, 'sm');
   if (i.slot === 'bg') return `<span class="cx-bgthumb">${bgLayer(i)}</span>`;
@@ -171,7 +171,7 @@ function filtersHTML(d, tab) {
 const priceOrder = (a, b) => a.currency === b.currency ? (a.price ?? 0) - (b.price ?? 0) : String(a.currency || '').localeCompare(String(b.currency || ''));
 // Featured order is presentation only: no products or prices are fabricated.
 // R58h: إطارات المالك أولًا (الأفخم فوق)
-const featuredFrames = ['art-f-29', 'art-f-28', 'art-f-24', 'art-f-23', 'art-f-22', 'art-f-21', 'art-f-20', 'art-f-18', 'art-f-16', 'art-f-15', 'art-f-14', 'art-f-11', 'art-f-10', 'art-f-09', 'art-f-08', 'art-f-07', 'art-f-06', 'art-f-03', 'art-f-02', 'art-f-01', 'ref-p-frame-08', 'ref-p-frame-02', 'ref-p-frame-06'];
+const featuredFrames = [...Array.from({ length: 12 }, (_, i) => `art-f2-${String(12 - i).padStart(2, '0')}`), 'art-f-29', 'art-f-28', 'art-f-24', 'art-f-23', 'art-f-22', 'art-f-21', 'art-f-20', 'art-f-18', 'art-f-16', 'art-f-15', 'art-f-14', 'art-f-11', 'art-f-10', 'art-f-09', 'art-f-08', 'art-f-07', 'art-f-06', 'art-f-03', 'art-f-02', 'art-f-01', 'ref-p-frame-08', 'ref-p-frame-02', 'ref-p-frame-06'];
 const featuredOrder = (i) => { const n = featuredFrames.indexOf(i.id); return n < 0 ? featuredFrames.length : n; };
 function gridFor(d, tab) {
   const f = SH.f;

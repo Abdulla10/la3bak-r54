@@ -1,9 +1,9 @@
 /* Rank page BODY only. The unified shell owns header, wallet, auth and navigation.
  * GETs never grant points. Every entitlement and claim remains server-authoritative. */
 import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r58i';
-import { mini } from '../avatars.js?v=r58l';
+import { mini } from '../avatars.js?v=r58o';
 import * as R from './rank-vip-shared.js?v=r58p';
-import * as V from './vip-noble-r52.js?v=r58n';
+import * as V from './vip-noble-r52.js?v=r58o';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 
 export function catalogueOf(data) {
@@ -106,7 +106,7 @@ function cardHTML(state, ctx) {
   }
   return `<section class="nx-card" aria-label="بطاقة نوبل"><span class="nx-corner a" aria-hidden="true"></span><span class="nx-corner b" aria-hidden="true"></span>
     <div class="nx-card-top"><span class="nx-face">${face || V.hex('person')}${earned ? `<em dir="ltr">${label}</em>` : ''}</span>
-      <div class="nx-card-id">${earned ? `${view.rank >= 1 && view.rank <= 9 ? `<span class="nx-chip has-art58" dir="ltr"><img class="art58-chip" src="/assets/art58/chips/n${view.rank}.webp?v=r58j" alt="" decoding="async"><b class="art58-chip-tx">${label}</b></span>` : `<span class="nx-chip" dir="ltr">${V.glyph('crown')}${label}</span>`}` : ''}${meta?.configured && earned ? `<b>${esc(meta.name)}</b>` : ''}${end ? `<small>صالحة حتى : <bdi dir="ltr">${esc(V.dateLine(end).split(' ')[1].replaceAll('/', '.'))}</bdi></small>` : ''}<strong><bdi dir="ltr">${V.num(points)}</bdi> نقطة ${season?.active === true && typeof season.name === 'string' ? `في ${esc(season.name)}` : 'نوبل'}</strong></div>
+      <div class="nx-card-id">${earned ? `${view.rank >= 1 && view.rank <= 9 ? `<span class="nx-chip has-art58" dir="ltr"><img class="art58-chip" src="/assets/art58/chips/n${view.rank}.webp?v=r58o" alt="" decoding="async"><b class="art58-chip-tx">${label}</b></span>` : `<span class="nx-chip" dir="ltr">${V.glyph('crown')}${label}</span>`}` : ''}${meta?.configured && earned ? `<b>${esc(meta.name)}</b>` : ''}${end ? `<small>صالحة حتى : <bdi dir="ltr">${esc(V.dateLine(end).split(' ')[1].replaceAll('/', '.'))}</bdi></small>` : ''}<strong><bdi dir="ltr">${V.num(points)}</bdi> نقطة ${season?.active === true && typeof season.name === 'string' ? `في ${esc(season.name)}` : 'نوبل'}</strong></div>
       <span class="nx-card-badge${earned ? '' : ' is-dim'}">${noblePic(earned ? view.rank : 1, earned ? meta : catalogue[0])}</span></div>
     <p class="nx-status">${status}</p>
     <div class="nx-rail" aria-hidden="true"><div class="nx-rail-names">${rail}</div><div class="nx-rail-track"><i style="width:${fill.toFixed(1)}%"></i>${catalogue.map(() => '<b></b>').join('')}</div><div class="nx-rail-vals">${vals}</div></div>

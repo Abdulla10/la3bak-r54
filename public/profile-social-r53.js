@@ -1,7 +1,7 @@
 /* R53: صفحتا «من الذي رآني» و«ادعُ الأصدقاء» من قائمة ملفي.
  * البيانات من الخادم فقط (/api/profile/visitors و/api/profile/invites)، بنفس جلسة الموقع.
  * ما فيه أرقام ثابتة ولا مكافآت: الدعوات بدون أي مكافأة مالية. */
-import { mini } from './avatars.js?v=r58l';
+import { mini } from './avatars.js?v=r58o';
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const PUB = /^[A-Za-z0-9_-]{16}$/;
 const INVITE_KEY = 'la3bak:pending-invite';

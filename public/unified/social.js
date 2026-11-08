@@ -4,17 +4,17 @@ import {createRoomToolsR33} from '../social-room-tools-r33.js?v=r58p';
 import {SOCIAL_GAME_LABELS_R47,renderSocialGame,normalizeSocialGameActionR47,createSocialGamesR47} from '../social-games-r47.js?v=r58p';
 import {renderUpgradePanel,roomUpgradeConfirmationR47,roomUpgradeErrorR47} from '../room-upgrade-r47.js?v=build-all-r47';
 import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room-photo-r31';
-import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r58j';
+import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r58o';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
 import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r58p';
-import {framed as frameOwnedPortrait} from '../shop.js?v=r58n';
+import {framed as frameOwnedPortrait} from '../shop.js?v=r58o';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
 import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics} from '../social-gift-runtime-r27.js?v=r57';
-import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58n';
+import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r58o';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
-import { mini as avatarMini } from '../avatars.js?v=r58l';
+import { mini as avatarMini } from '../avatars.js?v=r58o';
 import { effectStyle as rankEffects } from '../rank-perks-r56.js?v=r58i';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const arr = value => Array.isArray(value) ? value : [];
@@ -115,7 +115,7 @@ async function openOwnBenefits(c,options={}) {
   const epoch=c.epoch,roomId=c.routeRoom;
   if(!roomId||c.snapshot?.current?.roomId!==roomId)throw Error('ادخل الغرفة بحسابك قبل فتح حقيبة الحظ أو المكافأة.');
   if(!c.benefits){
-    const module=await import('../social-benefits.js?v=r58l');
+    const module=await import('../social-benefits.js?v=r58o');
     if(c!==live||c.epoch!==epoch||c.routeRoom!==roomId)return;
     c.benefitsHost=document.createElement('div');c.benefitsHost.dataset.soBenefitsHost='';if(!c.ctx.gameRoom)c.benefitsHost.dataset.soReferenceR28='';document.body.append(c.benefitsHost);
     c.benefits=module.createSocialBenefits({api:(...args)=>c.api(...args),roomId,getUserId:()=>c===live&&c.routeRoom===roomId?c.uid:'',openPacks:currency=>{c.benefits?.close();(globalThis.__LA3BAK_NAV__ || location).hash='#/payments/'+(currency==='gems'?'gems':'coins');},toast:message=>c.ctx.toast?.(message)});
@@ -201,7 +201,7 @@ const textField = (name,label,max=500,value='',required=true) => `<label class="
 const check = (name,label,checked=false) => `<label class="so-check"><input name="${name}" type="checkbox" ${checked?'checked':''}>${esc(label)}</label>`;
 const select = (name,label,options,value) => `<label class="so-field">${esc(label)}<select name="${name}">${Object.entries(options).map(([id,text])=>`<option value="${esc(id)}"${id===String(value)?' selected':''}>${esc(text)}</option>`).join('')}</select></label>`;
 const selfId = c => String(c.snapshot?.selfId || c.list?.selfId || c.uid);
-const RANK_CHIP=(key,n)=>key==='vip'&&n>=1&&n<=15?`/assets/art58/chips/vip${n}.webp?v=r58j`:key==='noble'&&n>=1&&n<=9?`/assets/art58/chips/n${n}.webp?v=r58j`:key==='room'&&n>=1&&n<=10?`/assets/art58/chips/lv${n}.webp?v=r58j`:'';
+const RANK_CHIP=(key,n)=>key==='vip'&&n>=1&&n<=15?`/assets/art58/chips/vip${n}.webp?v=r58o`:key==='noble'&&n>=1&&n<=9?`/assets/art58/chips/n${n}.webp?v=r58o`:key==='room'&&n>=1&&n<=10?`/assets/art58/chips/lv${n}.webp?v=r58o`:'';
 function rankBadges(m) {
   const rank=[['vip','VIP',15],['noble','N',9],['level','LV',100]].find(([key,,max])=>Number.isInteger(m.ranks?.[key])&&m.ranks[key]>0&&m.ranks[key]<=max);
   return rank?`<span class="so-member-ranks"><small class="so-rank so-rank-${rank[0]}${RANK_CHIP(rank[0],m.ranks[rank[0]])?' has-art58':''}" data-so-rank="${rank[0]}" dir="ltr">${RANK_CHIP(rank[0],m.ranks[rank[0]])?`<img class="art58-chip" src="${RANK_CHIP(rank[0],m.ranks[rank[0]])}" alt="" decoding="async"><b class="art58-chip-tx">${rank[1]}${m.ranks[rank[0]]}</b>`:`${icon('star')}${rank[1]}${m.ranks[rank[0]]}`}</small></span>`:'';

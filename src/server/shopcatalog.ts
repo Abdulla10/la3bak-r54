@@ -105,7 +105,8 @@ export class ShopCatalog {
     // R56: مقتنيات سلّم الرتب مخفية عن البيع افتراضيًا (تظهر وتنجهّز لمالكها فقط)، إلا إذا الإدارة حددت حالة غيرها
     // R57: «جليدي» صورته الأصلية مقصوصة نصها (تطلع مثل حرف C)، فتنخفي من البيع افتراضيًا. اللي يملكها تبقى له، والإدارة تقدر ترجّعها
     // R58h: إطارات lux-f المرسومة بالكود انستبدلت بإطارات المالك؛ تنخفي من البيع (اللي يملكها تبقى له)
-    const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-');
+    // R58o: إطارات art-f الأولى انستبدلت بمجموعة المالك الجديدة art-f2؛ القديمة تنخفي من البيع وتبقى لمن يملكها
+    const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-') || /^art-f-\d\d$/.test(base.id);
     const requestedStatus = o?.status === undefined && o?.active === undefined && (base.rankPerk || brokenArt) ? 'hidden' : shopStatus(o ?? {});
     // Missing/partial/invalid approval can never activate a proposal, including price zero.
     const status = approved === false && (!o?.status || requestedStatus === 'available') ? 'coming-soon' : requestedStatus;

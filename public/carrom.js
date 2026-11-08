@@ -3,7 +3,7 @@
  * اللوحة تدور بحيث خطك دائماً تحت. التصويب: اسحب من الضاربة للخلف (مثل النبّالة) وأفلت؛ الخط المنقّط يوضح الاتجاه وأول اصطدام.
  * التحريك على الخط: اسحب الضاربة يمين/يسار أو استعمل المنزلق تحت اللوحة. */
 import { faceHtml } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=r58l';
+import { avatarArt } from './avatars.js?v=r58o';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');

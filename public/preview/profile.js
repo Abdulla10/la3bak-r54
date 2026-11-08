@@ -6,11 +6,11 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=r58n';
-import { avatarArt } from '../avatars.js?v=r58l';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r58o';
+import { avatarArt } from '../avatars.js?v=r58o';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58n';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r58l';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r58o';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r58o';
 import { rankSummary, renderRankOverview } from './rank-overview.js?v=r58c';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -238,7 +238,7 @@ function referenceHeadBadges(ctx) {
  const rankHTML=system=>{const rank=rankSummary(ctx,system),earned=rank.state==='earned';
   const text=system==='level'?(earned?String(rank.rank):'—'):(earned?'VIP'+rank.rank:'VIP —');
   const art=system==='level'&&earned?`<span class="pvp-head-level-icon" data-pvp-level-theme="${rank.theme}" aria-hidden="true">${icon('crown')}</span>`:system==='level'?icon('crown'):'';
-  const chip=system==='vip'&&earned&&Number.isInteger(rank.rank)&&rank.rank>=1&&rank.rank<=15?`<img class="art58-chip" src="/assets/art58/chips/vip${rank.rank}.webp?v=r58j" alt="" decoding="async">`:'';
+  const chip=system==='vip'&&earned&&Number.isInteger(rank.rank)&&rank.rank>=1&&rank.rank<=15?`<img class="art58-chip" src="/assets/art58/chips/vip${rank.rank}.webp?v=r58o" alt="" decoding="async">`:'';
   return button('rank-system',`${chip||art}<small dir="ltr" data-pvp-head-rank="${system}"${chip?' class="art58-chip-tx"':''}>${esc(text)}</small>`,`data-system="${system}" data-rank-state="${rank.state}"${system==='vip'&&earned&&rank.rank>=1&&rank.rank<=15?' data-art58="1"':''} aria-label="تفاصيل ${esc(rank.text)}" title="${esc(rank.text)}"`,'pvp-head-rank pvp-head-pill is-'+system);
  };
  const support=headerCount(m?.giftCounts?.recv),supportTitle='عدد مرات الدعم بالهدايا المستلمة من أشخاص آخرين: '+support;
@@ -270,7 +270,7 @@ function souvenirShelf(ctx) {
  if(!ctx.user||!ctx.shopData)return '';
  const owned=new Set(arr(ctx.shopData.owned)),list=arr(ctx.shopData.items).filter(i=>i&&i.slot==='souvenir'&&owned.has(i.id)&&/^\/assets\/art58\/souv\/s\d{2}\.webp$/.test(String(i.art||'')));
  const total=arr(ctx.shopData.items).filter(i=>i&&i.slot==='souvenir').length;
- const body=list.length?`<div class="souv-row">${list.map(i=>`<figure class="souv-item r-${esc(i.rarity||'common')}"><img src="${esc(i.art)}?v=r58j" alt="" loading="lazy" decoding="async"><figcaption>${esc(i.name)}</figcaption></figure>`).join('')}</div>`:`<a class="souv-empty" href="#/shop" data-souv-shop>${'<i></i>'.repeat(3)}<span>رفّك فاضي — اقتنِ أول تذكار من المتجر</span></a>`;
+ const body=list.length?`<div class="souv-row">${list.map(i=>`<figure class="souv-item r-${esc(i.rarity||'common')}"><img src="${esc(i.art)}?v=r58o" alt="" loading="lazy" decoding="async"><figcaption>${esc(i.name)}</figcaption></figure>`).join('')}</div>`:`<a class="souv-empty" href="#/shop" data-souv-shop>${'<i></i>'.repeat(3)}<span>رفّك فاضي — اقتنِ أول تذكار من المتجر</span></a>`;
  return `<section class="souv-shelf" data-souv-shelf aria-label="تذكاراتي"><header><b>تذكاراتي</b><small dir="ltr">${list.length}/${total}</small></header>${body}</section>`;
 }
 function savedRoomsCard(ctx,s) {
