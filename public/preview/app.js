@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
 import * as PR from './profile.js?v=r67l';
-import * as UNIFIED from '../unified/shell.js?v=r67p';
+import * as UNIFIED from '../unified/shell.js?v=r67s';
 import * as REF from '../unified/home.js?v=r63a';
-import * as SOCIAL from '../unified/social.js?v=r67p';
+import * as SOCIAL from '../unified/social.js?v=r67s';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r63a';

@@ -208,8 +208,8 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()', // الميكروفون مقفّل افتراضياً؛ يُسمح لنفس الموقع فقط عند تفعيل الصوت.
   'Content-Security-Policy':
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' blob: ws: wss:; " +
-    "media-src 'self' blob:; " +
+    "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' blob: ws: wss:; " +
+    "frame-src https://www.youtube-nocookie.com; media-src 'self' blob:; " +
     "frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
 };
 
@@ -454,7 +454,7 @@ export async function createApp(
   if (cfg.googleClientId) {
     securityHeaders['Content-Security-Policy'] =
       "default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; " +
-      "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' blob: ws: wss: https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; " +
+      "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' blob: ws: wss: https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/ https://www.youtube-nocookie.com; " +
       "media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
   }
   /* ---- المتجر: كل التحقق بالخادم. العميل يرسل معرّف العنصر ومفتاح الطلب فقط ---- */

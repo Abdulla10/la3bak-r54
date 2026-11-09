@@ -76,7 +76,11 @@ type StoredSettings = Partial<Omit<RoomSettings, 'moderatorPermissions'>> & { mo
 type Chat = { id: string; actor: string; text: string; at: number };
 type Council = { id: string; name: string; description: string; kind: Kind; privacy: Privacy; ownerId: string; hostId: string | null; seats: number; locked: boolean; lockedSeats?: number[]; allowRequests: boolean; invites: string[]; requests: string[]; channel: string; createdAt: number; modeEnabled: Record<SocialModeId, boolean>; modes: Record<SocialModeId, Record<string, any>>; chat: Chat[]; tools?: RoomToolsR33 };
 type Memory = { id: string; councilId: string; authors: string[]; approved: string[]; text: string | null; at: number };
-type Room = { id: string; name: string; description: string; privacy: Privacy; memory: boolean; maxMembers: number; ownerId: string; hostId: string | null; moderators: string[]; invites: string[]; bans: { id: string; reason: string }[]; members: Member[]; councils: Council[]; memories: Memory[]; activity: { action: string; at: number }[]; createdAt: number; updatedAt: number; settings?: StoredSettings; micRequests?: string[]; micApprovals?: string[]; cover?: string; challenge?: Challenge; cannon?: CannonState; roomMode?: DirectoryRoomMode; roomTag?: DirectoryRoomTag; country?: DirectoryCountry; password?: RoomPasswordR30; upgrade?: RoomUpgradeMetadataR47; vanity?: string; vanityItem?: string; support?: number; ads?: RoomAd[]; month?: RoomMonth; rocket?: RoomRocket; week?: RoomWeek; allSenders?: Record<string, number>; cannon3?: RoomCannon3 };
+/** R67: مشاهدة يوتيوب جماعية بالغرفة. الموضع الحالي = paused لو موقوف، وإلا (الحين - base) بالثواني. */
+type RoomVideo = { vid: string; by: string; base: number; paused: number | null; at: number };
+const YT_ID = /^[A-Za-z0-9_-]{11}$/;
+const validRoomVideo = (v: any) => isObj(v) && keys(v, ['vid','by','base','paused','at']) && typeof v.vid === 'string' && YT_ID.test(v.vid) && typeof v.by === 'string' && v.by.length <= 80 && nat(v.base) && (v.paused === null || (typeof v.paused === 'number' && Number.isFinite(v.paused) && v.paused >= 0 && v.paused <= 86400 * 2)) && nat(v.at);
+type Room = { id: string; name: string; description: string; privacy: Privacy; memory: boolean; maxMembers: number; ownerId: string; hostId: string | null; moderators: string[]; invites: string[]; bans: { id: string; reason: string }[]; members: Member[]; councils: Council[]; memories: Memory[]; activity: { action: string; at: number }[]; createdAt: number; updatedAt: number; settings?: StoredSettings; micRequests?: string[]; micApprovals?: string[]; cover?: string; challenge?: Challenge; cannon?: CannonState; roomMode?: DirectoryRoomMode; roomTag?: DirectoryRoomTag; country?: DirectoryCountry; password?: RoomPasswordR30; upgrade?: RoomUpgradeMetadataR47; vanity?: string; vanityItem?: string; support?: number; ads?: RoomAd[]; month?: RoomMonth; rocket?: RoomRocket; week?: RoomWeek; allSenders?: Record<string, number>; cannon3?: RoomCannon3; video?: RoomVideo };
 type Pref = { id: string; invitations: boolean; interests: string; remember: boolean; adultConsent: boolean; favorites: { roomId: string; councilId: string }[]; previous: { roomId: string; councilId: string } | null; rates: number[]; recentRoomIds?: string[]; followedRoomIds?: string[] };
 type DirectoryAdmission = { passwordVerifiedRoomId?: string; protection?: RoomPasswordR30 };
 type Report = { id: string; actor: string; targetType: string; targetId: string; subjectId: string | null; roomId: string; councilId: string; text: string; evidence: string | null; at: number; resolution: string | null };
@@ -114,10 +118,11 @@ export function validSocialRooms(d: Record<string, unknown>): boolean {
   const roomIds = new Set<string>(), councilIds = new Set<string>(), users = new Set<string>(), channels = new Set<string>(), challengeIds = new Set<string>(), scoredIds = new Set<string>();
   const cannonIds = new Set<string>(), cannonReceiptIds = new Set<string>();
   for (const r of d.rooms) {
-    if (!isObj(r) || !keys(r, ['id','name','description','privacy','memory','maxMembers','ownerId','hostId','moderators','invites','bans','members','councils','memories','activity','createdAt','updatedAt','settings','micRequests','micApprovals','cover','challenge','cannon','roomMode','roomTag','country','password','upgrade','vanity','vanityItem','support','ads','month','rocket','week','allSenders','cannon3']) || !uuid(r.id) || roomIds.has(r.id) || !str(r.name, 80) || !r.name.trim() || !str(r.description, 400) || !privacy(r.privacy) || typeof r.memory !== 'boolean' || !num(r.maxMembers, 2, 50) || !ident(r.ownerId) || !(r.hostId === null || ident(r.hostId)) || !strings(r.moderators, ident, 50) || r.moderators.includes(r.ownerId) || !strings(r.invites, ident, 200) || !Array.isArray(r.bans) || r.bans.length > 500 || !Array.isArray(r.members) || r.members.length > r.maxMembers || !Array.isArray(r.councils) || r.councils.length > 50 || !Array.isArray(r.memories) || r.memories.length > 100 || !Array.isArray(r.activity) || r.activity.length > 100 || !stamp(r.createdAt) || !stamp(r.updatedAt)) return false;
+    if (!isObj(r) || !keys(r, ['id','name','description','privacy','memory','maxMembers','ownerId','hostId','moderators','invites','bans','members','councils','memories','activity','createdAt','updatedAt','settings','micRequests','micApprovals','cover','challenge','cannon','roomMode','roomTag','country','password','upgrade','vanity','vanityItem','support','ads','month','rocket','week','allSenders','cannon3','video']) || !uuid(r.id) || roomIds.has(r.id) || !str(r.name, 80) || !r.name.trim() || !str(r.description, 400) || !privacy(r.privacy) || typeof r.memory !== 'boolean' || !num(r.maxMembers, 2, 50) || !ident(r.ownerId) || !(r.hostId === null || ident(r.hostId)) || !strings(r.moderators, ident, 50) || r.moderators.includes(r.ownerId) || !strings(r.invites, ident, 200) || !Array.isArray(r.bans) || r.bans.length > 500 || !Array.isArray(r.members) || r.members.length > r.maxMembers || !Array.isArray(r.councils) || r.councils.length > 50 || !Array.isArray(r.memories) || r.memories.length > 100 || !Array.isArray(r.activity) || r.activity.length > 100 || !stamp(r.createdAt) || !stamp(r.updatedAt)) return false;
     if (Object.hasOwn(r, 'upgrade') && !validRoomUpgradeMetadataR47(r.upgrade)) return false;
     if (Object.hasOwn(r,'vanity') && (typeof r.vanity !== 'string' || !ROOM_VANITY.test(r.vanity) || typeof r.vanityItem !== 'string')) return false;
     if (Object.hasOwn(r,'support') && !nat(r.support)) return false;
+    if (Object.hasOwn(r,'video') && !validRoomVideo(r.video)) return false;
     if (Object.hasOwn(r,'month') && !validRoomMonth(r.month)) return false;
     if (Object.hasOwn(r,'rocket') && !validRoomRocket(r.rocket)) return false;
     if (Object.hasOwn(r,'cannon3') && !validRoomCannon3(r.cannon3)) return false;
@@ -574,7 +579,7 @@ export class SocialRooms {
   }
   /** R58: الرقم الظاهر للغرفة: الأيدي المميز إذا موجود، وإلا رقم 8 خانات الثابت */
   private roomCode(r: Room): string { return r.vanity ?? roomCodeOf(r.id); }
-  private roomExtrasView(r: Room) { const lv = roomLevelOf(r.support ?? 0); return { weekPts: Object.values(currentWeek(r.week, this.clock()).senders).reduce((n, v) => n + v, 0), rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })), }; }
+  private roomExtrasView(r: Room) { const lv = roomLevelOf(r.support ?? 0); return { weekPts: Object.values(currentWeek(r.week, this.clock()).senders).reduce((n, v) => n + v, 0), rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })), video: r.video ? { vid: r.video.vid, paused: r.video.paused, base: r.video.base, now: this.clock() } : null, }; }
   /** R55: فحص جوائز المدفع بدون رمي خطأ. لو عنصر جائزة صار مقفول برتبة أو موقوف بالمتجر، الغرف والدردشة والهدايا تكمل عادي والمدفع ما ينفعّل لين ترجع الجوائز صالحة. */
   private cannonCatalogReady(): boolean {
     if (!this.opts.cannon) return false;
@@ -1177,6 +1182,18 @@ export class SocialRooms {
       const ads:RoomAd[]=[];
       for(const raw of b.ads as unknown[]){if(typeof raw!=='string')fail('invalid_room_ads');const t=raw.trim().slice(0,200);if(!t)continue;if(this.opts.moderate){const m=this.opts.moderate(t,'room-ad');if(!m.ok)fail(m.code,422);}const old=(r.ads??[]).find(a=>a.text===t);ads.push(old??{id:randomUUID(),text:t,at:now});}
       if(ads.length)r.ads=ads;else delete r.ads;this.activity(r,command,now);return success({roomId:r.id,updated:true});
+    }
+    /* R67: يوتيوب بالغرفة — المالك والمشرفين بس (بصلاحية «الهوية»). الكل يشوف نفس اللحظة. */
+    if(command==='video:set'||command==='video:control'||command==='video:off') {
+      this.requireMod(r,id,undefined,'identity');
+      const pos=(v:RoomVideo)=>Math.max(0,v.paused??(now-v.base)/1000);
+      if(command==='video:off'){if(!keys(b,['roomId']))fail('invalid_video');delete r.video;this.activity(r,command,now);return success({roomId:r.id,updated:true});}
+      if(command==='video:set'){if(!keys(b,['roomId','vid'])||typeof b.vid!=='string'||!YT_ID.test(b.vid))fail('invalid_video');r.video={vid:b.vid,by:id,base:now,paused:null,at:now};this.activity(r,command,now);return success({roomId:r.id,updated:true});}
+      if(!r.video)fail('video_not_playing',409);
+      if(!keys(b,['roomId','action','position'])||!['play','pause','seek'].includes(String(b.action))||(b.position!==null&&(typeof b.position!=='number'||!Number.isFinite(b.position)||b.position<0||b.position>86400*2)))fail('invalid_video');
+      const v=r.video,p=typeof b.position==='number'?b.position:pos(v);
+      if(b.action==='pause')v.paused=p;else if(b.action==='play'){v.paused=null;v.base=Math.round(now-p*1000);}else{if(v.paused!==null)v.paused=p;else v.base=Math.round(now-p*1000);}
+      v.at=now;this.activity(r,command,now);return success({roomId:r.id,updated:true});
     }
     /* R58: أيدي غرفة مميز (من المتجر) — للمالك فقط، والرقم ما يتكرر بين الغرف */
     if(command==='room:vanity') {

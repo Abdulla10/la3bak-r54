@@ -298,3 +298,25 @@ h1,h2{line-height:1.35;}
 .gb67-tx em{font-style:normal;color:#FFD66B;font-weight:800;}
 .gb67-qty{font:400 30px/1 var(--font-display,'Cairo');color:#FFD66B;text-shadow:0 2px 0 #4a1d05;}
 @media (prefers-reduced-motion:reduce){.gb67-rays,.gb67-art{animation:none!important}}
+
+/* R67: يوتيوب بالغرفة (وضع السينما) */
+.cn67{position:relative;margin:6px 10px 8px;border-radius:18px;overflow:hidden;background:linear-gradient(180deg,#3a0d1a,#1C0A30);border:1.5px solid #E0A52699;box-shadow:0 8px 24px #0008;z-index:2;}
+.cn67::before{content:"";position:absolute;inset:0 0 auto;height:22px;background:repeating-linear-gradient(90deg,#8b1230 0 26px,#a5173b 26px 52px);border-bottom:2px solid #E0A526;opacity:.9;pointer-events:none;}
+.cn67-screen{position:relative;margin:26px 10px 8px;aspect-ratio:16/9;border-radius:10px;background:#000;}
+.cn67-empty{display:grid;justify-items:center;gap:10px;padding:38px 16px 18px;text-align:center;}
+.cn67-brand{display:flex;align-items:center;gap:6px;color:#fff;font-size:18px;}
+.cn67-empty p{margin:0;color:#CDB8E6;font-size:13.5px;line-height:1.7;}
+.cn67-add{padding:10px 26px;border:0;border-radius:22px;background:linear-gradient(135deg,#FFD66B,#E0A526);color:#1C0A30;font:inherit;font-weight:800;font-size:15px;cursor:pointer;}
+.cn67-link{border:0;background:none;color:#CDB8E6;font:inherit;font-size:13px;cursor:pointer;}
+.cn67-ctl{display:flex;justify-content:center;gap:8px;padding:0 10px 10px;}
+.cn67-ctl button{min-width:44px;height:38px;padding:0 12px;border:1px solid #ffffff26;border-radius:19px;background:#ffffff14;color:#F5E9FF;font:inherit;font-size:13px;font-weight:700;cursor:pointer;display:grid;place-items:center;}
+.cn67-ctl .cn67-pp{background:linear-gradient(135deg,#FFD66B,#E0A526);color:#1C0A30;border:0;width:52px;}
+.cn67-ctl .cn67-off{color:#ff9aa8;border-color:#ff9aa855;}
+.cn67-note{margin:0;padding:0 12px 10px;text-align:center;color:#CDB8E6;font-size:12.5px;}
+.cn67-host{position:fixed;left:0;top:0;z-index:40;border-radius:10px;overflow:hidden;visibility:hidden;will-change:transform;}
+.cn67-host iframe{display:block;width:100%;height:100%;border:0;}
+/* المقاعد تصير صف كراسي سينما */
+[data-so-cinema="1"] .so-central-council .so-seat-grid{--so-seat-columns:6!important;gap:4px!important;}
+[data-so-cinema="1"] .so-central-council .so-seat{transform:scale(.82);transform-origin:top center;}
+[data-so-cinema="1"] .so-central-council .so-seat::before{content:"";position:absolute;inset:auto 8% -2px;height:46%;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,#b3173f,#6d0c26);box-shadow:inset 0 2px 0 #ff5a7a66;z-index:-1;}
+[data-so-cinema="1"] .so-central-council .so-seat{position:relative;isolation:isolate;}
