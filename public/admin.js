@@ -1,5 +1,5 @@
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r66a';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r67p';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=admin-royal-1';
 import {mountPaymentAdmin} from './payment-admin.js?v=r66a';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';

@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
 import * as PR from './profile.js?v=r67l';
-import * as UNIFIED from '../unified/shell.js?v=r67i';
+import * as UNIFIED from '../unified/shell.js?v=r67p';
 import * as REF from '../unified/home.js?v=r63a';
-import * as SOCIAL from '../unified/social.js?v=r67i';
+import * as SOCIAL from '../unified/social.js?v=r67p';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r63a';
@@ -636,7 +636,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r66a').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r67p').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':

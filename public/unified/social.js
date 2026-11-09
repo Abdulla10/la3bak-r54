@@ -11,6 +11,7 @@ import {framed as frameOwnedPortrait} from '../shop.js?v=r63b';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
 import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r63a';
+import {bigGift} from './gift-big-r67.js?v=r67o';
 import {cannon3Shortcut,cannon3Panel,cannon3Blast} from './room-cannon-r59.js?v=r67i';
 import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r63b';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
@@ -140,7 +141,7 @@ export function receiveSocialSupport(event) {
   const c=live;if(!c||c.ctx.gameRoom||c.snapshot?.current?.roomId!==c.routeRoom)return false;
   return c.challengeUI?.receive(supportEventModel(event))===true;
 }
-export function receiveSocialGiftEffect(event,meta){const ok=receiveGiftRuntime(live,event,meta);try{if(!meta?.dup&&!meta?.historical&&live&&!live.ctx?.gameRoom&&meta?.roomId===live.routeRoom&&!(live.ctx?.hideChatEffects||live.ctx?.accountSettings?.hideChatEffects))giftSlide(event);}catch{}return ok;}
+export function receiveSocialGiftEffect(event,meta){const ok=receiveGiftRuntime(live,event,meta);try{if(!meta?.dup&&!meta?.historical&&live&&!live.ctx?.gameRoom&&meta?.roomId===live.routeRoom&&!(live.ctx?.hideChatEffects||live.ctx?.accountSettings?.hideChatEffects)){giftSlide(event);bigGift(event);}}catch{}return ok;}
 /* R59: شريط الهدية الجانبي «N×» (صورة المرسل + الهدية + المستلم) مثل الفيديو. عرض بس؛ القيم من حدث الخادم المؤكد. */
 const slideSeen=new Set();
 function giftSlide(ev){

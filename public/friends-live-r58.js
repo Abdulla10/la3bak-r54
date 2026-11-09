@@ -48,7 +48,10 @@ if (typeof document !== 'undefined' && !globalThis.__LA3BAK_FL__) {
     const m = e.detail || {}; at = 0; if (!m.name) return;
     if (!stack || !stack.isConnected) { stack = document.createElement('div'); stack.className = 'fl-toasts'; stack.setAttribute('aria-live', 'polite'); document.body.appendChild(stack); }
     const t = document.createElement('div'); t.className = 'fl-toast' + (m.t === 'friend:room' ? ' is-room' : ''); t.setAttribute('role', 'status');
-    t.innerHTML = m.t === 'friend:room' && m.room
+    if (m.cp) t.classList.add('is-cp');
+    t.innerHTML = m.t === 'friend:room' && m.room && m.cp
+      ? `<span class="fl-toast-ic">💞</span><span class="fl-toast-tx">شريكك بـCP <b>${esc(m.name)}</b> دخل غرفة <b>${esc(m.room.name)}</b></span><button type="button" class="fl-toast-go" data-fl-room="${esc(m.room.id)}" data-fl-locked="${m.room.locked ? 1 : 0}">الحقه</button>`
+      : m.t === 'friend:room' && m.room
       ? `<span class="fl-toast-ic">🎙️</span><span class="fl-toast-tx"><b>${esc(m.name)}</b> دخل غرفة <b>${esc(m.room.name)}</b></span><button type="button" class="fl-toast-go" data-fl-room="${esc(m.room.id)}" data-fl-locked="${m.room.locked ? 1 : 0}">ادخل معه</button>`
       : `<span class="fl-toast-ic">🟢</span><span class="fl-toast-tx">صاحبك <b>${esc(m.name)}</b> دخل الموقع</span>`;
     stack.prepend(t); while (stack.children.length > 3) stack.lastChild.remove();
