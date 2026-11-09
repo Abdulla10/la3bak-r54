@@ -904,6 +904,7 @@ export async function createApp(
     secret: cfg.cookieSecret, nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
     hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
     push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
+    profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg') return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= 6); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
   }, Date.now, storage, opts.communityLimits);
   const social = new SocialPrivate(socialFile, Date.now, storage, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id),

@@ -435,3 +435,14 @@ html body .so-page .so-room-detail .so-chat-system{background:rgba(13,6,20,.38)!
 html[data-theme] body .so-page .so-room-detail .so-chat-system>p,html[data-theme] body .so-page .so-room-detail .so-chat-system>span,html[data-theme] body .so-page .so-room-detail .so-central-footer :is(.so-council-selector,.so-circle-button,.so-seat-count),html body .so-page .so-room-detail .so-chat-system p,html body .so-page .so-room-detail .so-chat-system span,html body .so-page .so-room-detail .so-central-footer *{color:#fff!important;}
 html body .so-page .so-room-detail .so-chat-system svg,html body .so-page .so-room-detail .so-central-footer svg{color:#fff!important;filter:drop-shadow(0 1px 2px #000a);}
 html[data-theme] body .so-page .so-room-detail .so-central-footer .so-seat-toolbar .so-circle-button,html[data-theme] body .so-page .so-room-detail .so-central-footer .so-seat-toolbar .so-council-selector{background:transparent!important;border:0!important;}
+
+/* R67aa: خلفية الملف الكاملة — الطريقة أ (زجاج غامق) */
+.cm-prof{position:relative}
+.cm67-bg{display:none}
+html.pf67-full{background:linear-gradient(180deg,#0D061400 0%,#0D061433 30%,#0D0614cc 75%,#0D0614ee 100%),var(--pf67-bg) center top/cover no-repeat fixed!important;background-color:#0D0614!important}
+html.pf67-full body,html.pf67-full body main.view,html.pf67-full body article.pv-profile,html.pf67-full body .cm-page{background:transparent!important}
+html.pf67-full body .pv-profile .hero.pvp-compact-head,html.pf67-full body .cm-prof{background:transparent!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important}
+html.pf67-full body .pv-profile .lpu-cover{display:none!important}
+html.pf67-full body .pv-profile .hero :is(h1,.id,strong,b,small,span),html.pf67-full body .cm-prof :is(h1,h2,h3,p,b,small,span){text-shadow:0 2px 8px #000c}
+html.pf67-full body :is(.idc67,.kd67,.cp58-card,.tr58-me>*,.pvp-profile-menu .pvp-menu-group,.pvp-hub,.pvp-profile-details details,.pv-profile section.card,.cm-page section.card:not(.cm-prof),.cm-page .cm-post){background:rgba(16,7,28,.72)!important;backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,214,107,.28)!important;border-radius:20px!important;box-shadow:0 8px 24px #0006!important}
+html.pf67-full body .pvp-menu-row{background:transparent!important}

@@ -30,6 +30,7 @@ export function settingsHTML(ctx) {
     ${link('إعدادات الخصوصية', '#/privacy-settings')}
     ${link('القائمة السوداء', '#/friends')}
     ${row('إخفاء منشوراتي<small class="s60-sub">منشوراتك ما تطلع لأحد غيرك</small>', toggle('hidePosts', ctx.settings?.hidePosts === true, !ctx.settings))}
+    ${row('خلفية الملف كاملة<small class="s60-sub">للخلفيات الأسطورية والفخمة جدًا، ولـVIP 6 وفوق. لو طفيتها تطلع الخلفية فوق الملف بس</small>', toggle('flatProfileBg', ctx.settings?.flatProfileBg !== true, !ctx.settings))}
     ${row('إخفاء لون اسمي<small class="s60-sub">لون اسمك حسب مستوى VIP ما يطلع للناس</small>', toggle('hideNameColor', ctx.settings?.hideNameColor === true, !ctx.settings))}
     ${link('إخفاء جميع منشوراته', '#/hidden-posts')}
   </ul>
@@ -121,7 +122,7 @@ export function bind(root, host) {
     if (dk) { const on = !document.documentElement.classList.contains('lb-dark'); const TH = await import('./theme.js?v=r64a'); TH.setDark(on); dk.classList.toggle('is-on', on); dk.setAttribute('aria-checked', String(on)); return; }
     const t = e.target.closest?.('[data-s60-toggle]');
     if (t && !t.disabled) {
-      const key = t.dataset.s60Toggle; const p = PRIV.find((x) => x.key === key); const nowOn = t.getAttribute('aria-checked') !== 'true';
+      const key = t.dataset.s60Toggle; const p = PRIV.find((x) => x.key === key) || (key === 'flatProfileBg' ? { invert: true } : null); const nowOn = t.getAttribute('aria-checked') !== 'true';
       const val = p?.invert ? !nowOn : nowOn; t.disabled = true;
       const r = await api('/api/account-tools/settings', 'PATCH', { [key]: val });
       host.after?.(r && r.ok !== false && !r.error ? '' : (r.error || 'تعذّر الحفظ.'), !(r && r.ok !== false && !r.error)); return;
@@ -151,7 +152,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r62e'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r67aa'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;

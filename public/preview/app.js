@@ -1,6 +1,6 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r67w';
-import * as UNIFIED from '../unified/shell.js?v=r67w';
+import * as PR from './profile.js?v=r67aa';
+import * as UNIFIED from '../unified/shell.js?v=r67aa';
 import * as REF from '../unified/home.js?v=r63a';
 import * as SOCIAL from '../unified/social.js?v=r67w';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -22,7 +22,7 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r67w';
+import * as PF from '../profile.js?v=r67aa';
 import * as SHOP from '../shop.js?v=r67w';
 import * as GIFT from '../gifts.js?v=r63a';
 import * as GFX from '../giftfx.js?v=r57';
@@ -32,13 +32,13 @@ import * as UNV from '../uno.js?v=r59d';
 import * as CRV from '../carrom.js?v=r59d';
 import * as MNV from '../minaboli-r47.js?v=r57';
 import * as CITY from '../city.js?v=r57';
-import * as COM from '../community.js?v=r66a';
+import * as COM from '../community.js?v=r67aa';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r62e';
+import * as PWA from '../pwa.js?v=r67aa';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r67w';
+import * as MIS from '../missions.js?v=r67aa';
 import * as CHAT from '../chat.js?v=r63a';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -384,7 +384,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r67t');
+  const M = await import('../settings-r60.js?v=r67aa');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -458,6 +458,7 @@ async function functionalApi(path, method = 'GET', body) {
 function applyAccountSettings(settings) {
   if (!settings) return;
   S.accountSettings = settings;
+  try{window.dispatchEvent(new CustomEvent('la3bak:settings'));}catch{}
   if (typeof settings.sound === 'boolean' && SFX.isOn() !== settings.sound) SFX.setOn(settings.sound);
 }
 async function functionalPage(view, name) {

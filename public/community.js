@@ -183,7 +183,7 @@ export function userPageHTML(signed, gameName) {
   // الكتم والحظر (التطبيق كله بالخادم)
   const relBtns = signed && !u.me ? `<div class="cm-rel">${u.blocked ? '' : `<button type="button" class="pill-btn" data-act="cm-rel" data-k="mute" data-pub="${esc(u.pub)}" data-on="${u.muted ? 0 : 1}">${u.muted ? '👁 إظهار منشوراته' : '🙈 إخفاء منشوراته'}</button>`}<button type="button" class="pill-btn ${u.blocked ? '' : 'danger'}" data-act="cm-rel" data-k="block" data-pub="${esc(u.pub)}" data-on="${u.blocked ? 0 : 1}">${u.blocked ? '✅ فك الحظر' : '⛔ حظر'}</button></div>` : '';
   return `<div class="stack cm-page">
-    <section class="card cm-prof">${faceOf(u, 84)}<div class="cm-pi"><h1>${esc(u.name)}${u.me ? ' <small>(أنت)</small>' : ''}</h1>
+    <section class="card cm-prof">${u.bg && typeof u.bg.id === 'string' ? `<div class="cm67-bg" aria-hidden="true" data-id="${esc(u.bg.id)}" data-css="${esc(u.bg.css || '')}" data-art="${esc(u.bg.art || '')}" data-full="${u.bg.full ? 1 : 0}"></div>` : ''}${faceOf(u, 84)}<div class="cm-pi"><h1>${esc(u.name)}${u.me ? ' <small>(أنت)</small>' : ''}</h1>
       <p class="cm-facts">${facts.map((f) => `<span>${f}</span>`).join('')}</p>
       ${U.data.relations?.couple && PUB_RE.test(U.data.relations.couple.partnerPub) && !u.blocked ? `<p class="cm-facts" data-public-couple-r47><a href="#/u/${esc(U.data.relations.couple.partnerPub)}">ارتباط افتراضي · ملف الشريك</a></p>` : ''}
       <p class="cm-fol"><a href="#/u/${esc(u.pub)}/followers"><b>${nf(u.followers)}</b> متابِع</a><a href="#/u/${esc(u.pub)}/following"><b>${nf(u.following)}</b> يتابع</a><span><b>${nf(u.posts)}</b> منشور</span></p></div>${u.blocked ? '' : followBtn}${relBtns}</section>

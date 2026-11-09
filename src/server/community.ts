@@ -81,6 +81,7 @@ export interface CommunityDeps {
   log(event: string, data?: Record<string, unknown>): void;
   /** R66: صاحب الحساب مخفي منشوراته عن الكل (إعداد «إخفاء منشوراتي») */
   postsHidden?(id: string): boolean;
+  profileBg?(id: string): { id: string; css?: string; art?: string; rarity?: string; full: boolean } | null;
 }
 export interface CommunityLimits { post: [number, number]; comment: [number, number]; like: [number, number]; follow: [number, number]; report: [number, number]; upload: [number, number]; read: [number, number] }
 /** [سعة، إعادة تعبئة بالثانية] لكل نوع */
@@ -208,8 +209,8 @@ export class Community {
     const posts = allPosts.filter((p) => p.id < b);
     const page = posts.slice(-PAGE - 1).reverse();
     if (iBlocked) return { user: { ...this.who(id), stats: null, ...counts, followers, following, followed: false, me: false, posts: 0, blocked: true, muted: iMuted }, posts: [], more: false };
-    if (this.priv(me, id)) return { user: { ...this.who(id), stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: false, posts: 0, blocked: false, muted: iMuted, postsHidden: true }, posts: [], more: false };
-    return { user: { ...this.who(id), stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: me === id, posts: allPosts.length, blocked: false, muted: iMuted }, posts: page.slice(0, PAGE).map((p) => this.postView(p, me)), more: page.length > PAGE };
+    if (this.priv(me, id)) return { user: { ...this.who(id), stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: false, posts: 0, blocked: false, muted: iMuted, postsHidden: true, bg: this.dep.profileBg?.(id) ?? null }, posts: [], more: false };
+    return { user: { ...this.who(id), stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: me === id, posts: allPosts.length, blocked: false, muted: iMuted, bg: this.dep.profileBg?.(id) ?? null }, posts: page.slice(0, PAGE).map((p) => this.postView(p, me)), more: page.length > PAGE };
   }
   followList(pub: unknown, which: 'followers' | 'following', me: string | null = null) {
     const id = this.idOfPub(pub); if (!id || this.dep.isBanned(id)) throw new CommunityError(404, 'الحساب غير موجود.');
