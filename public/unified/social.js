@@ -4,17 +4,17 @@ import {createRoomToolsR33} from '../social-room-tools-r33.js?v=r58p';
 import {SOCIAL_GAME_LABELS_R47,renderSocialGame,normalizeSocialGameActionR47,createSocialGamesR47} from '../social-games-r47.js?v=r58p';
 import {renderUpgradePanel,roomUpgradeConfirmationR47,roomUpgradeErrorR47} from '../room-upgrade-r47.js?v=build-all-r47';
 import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room-photo-r31';
-import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r67av';
+import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r68h';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
 import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r67al';
-import {framed as frameOwnedPortrait} from '../shop.js?v=r67ac';
+import {framed as frameOwnedPortrait} from '../shop.js?v=r68h';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
 import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r63a';
 import {bigGift} from './gift-big-r67.js?v=r67ag';
 import {cinemaHTML,cinemaMount,cinemaUnmount,cinemaPosition,parseYouTube} from './room-cinema-r67.js?v=r67s';
 import {cannon3Shortcut,cannon3Panel,cannon3Blast} from './room-cannon-r59.js?v=r67i';
-import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r67ac';
+import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r68h';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
 import { mini as avatarMini } from '../avatars.js?v=r67ac';
@@ -1102,7 +1102,7 @@ export function mount(root,ctx={}) {
     if(action.startsWith('directory-')&&!c.routeRoom&&!ctx.gameRoom){
       if(c.busy||dialogBusy)return;
       const value=target.dataset.value;
-      if(action==='directory-tab'&&['all','mine','popular'].includes(value))c.directoryUI.tab=value;
+      if(action==='directory-tab'&&['all','mine','popular','country','rank'].includes(value))c.directoryUI.tab=value;
       else if(action==='directory-mine'&&['recent','joined','following'].includes(value))c.directoryUI.mineTab=value;
       else if(action==='directory-category'&&['all','friends','music','games','call','birthday'].includes(value))c.directoryUI.category=value;
       else if(action==='directory-country'&&['','SA','AE','KW','QA','OM','BH','EG','IQ'].includes(value))c.directoryUI.country=value;

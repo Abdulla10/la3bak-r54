@@ -42,7 +42,7 @@ export function bannersHTML(list) {
     return `<a class="h68-banner${b.full ? ' is-full' : ''}" data-h68-slide="${i}" href="${esc(href)}"${ext ? ' target="_blank" rel="noopener"' : ''}${i ? ' aria-hidden="true" tabindex="-1"' : ''}>${img ? `<img class="h68-bimg" src="${esc(img)}" alt="" decoding="async"${i ? ' loading="lazy"' : ' fetchpriority="high"'}>` : ''}<span class="h68-bglow" aria-hidden="true"></span><span class="h68-bcopy"><b class="h68-btitle">${titleHTML(b)}</b>${b.text ? `<small>${esc(b.text)}</small>` : ''}${b.cta ? `<span class="h68-bcta">${esc(b.cta)}</span>` : ''}</span></a>`;
   }).join('')}</div>${bs.length > 1 ? `<div class="h68-dots" role="group" aria-label="اختيار اللافتة">${bs.map((_, i) => `<button type="button" data-h68-dot="${i}" aria-label="اللافتة ${i + 1}" aria-pressed="${i === 0}"></button>`).join('')}</div>` : ''}</section>`;
 }
-function headerHTML(ctx) {
+export function headerHTML(ctx) {
   const m = ctx.me, user = ctx.user;
   const face = typeof ctx.avatarHTML === 'function' ? (() => { try { return ctx.avatarHTML(56); } catch { return ''; } })() : '';
   const vip = user ? rankSummary(ctx, 'vip') : null, vipN = vip?.state === 'earned' && Number.isSafeInteger(vip.rank) ? vip.rank : 0;
@@ -80,29 +80,39 @@ function peopleHTML(list) {
     return `<a class="h68-person" href="${esc(href)}"><span class="h68-ppic">${pic}<i class="h68-on"></i></span><span class="h68-pinfo"><b>${esc(f.name)}</b><small>${f.room ? `🎙️ ${esc(f.room.name)}` : 'متصل الآن'}</small></span></a>`;
   }).join('');
 }
+/* البنرات: تتبدل لحالها كل 5 ثواني وبالسحب — تشتغل على أي صفحة فيها بنرات (الرئيسية والغرف) */
+function bindBanners(b) {
+  if (b.dataset.h68Bound) return; b.dataset.h68Bound = '1';
+  let idx = 0, sx = null;
+  const n = () => b.querySelectorAll('[data-h68-slide]').length;
+  const show = (i) => { const k = n(); if (!k) return; idx = ((i % k) + k) % k; const t = b.querySelector('.h68-track'); if (t) t.style.transform = `translateX(${idx * 100}%)`; b.querySelectorAll('[data-h68-slide]').forEach((s, q) => { s.toggleAttribute('aria-hidden', q !== idx); s.tabIndex = q === idx ? 0 : -1; }); b.querySelectorAll('[data-h68-dot]').forEach((d, q) => d.setAttribute('aria-pressed', String(q === idx))); };
+  const timer = setInterval(() => { if (!b.isConnected) return clearInterval(timer); if (!document.hidden && n() > 1) show(idx + 1); }, 5000);
+  b.addEventListener('click', (e) => { const d = e.target.closest?.('[data-h68-dot]'); if (d) { e.preventDefault(); e.stopPropagation(); show(Number(d.dataset.h68Dot)); } });
+  b.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+  b.addEventListener('touchend', (e) => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 40) show(idx + (dx > 0 ? 1 : -1)); });
+}
+let bannerFetch = null;
+function fillHosts() {
+  const hosts = [...document.querySelectorAll('[data-h68-banner-host]:not([data-h68-filled])')];
+  if (!hosts.length) return;
+  hosts.forEach((h) => { h.dataset.h68Filled = '1'; });
+  const apply = () => { for (const h of hosts) { if (!h.isConnected || !Array.isArray(bannerCache)) continue; const cur = h.querySelector('[data-h68-banners]'); const want = bannersHTML(bannerCache); if (!cur || cur.dataset.h68Sig !== JSON.stringify(bannerCache).length + '') { h.innerHTML = want; const nb = h.querySelector('[data-h68-banners]'); if (nb) { nb.dataset.h68Sig = JSON.stringify(bannerCache).length + ''; bindBanners(nb); } } } };
+  if (Array.isArray(bannerCache)) apply();
+  if (!bannerFetch) bannerFetch = getJSON('/api/home-banners').then((j) => { if (j?.ok) bannerCache = arr(j.list); setTimeout(() => { bannerFetch = null; }, 60000); return bannerCache; });
+  bannerFetch.then(apply);
+}
+function scan() { document.querySelectorAll('[data-h68-banners]:not([data-h68-bound])').forEach(bindBanners); fillHosts(); }
+if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined' && !globalThis.__h68obs) {
+  globalThis.__h68obs = new MutationObserver(() => { if (document.querySelector('[data-h68-banners]:not([data-h68-bound]),[data-h68-banner-host]:not([data-h68-filled])')) scan(); });
+  const go = () => { globalThis.__h68obs.observe(document.body, { childList: true, subtree: true }); scan(); };
+  if (document.body) go(); else addEventListener('DOMContentLoaded', go);
+}
 export function mount68(root, ctx = {}) {
-  let alive = true, idx = 0, timer = 0;
-  const host = () => root.querySelector('[data-h68-banners]');
-  const show = (i) => {
-    const b = host(); if (!b) return; const n = b.querySelectorAll('[data-h68-slide]').length; if (!n) return;
-    idx = ((i % n) + n) % n; b.querySelector('.h68-track').style.transform = `translateX(${idx * 100}%)`;
-    b.querySelectorAll('[data-h68-slide]').forEach((s, k) => { s.toggleAttribute('aria-hidden', k !== idx); s.tabIndex = k === idx ? 0 : -1; });
-    b.querySelectorAll('[data-h68-dot]').forEach((d, k) => d.setAttribute('aria-pressed', String(k === idx)));
-  };
-  const auto = () => { clearInterval(timer); timer = setInterval(() => { if (!alive || document.hidden) return; if ((host()?.querySelectorAll('[data-h68-slide]').length || 0) > 1) show(idx + 1); }, 5000); };
-  const onClick = (e) => { const d = e.target.closest?.('[data-h68-dot]'); if (d && root.contains(d)) { e.preventDefault(); show(Number(d.dataset.h68Dot)); auto(); } };
-  let sx = null;
-  const ts = (e) => { if (e.target.closest?.('[data-h68-banners]')) sx = e.touches[0].clientX; };
-  const te = (e) => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 40) { show(idx + (dx > 0 ? 1 : -1)); auto(); } };
-  root.addEventListener('click', onClick); root.addEventListener('touchstart', ts, { passive: true }); root.addEventListener('touchend', te);
-  auto();
-  getJSON('/api/home-banners').then((j) => {
-    if (!alive || !j?.ok) return; const list = arr(j.list); const same = JSON.stringify(list) === JSON.stringify(bannerCache); bannerCache = list;
-    const h = root.querySelector('[data-h68-banner-host]'); if (h && !same) { h.innerHTML = bannersHTML(list); idx = 0; }
-  });
+  let alive = true;
+  scan();
   if (ctx.user && !ctx.noCommunity) {
     getJSON('/api/social/rooms').then((j) => { const el = root.querySelector('[data-h68-live] .h68-rooms'); if (alive && el) el.innerHTML = j?.ok ? roomsHTML(j.rooms) : '<p class="h68-empty">تعذّر التحميل.</p>'; });
     getJSON('/api/friends/live').then((j) => { const el = root.querySelector('[data-h68-now] .h68-people'); if (alive && el) el.innerHTML = peopleHTML(j?.list); });
   }
-  return () => { alive = false; clearInterval(timer); root.removeEventListener('click', onClick); root.removeEventListener('touchstart', ts); root.removeEventListener('touchend', te); };
+  return () => { alive = false; };
 }

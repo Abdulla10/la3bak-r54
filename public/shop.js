@@ -10,8 +10,8 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 export const SH = { data: null, err: '', loading: false, world: 'players', tab: 'frame', preview: null, confirm: null, busy: false, giftTab: null, who: null, try: {}, f: { rar: 'all', own: 'all', sort: 'rar', set: 'all' }, lim: 24 };
 // R58p: أسماء أقصر وترتيب أوضح (شبكة 4×2 بأيقونات)
-export const STOREFRONT_TABS = [['frame', 'الإطارات'], ['mic-frame', 'المايك'], ['chat-bubble', 'الفقاعات'], ['board', 'اللوحات'], ['souvenir', 'التذكارات'], ['special-id', 'أيدي مميز'], ['room-id', 'أيدي الغرف'], ['room-bg', 'خلفيات الغرف'], ['bg', 'الخلفيات'], ['profile-card', 'البطاقات']];
-const STORE_TAB_ICON = { 'mic-frame': '🎙️', frame: '💍', 'chat-bubble': '💬', board: '🪧', souvenir: '🎁', 'special-id': '🆔', 'room-id': '🏠', 'room-bg': '🏰', bg: '🖼️', 'profile-card': '🪪' };
+export const STOREFRONT_TABS = [['avatar', 'الصور الرمزية'], ['frame', 'الإطارات'], ['title', 'الألقاب'], ['mic-frame', 'المايك'], ['chat-bubble', 'الفقاعات'], ['board', 'اللوحات'], ['souvenir', 'التذكارات'], ['special-id', 'أيدي مميز'], ['room-id', 'أيدي الغرف'], ['room-bg', 'خلفيات الغرف'], ['bg', 'الخلفيات'], ['profile-card', 'البطاقات']];
+const STORE_TAB_ICON = { avatar: '👤', title: '👑', 'mic-frame': '🎙️', frame: '🏵️', 'chat-bubble': '💬', board: '🪧', souvenir: '🎁', 'special-id': '🆔', 'room-id': '🏠', 'room-bg': '🏰', bg: '🖼️', 'profile-card': '🪪' };
 export const SLOT_TABS = [['avatar', 'الأفاتارات'], ['frame', 'الإطارات'], ['bg', 'الخلفيات'], ['owned', 'أغراضي'], ['sets', 'المجموعات'], ['title', 'ألقاب'], ['badge', 'شارات'], ['ach', 'المكتسبة'], ['gift', 'الهدايا'], ['coins', 'عملات'], ['tasks', 'مكافآت'], ['log', 'السجل']];
 const CUR = { coins: renderProfileIcon('coin').replace('class="pvp-icon"','class="sh-currency sh-currency-coins"').replace('<svg','<svg width="24" height="24"'), gems: giftArt({motif:'diamond',cat:'luxury',variant:0,name:'جواهر'},24).replace('class="gift-art','class="sh-currency sh-currency-gems gift-art') };
 const TAB_ICON = { avatar: 'person', frame: 'frame', entrance: 'star', owned: 'shirt', bg: 'image', sets: 'shirt', title: 'crown', badge: 'medal', ach: 'trophy', gift: 'star', convert: 'back', tasks: 'calendar', log: 'file' };
@@ -120,7 +120,7 @@ function itemActionHTML(i, d) {
 function itemCard(i, d) {
   const owned = ownsItem(i, d); const on = d.equipped[i.slot] === i.id;
   const state = owned ? (on ? 'مجهّز' : 'تملكه') : !approvedPrice(i) ? 'عرض فقط' : itemStatus(i) !== 'available' || i.active === false || i.retired ? statusLabel(i) : !itemEligible(i) ? 'مقفل بالرتبة' : '';
-  return `<li class="sh-card r23-product r-${esc(i.rarity || i.tier || 'common')}${owned ? ' own' : ''}${on ? ' equipped' : ''}" data-id="${esc(i.id)}" data-slot="${esc(i.slot)}"><button class="r23-product-tile" type="button" data-act="shop-preview" data-id="${esc(i.id)}" aria-label="معاينة ${esc(i.name)}${state ? ' · ' + esc(state) : ''}"><span class="r23-product-art" aria-hidden="true">${thumb(i)}</span>${owned ? `<span class="r23-owned-mark" aria-hidden="true">${renderProfileIcon('check')}</span>` : ''}</button><div class="r23-price" aria-label="${approvedPrice(i) ? 'السعر' : 'حالة السعر'}">${priceHTML(i)}</div><span class="r23-sr">${esc(i.name)}</span>${state ? `<small class="r23-product-state">${esc(state)}</small>` : ''}</li>`;
+  return `<li class="sh-card r23-product r-${esc(i.rarity || i.tier || 'common')}${owned ? ' own' : ''}${on ? ' equipped' : ''}" data-id="${esc(i.id)}" data-slot="${esc(i.slot)}"><span class="r68-rib r-${esc(i.rarity || 'common')}">${RAR_ICON[i.rarity] || '⚪'} ${esc(RARITY[i.rarity]?.label || 'عادي')}</span><button class="r23-product-tile" type="button" data-act="shop-preview" data-id="${esc(i.id)}" aria-label="معاينة ${esc(i.name)}${state ? ' · ' + esc(state) : ''}"><span class="r23-product-art" aria-hidden="true">${thumb(i)}</span>${owned ? `<span class="r23-owned-mark" aria-hidden="true">${renderProfileIcon('check')}</span>` : ''}</button><div class="r23-price" aria-label="${approvedPrice(i) ? 'السعر' : 'حالة السعر'}">${priceHTML(i)}</div><span class="r23-sr">${esc(i.name)}</span>${state ? `<small class="r23-product-state">${esc(state)}</small>` : ''}</li>`;
 }
 /** العنصر المعروض بالمعاينة لكل خانة: التجربة ثم المجهّز */
 function shown(d, slot) {
@@ -247,6 +247,19 @@ export function achHTML(d, compact = false) {
     <p class="hint" style="text-align:start">الألقاب والشارات هنا مكتسبة فقط: تنفتح من أرقامك الحقيقية بالخادم (مباريات منتهية، انتصارات، مستوى، نقاط، هدايا فعلية) وما تنشرى. الألقاب والشارات المدفوعة القديمة محفوظة بتبويب «المكتبة السابقة».</p></section>`;
 }
 
+/* R68f: صف الندرة الظاهر (مثل التصميم) + الحزم المميزة من مجموعات المتجر الحقيقية */
+const RAR_ICON = { common: '⚪', premium: '🟢', rare: '💎', epic: '⭐', legendary: '👑', ultra: '✨' };
+function rarityRow68(tab) {
+  const f = SH.f, chip = (v, l) => `<button type="button" class="r68-rar r-${v} ${f.rar === v ? 'on' : ''}" data-act="shop-f" data-k="rar" data-v="${v}" aria-pressed="${f.rar === v}">${l}</button>`;
+  return `<div class="r68-rars" role="group" aria-label="الندرة">${['common', 'rare', 'epic', 'legendary'].map((r) => chip(r, `<i aria-hidden="true">${RAR_ICON[r]}</i>${RARITY[r].label}`)).join('')}${chip('all', 'الكل')}</div>`;
+}
+function bundles68(d) {
+  const by = {};
+  for (const i of d.collectionItems ?? d.items) if (i.set) (by[i.set] ??= []).push(i);
+  const sets = Object.entries(by).map(([k, items]) => { const missing = items.filter((i) => !d.owned.includes(i.id) && approvedPrice(i) && itemStatus(i) === 'available'); const left = missing.reduce((n, i) => n + (i.currency === 'coins' ? i.price : 0), 0); return { k, items, left, rar: Math.max(...items.map((i) => rarityLv(i.rarity))) }; }).filter((x) => x.left > 0).sort((a, b) => b.rar - a.rar || b.left - a.left).slice(0, 3);
+  if (!sets.length) return '';
+  return `<section class="r68-bundles"><h2><span aria-hidden="true">🎁</span> حزم مميزة</h2><div class="r68-bgrid">${sets.map((x, n) => `<button type="button" class="r68-bundle" data-act="shop-tab" data-v="sets">${n === 0 ? '<i class="r68-best">الأفضل</i>' : ''}<span class="r68-bart">${x.items.slice(0, 3).map((i) => `<span>${thumb(i)}</span>`).join('')}</span><b>${esc(d.sets?.[x.k] ?? x.k)}</b><small>${nf(x.items.length)} قطع بالمجموعة</small><span class="r68-bprice">${CUR.coins}<b>${nf(x.left)}</b></span></button>`).join('')}</div></section>`;
+}
 export function shopHTML(me) {
   if (SH.loading && !SH.data) return '<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="status">جاري تحميل المتجر…</p></div></div>';
   if (SH.err || !SH.data) return `<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="alert">${esc(SH.err || 'تعذّر التحميل.')}</p><button class="btn" type="button" data-act="shop-reload">إعادة المحاولة</button></div></div>`;
@@ -254,10 +267,10 @@ export function shopHTML(me) {
   const inWorld = (i) => /^(lux-|sid-|rid-|rbg-|art-|souv-)/.test(i.id) ? SH.world === 'players' : i.slot === 'entrance' ? SH.world === 'kids' ? i.kids === true : SH.world === 'players' && i.kids !== true : SH.world === 'legacy' ? !i.id.startsWith('ref-') : i.id.startsWith(SH.world === 'kids' ? 'ref-k-' : 'ref-p-') || (SH.world === 'players' && isSuppliedBackground(i.id));
   const d = { ...full, items: full.items.filter((i) => inWorld(i) && visibleItem(i, full)), collectionItems: full.collectionItems?.filter((i) => inWorld(i) && visibleItem(i, full)) };
   const tab = [...SLOT_TABS, ...STOREFRONT_TABS].some((t) => t[0] === SH.tab) ? SH.tab : 'frame';
-  const header = `<header class="r23-store-header"><a class="r23-store-back" href="#/account" aria-label="العودة إلى حسابي">${renderProfileIcon('back')}</a><h1>متجر الأغراض</h1><button class="r23-my-items ${tab === 'owned' ? 'on' : ''}" type="button" data-act="shop-tab" data-v="owned" aria-pressed="${tab === 'owned'}">أغراضي</button></header>`;
+  const header = `<a class="r68-shop-banner" href="#/shop/packs/coins" aria-label="متجر لعبك — مظاهر حصرية"><img src="/assets/art68/shop-banner.webp" alt="" decoding="async" fetchpriority="high"></a><button class="r23-my-items r68-myitems ${tab === 'owned' ? 'on' : ''}" type="button" data-act="shop-tab" data-v="owned" aria-pressed="${tab === 'owned'}">أغراضي</button>`;
   const world = `<div class="ref-worlds" role="group" aria-label="عالم المتجر">${[['players','مظاهر اللاعبين'],['kids','عالم الأطفال'],['legacy','المكتبة السابقة']].map(([v,l])=>`<button type="button" class="${SH.world===v?'on':''}" data-act="shop-world" data-v="${v}" aria-pressed="${SH.world===v}">${renderProfileIcon(v === 'players' ? 'person' : v === 'kids' ? 'game' : 'file')}${l}</button>`).join('')}</div>`;
   const activeTabs = SLOT_TABS.map(([k,l]) => [k, SH.world !== 'legacy' && k === 'badge' ? 'شارات الإنجازات' : SH.world !== 'legacy' && k === 'title' ? 'الألقاب المكتسبة' : l]);
-  const tabs = `<div class="sh-tabs r23-store-tabs" role="tablist" aria-label="أقسام المتجر" dir="rtl">${STOREFRONT_TABS.map(([k, l]) => `<button type="button" role="tab" aria-selected="${tab === k}" aria-controls="r23-store-panel" class="${tab === k ? 'on' : ''}" data-act="shop-tab" data-v="${k}"><i aria-hidden="true">${STORE_TAB_ICON[k] || ''}</i><span>${l}</span></button>`).join('')}</div>`;
+  const tabs = `<div class="sh-tabs r23-store-tabs" role="tablist" aria-label="أقسام المتجر" dir="rtl"><a class="r68-viptab" href="#/vip"><i aria-hidden="true">💎</i><span>VIP</span></a>${STOREFRONT_TABS.map(([k, l]) => `<button type="button" role="tab" aria-selected="${tab === k}" aria-controls="r23-store-panel" class="${tab === k ? 'on' : ''}" data-act="shop-tab" data-v="${k}"><i aria-hidden="true">${STORE_TAB_ICON[k] || ''}</i><span>${l}</span></button>`).join('')}</div>`;
   const more = `<details class="r23-more"><summary>${renderProfileIcon('menu')} المزيد <small>${esc(activeTabs.find(([k]) => k === tab)?.[1] || (SH.world === 'kids' ? 'عالم الأطفال' : SH.world === 'legacy' ? 'المكتبة السابقة' : 'مظاهر اللاعبين'))}</small></summary><div class="r23-more-panel">${world}<nav class="r23-legacy-nav" aria-label="أقسام المتجر الإضافية">${activeTabs.map(([k, l]) => `<button type="button" class="${tab === k ? 'on' : ''}" data-act="shop-tab" data-v="${k}" aria-pressed="${tab === k}">${tabIcon(k)}${l}</button>`).join('')}</nav><details class="r23-policy"><summary>سياسة المتجر</summary><p>المظاهر شكلية فقط ولا تعطي أي أفضلية في اللعب. العملات افتراضية ولا تتحول إلى مال. الأسعار والاستحقاق والملكية كما يحددها الخادم. باقات الشحن تخضع للوضع المعتمد بالخادم. ${conversionHint(d.economy)}</p></details></div></details>`;
   let body;
   if (tab === 'tasks') {
@@ -291,7 +304,7 @@ export function shopHTML(me) {
   } else if (tab === 'owned') {
     body = gridFor(full, 'owned');
   } else {
-    body = `<details class="r23-filters"><summary>${renderProfileIcon('settings')} تصفية وترتيب</summary>${filtersHTML(d, tab)}</details>` + gridFor(d, tab) + (Object.keys(SH.try).length ? `<details class="r23-appearance" open><summary>${renderProfileIcon('camera')} معاينة مظهري</summary>${previewHTML(d)}</details>` : '') + (tab === 'avatar' && SH.freeAvatars ? SH.freeAvatars() : '');
+    body = rarityRow68(tab) + `<details class="r23-filters"><summary>${renderProfileIcon('settings')} تصفية وترتيب</summary>${filtersHTML(d, tab)}</details>` + gridFor(d, tab) + (Object.keys(SH.try).length ? `<details class="r23-appearance" open><summary>${renderProfileIcon('camera')} معاينة مظهري</summary>${previewHTML(d)}</details>` : '') + (tab === 'avatar' && SH.freeAvatars ? SH.freeAvatars() : '');
   }
   let dlg = previewDialogHTML(full);
   if (SH.gemConfirm && SH.gemKey) dlg = `<div class="sh-modal" role="dialog" aria-modal="true" aria-label="إيصال تحويل سابق"><div class="card"><h2>مراجعة إيصال سابق</h2><p>التحويلات الجديدة مقفولة. يُرسل معرّف الطلب السابق فقط للتحقق من وجود إيصال محفوظ، دون إنشاء عملية جديدة.</p><button class="btn gold" type="button" data-act="shop-gem-buy" ${SH.busy?'disabled':''}>التحقق من الإيصال السابق</button></div></div>`;

@@ -12,10 +12,39 @@ const toggle = (key, on, disabled = false) => `<button type="button" class="s60-
 const head = (title, back) => `<header class="s60-head"><a class="s60-back" href="${esc(back)}" aria-label="رجوع">›</a><h1>${esc(title)}</h1><span></span></header>`;
 const msg = (t, bad = false) => t ? `<p class="s60-msg${bad ? ' is-bad' : ''}" role="status">${esc(t)}</p>` : '';
 
+/* R68h: أيقونات ذهبية لصفوف الإعدادات (تصميم المالك) */
+const G68 = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="g68" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a0"/><stop offset="1" stop-color="#f0a926"/></linearGradient></defs><g fill="none" stroke="url(#g68)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</g></svg>`;
+const S68 = {
+  'اللغة': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/>',
+  'إعادة تعيين كلمة المرور': '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>',
+  'ربط الحساب': '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  'الأجهزة اللي سجّلت الدخول منها': '<rect x="3" y="4" width="14" height="10" rx="1.5"/><path d="M6 18h8"/><rect x="16" y="9" width="5" height="11" rx="1"/>',
+  'الوضع الداكن': '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  'معلومات الحساب': '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+  'إشعارات الجوال': '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+  'إعدادات الإشعارات': '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/>',
+  'إعدادات الخصوصية': '<path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  'القائمة السوداء': '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+  'إخفاء منشوراتي': '<path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.6"/><path d="M4 20L20 4"/>',
+  'خلفية الملف كاملة': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6"/>',
+  'إخفاء لون اسمي': '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+  'إخفاء جميع منشوراته': '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  'المؤثرات الصوتية': '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/>',
+  'مسح ذاكرة التخزين المؤقت': '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+  'إصلاح مشاكل اللعبة': '<path d="M7 7h10a5 5 0 0 1 4.9 6l-.7 3.4a2.6 2.6 0 0 1-4.5 1.2L14.6 15H9.4l-2.1 2.6a2.6 2.6 0 0 1-4.5-1.2L2.1 13A5 5 0 0 1 7 7zM7 10v4M5 12h4"/>',
+  'حول لعبك | LA3BAK': '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  'إرشادات المجتمع': '<path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1zM12 6v14"/>',
+  'سياسة الخصوصية': '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  'المساعدة والدعم': '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17v.5"/>',
+  'تبديل الحساب': '<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
+  'خروج': '<path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/>',
+  'حذف الحساب': '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+};
+function icons68(html) { for (const [k, d] of Object.entries(S68)) html = html.split(`<span class="s60-label">${k}`).join(`<span class="s60-label"><i class="s68-ic">${G68(d)}</i>${k}`); return html.replace('<header class="s60-head">', '<header class="s60-head s68-head"><span class="s68-logo" aria-hidden="true"><i>👑</i><b>لعبك</b><small>LA3BAK</small></span>'); }
 /** صفحة الإعدادات */
 export function settingsHTML(ctx) {
   const google = ctx.google === true;
-  return `<section class="s60" dir="rtl">${head('الإعدادات', '#/profile')}
+  return icons68(`<section class="s60" dir="rtl">${head('الإعدادات', '#/profile')}
   <ul class="s60-list">
     ${row('اللغة', '<small>العربية</small>')}
     ${btn('إعادة تعيين كلمة المرور', 'password', google ? 'من حساب Google' : '')}
@@ -40,7 +69,7 @@ export function settingsHTML(ctx) {
     ${btn('إصلاح مشاكل اللعبة', 'repair')}
   </ul>
   <ul class="s60-list">
-    ${link('حول لعبنا', '#/about')}
+    ${link('حول لعبك | LA3BAK', '#/about')}
     ${link('إرشادات المجتمع', '#/terms')}
     ${link('سياسة الخصوصية', '#/privacy')}
     ${link('المساعدة والدعم', '#/support')}
@@ -51,7 +80,7 @@ export function settingsHTML(ctx) {
   </ul>
   <ul class="s60-list">
     ${btn('حذف الحساب', 'delete-account', 'بعد 30 يوم', 'is-danger')}
-  </ul>${msg(ctx.msg, ctx.bad)}</section>`;
+  </ul>${msg(ctx.msg, ctx.bad)}</section>`);
 }
 
 const PRIV = [
@@ -155,7 +184,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r68d'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r68h'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;

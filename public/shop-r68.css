@@ -1,0 +1,56 @@
+/* R68f: المتجر بتصميم المالك */
+.lb-unified[data-lb-route="shop"]>.lb-topbar{display:none!important}
+.lb-unified[data-lb-route="shop"]{background:radial-gradient(120% 40% at 50% 0%,#2e1155,#1a0a31 55%,#12071f)!important}
+.lb-unified[data-lb-route="shop"]>.lb-content{background:none!important;padding:0 12px 120px!important;max-width:none!important}
+.h68.h68-shophead{padding:calc(env(safe-area-inset-top) + 10px) 12px 0;display:block}
+html body .r23-store{background:none!important;color:#fff!important;gap:12px!important;position:relative}
+html body .r23-store .r68-shop-banner{display:block;border-radius:22px;overflow:hidden;border:1.5px solid rgba(200,150,255,.5);box-shadow:0 0 22px rgba(160,80,255,.35);margin-top:12px}
+html body .r23-store .r68-shop-banner img{display:block;width:100%;height:auto}
+html body .r23-store .r68-myitems{position:absolute;top:22px;left:10px;z-index:2;padding:5px 12px!important;border-radius:999px!important;background:rgba(24,10,46,.8)!important;border:1.5px solid rgba(190,150,255,.5)!important;color:#fff!important;font-size:12.5px!important;font-weight:800!important}
+html body .r23-store .r23-store-tabs{display:flex!important;grid-template-columns:none!important;gap:8px!important;overflow-x:auto!important;scrollbar-width:none;padding:4px 2px!important;margin:0!important;background:none!important;border:0!important;flex-wrap:nowrap!important}
+html body .r23-store .r23-store-tabs>*{flex:0 0 82px!important;height:82px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:6px!important;padding:6px 4px!important;border-radius:18px!important;background:linear-gradient(180deg,rgba(82,38,140,.6),rgba(40,16,76,.6))!important;border:1.5px solid rgba(186,140,255,.35)!important;color:#fff!important;text-decoration:none;box-shadow:none!important;min-width:0}
+html body .r23-store .r23-store-tabs>* i{font-style:normal;font-size:28px;line-height:1}
+html body .r23-store .r23-store-tabs>* span{font-size:12.5px!important;font-weight:800!important;white-space:nowrap;color:#fff!important}
+html body .r23-store .r23-store-tabs>.on{flex-basis:110px!important;background:linear-gradient(180deg,#b65cff,#7c2ae0)!important;border-color:#e2b8ff!important;box-shadow:0 0 16px rgba(182,92,255,.7)!important}
+html body .r23-store .r68-viptab span{color:#ffcb47!important;font-size:16px!important;font-weight:900!important}
+html body .r23-store .r68-rars{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:2px}
+html body .r23-store .r68-rar{flex:none;display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;background:rgba(40,14,72,.7);border:1.5px solid rgba(186,140,255,.4);color:#efe6ff;font-size:14px;font-weight:800}
+html body .r23-store .r68-rar i{font-style:normal}
+html body .r23-store .r68-rar.r-legendary{color:#ffcb47}
+html body .r23-store .r68-rar.on{background:linear-gradient(180deg,#9b45f2,#6a1fc9);border-color:#d7a8ff;color:#fff;box-shadow:0 0 12px rgba(160,80,255,.6)}
+html body .r23-store .r23-filters{border-radius:16px!important;background:rgba(40,14,72,.55)!important;border:1px solid rgba(186,140,255,.3)!important;color:#fff!important}
+html body .r23-store .r23-filters summary{color:#d9c8f6!important}
+html body .r23-store .r23-count{color:#c9b4ec!important;font-size:12.5px!important}
+html body .r23-store .r23-product-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+html body .r23-store .r23-product{position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;padding:24px 4px 8px!important;border-radius:16px!important;background:linear-gradient(180deg,rgba(74,34,128,.55),rgba(36,14,68,.6))!important;border:1.5px solid rgba(186,140,255,.35)!important;box-shadow:none!important;min-width:0}
+html body .r23-store .r68-rib{position:absolute;top:0;left:50%;transform:translateX(-50%);padding:2px 9px;border-radius:0 0 10px 10px;font-size:10.5px;font-weight:900;white-space:nowrap;color:#fff;background:linear-gradient(180deg,#5b2aa8,#3a1574);border:1px solid rgba(190,150,255,.45);border-top:0}
+html body .r23-store .r68-rib.r-legendary,html body .r23-store .r68-rib.r-ultra{background:linear-gradient(180deg,#6b3d00,#3d2200);color:#ffcb47;border-color:#c98a1a}
+html body .r23-store .r68-rib.r-epic{color:#f0c6ff}
+html body .r23-store .r68-rib.r-rare{color:#a8dcff}
+html body .r23-store .r23-product-tile{width:100%!important;aspect-ratio:1!important;height:auto!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;display:grid!important;place-items:center!important}
+html body .r23-store .r23-product-art{width:92%!important;height:92%!important;border-radius:50%!important;overflow:hidden;display:grid!important;place-items:center!important;background:radial-gradient(circle at 50% 40%,#3f1a78,#1c0a38)!important;box-shadow:0 0 0 2px rgba(255,203,71,.6),0 0 12px rgba(176,92,255,.45)!important}
+html body .r23-store .r23-product.r-epic .r23-product-art{box-shadow:0 0 0 2px #c58cff,0 0 14px rgba(190,120,255,.6)!important}
+html body .r23-store .r23-product.r-rare .r23-product-art{box-shadow:0 0 0 2px #6fb8ff,0 0 12px rgba(100,170,255,.5)!important}
+html body .r23-store .r23-product.r-common .r23-product-art{box-shadow:0 0 0 2px #b9b2d6!important}
+html body .r23-store .r23-product-art>*{max-width:100%!important;max-height:100%!important}
+html body .r23-store .r23-price{width:100%!important;display:flex!important;justify-content:center!important;margin:0!important}
+html body .r23-store .r23-price-value,html body .r23-store .r23-price-note{display:inline-flex!important;align-items:center!important;gap:4px!important;padding:3px 10px!important;border-radius:999px!important;background:rgba(20,8,40,.75)!important;border:1px solid rgba(186,140,255,.4)!important;color:#fff!important;font:800 12px/1.4 Arial,sans-serif!important;white-space:nowrap}
+html body .r23-store .r23-price-value b{color:#fff!important}
+html body .r23-store .r68-bundles h2{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0;font-size:20px;font-weight:900;color:#fff}
+html body .r23-store .r68-bgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+html body .r23-store .r68-bundle{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:18px;background:linear-gradient(180deg,rgba(82,38,140,.6),rgba(40,16,76,.6));border:1.5px solid rgba(186,140,255,.4);color:#fff}
+html body .r23-store .r68-best{position:absolute;top:10px;left:-24px;transform:rotate(-40deg);padding:2px 26px;background:#d8203f;color:#fff;font-style:normal;font-size:10px;font-weight:900}
+html body .r23-store .r68-bart{display:flex;justify-content:center;height:56px}
+html body .r23-store .r68-bart>span{width:44px;height:44px;margin:0 -8px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#2a1350;border:1.5px solid #e9a64c}
+html body .r23-store .r68-bart>span>*{max-width:100%;max-height:100%}
+html body .r23-store .r68-bundle b{font-size:14.5px;font-weight:900}
+html body .r23-store .r68-bundle small{font-size:10.5px;color:#c9b4ec!important}
+html body .r23-store .r68-bprice{display:inline-flex;align-items:center;gap:3px;margin-top:4px;padding:3px 10px;border-radius:999px;background:rgba(20,8,40,.75);border:1px solid rgba(186,140,255,.4);font:800 12px Arial,sans-serif}
+html body .r23-store .r23-store-tabs>*{width:76px!important;max-width:76px!important;flex:0 0 76px!important;height:78px!important}
+html body .r23-store .r23-store-tabs>.on{width:100px!important;max-width:100px!important;flex-basis:100px!important}
+html body .r23-store .r23-store-tabs>* i{font-size:26px}
+html body .r23-store .r23-price-value,html body .r23-store .r23-price-note{font-size:10.5px!important;padding:3px 7px!important;gap:3px!important;max-width:100%}
+html body .r23-store .r23-price-value svg,html body .r23-store .r23-price-value img{width:13px!important;height:13px!important}
+html body .r23-store .r68-rib{font-size:9.5px;padding:2px 7px}
+html body .r23-store .r23-more{border-radius:16px!important;background:rgba(40,14,72,.55)!important;border:1px solid rgba(186,140,255,.3)!important}
+html body .r23-store .r23-store-tabs>*{width:84px!important;max-width:84px!important;flex-basis:84px!important}

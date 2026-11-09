@@ -11,13 +11,15 @@ const stamp = value => {
   const date = new Date(value);
   return Number.isFinite(date.getTime()) ? date.toLocaleString('ar-AE-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' }) : '';
 };
-const hero = () => `<section class="hero"><div class="hero-symbol">${icon('chat')}</div><h1>الرسائل</h1><p class="subtitle">سولف ويا ربعك</p></section>`;
+/* R68g: رأس الرسائل بتصميم المالك */
+const hero = (ctx = {}) => `<header class="m68-head" dir="ltr"><div class="m68-btns"><a class="m68-sq" href="#/friends" aria-label="إضافة صديق"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></a><a class="m68-sq" href="#/friends" aria-label="الأصدقاء"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20c0-3.8 2.9-6.2 6.5-6.2s6.5 2.4 6.5 6.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 8h5M16 12h5M18 16h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><i class="m68-dot" data-m68-reqdot hidden></i></a></div><span class="m68-logo" aria-hidden="true"><i>👑</i><b>لعبك</b><small>LA3BAK</small></span><h1>الرسائل</h1></header>
+<nav class="m68-rows"><a class="m68-row" href="#/notifications"><span class="m68-ic is-bell" aria-hidden="true">🔔</span><span class="m68-txt"><b>معلومات النظام <i class="m68-ok">✓</i></b><small>آخر الأخبار والتنبيهات من لعبك</small></span><span class="m68-end">${Number(ctx.unread) > 0 ? `<em>${esc(Math.min(99, Number(ctx.unread)))}</em>` : ''}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span></a><a class="m68-row" href="#/friends"><span class="m68-ic is-req" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4" fill="#fff"/><path d="M2 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="#fff"/><path d="M19 9v6M16 12h6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></span><span class="m68-txt"><b>طلبات الصداقة</b></span><span class="m68-end"><em data-m68-req hidden></em><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span></a></nav>`;
 const limits = () => `<p class="lb-message-limit">الرسائل نصية بين الأصدقاء المقبولين فقط. المجموعات والمرفقات ودعوات اللعب وحالة الاتصال ما تدعمها خدمة الرسائل الحالية. التحديث يدوي.</p>`;
 
 /** Returns the body only; no common header, balances, navigation or drawer. */
 export function render(ctx = {}) {
   const loggedIn = !!(ctx.user || ctx.me);
-  return `<div data-lb-page="messages" dir="rtl">${hero()}<div data-lb-messages-host>${loggedIn ? '<section class="panel lb-message-empty" role="status">جاري تحميل رسائلك…</section>' : '<section class="panel lb-message-empty"><h2 class="panel-title">سجّل دخولك أول</h2><p>سجّل دخولك عشان تشوف رسائلك وتراسل ربعك.</p><a class="gold-btn" href="#/account">تسجيل الدخول</a></section>'}</div>${limits()}</div>`;
+  return `<div data-lb-page="messages" class="m68" dir="rtl">${hero(ctx)}<div data-lb-messages-host>${loggedIn ? '<section class="panel lb-message-empty" role="status">جاري تحميل رسائلك…</section>' : '<section class="panel lb-message-empty"><h2 class="panel-title">سجّل دخولك أول</h2><p>سجّل دخولك عشان تشوف رسائلك وتراسل ربعك.</p><a class="gold-btn" href="#/account">تسجيل الدخول</a></section>'}</div></div>`;
 }
 
 /** Adapts the existing social-private pagination, DM privacy and send/read contracts. */
@@ -29,6 +31,7 @@ export function mount(root, ctx = {}) {
     host.innerHTML = '<section class="panel lb-message-empty" role="alert">خدمة الرسائل مب متاحة في هالواجهة الحين. ما تم إرسال أي طلب.</section>';
     return { destroy() {} };
   }
+  ctx.api('/api/social-private/friend-requests?direction=incoming&limit=20','GET').then(r=>{const n=Array.isArray(r?.list)?r.list.length:0;const el=root.querySelector('[data-m68-req]'),dot=root.querySelector('[data-m68-reqdot]');if(el&&n){el.textContent=n>=20?'20+':String(n);el.hidden=false;}if(dot)dot.hidden=!n;}).catch(()=>{});
   const state = {
     tab: 'inbox', query: '', busy: false, error: '', notice: '',
     settings: null, friends: pageEmpty(), inbox: pageEmpty(), conversation: pageEmpty(),
@@ -63,7 +66,7 @@ export function mount(root, ctx = {}) {
       const unread = typeof item.unread === 'number' && Number.isSafeInteger(item.unread) && item.unread > 0 ? `<span class="lb-message-unread" aria-label="${esc(item.unread)} رسالة غير مقروءة">${esc(item.unread)}</span>` : '';
       return `<button type="button" class="list-row lb-message-row${selected ? ' active' : ''}" data-lb-msg-action="open" data-peer="${esc(user.pub)}" ${selected ? 'aria-current="true"' : ''} ${disabled()}><span class="avatar lb-message-avatar">${icon('user')}</span><span class="grow"><b>${esc(user.name || 'لاعب')}</b><small class="lb-message-preview">${kind === 'inbox' ? esc(item.last?.body || '') : 'صديق مقبول · افتح المحادثة'}</small></span><span class="lb-message-row-end">${unread}${kind === 'inbox' ? `<small>${esc(stamp(item.last?.at))}</small>` : ''}</span></button>`;
     }).join('');
-    return `${state.errors[kind] ? `<p role="alert" class="lb-message-error">${esc(state.errors[kind])} القائمة المعروضة هي آخر بيانات تم تحميلها.</p>` : ''}${html || `<p class="lb-message-empty">${state.query.trim() ? 'ما لقينا نتيجة في القائمة المحمّلة.' : kind === 'inbox' ? 'ما عندك محادثات للحين. اختَر صديق من تبويب الأصدقاء.' : 'ما عندك أصدقاء مقبولين ظاهرين للحين.'}</p>`}${moreButton(kind)}`;
+    return `${state.errors[kind] ? `<p role="alert" class="lb-message-error">${esc(state.errors[kind])} القائمة المعروضة هي آخر بيانات تم تحميلها.</p>` : ''}${html || `${kind === 'inbox' && !state.query.trim() ? '<img class="m68-empty-art" src="/assets/art68/msg-empty.webp" alt="" decoding="async">' : ''}<p class="lb-message-empty">${state.query.trim() ? 'ما لقينا نتيجة في القائمة المحمّلة.' : kind === 'inbox' ? 'ما عندك محادثات للحين. اختَر صديق من تبويب الأصدقاء.' : 'ما عندك أصدقاء مقبولين ظاهرين للحين.'}</p>`}${moreButton(kind)}`;
   };
   const conversationHTML = () => {
     if (!state.peer) return '<div class="lb-message-empty lb-message-pick"><span class="lb-message-empty-icon">' + icon('chat') + '</span><h2>اختَر محادثة</h2><p>اختَر محادثة من القائمة، أو صديق مقبول عشان تبدأ السوالف.</p></div>';

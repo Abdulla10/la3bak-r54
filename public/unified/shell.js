@@ -1,22 +1,23 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
 import { nav68HTML } from '../nav-r68.js?v=r68b';
-import * as home from './home.js?v=r68c';
+import { headerHTML as head68 } from './home-r68.js?v=r68h';
+import * as home from './home.js?v=r68h';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import {giftArt} from '../giftart.js?v=release-r14';
 import * as rooms from './rooms.js?v=r58p';
 import * as wallet from './wallet.js?v=r63b';
 import * as notifications from './notifications.js?v=r67as';
-import * as messages from './messages.js?v=r57';
+import * as messages from './messages.js?v=r68h';
 import * as friends from './friends.js?v=r58p';
 import * as drawer from './drawer.js?v=r67ac';
 import * as ranking from './ranking.js?v=r67ac';
 import * as games from './games.js?v=r67ac';
 import * as settings from './settings.js?v=r58p';
-import * as store from './store.js?v=r67ac';
+import * as store from './store.js?v=r68h';
 import * as payments from './payments.js?v=r63a';
-import * as ranks from './ranks.js?v=r67ac';
-import * as vip from './vip.js?v=r67ac';
-import * as social from './social.js?v=r68d';
+import * as ranks from './ranks.js?v=r68h';
+import * as vip from './vip.js?v=r68h';
+import * as social from './social.js?v=r68h';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
 export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','devices','hidden-posts','community','post','u','not-found']);
 export const hasRoute=name=>routes.includes(name);
@@ -60,9 +61,9 @@ function drawerHTML(ctx){
 }
 export function pageHTML(ctx){
   const key=pageKey(ctx.page);const locked=ctx.noCommunity&&protectedRoute('#/'+ctx.page);const mod=ctx.contentOnly||locked?null:modules[key];
-  const meta=ctx.page==='home'?'':`<div class="lb-route-meta"><a class="lb-route-back" href="${esc(ctx.backHref||'#/')}" aria-label="رجوع">رجوع</a>${ctx.user?`<span class="lb-route-connection${ctx.connected?'':' lb-offline'}"><i aria-hidden="true"></i>${ctx.connected?'متصل':'جاري الاتصال…'}</span>`:''}</div>`;
+  const meta=ctx.page==='home'||ctx.page==='shop'?'':`<div class="lb-route-meta"><a class="lb-route-back" href="${esc(ctx.backHref||'#/')}" aria-label="رجوع">رجوع</a>${ctx.user?`<span class="lb-route-connection${ctx.connected?'':' lb-offline'}"><i aria-hidden="true"></i>${ctx.connected?'متصل':'جاري الاتصال…'}</span>`:''}</div>`;
   const body=locked?`<section class="panel empty-state" role="status"><p>${esc(lockedText)}</p><a class="btn" href="#/">الرئيسية</a></section>`:mod?.render(ctx)??ctx.content??'';
-  return `<article class="lb-unified" data-lb-release="reference-milestone-1" data-lb-route="${esc(key)}" dir="rtl">${headerHTML(ctx)}${meta}<main class="lb-content" data-lb-page="${key}">${body}</main>${bottomHTML(ctx.page,ctx)}${ctx.page==='home'?home.footerHTML(ctx):''}<div class="lb-backdrop" data-lb-shell="close" hidden></div><aside class="lb-drawer" aria-label="القائمة الجانبية" aria-hidden="true" inert>${drawerHTML(ctx)}</aside><p class="lb-visually-hidden" data-lb-lock-status role="status" aria-live="polite"></p></article>`;
+  return `<article class="lb-unified" data-lb-release="reference-milestone-1" data-lb-route="${esc(key)}" dir="rtl">${ctx.page==='shop'?`<div class="h68 h68-shophead">${head68(ctx)}</div>`:headerHTML(ctx)}${meta}<main class="lb-content" data-lb-page="${key}">${body}</main>${bottomHTML(ctx.page,ctx)}${ctx.page==='home'?home.footerHTML(ctx):''}<div class="lb-backdrop" data-lb-shell="close" hidden></div><aside class="lb-drawer" aria-label="القائمة الجانبية" aria-hidden="true" inert>${drawerHTML(ctx)}</aside><p class="lb-visually-hidden" data-lb-lock-status role="status" aria-live="polite"></p></article>`;
 }
 export function mount(root,ctx){
   const key=pageKey(ctx.page);const pageRoot=root.querySelector('[data-lb-page]');const shell=root.querySelector('.lb-unified');const aside=shell?.querySelector('.lb-drawer');const backdrop=shell?.querySelector('.lb-backdrop');let oldFocus;
