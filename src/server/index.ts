@@ -958,7 +958,7 @@ export async function createApp(
       // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
       const eq=wallet.equipped(id),cosm=(slot:string)=>{const it=eq[slot]?shopcat.get(eq[slot]):undefined;return it&&it.slot===slot&&typeof it.css==='string'?it.css:null;};
       const bubble=cosm('chat-bubble'),board=cosm('board'),micFrame=cosm('mic-frame');
-      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),ranks:{level:p.level.enabled?p.level.value:null,vip:p.vip.enabled?vip:null,noble:p.noble.enabled?noble:null},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
+      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),ranks:{...(accountTools.settings(id).hideNameColor===true?{nameOff:true}:{}),level:p.level.enabled?p.level.value:null,vip:p.vip.enabled?vip:null,noble:p.noble.enabled?noble:null},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
     },
     blocked:(a,b)=>community.pairBlocked(a,b),eligible:socialEligible,trustedAdmin:id=>id==='token',
     emit:(ids,event)=>{for(const id of ids)sendToUser(id,event);},

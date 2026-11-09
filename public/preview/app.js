@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r67l';
-import * as UNIFIED from '../unified/shell.js?v=r67s';
+import * as PR from './profile.js?v=r67t';
+import * as UNIFIED from '../unified/shell.js?v=r67t';
 import * as REF from '../unified/home.js?v=r63a';
-import * as SOCIAL from '../unified/social.js?v=r67s';
+import * as SOCIAL from '../unified/social.js?v=r67t';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r63a';
@@ -22,7 +22,7 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r63a';
+import * as PF from '../profile.js?v=r67t';
 import * as SHOP from '../shop.js?v=r63b';
 import * as GIFT from '../gifts.js?v=r63a';
 import * as GFX from '../giftfx.js?v=r57';
@@ -38,7 +38,7 @@ import * as THEME from '../theme.js?v=r64a';
 import * as PWA from '../pwa.js?v=r62e';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r63a';
+import * as MIS from '../missions.js?v=r67t';
 import * as CHAT from '../chat.js?v=r63a';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -384,7 +384,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r67r');
+  const M = await import('../settings-r60.js?v=r67t');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

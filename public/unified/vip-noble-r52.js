@@ -4,7 +4,7 @@
 import * as R from './rank-vip-shared.js?v=r66b';
 // استيراد كمساحة أسماء: لو المتصفح عنده نسخة أقدم من shop.js بالكاش (بدون itemThumb) ما تنكسر الصفحة
 import * as SHOP from '../shop.js?v=r63b';
-import { PERK_ITEMS } from '../rank-perks-r56.js?v=r58i';
+import { PERK_ITEMS } from '../rank-perks-r56.js?v=r67t';
 const { esc, obj, list, nat } = R;
 
 /* رموز أحادية اللون داخل الشكل السداسي (رسم بسيط خاص بالموقع) */

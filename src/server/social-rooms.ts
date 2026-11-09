@@ -1414,7 +1414,7 @@ export class SocialRooms {
   private who(id:string) {
     const p=this.opts.profile(id);if(!p)return null;
     const r=p.ranks;
-    const ranks=r?{level:num(r.level,1,100)?r.level:null,vip:num(r.vip,0,15)?r.vip:null,noble:num(r.noble,0,9)?r.noble:null}:undefined;
+    const ranks=r?{level:num(r.level,1,100)?r.level:null,vip:num(r.vip,0,15)?r.vip:null,noble:num(r.noble,0,9)?r.noble:null,...((r as {nameOff?:boolean}).nameOff===true?{nameOff:true}:{})}:undefined;
     const frame=typeof p.frame==='string'&&/^[A-Za-z_][A-Za-z0-9_-]{0,79}$/.test(p.frame)?p.frame:null;
     const cosmetic=(v:unknown)=>typeof v==='string'&&/^[a-z][a-z0-9-]{0,39}$/.test(v)?v:null;
     const bubble=cosmetic(p.bubble),board=cosmetic(p.board),micFrame=cosmetic(p.micFrame);

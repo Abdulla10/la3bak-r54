@@ -30,6 +30,7 @@ export function settingsHTML(ctx) {
     ${link('إعدادات الخصوصية', '#/privacy-settings')}
     ${link('القائمة السوداء', '#/friends')}
     ${row('إخفاء منشوراتي<small class="s60-sub">منشوراتك ما تطلع لأحد غيرك</small>', toggle('hidePosts', ctx.settings?.hidePosts === true, !ctx.settings))}
+    ${row('إخفاء لون اسمي<small class="s60-sub">لون اسمك حسب مستوى VIP ما يطلع للناس</small>', toggle('hideNameColor', ctx.settings?.hideNameColor === true, !ctx.settings))}
     ${link('إخفاء جميع منشوراته', '#/hidden-posts')}
   </ul>
   <ul class="s60-list">

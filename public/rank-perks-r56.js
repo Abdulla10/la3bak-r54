@@ -83,6 +83,9 @@ const rankOf = (v, max) => (Number.isSafeInteger(v) && v >= 1 && v <= max ? v : 
 export function effectStyle(ranks) {
   const vip = rankOf(ranks?.vip, 15), noble = rankOf(ranks?.noble, 9), out = {};
   for (const [system, have] of [['vip', vip], ['noble', noble]]) for (const e of EFFECTS[system]) if (have >= e.rank && (LUX[e.tier] || 0) > (LUX[out[e.kind]] || 0)) out[e.kind] = e.tier;
+  /* R67: لون الاسم حسب مستوى VIP (15 لون)، واللاعب يقدر يخفيه من الإعدادات */
+  if (vip >= 1) out.name = 'v' + vip;
+  if (ranks?.nameOff === true) delete out.name;
   return out;
 }
 export const effectClasses = (ranks) => Object.entries(effectStyle(ranks)).map(([kind, tier]) => `rp-${kind}-${tier}`).join(' ');

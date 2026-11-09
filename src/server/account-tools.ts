@@ -14,11 +14,12 @@ export interface AccountSettings {
   hideVisits: boolean;
   /** R66: إخفاء منشوراتي — منشوراتي ما تطلع لغيري (لا بالمجتمع ولا بملفي) */
   hidePosts: boolean;
+  hideNameColor: boolean;
 }
 export const ACCOUNT_SETTINGS_DEFAULTS: Readonly<AccountSettings> = Object.freeze({
   sound: false, notifications: false, showActivity: false, showPresence: false,
   // R55: مؤثرات الهدايا ثلاثية الأبعاد والدخوليات تظهر افتراضيًا (مثل باقي المنصات)، واللاعب يقدر يخفيها من الإعدادات
-  hideEntrances: false, hideChatEffects: false, hideVisits: false, hidePosts: false,
+  hideEntrances: false, hideChatEffects: false, hideVisits: false, hidePosts: false, hideNameColor: false,
 });
 export const ACCOUNT_REASON_MAX = 500;
 export type VerificationStatus = 'pending' | 'accepted' | 'rejected' | 'revoked';
