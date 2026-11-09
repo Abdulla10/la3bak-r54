@@ -126,3 +126,26 @@ export function mountPlayerLog(root, { call, q: q0 = '' }) {
   });
   paint(); if (S.q) load();
 }
+
+/* ---------- R68z: الأيديات الثلاثية (100–999) ---------- */
+export function mountIds3(root, { call }) {
+  style();
+  if (!document.querySelector('style[data-ids3]')) { const st = document.createElement('style'); st.dataset.ids3 = '1'; st.textContent = `.i3-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.i3-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;border-radius:16px;background:linear-gradient(180deg,#1a1a1d,#121214);border:1px solid #ffffff14}.i3-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 12px;border-radius:99px;font-weight:900;font-size:18px;background:linear-gradient(180deg,#5a2a0a,#2a1204);border:1.5px solid #ffc83d;color:#ffe08a;direction:ltr}.i3-pill i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;font-style:normal;font-size:8px;background:radial-gradient(circle,#ffe08a,#c98a1a);color:#5a2a00}.i3-own{font-size:12px;text-align:center}.i3-own b{color:#7be0a0}.i3-free{font-size:12px;opacity:.7}`; document.head.append(st); }
+  const S = { d: null, q: '', err: '', msg: '', busy: false };
+  const load = async () => { try { S.d = await call('ids3' + (S.q ? '?q=' + encodeURIComponent(S.q) : '')); S.err = ''; } catch (e) { S.err = e.message; } paint(); };
+  function paint() {
+    if (!root.isConnected) return;
+    if (!S.d) return shell(root, S, '<p class="ad-muted">جاري التحميل…</p>');
+    shell(root, S, `<section class="ad-card"><h2>🆔 الأيديات الثلاثية</h2><p class="ad-muted">أرقام من 3 خانات (100–999) محجوزة للإدارة، ما تنباع بالمتجر. تعطيها لأي لاعب برقمه وتسحبها وقت ما تبي. مستخدم منها: ${S.d.taken} من ${S.d.total}.</p>
+      <form data-at="i3find" class="ad-form"><input class="ad-in" name="q" inputmode="numeric" maxlength="3" placeholder="ابحث عن رقم أو اكتب أي رقم من 3 خانات" value="${esc(S.q)}"><button class="ad-btn" type="submit">بحث</button></form></section>
+      <section class="ad-card"><div class="i3-grid">${S.d.list.map((x) => `<div class="i3-card"><span class="i3-pill"><b>${esc(x.value)}</b><i>ID</i></span>${x.owner ? `<span class="i3-own">مع <b>${esc(x.owner.name)}</b></span><button class="ad-btn danger" type="button" data-at="i3take" data-v="${esc(x.value)}">سحب</button>` : `<span class="i3-free">متاح</span><button class="ad-btn" type="button" data-at="i3give" data-v="${esc(x.value)}">أعطِ لاعب</button>`}</div>`).join('') || '<p class="ad-muted">ما فيه نتائج.</p>'}</div></section>`);
+  }
+  const run = async (fn, ok) => { if (S.busy) return; S.busy = true; S.err = ''; S.msg = ''; try { await fn(); S.msg = ok; } catch (e) { S.err = e.message; } S.busy = false; await load(); };
+  root.addEventListener('submit', (e) => { if (!e.target.closest('[data-at="i3find"]')) return; e.preventDefault(); S.q = e.target.querySelector('[name=q]').value.replace(/\D/g, ''); load(); });
+  root.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-at]'); if (!b || b.tagName === 'FORM') return; const v = b.dataset.v;
+    if (b.dataset.at === 'i3give') { const player = prompt(`رقم اللاعب اللي ياخذ الأيدي ${v}:`); if (!player) return; const reason = ask('السبب؟'); if (!reason) return; run(() => call('ids3', { method: 'POST', body: { op: 'give', value: v, player: player.trim(), reason } }), `انعطى الأيدي ${v}.`); }
+    if (b.dataset.at === 'i3take') { const reason = ask(`سحب الأيدي ${v}؟ اكتب السبب:`); if (reason) run(() => call('ids3', { method: 'POST', body: { op: 'take', value: v, reason } }), `انسحب الأيدي ${v}.`); }
+  });
+  paint(); load();
+}

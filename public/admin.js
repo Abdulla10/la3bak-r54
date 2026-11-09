@@ -1,11 +1,11 @@
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r68z9';
-import { side68, head68, brand68, dash68HTML } from './admin-dash-r68.js?v=r68z';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r68z10';
+import { side68, head68, brand68, dash68HTML } from './admin-dash-r68.js?v=r68z10';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=r68l-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=r68z9';
+import {mountPaymentAdmin} from './payment-admin.js?v=r68z10';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
-import {mountSocialAdmin} from './social-admin.js?v=r68z9';
-import { pricingHTML, progressionHTML } from './economy-admin.js?v=r68z9';
+import {mountSocialAdmin} from './social-admin.js?v=r68z10';
+import { pricingHTML, progressionHTML } from './economy-admin.js?v=r68z10';
 import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r68z9';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
@@ -26,6 +26,7 @@ const TABS = [
   ['suspicious','الحسابات المشبوهة','staff.manage'],
   ['games-control','التحكم بالألعاب','staff.manage'],
   ['player-log','سجل اللاعب','staff.manage'],
+  ['ids3','الأيديات الثلاثية','staff.manage'],
   ['site-ops','التشغيل والغرف والمنشورات','staff.manage'],
   ['watch','الرقابة والاقتصاد','staff.manage'],
   ['live','المباشر واللاعبين والفعاليات','staff.manage'],
@@ -73,7 +74,7 @@ export function mountAdmin(root) {
   const can = (p) => S.me?.perms?.includes(p);
 
   function shell(inner) {
-    const tabs = TABS.filter((t) => can(t[2]) && (t[0] !== 'owner-tools' || ownerToolsVisible(S.me)) && (!['pricing', 'progression','payments','rank-vip','auction','tribes-cp','tuning','home-banners','suspicious','games-control','player-log','site-ops','watch','live'].includes(t[0]) || S.me?.role === 'owner') && (t[0] !== 'verification' || ['owner', 'admin'].includes(S.me?.role)));
+    const tabs = TABS.filter((t) => can(t[2]) && (t[0] !== 'owner-tools' || ownerToolsVisible(S.me)) && (!['pricing', 'progression','payments','rank-vip','auction','tribes-cp','tuning','home-banners','suspicious','games-control','player-log','ids3','site-ops','watch','live'].includes(t[0]) || S.me?.role === 'owner') && (t[0] !== 'verification' || ['owner', 'admin'].includes(S.me?.role)));
     const primary = [
       ['overview','لوحة التحكم','overview','home'],['health','حالة الموقع','health','shield'],['players','إدارة اللاعبين','players','users'],
       ['economy','المحفظة والعملات','economy','wallet'],['shop','المتجر والمنتجات','shop','store'],
@@ -112,6 +113,7 @@ export function mountAdmin(root) {
     suspicious: () => '<section data-at68="suspicious"></section>',
     'games-control': () => '<section data-at68="games"></section>',
     'player-log': () => '<section data-at68="log"></section>',
+    ids3: () => '<section data-at68="ids3"></section>',
     'site-ops': () => '<section data-site-admin></section>',
     watch: () => '<section data-watch-admin></section>',
     live: () => '<section data-live-admin></section>',
@@ -338,7 +340,7 @@ export function mountAdmin(root) {
     const waRoot=root.querySelector('[data-watch-admin]');
     if(waRoot && S.me?.role==='owner') import('./watch-admin-r67.js?v=r67ai').then(({mountWatchAdmin})=>{if(waRoot.isConnected)mountWatchAdmin(waRoot,{call});}).catch(()=>{if(waRoot.isConnected)waRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const atRoot=root.querySelector('[data-at68]');
-    if(atRoot && S.me?.role==='owner') import('./admin-tools-r68.js?v=r68z').then((M)=>{if(!atRoot.isConnected)return;const k=atRoot.dataset.at68;if(k==='suspicious')M.mountSuspicious(atRoot,{call,openLog:(q)=>{S.logQ=q;go('player-log');}});else if(k==='games')M.mountGamesControl(atRoot,{call});else{M.mountPlayerLog(atRoot,{call,q:S.logQ||''});}}).catch(()=>{if(atRoot.isConnected)atRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
+    if(atRoot && S.me?.role==='owner') import('./admin-tools-r68.js?v=r68z10').then((M)=>{if(!atRoot.isConnected)return;const k=atRoot.dataset.at68;if(k==='suspicious')M.mountSuspicious(atRoot,{call,openLog:(q)=>{S.logQ=q;go('player-log');}});else if(k==='games')M.mountGamesControl(atRoot,{call});else if(k==='ids3')M.mountIds3(atRoot,{call});else{M.mountPlayerLog(atRoot,{call,q:S.logQ||''});}}).catch(()=>{if(atRoot.isConnected)atRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const hbRoot=root.querySelector('[data-home-banners-admin]');
     if(hbRoot && S.me?.role==='owner') import('./home-banners-admin-r68.js?v=r68z').then(({mountHomeBannersAdmin})=>{if(hbRoot.isConnected)mountHomeBannersAdmin(hbRoot,{call});}).catch(()=>{if(hbRoot.isConnected)hbRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const saRoot=root.querySelector('[data-site-admin]');
@@ -348,7 +350,7 @@ export function mountAdmin(root) {
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=r68z9').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r68z10').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { if (tab !== 'player-log') S.logQ = ''; S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {

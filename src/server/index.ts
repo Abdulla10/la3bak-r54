@@ -1389,6 +1389,28 @@ export async function createApp(
     }, 'owner');
     // R68z: إعادة المباراة (للإدارة)
     functionalHttp.add('GET', '/api/admin/replay', ({ url }) => { const r = replays.load(String(url.searchParams.get('ref') ?? '')); if (!r) throw new FunctionalHttpError(404, 'الإعادة مو موجودة (ممكن قديمة أو قبل التحديث).'); return { ok: true, replay: { ...r, gameName: registry.historyEngine(r.game)?.info.name ?? r.game } }; }, 'owner');
+    // R68z: الأيديات الثلاثية (100–999) — محجوزة للإدارة، المالك يعطيها ويسحبها من اللوحة
+    const IDS3_FEATURED = (() => { const out = new Set<string>(); for (let d = 1; d <= 9; d++) { out.add(String(d).repeat(3)); out.add(d + '00'); out.add(`${d}0${d}`); } for (let a = 1; a <= 7; a++) { out.add(`${a}${a + 1}${a + 2}`); out.add(`${a + 2}${a + 1}${a}`); } out.add('210'); out.add('313'); out.add('786'); return [...out].sort(); })();
+    const ids3View = (v: string) => { const owner = accounts.findByDisplayPlayerId(v); return { value: v, owner: owner ? { id: owner, name: nm(owner) } : null }; };
+    functionalHttp.add('GET', '/api/admin/ids3', ({ url }) => {
+      const q = String(url.searchParams.get('q') ?? '').replace(/\D/g, '');
+      const list = q ? (/^[1-9]\d{2}$/.test(q) ? [q] : IDS3_FEATURED.filter((v) => v.includes(q))) : IDS3_FEATURED;
+      return { ok: true, list: list.map(ids3View), taken: IDS3_FEATURED.filter((v) => accounts.findByDisplayPlayerId(v)).length, total: IDS3_FEATURED.length };
+    }, 'owner');
+    functionalHttp.add('POST', '/api/admin/ids3', ({ actor, body }) => {
+      const v = String(body.value ?? ''); adminNeed(/^[1-9]\d{2}$/.test(v), 'الأيدي لازم يكون 3 أرقام (100–999).');
+      const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(reason.length >= 3, 'اكتب السبب.');
+      const owner = accounts.findByDisplayPlayerId(v);
+      if (body.op === 'take') {
+        adminNeed(!!owner, 'هذا الأيدي مو مع أحد.');
+        accounts.setSpecialPlayerId(owner!, null); admin.audit(actor!, 'ids3.take', owner!, `${v} — ${reason}`); return { ok: true, item: ids3View(v) };
+      }
+      const q = String(body.player ?? '').trim(); const target = /^\d{3,12}$/.test(q) ? accounts.findByDisplayPlayerId(q) : null;
+      adminNeed(!!target, 'ما لقيت لاعب بهالرقم.'); adminNeed(!owner || owner === target, 'هذا الأيدي مع لاعب ثاني، اسحبه أول.');
+      try { accounts.setSpecialPlayerId(target!, v); } catch (e) { throw new FunctionalHttpError(409, 'تعذّر إعطاء الأيدي.'); }
+      admin.audit(actor!, 'ids3.give', target!, `${v} — ${reason}`);
+      return { ok: true, item: ids3View(v) };
+    }, 'owner');
     // ---- R68y: (10) سجل اللاعب الكامل ----
     functionalHttp.add('GET', '/api/admin/player-log', ({ url }) => {
       const q = String(url.searchParams.get('q') ?? '').trim(); adminNeed(q.length >= 2, 'اكتب رقم اللاعب أو اسمه.');
