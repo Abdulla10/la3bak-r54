@@ -12,7 +12,7 @@ export interface FunctionalContext {
   body: Record<string, unknown>;
 }
 type Handler = (ctx: FunctionalContext) => unknown | Promise<unknown>;
-interface Route { method: string; pattern: RegExp; names: string[]; handler: Handler; staff: 'owner' | 'support' | null }
+interface Route { method: string; pattern: RegExp; names: string[]; handler: Handler; staff: 'owner' | 'support' | null; maxBody?: number }
 interface Deps {
   json(res: http.ServerResponse, status: number, body: unknown): void;
   sameOrigin(req: http.IncomingMessage): boolean;
@@ -29,21 +29,21 @@ export class FunctionalHttp {
   private writeLimiter = new KeyedLimiter(30, 0.5);
   constructor(private deps: Deps) {}
   allowFallback(prefix: string) { this.fallbackPrefixes.add(prefix); return this; }
-  add(method: string, path: string, handler: Handler, staff: 'owner' | 'support' | null = null) {
+  add(method: string, path: string, handler: Handler, staff: 'owner' | 'support' | null = null, maxBody = 32768) {
     const names: string[] = [];
     const source = path.split('/').map((part) => {
       if (part.startsWith(':')) { names.push(part.slice(1)); return '([^/]+)'; }
       return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }).join('/');
-    this.routes.push({ method, pattern: new RegExp('^' + source + '$'), names, handler, staff });
+    this.routes.push({ method, pattern: new RegExp('^' + source + '$'), names, handler, staff, maxBody });
     this.prefixes.add(path.split('/').slice(0, staff ? 4 : 3).join('/'));
     return this;
   }
-  private async body(req: http.IncomingMessage): Promise<Record<string, unknown>> {
-    if (Number(req.headers['content-length'] ?? 0) > 32768) { req.resume(); throw new FunctionalHttpError(413, 'الطلب كبير.'); }
+  private async body(req: http.IncomingMessage, max = 32768): Promise<Record<string, unknown>> {
+    if (Number(req.headers['content-length'] ?? 0) > max) { req.resume(); throw new FunctionalHttpError(413, 'الطلب كبير.'); }
     const bytes = await new Promise<Buffer>((resolve, reject) => {
       const chunks: Buffer[] = []; let size = 0; let big = false;
-      req.on('data', (chunk: Buffer) => { size += chunk.length; if (size > 32768) { big = true; chunks.length = 0; } else if (!big) chunks.push(chunk); });
+      req.on('data', (chunk: Buffer) => { size += chunk.length; if (size > max) { big = true; chunks.length = 0; } else if (!big) chunks.push(chunk); });
       req.on('end', () => big ? reject(new FunctionalHttpError(413, 'الطلب كبير.')) : resolve(Buffer.concat(chunks)));
       req.on('error', reject); req.on('aborted', () => reject(new FunctionalHttpError(400, 'الطلب لم يكتمل.')));
     });
@@ -78,7 +78,7 @@ export class FunctionalHttp {
       if (mut) {
         if (!this.deps.sameOrigin(req) || (route.staff && req.headers['x-admin'] !== '1')) throw new FunctionalHttpError(403, 'مصدر الطلب غير مسموح.');
         if (String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase() !== 'application/json') throw new FunctionalHttpError(415, 'المطلوب طلب JSON.');
-        body = await this.body(req);
+        body = await this.body(req, route.maxBody ?? 32768);
       }
       const match = route.pattern.exec(url.pathname)!;
       const params: Record<string, string> = {};

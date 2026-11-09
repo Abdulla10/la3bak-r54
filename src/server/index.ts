@@ -25,6 +25,7 @@ import { ROCKET_PLANETS } from './room-rocket-r58.js';
 import { SiteFlagsStore } from './site-flags-r67.js';
 import { roomOwnerGift } from './room-extras-r58.js';
 import { AccountDeletion, DELETION_GRACE_MS } from './account-deletion-r67.js';
+import { HomeBanners, HomeBannerError } from './home-banners-r68.js';
 import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
@@ -349,6 +350,7 @@ export async function createApp(
   const deletion = new AccountDeletion(functionalFile(undefined, 'account-deletion'), Date.now, storage);
   accounts.hiddenFilter = (id) => deletion.hidden(id);
   const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
+  const homeBanners = new HomeBanners(functionalFile(undefined, 'home-banners'), Date.now, storage);
   { const t = siteFlags.tuning(); if (t) try { applyTuning(validateTuning(t, TUNING_DEFAULT)); } catch (e) { log('tuning_invalid', { error: String((e as Error).message).slice(0, 120) }); } }
   /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
   const firstTopup = new FirstTopup(functionalFile(undefined, 'first-topup'), {
@@ -1302,6 +1304,13 @@ export async function createApp(
       sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
       return { ok: true, id: b.id, coins: pay.coins };
     });
+    // R68c: بنرات الصفحة الرئيسية
+    const hbErr = <T>(fn: () => T): T => { try { return fn(); } catch (e) { if (e instanceof HomeBannerError) throw new FunctionalHttpError(400, e.message); throw e; } };
+    functionalHttp.add('GET', '/api/admin/home-banners', () => ({ ok: true, list: homeBanners.all() }), 'owner');
+    functionalHttp.add('POST', '/api/admin/home-banners/save', ({ actor, body }) => { const b = hbErr(() => homeBanners.upsert(body, actor!.name)); admin.audit(actor!, 'home-banner:save', b.id, b.title); return { ok: true, banner: b, list: homeBanners.all() }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/home-banners/remove', ({ actor, body }) => { hbErr(() => homeBanners.remove(String(body.id ?? ''))); admin.audit(actor!, 'home-banner:remove', String(body.id ?? ''), ''); return { ok: true, list: homeBanners.all() }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/home-banners/move', ({ body }) => { hbErr(() => homeBanners.move(String(body.id ?? ''), Number(body.dir))); return { ok: true, list: homeBanners.all() }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/home-banners/image', async ({ actor, body }) => { try { const url = await homeBanners.putImage(body.data); admin.audit(actor!, 'home-banner:image', url, ''); return { ok: true, url }; } catch (e) { if (e instanceof HomeBannerError) throw new FunctionalHttpError(400, e.message); throw e; } }, 'owner', 3_600_000);
     functionalHttp.add('GET', '/api/admin/broadcasts', () => ({ ok: true, list: broadcasts.list(100) }), 'owner');
     functionalHttp.add('POST', '/api/admin/broadcasts/hide', ({ actor, body }) => {
       const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(reason.length >= 3, 'اكتب السبب.');
@@ -1373,8 +1382,8 @@ export async function createApp(
   functionalHttp.add('GET', '/api/friends/live', ({ user }) => {
     const ids = social.friendInternalIds(user.id).slice(0, 200);
     const list = ids.map((f) => { // الأصدقاء المقبولين بس يشوفون الغرفة، إلا إذا الصديق قفّل «إظهار التواجد» بنفسه
-      const room = privacyOn(f, 'showPresence') ? null : socialRooms.friendRoom(user.id, f); const photo = avatars.version(f); return { id: community.pub(f), name: accounts.nameOf(f), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(f)}&v=${photo}` : null, room }; });
-    list.sort((a, b) => Number(!!b.room) - Number(!!a.room) || String(a.name).localeCompare(String(b.name), 'ar'));
+      const room = privacyOn(f, 'showPresence') ? null : socialRooms.friendRoom(user.id, f); const photo = avatars.version(f); return { id: community.pub(f), name: accounts.nameOf(f), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(f)}&v=${photo}` : null, room, online: !privacyOn(f, 'showPresence') && (sockets.get(f)?.size ?? 0) > 0 }; });
+    list.sort((a, b) => Number(!!b.room) - Number(!!a.room) || Number(b.online) - Number(a.online) || String(a.name).localeCompare(String(b.name), 'ar'));
     return { ok: true, list: list.slice(0, 60) };
   });
   functionalHttp.add('GET', '/api/room-ids/mine', ({ user }) => ({ ok: true, items: wallet.owned(user.id).map((iid) => shopcat.get(iid)).filter((it): it is NonNullable<typeof it> => !!it && it.slot === 'room-id' && typeof it.css === 'string').map((it) => ({ id: it.id, code: it.css as string, name: it.name })) }));
@@ -1664,6 +1673,8 @@ export async function createApp(
       if (url.pathname === '/api/first-topup' && req.method === 'GET') return json(res, 200, { ok: true, eligible: !!user && firstTopup.eligible(user.id) && (paymentSettings?.mode === 'live' || (paymentSettings?.mode === 'test' && firstTopup.allowTest)), percent: firstTopup.percent });
       if (url.pathname === '/api/season' && req.method === 'GET') return json(res, 200, seasonView());
       // R62: هدية الدخول اليومي المتصاعدة
+      if (url.pathname === '/api/home-banners' && req.method === 'GET') return json(res, 200, { ok: true, list: homeBanners.publicList() });
+      if (url.pathname.startsWith('/api/home-banners/img/') && (req.method === 'GET' || req.method === 'HEAD')) { const buf = homeBanners.image(url.pathname.slice('/api/home-banners/img/'.length)); if (!buf) return json(res, 404, { error: 'الصورة غير موجودة.' }); res.writeHead(200, { 'Content-Type': 'image/webp', 'Content-Length': buf.length, 'Cache-Control': 'public, max-age=31536000, immutable', ...SECURITY_HEADERS }); return res.end(req.method === 'HEAD' ? undefined : buf); }
       if (url.pathname === '/api/site-flags' && req.method === 'GET') { const f = siteFlags.get(); return json(res, 200, { ok: true, cinema: f.cinema, bigGiftMin: f.bigGiftMin, profileBgVip: f.profileBgVip, streak: f.streak, roomBgLevel: currentTuning().roomBg }); }
       if (url.pathname === '/api/daily-streak' && req.method === 'GET') { if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); return json(res, 200, { ...streak.view(user.id, wallet.canClaim(user.id)), enabled: siteFlags.get().streak }); }
       // R62: إشعارات الجوال

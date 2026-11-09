@@ -3,6 +3,7 @@
  * The optional avatarHTML callback is trusted application-owned markup.
  */
 import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
+import { render68, mount68 } from './home-r68.js?v=r68c';
 import { visibleGameCatalogue } from '../game-availability.js?v=games-royal-1';
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -209,7 +210,8 @@ function quickHTML() {
   return `<nav class="hq60" aria-label="المزادات والبطولات والأخبار">${card('#/auction', '🔨', 'المزادات', 'مقتنيات نادرة')}${card('#/tournaments', '🏆', 'البطولات', 'تحديات وجوايز')}${card('#/events', '📰', 'الأخبار', 'الفعاليات والجديد')}</nav>`;
 }
 export function render(ctx = {}) {
-  return `<div class="lb-home" dir="rtl">${accountHTML(ctx)}${ctx.user ? '<div class="fl-host" data-friends-live></div>' : ''}${heroHTML(ctx)}${quickHTML()}<div class="pv-home-content">${gamesHTML(ctx)}${socialLinksHTML(ctx)}${disclosure('المتجر والمقتنيات وتصنيفات الألعاب', 'shop', shortcutsHTML()+categoriesHTML(ctx), 'home-extras')}${disclosure('البطولات والمتصدرون', 'trophy', socialHTML(ctx), 'home-competition')}${disclosure('الأخبار والفعاليات والتطبيق', 'bell', newsHTML(ctx)+appsHTML(ctx), 'home-news')}</div></div>`;
+  // R68c: الرئيسية الجديدة بتصميم المالك
+  return render68(ctx);
 }
 export const homeHTML = render;
 
@@ -275,8 +277,10 @@ export function mountHome(root, ctx = {}) {
   root.addEventListener('error', onImageError, true);
   root.querySelectorAll('img').forEach((image) => { if (image.complete && !image.naturalWidth) onImageError({ target: image }); });
   const cleanup = () => { destroyed = true; root.removeEventListener('click', onClick); root.removeEventListener('input', onInput); root.removeEventListener('error', onImageError, true); mounts.delete(root); };
-  mounts.set(root, cleanup);
-  return cleanup;
+  const off68 = mount68(root, ctx);
+  const cleanup2 = () => { off68(); cleanup(); };
+  mounts.set(root, cleanup2);
+  return cleanup2;
 }
 export function mount(root, ctx = {}) {
   const cleanup = mountHome(root, ctx);
