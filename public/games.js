@@ -4,6 +4,7 @@ import { ldPlayMode, LD_MODES } from './hub.js?v=r68y-r6';
 import * as SFX from './sfx.js?v=shell-r6';
 import { domino } from './domino.js?v=r67ac';
 import { uno } from './uno.js?v=r67ac';
+import { liars } from './liars.js?v=r68z4';
 import { carrom } from './carrom.js?v=r67ac';
 import { minaboli } from './minaboli-r47.js?v=r57';
 /* واجهات الألعاب بالدور والتصويت. كل دالة تأخذ الغرفة وترجع HTML.
@@ -674,7 +675,7 @@ export const FX_GEOM = {
   jackaro: { unit: 22, key: (p, m) => `m${p}:${m}`, pos: (g, p, prog, m) => posOf(g, p, prog, m) },
 };
 
-export const GAME_VIEWS = { codewords, jackaro, ludo, baloot, domino, uno, carrom, minaboli };
+export const GAME_VIEWS = { codewords, jackaro, ludo, baloot, domino, uno, carrom, minaboli, liars };
 /* حركة انتقال حقيقية للكرات/القطع: نحفظ مواضعها قبل إعادة الرسم ثم نحرّكها من القديم للجديد */
 export function flipSnapshot() {
   const m = new Map();

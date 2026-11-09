@@ -22,5 +22,6 @@ export const KIDS: Record<string, KidsMeta> = {
   ludo: k(7, 14, 'medium', 'both', 'الحظ والتخطيط', false),
   domino: k(7, 14, 'medium', 'both', 'مطابقة الأرقام والجمع', false),
   uno: k(7, 14, 'easy', 'both', 'الألوان والأرقام والتخطيط', false),
+  liars: k(12, 99, 'medium', 'both', 'الخداع والملاحظة والحظ', false),
   carrom: k(8, 14, 'medium', 'both', 'التصويب وتقدير القوة', false),
 };
