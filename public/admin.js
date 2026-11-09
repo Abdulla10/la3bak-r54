@@ -1,10 +1,10 @@
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r67ac';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r67af';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=admin-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=r67ac';
+import {mountPaymentAdmin} from './payment-admin.js?v=r67af';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
-import {mountSocialAdmin} from './social-admin.js?v=r67ac';
-import { pricingHTML, progressionHTML } from './economy-admin.js?v=r67ac';
+import {mountSocialAdmin} from './social-admin.js?v=r67af';
+import { pricingHTML, progressionHTML } from './economy-admin.js?v=r67af';
 import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r67ac';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
@@ -19,6 +19,7 @@ const setTok = (v) => { try { v ? sessionStorage.setItem(TOK, v) : sessionStorag
 const TABS = [
   ['owner-tools', 'تمييز الحسابات', 'players.view'],
   ['auction','مزادات المقتنيات','staff.manage'],
+  ['tribes-cp','القبائل وCP والجوائز','staff.manage'],
   ['pricing', 'الباقات والتحويل', 'staff.manage'], ['payments','المدفوعات والمبيعات','staff.manage'], ['progression', 'LEVEL / VIP / NOBLE', 'staff.manage'], ['rank-vip', 'الرتب والمواسم وعضوية VIP', 'staff.manage'], ['functional', 'المهام والمكافآت والدعم', 'staff.manage'], ['verification', 'التوثيق', 'players.view'], ['overview', 'الإحصائيات', 'stats.view'], ['players', 'اللاعبون', 'players.view'], ['economy', 'الاقتصاد', 'stats.view'], ['bulk', 'منح جميع اللاعبين', 'wallet.bulk-grant'], ['shop', 'المتجر', 'shop.view'], ['gifts', 'الهدايا', 'shop.view'],
   ['rooms', 'الغرف والألعاب', 'rooms.view'], ['social', 'الغرف الاجتماعية والمجالس', 'social.view'], ['reports', 'بلاغات المجتمع', 'community.moderate'], ['achievements', 'الإنجازات', 'ach.view'], ['notices', 'الإعلانات والفعاليات', 'ann.manage'],
   ['staff', 'المشرفون والصلاحيات', 'staff.manage'], ['audit', 'التدقيق والأمان', 'audit.view'], ['settings', 'الإعدادات', 'settings.view'], ['maintenance', 'الصيانة', 'maint.manage'], ['system', 'الخدمات والمراقبة', 'system.view'], ['health', 'حالة الموقع', 'system.view'],
@@ -62,20 +63,20 @@ export function mountAdmin(root) {
   const can = (p) => S.me?.perms?.includes(p);
 
   function shell(inner) {
-    const tabs = TABS.filter((t) => can(t[2]) && (t[0] !== 'owner-tools' || ownerToolsVisible(S.me)) && (!['pricing', 'progression','payments','rank-vip','auction'].includes(t[0]) || S.me?.role === 'owner') && (t[0] !== 'verification' || ['owner', 'admin'].includes(S.me?.role)));
+    const tabs = TABS.filter((t) => can(t[2]) && (t[0] !== 'owner-tools' || ownerToolsVisible(S.me)) && (!['pricing', 'progression','payments','rank-vip','auction','tribes-cp'].includes(t[0]) || S.me?.role === 'owner') && (t[0] !== 'verification' || ['owner', 'admin'].includes(S.me?.role)));
     const primary = [
       ['overview','لوحة التحكم','overview','home'],['health','حالة الموقع','health','shield'],['players','إدارة اللاعبين','players','users'],
       ['economy','المحفظة والعملات','economy','wallet'],['shop','المتجر والمنتجات','shop','store'],
-      ['rooms','الألعاب والغرف','rooms','game'],['matches','المباريات','rooms','trophy'],
+      ['rooms','الألعاب والمباريات','rooms','game'],
       ['social','الغرف الاجتماعية والمجالس','social','users'],
-      ['tournaments','البطولات والتحديات',null,'calendar'],['rewards','الترتيب والجوائز','achievements','chart'],
-      ['events','الفعاليات والأحداث','notices','calendar'],['announcements','الإعلانات والتنبيهات','notices','megaphone'],
+      ['rewards','الترتيب والجوائز','achievements','chart'],
+      ['announcements','الإعلانات والفعاليات','notices','megaphone'],
       ['staff','إدارة المشرفين والصلاحيات','staff','shield'],['audit','سجل العمليات','audit','list'],['settings','الإعدادات','settings','settings']
     ];
     const btn=([id,label,tab,icon])=>{ const allowed=tab&&tabs.some(t=>t[0]===tab); return `<button type="button" class="${S.navId===id?'on ':''}${allowed?'':'ad-nav-unavailable'}" data-ad-entry data-ad-label="${esc(label)}" data-ad="${allowed?'tab':'unavailable'}" ${allowed?`data-t="${tab}" data-navid="${id}"`:''} ${S.navId===id?'aria-current="page"':''} ${allowed?'':`aria-disabled="true" data-why="${tab?'هالقسم مب ضمن صلاحيات حسابك.':'إدارة البطولات مب منفّذة في النظام الحالي؛ ما بنعرضها كأنها شغّالة.'}"`}><span aria-hidden="true">${adminRoyalIcon(icon)}</span><span>${label}</span>${allowed?'':'<small>غير متاح</small>'}</button>`; };
     const covered=new Set(primary.map(x=>x[2]).filter(Boolean));
     const extra=tabs.filter(t=>!covered.has(t[0]));
-    const extraIcons={pricing:'wallet',payments:'wallet',progression:'crown',functional:'gift',verification:'shield',bulk:'gift',gifts:'gift',reports:'megaphone',maintenance:'settings',system:'chart',health:'shield','owner-tools':'crown'};
+    const extraIcons={'tribes-cp':'crown',pricing:'wallet',payments:'wallet',progression:'crown',functional:'gift',verification:'shield',bulk:'gift',gifts:'gift',reports:'megaphone',maintenance:'settings',system:'chart',health:'shield','owner-tools':'crown'};
     const label = primary.find(x=>x[0]===S.navId)?.[1] || tabs.find(t=>t[0]===S.tab)?.[1] || 'لوحة التحكم';
     return `<div class="ad ad-modern ad-royal${S.sidebarOpen?' ad-sidebar-open':''}"><button type="button" class="ad-mobile-shade" data-ad="close-menu" aria-label="إغلاق القائمة"></button><aside class="ad-side" id="ad-royal-sidebar"><a class="ad-brand" href="#/" aria-label="العودة لموقع لعبنا">${adminRoyalBrand()}</a><nav class="ad-nav" aria-label="أقسام لوحة الإدارة">${primary.map(btn).join('')}<details class="ad-more" ${extra.some(t=>t[0]===S.tab)?'open':''}><summary>أدوات الإدارة الإضافية</summary>${extra.map(t=>btn([t[0],t[1],t[0],extraIcons[t[0]]||'settings'])).join('')}</details><p data-ad-search-empty class="ad-empty" hidden>ما لقينا قسم. اضغط بحث للبحث عن لاعب.</p></nav><img class="ad-side-art" src="/admin-royal-assets/sidebar-controller.png" alt="" loading="lazy"><div class="ad-side-foot">${esc(S.me.name)} · ${esc(S.me.roleLabel)}</div></aside><section class="ad-main-wrap"><header class="ad-head ad-royal-top"><button class="ad-menu-toggle ad-btn ghost" type="button" data-ad="menu" aria-controls="ad-royal-sidebar" aria-expanded="${S.sidebarOpen}">${adminRoyalIcon('menu')}<span class="sr-only">القائمة</span></button><form class="ad-global-search" data-adf="navsearch"><input class="ad-in" name="q" value="${esc(S.search)}" autocomplete="off" placeholder="ابحث في لوحة التحكم أو باسم اللاعب وID…" aria-label="بحث بالأقسام أو اسم اللاعب أو ID"><button type="submit" aria-label="بحث">${adminRoyalIcon('search')}</button></form><details class="ad-account-menu"><summary><span class="ad-manager-symbol">${adminRoyalIcon('crown')}</span><span><b>${esc(S.me.name)}</b><small>${esc(S.me.roleLabel)}</small></span>${adminRoyalIcon('chevron')}</summary><div><p>${esc(S.me.roleLabel)} · ${nf(S.me.perms?.length||0)} صلاحية</p><button type="button" class="ad-btn ghost" data-ad="tab" data-t="settings" ${can('settings.view')?'':'disabled'}>صلاحيات وإعدادات الحساب</button><button type="button" class="ad-btn danger" data-ad="logout">تسجيل الخروج</button></div></details><button class="ad-btn ghost ad-refresh" type="button" data-ad="refresh" aria-label="تحديث بيانات القسم">${adminRoyalIcon('refresh')}</button></header>${S.tab!=='overview'?`<h1 class="ad-page-title">${esc(label)}</h1>`:''}${S.msg?`<div class="ad-note ok" role="status">${esc(S.msg)}</div>`:''}${S.err?`<div class="ad-note bad" role="alert">${esc(S.err)}</div>`:''}<main class="ad-main">${S.navId==='matches'?'<div class="ad-note">المباريات الحالية والمنتهية المتاحة موجودة ضمن الغرف. سجل تاريخي مستقل لكل مباراة مب متوفر؛ ما نعرض أرقام تاريخية غير موثقة.</div>':''}${S.navId==='rewards'?'<div class="ad-note"><a class="ad-btn ghost" href="#/leaderboard">فتح الترتيب الحقيقي للاعبين</a> · إدارة الإنجازات والمكافآت الحالية تحت.</div>':''}${S.navId==='events'?'<div class="ad-note">الفعاليات الحالية إعلانات مجدولة من نوع فعالية، مب نظام بطولة مستقل.</div>':''}${inner}</main></section></div>`;
   }
@@ -96,6 +97,7 @@ export function mountAdmin(root) {
     progression: progressionHTML,
     'rank-vip': () => '<section data-rank-vip-admin></section>',
     auction: () => '<section data-auction-admin></section>',
+    'tribes-cp': () => '<section data-tribes-cp-admin></section>',
     social: () => '<section data-social-admin></section>',
     payments: () => '<div data-payment-admin></div>',
     functional: () => '<div data-functional-admin></div>',
@@ -157,21 +159,25 @@ export function mountAdmin(root) {
         <div class="ad-form"><label>الخصم %<input class="ad-in" name="discount" type="number" min="0" max="90" value="30"></label><label>المدة (ساعات)<input class="ad-in" name="hours" type="number" min="1" max="720" value="48"></label><label>يبدأ<input class="ad-in" name="startsAt" type="datetime-local"></label><label class="ad-check"><input type="checkbox" name="exclusive"> حصري</label></div>
         <button class="ad-btn" type="submit">إضافة العرض</button></form>
         ${d.offers.list.length ? `<div class="ad-list">${d.offers.list.slice(0, 40).map((o) => `<div class="ad-line"><span><b>${esc(o.itemName)}</b><small>${OFST[o.state] || ''} · خصم ${nf(o.discount)}%${o.exclusive ? ' · حصري' : ''} · ${dt(o.startsAt)} ← ${dt(o.endsAt)}</small></span>${o.state !== 'ended' ? `<button class="ad-btn ghost" data-ad="offer-end" data-id="${esc(o.id)}" data-arm="1">إنهاء</button>` : ''}</div>`).join('')}</div>` : empty('ما فيه عروض للحين.')}</section>`;
-      const mg = can('shop.manage'); const SL = { frame: 'إطار', bg: 'خلفية', title: 'لقب', badge: 'شارة' }; const cur = (c) => (c === 'gems' ? '💎' : '🪙');
+      const mg = can('shop.manage'); const SL = { frame: 'إطار', bg: 'خلفية', title: 'لقب', badge: 'شارة', 'chat-bubble': 'فقاعة دردشة', board: 'لوحة اسم', 'special-id': 'أيدي مميز', 'room-id': 'أيدي غرفة', 'mic-frame': 'إطار مايك', 'room-bg': 'خلفية غرفة', souvenir: 'تذكار', avatar: 'أفاتار', entrance: 'دخول' }; const NEW_SL = ['frame', 'bg', 'chat-bubble', 'board', 'title', 'badge', 'special-id', 'room-id']; const cur = () => '🪙'; const shown = (p, c) => c === 'gems' ? p * 20 : p;
       const optsOf = (arr) => arr.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
-      const addForm = mg ? `<section class="ad-card"><h2>إضافة منتج</h2><p class="ad-muted">المنتج الجديد تجميلي فقط. الإطار والخلفية تختار مظهرهما من القائمة المتوفرة بالواجهة؛ اللقب والشارة نص قصير. المعرّف ما يتغيّر بعد الإنشاء والمنتج ما يُحذف (فقط يُعطَّل).</p>
+      const addForm = mg ? `<section class="ad-card"><h2>إضافة منتج</h2><p class="ad-muted">المنتج الجديد تجميلي فقط. الإطار والخلفية والفقاعة واللوحة تختار شكلها من الرسومات الموجودة؛ اللقب والشارة نص قصير؛ الأيدي المميز رقم. المعرّف ما يتغيّر بعد الإنشاء والمنتج ما يُحذف (فقط يُعطَّل).</p>
         <form data-adf="shopnew" class="ad-form col"><input class="ad-in" name="id" placeholder="المعرّف (إنجليزي، مثل frame-ruby)" required maxlength="32" dir="ltr" pattern="[a-z][a-z0-9-]{2,31}">
-        <select class="ad-in" name="slot">${Object.entries(SL).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
+        <select class="ad-in" name="slot">${NEW_SL.map((k) => `<option value="${k}">${SL[k]}</option>`).join('')}</select>
         <input class="ad-in" name="name" placeholder="الاسم" required maxlength="40"><input class="ad-in" name="icon" placeholder="الأيقونة (إيموجي)" required maxlength="8"><input class="ad-in" name="desc" placeholder="الوصف (اختياري)" maxlength="120">
         <div class="ad-row2"><input class="ad-in" name="price" type="number" min="1" step="1" placeholder="السعر" required inputmode="numeric"><select class="ad-in" name="currency"><option value="coins">🪙 عملات</option></select></div>
         <label>مظهر الإطار (إن كانت الخانة إطار)<select class="ad-in" name="cssFrame">${optsOf(s.presets.frame)}</select></label>
         <label>مظهر الخلفية (إن كانت الخانة خلفية)<select class="ad-in" name="cssBg">${optsOf(s.presets.bg)}</select></label>
+        <label>شكل الفقاعة (إن كانت فقاعة دردشة)<select class="ad-in" name="cssBubble">${optsOf(s.presets['chat-bubble'] || [])}</select></label>
+        <label>شكل اللوحة (إن كانت لوحة اسم)<select class="ad-in" name="cssBoard">${optsOf(s.presets.board || [])}</select></label>
+        <label>رقم الأيدي (إن كان أيدي مميز أو أيدي غرفة)<input class="ad-in" name="cssId" inputmode="numeric" dir="ltr" maxlength="10" pattern="[1-9][0-9]{2,9}"></label>
+        <p class="ad-muted">إطار المايك وخلفية الغرفة والتذكار يحتاجون رسومات جديدة، فتنضاف من الكتالوج مو من هنا.</p>
         <label>نص اللقب أو رمز الشارة (إن كانت الخانة لقب/شارة)<input class="ad-in" name="cssText" maxlength="24"></label>
         ${shopFields()}<button class="ad-btn" type="submit">إضافة المنتج</button></form></section>` : '';
       const card = (i) => `<article class="ad-card"><h3>${esc(i.icon)} ${esc(i.name)} <em class="ad-tag">${SL[i.slot] || esc(i.slot)}</em> ${i.active ? '<em class="ad-tag ok">معروض للبيع</em>' : '<em class="ad-tag">موقوف</em>'}${i.custom ? '<em class="ad-tag">مضاف</em>' : ''}</h3>
-        <p class="ad-sub"><code dir="ltr">${esc(i.id)}</code> · ${nf(i.price)} ${cur(i.currency)}${i.defaults && (i.defaults.price !== i.price || i.defaults.currency !== i.currency) ? ` <small>(الأصلي ${nf(i.defaults.price)} ${cur(i.defaults.currency)})</small>` : ''} · ${nf(i.owners)} مالك</p>
+        <p class="ad-sub"><code dir="ltr">${esc(i.id)}</code> · ${nf(shown(i.price, i.currency))} 🪙${i.defaults && shown(i.defaults.price, i.defaults.currency) !== shown(i.price, i.currency) ? ` <small>(الأصلي ${nf(shown(i.defaults.price, i.defaults.currency))} 🪙)</small>` : ''} · ${nf(i.owners)} مالك</p>
         ${mg ? `<form data-adf="shopedit" data-id="${esc(i.id)}" class="ad-form col"><input class="ad-in" name="name" value="${esc(i.name)}" required maxlength="40"><input class="ad-in" name="icon" value="${esc(i.icon)}" required maxlength="8"><input class="ad-in" name="desc" value="${esc(i.desc)}" maxlength="120" placeholder="الوصف">
-        <div class="ad-row2"><input class="ad-in" name="price" type="number" min="1" step="1" value="${i.price}" required inputmode="numeric"><select class="ad-in" name="currency"><option value="coins"${i.currency === 'coins' ? ' selected' : ''}>🪙 عملات</option>${i.currency === 'gems' ? '<option value="gems" selected>💎 جواهر (قديم: يظهر للاعبين ×20 عملة)</option>' : ''}</select></div>
+        <div class="ad-row2"><input class="ad-in" name="price" type="number" min="${i.currency === 'gems' ? 20 : 1}" step="${i.currency === 'gems' ? 20 : 1}" value="${shown(i.price, i.currency)}" required inputmode="numeric"><input type="hidden" name="currency" value="${esc(i.currency)}"><span class="ad-muted">🪙 عملات</span></div>
         ${shopFields(i)}<div class="ad-acts"><button class="ad-btn" type="submit" name="op" value="save">حفظ التعديل</button><button class="ad-btn ghost" type="submit" name="op" value="${i.active ? 'off' : 'on'}">${i.active ? 'إيقاف البيع' : 'تفعيل البيع'}</button></div></form>` : ''}</article>`;
       return offersCard + `<div class="ad-note">${esc(s.note)}</div>${s.persistent ? '' : '<div class="ad-note warn">تنبيه: لا يوجد WALLET_FILE فالتعديلات بالذاكرة وتضيع عند إعادة التشغيل.</div>'}<div class="ad-grid">${stat('إجمالي المقتنيات المشتراة', nf(s.purchases))}${stat('عدد المنتجات', nf(s.items.length))}${stat('معروضة للبيع', nf(s.items.filter((x) => x.active).length))}</div>${addForm}
         <section class="ad-card"><h2>المنتجات والأسعار</h2></section><div class="ad-list">${s.items.map(card).join('')}</div>`;
@@ -305,12 +311,14 @@ export function mountAdmin(root) {
     if(rankVipRoot && S.me?.role==='owner') rankVipAdminMount=mountRankVipAdmin(rankVipRoot,{call,actor:S.me});
     const auctionRoot=root.querySelector('[data-auction-admin]');
     if(auctionRoot && S.me?.role==='owner')auctionAdminMount=mountAuctionAdminR47(auctionRoot,{call,actor:S.me});
+    const tcRoot=root.querySelector('[data-tribes-cp-admin]');
+    if(tcRoot && S.me?.role==='owner') import('./tribes-cp-admin-r67.js?v=r67af').then(({mountTribesCpAdmin})=>{if(tcRoot.isConnected)mountTribesCpAdmin(tcRoot,{call});}).catch(()=>{if(tcRoot.isConnected)tcRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const socialRoot=root.querySelector('[data-social-admin]');
     if(socialRoot && can('social.view')) socialAdminMount=mountSocialAdmin(socialRoot,{call,actor:S.me});
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=r67ac').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r67af').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {
@@ -477,7 +485,7 @@ export function mountAdmin(root) {
     if (k === 'ban' && pid) { await run(async () => { await call(`players/${pid}/ban`, { method: 'POST', body: { reason: v('reason') } }); await reopen(); }, 'تم الحظر.'); return paint(); }
     if (k === 'staff' && pid) { await run(async () => { await call('staff', { method: 'POST', body: { id: pid, role: v('role') } }); await reopen(); }, 'تم التعيين.'); return paint(); }
     if (k === 'shopnew') {
-      const slot = v('slot'); const css = slot === 'frame' ? v('cssFrame') : slot === 'bg' ? v('cssBg') : v('cssText');
+      const slot = v('slot'); const css = slot === 'frame' ? v('cssFrame') : slot === 'bg' ? v('cssBg') : slot === 'chat-bubble' ? v('cssBubble') : slot === 'board' ? v('cssBoard') : slot === 'special-id' || slot === 'room-id' ? v('cssId') : v('cssText');
       const item = { id: v('id'), slot, name: v('name'), icon: v('icon'), desc: v('desc'), price: num('price'), currency: v('currency'), css, status:v('status'), minLevel:num('minLevel'), minVip:num('minVip'), minNoble:num('minNoble') };
       await run(async () => {
         try { await call('shop/items', { method: 'POST', body: item }); }
@@ -491,7 +499,7 @@ export function mountAdmin(root) {
       }, 'أُضيف المنتج.').then((r) => { if (r === 'dup') S.msg = 'المنتج «' + item.name + '» موجود بنفس البيانات: طلبك السابق نجح، وما انضاف مرة ثانية.'; });
       return go(undefined, true);
     }
-    if (k === 'shopedit') { const op = sub?.value; const id = f.dataset.id; await run(() => call('shop/items/' + id, { method: 'PUT', body: op === 'save' ? { name: v('name'), icon: v('icon'), desc: v('desc'), price: num('price'), currency: v('currency'),status:v('status'),minLevel:num('minLevel'),minVip:num('minVip'),minNoble:num('minNoble') } : { active: op === 'on' } }), op === 'save' ? 'حُفظ التعديل.' : op === 'on' ? 'فُعّل البيع.' : 'أُوقف البيع.'); return go(undefined, true); }
+    if (k === 'shopedit') { const op = sub?.value; const id = f.dataset.id; await run(() => call('shop/items/' + id, { method: 'PUT', body: op === 'save' ? { name: v('name'), icon: v('icon'), desc: v('desc'), price: v('currency') === 'gems' ? Math.max(1, Math.round(num('price') / 20)) : num('price'), currency: v('currency'),status:v('status'),minLevel:num('minLevel'),minVip:num('minVip'),minNoble:num('minNoble') } : { active: op === 'on' } }), op === 'save' ? 'حُفظ التعديل.' : op === 'on' ? 'فُعّل البيع.' : 'أُوقف البيع.'); return go(undefined, true); }
     if (k === 'gsearch') { S.gq = v('q'); S.gcat = v('cat'); S.goff = 0; return go(); }
     if (k === 'gprice') { await run(() => call('gifts/' + f.dataset.id, { method: 'POST', body: { price: Number(v('price')) } }), 'تم حفظ السعر.'); return go(undefined, true); }
     if (k === 'rdecide') { const op = sub?.value === 'remove' ? 'remove' : 'dismiss'; await run(() => call(`reports/${f.dataset.id}/${op}`, { method: 'POST', body: { reason: v('reason') } }), op === 'remove' ? 'انحذف المحتوى وانقفل البلاغ.' : 'انرفض البلاغ.'); return go(undefined, true); }

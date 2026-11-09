@@ -35,6 +35,8 @@ export class CpPoints {
     this.disk = new Persister('cp-points', file, () => this.d, now, mon, validCpPoints);
   }
   get(key: string): number { return this.d.pts[key] ?? 0; }
+  /** R67ae: الإدارة تصفّر نقاط ارتباط */
+  reset(key: string): void { if (!(key in this.d.pts)) return; const prev = structuredClone(this.d); delete this.d.pts[key]; if (this.d.days) delete this.d.days[key]; try { this.disk.mustSave(); } catch (e) { this.d = prev; throw e; } }
   private now: () => number = Date.now;
   day(key: string, now = this.now()): Day { const today = cpToday(now), d = this.d.days?.[key]; return d && d.d === today ? d : { d: today, gift: 0, claimed: [] }; }
   /** R67: هدية اليوم بين الطرفين (للمهمة اليومية) */

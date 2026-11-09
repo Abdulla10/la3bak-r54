@@ -79,6 +79,20 @@ export class Tribes {
   }
   leave(user: string): void { const t = this.of(user); if (!t) throw new TribeError('no_tribe'); if (t.leader === user) throw new TribeError('leader_leave'); this.tx(() => { t.members = t.members.filter((m) => m.id !== user); }); }
   disband(leader: string): Tribe { const t = this.of(leader); if (!t) throw new TribeError('no_tribe'); if (t.leader !== leader) throw new TribeError('not_leader'); this.tx(() => { this.d.tribes = this.d.tribes.filter((x) => x.id !== t.id); }); return t; }
+  /** R67ae: أدوات الإدارة (المالك) */
+  all(): Tribe[] { return this.d.tribes; }
+  adminRename(id: number, rawName: string): Tribe {
+    const t = this.get(id); if (!t) throw new TribeError('not_found');
+    const name = String(rawName ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+    if (name.length < 3 || name.length > 24 || !/^[\p{L}\p{M}\p{N} _-]+$/u.test(name)) throw new TribeError('name');
+    if (this.d.tribes.some((x) => x.id !== id && x.name.toLowerCase() === name.toLowerCase())) throw new TribeError('name_taken');
+    this.tx(() => { t.name = name; }); return t;
+  }
+  adminKick(id: number, user: string): Tribe {
+    const t = this.get(id); if (!t) throw new TribeError('not_found'); if (t.leader === user) throw new TribeError('leader_leave');
+    if (!t.members.some((m) => m.id === user)) throw new TribeError('not_member'); this.tx(() => { t.members = t.members.filter((m) => m.id !== user); }); return t;
+  }
+  adminDisband(id: number): Tribe { const t = this.get(id); if (!t) throw new TribeError('not_found'); this.tx(() => { this.d.tribes = this.d.tribes.filter((x) => x.id !== id); }); return t; }
   /** هدية مؤكدة بالمحفظة من عضو. ترجع القبيلة إذا تغيّرت. */
   addGift(from: string, gems: number): Tribe | null {
     if (!nat(gems) || !gems) return null; const t = this.of(from); if (!t) return null; const m = t.members.find((x) => x.id === from)!;

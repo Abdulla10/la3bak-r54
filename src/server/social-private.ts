@@ -289,6 +289,12 @@ export class SocialPrivate {
   }
   /** R58w: الارتباط الافتراضي الحالي (للخادم بس: نقاط CP). ما يغيّر شي ولا يتجاوز إعدادات الظهور. */
   coupleOf(me: string): { id: number; partner: string; at: number } | null { const b = (this.d.familyR47?.couples ?? []).find(x => x.a === me || x.b === me); return b ? { id: b.id, partner: b.a === me ? b.b : b.a, at: b.at } : null; }
+  /** R67ae: للإدارة — كل الارتباطات، وفك ارتباط واحد */
+  allCouples(): { id: number; a: string; b: string; at: number }[] { return (this.d.familyR47?.couples ?? []).map((x) => ({ id: x.id, a: x.a, b: x.b, at: x.at })); }
+  adminBreakCouple(id: number): { a: string; b: string } | null {
+    const c = (this.d.familyR47?.couples ?? []).find((x) => x.id === id); if (!c) return null;
+    this.tx(() => { const st = this.d.familyR47!; st.couples = st.couples.filter((x) => x.id !== id); }); return { a: c.a, b: c.b };
+  }
   /** Parent resolves subject/viewer from the current account/profile; never accept internal IDs from HTTP. */
   familyPublic(subject: string, viewer?: string) {
     return publicFamilyView(this.d.familyR47 ?? emptyFamilyState(), subject, viewer, this.familyContext());

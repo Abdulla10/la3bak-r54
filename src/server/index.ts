@@ -20,8 +20,10 @@ import { MemoryStore, type RoomStore } from './store.js';
 import { Leaderboard, validBoard } from './leaderboard.js';
 import { Matchmaker } from './matchmaker.js';
 import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
-import { CpPoints, cpKey, cpLevelOf, CP_TASKS } from './cp-r58.js';
-import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, tribeLevelOf, type Tribe } from './tribes-r58.js';
+import { CpPoints, cpKey, cpLevelOf, CP_TASKS, CP_LEVELS, CP_LEVEL_NAMES } from './cp-r58.js';
+import { ROCKET_PLANETS } from './room-rocket-r58.js';
+import { CANNON3_LEVELS } from './room-cannon-r59.js';
+import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, TRIBE_LEVELS, tribeLevelOf, type Tribe } from './tribes-r58.js';
 import { TribeTreasure, TreasureError, TREASURE_ERR, TRIBE_TASKS, TRIBE_BOXES, TRIBE_SHOP, ROCKET_PRESTIGE, launchGrants, planetOfLaunch } from './tribe-treasure-r59.js';
 import { achOf, achView, earned, type AchInput } from './achievements.js';
 import { City, CityError, validCity } from './city.js';
@@ -54,7 +56,7 @@ import { FunctionalOutbox, validFunctionalOutbox, type FunctionalIntent } from '
 import { validGiftSupportContext, type GiftSupportContext } from './social-challenge.js';
 import { DataDirectoryLock } from './data-directory-lock.js';
 import { SessionRegistry, validSessionRegistry, sessionTokenHash } from './session-registry.js';
-import { FunctionalHttp } from './functional-http.js';
+import { FunctionalHttpError, FunctionalHttp } from './functional-http.js';
 import { Payments, validPayments } from './payments.js';
 import { wirePaymentRoutes, paymentWebhookHandler } from './payment-http.js';
 import { TapPaymentProvider } from './tap-payments.js';
@@ -1171,6 +1173,52 @@ export async function createApp(
   functionalHttp.add('POST', '/api/tribes/:id/kick', ({ user, params, body }) => tribeRun(() => { const who = community.resolvePublicId(String((body as any)?.user ?? '')); if (!who) throw new TribeError('not_member'); tribes.kick(user.id, Number(params.id), who); tribePush([who]); return { ok: true }; }));
   functionalHttp.add('POST', '/api/tribes/leave', ({ user }) => tribeRun(() => { tribes.leave(user.id); return { ok: true }; }));
   functionalHttp.add('POST', '/api/tribes/disband', ({ user }) => tribeRun(() => { const t = tribes.disband(user.id); tribePush(t.members.map((m) => m.id).filter((x) => x !== user.id)); return { ok: true }; }));
+  // R67ae: لوحة الإدارة — القبائل وCP والصاروخ والمدفع (المالك فقط، وكل تعديل ينسجل بالتدقيق)
+  {
+    const nm = (id: string) => accounts.nameOf(id) || id.slice(0, 8);
+    const adminNeed = (c: boolean, m: string) => { if (!c) throw new FunctionalHttpError(400, m); };
+    const tribeAdminRun = <T>(fn: () => T): T => { try { return fn(); } catch (e) { if (e instanceof TribeError) throw new FunctionalHttpError(400, TRIBE_ERR[e.code] ?? 'تعذّر التنفيذ.'); throw e; } };
+    functionalHttp.add('GET', '/api/admin/tribes-cp', () => {
+      const wk = weekKeyOf(Date.now());
+      const list = tribes.all().map((t) => ({ id: t.id, name: t.name, leader: nm(t.leader), leaderId: t.leader, at: t.at, members: t.members.map((m) => ({ id: m.id, name: nm(m.id), pts: m.pts, leader: m.id === t.leader })), pts: t.pts, monthPts: tribes.monthPts(t), weekPts: treasure.weekPts(t.id), level: tribeLevelOf(t.pts) }))
+        .sort((a, b) => b.monthPts - a.monthPts || b.pts - a.pts);
+      const couples = social.allCouples().map((c) => { const pts = cpPoints.get(cpKey(c.id, c.a, c.b)); return { id: c.id, a: nm(c.a), b: nm(c.b), at: c.at, pts, level: cpLevelOf(pts) }; }).sort((x, y) => y.pts - x.pts);
+      return {
+        ok: true, week: wk, tribes: list, couples,
+        config: {
+          tribeLevels: TRIBE_LEVELS, warFuel: WAR_FUEL, rocketPrestige: ROCKET_PRESTIGE,
+          rocket: ROCKET_PLANETS.map((p) => ({ stage: p.stage, name: p.name, goal: p.goal, prizes: p.prizes, gifts: p.gifts.map((g) => g.map((x) => x.name)), luck: p.luck.name })),
+          cannon: CANNON3_LEVELS.map((l) => ({ level: l.level, goal: l.goal, coins: l.coins, top1: l.top1.name, items: l.items.map((x) => x.name) })),
+          cpLevels: CP_LEVELS.map((min, i) => ({ min, name: CP_LEVEL_NAMES[i] })), cpTasks: CP_TASKS,
+        },
+      };
+    }, 'owner');
+    functionalHttp.add('POST', '/api/admin/tribes-cp/tribe', ({ actor, body }) => {
+      const id = Number(body.id), op = String(body.op ?? ''), reason = String(body.reason ?? '').trim().slice(0, 200);
+      adminNeed(Number.isSafeInteger(id) && id > 0, 'رقم القبيلة غير صالح.'); adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+      const before = tribes.get(id); adminNeed(!!before, 'القبيلة غير موجودة.');
+      const ids = before!.members.map((m) => m.id); let detail = '';
+      if (op === 'rename') { const t = tribeAdminRun(() => tribes.adminRename(id, String(body.name ?? ''))); detail = `${before!.name} → ${t.name}`; }
+      else if (op === 'kick') { const u = String(body.user ?? ''); tribeAdminRun(() => tribes.adminKick(id, u)); detail = `طرد ${nm(u)}`; }
+      else if (op === 'disband') { tribeAdminRun(() => tribes.adminDisband(id)); detail = `حل القبيلة ${before!.name}`; }
+      else throw new FunctionalHttpError(400, 'عملية غير معروفة.');
+      tribePush(ids);
+      const auditOk = admin.audit(actor!, 'tribe.' + op, 'tribe:' + id, `${detail} — ${reason}`);
+      return { ok: true, auditOk };
+    }, 'owner');
+    functionalHttp.add('POST', '/api/admin/tribes-cp/couple', ({ actor, body }) => {
+      const id = Number(body.id), op = String(body.op ?? ''), reason = String(body.reason ?? '').trim().slice(0, 200);
+      adminNeed(Number.isSafeInteger(id) && id > 0, 'رقم الارتباط غير صالح.'); adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+      const c = social.allCouples().find((x) => x.id === id); adminNeed(!!c, 'الارتباط غير موجود.');
+      const key = cpKey(c!.id, c!.a, c!.b);
+      if (op === 'reset') cpPoints.reset(key);
+      else if (op === 'break') { social.adminBreakCouple(id); cpPoints.reset(key); }
+      else throw new FunctionalHttpError(400, 'عملية غير معروفة.');
+      for (const u of [c!.a, c!.b]) sendToUser(u, { t: 'cp:update' });
+      const auditOk = admin.audit(actor!, 'cp.' + op, 'couple:' + id, `${nm(c!.a)} و ${nm(c!.b)} — ${reason}`);
+      return { ok: true, auditOk };
+    }, 'owner');
+  }
   functionalHttp.add('GET', '/api/friends/live', ({ user }) => {
     const ids = social.friendInternalIds(user.id).slice(0, 200);
     const list = ids.map((f) => { // الأصدقاء المقبولين بس يشوفون الغرفة، إلا إذا الصديق قفّل «إظهار التواجد» بنفسه

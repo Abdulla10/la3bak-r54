@@ -268,7 +268,7 @@ export function createAdmin(d: AdminDeps) {
     return {
       items, purchases: Object.values(owned).reduce((a, b) => a + b, 0), editable: true, persistent: d.shopcat.persistent,
       presets: PRESETS, priceMax: PRICE_MAX,
-      note: 'تعديل السعر يسري على الشراء القادم فقط ولا يغيّر ما اشتراه اللاعبون. المنتج ما يُحذف: التعطيل يوقف البيع فقط ويبقى عند من يملكه. لا توجد هدايا بين اللاعبين بالنظام.',
+      note: 'تعديل السعر يسري على الشراء القادم فقط ولا يغيّر ما اشتراه اللاعبون. المنتج ما يُحذف: التعطيل يوقف البيع فقط ويبقى عند من يملكه.',
     };
   }
   const itemInput = (b: Record<string, unknown>) => { const o: Record<string, unknown> = {}; for (const k of ['id', 'slot', 'name', 'icon', 'desc', 'price', 'currency', 'css', 'active', 'status', 'minLevel', 'minVip', 'minNoble']) if (k in b) o[k] = b[k]; return o; };
@@ -727,5 +727,5 @@ export function createAdmin(d: AdminDeps) {
   }
 
   const publicStatus = (user: { id: string } | null) => { const m = P.maintenance(); const ban = user ? P.banOf(user.id) : null; return { maintenance: { on: m.on, message: m.message, since: m.since }, staff: !!(user && P.roleOf(user.id)), ban: ban ? { reason: ban.reason } : null, notices: P.activeNotices() }; };
-  return { handle, actorOf, maintenanceBlock, banBlock, publicStatus, resumeApprovals, retryBulk: () => { bulkStore.retry(); d.bulkGrants?.runBatch(); }, stop: () => clearInterval(lagTimer) };
+  return { handle, actorOf, audit: safeAudit, maintenanceBlock, banBlock, publicStatus, resumeApprovals, retryBulk: () => { bulkStore.retry(); d.bulkGrants?.runBatch(); }, stop: () => clearInterval(lagTimer) };
 }

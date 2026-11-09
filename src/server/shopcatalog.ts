@@ -71,7 +71,10 @@ const approvedProposal = (o: Override | undefined): boolean => !!o
 export class ShopInputError extends Error { constructor(msg: string, public code = 400) { super(msg); } }
 
 /** أنماط الإطار/الخلفية المتاحة = اللي في الكتالوج الأساسي (لها CSS فعلي بالواجهة) */
-export const PRESETS: Record<'frame' | 'bg', string[]> = {
+export const PRESETS: Record<'frame' | 'bg' | 'chat-bubble' | 'board', string[]> = {
+  // R67ae: الفقاعات واللوحات من الرسومات الموجودة
+  'chat-bubble': [...new Set(CATALOG.filter((i) => i.slot === 'chat-bubble').map((i) => i.css ?? '').filter(Boolean))],
+  board: [...new Set(CATALOG.filter((i) => i.slot === 'board').map((i) => i.css ?? '').filter(Boolean))],
   frame: [...new Set(CATALOG.filter((i) => i.slot === 'frame').map((i) => i.css ?? ''))],
   bg: [...new Set(CATALOG.filter((i) => i.slot === 'bg' && !i.proposalOnly).map((i) => i.css ?? ''))],
 };
@@ -174,7 +177,14 @@ export class ShopCatalog {
     if (slot === 'entrance') throw new ShopInputError('دخول السيارات متاح من العناصر الأساسية المعتمدة فقط.');
     if (slot === 'mic-frame') throw new ShopInputError('إطارات المايك من رسومات الكتالوج المعتمدة فقط.');
     if (slot === 'souvenir') throw new ShopInputError('التذكارات متاحة من رسومات الكتالوج المعتمدة فقط.');
-    if (slot === 'frame' || slot === 'bg') {
+    if (slot === 'room-bg') throw new ShopInputError('خلفيات الغرف تحتاج صورة جديدة؛ تنضاف من رسومات الكتالوج المعتمدة.');
+    if (slot === 'special-id' || slot === 'room-id') {
+      const c = String(raw ?? '').trim();
+      if (!/^[1-9][0-9]{2,9}$/.test(c)) throw new ShopInputError('الأيدي المميز أرقام فقط (3 إلى 10 أرقام) وما يبدأ بصفر.');
+      if (CATALOG.some((i) => i.slot === slot && i.css === c) || Object.values(this.d.custom).some((i) => i.slot === slot && i.css === c)) throw new ShopInputError('هذا الأيدي موجود بالمتجر من قبل.', 409);
+      return c;
+    }
+    if (slot === 'frame' || slot === 'bg' || slot === 'chat-bubble' || slot === 'board') {
       const c = String(raw ?? '');
       if (!PRESETS[slot].includes(c)) throw new ShopInputError('المظهر لازم يكون من القائمة المتاحة.');
       return c;
@@ -190,7 +200,7 @@ export class ShopCatalog {
     if (achOf(id)) throw new ShopInputError('المعرّف مخصص لإنجاز مكتسب، ولا يُستخدم لمنتج تجاري.', 409);
     if (this.get(id) || id === '__proto__') throw new ShopInputError('المعرّف مستخدم من قبل.', 409);
     const slot = input.slot as Slot;
-    if (!SLOTS.includes(slot)) throw new ShopInputError('الخانة: إطار أو خلفية أو لقب أو شارة.');
+    if (!SLOTS.includes(slot)) throw new ShopInputError('نوع المنتج غير صالح.');
     if (Object.keys(this.d.custom).length >= CUSTOM_CAP) throw new ShopInputError('وصلت الحد الأقصى للمنتجات المضافة.', 409);
     const f = this.fields(input, { slot, currency: slot === 'frame' ? 'gems' : 'coins' }, false);
     const css = this.cssFor(slot, input.css);
