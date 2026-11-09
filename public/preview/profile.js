@@ -221,12 +221,12 @@ function referenceDrawer(ctx,s) {
 }
 
 function referenceBottomNav(ctx={}) {
- const routes=[['#/','home','الرئيسية'],['#/social-rooms','users','الغرف'],['#/community','file','المنشورات'],['#/messages','mail','الرسائل'],['#/profile','person','ملفي']];
+ const routes=[['#/','home','الرئيسية'],['#/social-rooms','users','الغرف'],['#/shop','shop','المتجر'],['#/community','file','المنشورات'],['#/messages','mail','الرسائل'],['#/profile','person','ملفي']];
  return `<nav class="bottom pvp-footer" dir="ltr" aria-label="التنقل الرئيسي">${routes.map(([href,ic,label])=>`<a ${href==='#/profile'?'class="selected" aria-current="page"':''} href="${href}" ${ctx.noCommunity&&['#/social-rooms','#/community','#/messages'].includes(href)?'data-pvp="restricted" aria-disabled="true" title="مقفل بإعدادات ولي الأمر"':''}>${icon(ic)}<small dir="rtl">${label}</small></a>`).join('')}</nav>`;
 }
 
 function referenceHeader(ctx,s) {
- return `<header class="top" dir="rtl"><a class="logo" href="#/" aria-label="LA3BAK لعبنا — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" alt="" width="28" height="24"><b dir="ltr">LA3BAK <span lang="ar">| لعبنا</span></b></a><nav class="actions" aria-label="أدوات الملف"><button type="button" class="lpu-head-button" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${!ctx.noCommunity?`<a href="#/notifications" aria-label="الإشعارات">${icon('bell')}${ctx.unread?'<i class="lpu-notification-dot"></i>':''}</a>`:''}${button('menu',icon('menu'),`aria-label="فتح القائمة" aria-expanded="${s.menu}"`,'lpu-head-button')}</nav></header>`;
+ return `<header class="top" dir="rtl"><a class="logo" href="#/" aria-label="LA3BAK لعبنا — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" alt="" width="28" height="24"><b dir="ltr">LA3BAK <span lang="ar">| لعبنا</span></b></a><nav class="actions" aria-label="أدوات الملف"><button type="button" class="lpu-head-button" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${!ctx.noCommunity?`<a href="#/notifications" aria-label="الإشعارات">${icon('bell')}${ctx.unread?'<i class="lpu-notification-dot"></i>':''}</a>`:''}${/* R67au: زر ☰ انشال بطلب المالك؛ الإعدادات والدعم والمتجر موجودة بالملف والشريط السفلي */''}</nav></header>`;
 }
 
 const headerCount = value => typeof value==='number' && Number.isSafeInteger(value) && value>=0 ? new Intl.NumberFormat('en-US').format(value) : '—';

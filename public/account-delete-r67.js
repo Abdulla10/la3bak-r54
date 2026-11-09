@@ -24,7 +24,7 @@ function openConfirm() {
     if (!e.target.closest('[data-go]') || go.disabled) return;
     go.disabled = true; go.textContent = 'جاري…';
     try {
-      const r = await fetch('/api/account/delete', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: inp.value.trim() }) });
+      const r = await fetch('/api/account-deletion/request', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: inp.value.trim() }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { err.textContent = j.error || 'تعذّر الطلب.'; go.disabled = false; go.textContent = 'احذف حسابي'; return; }
       sh.querySelector('.ad67-box').innerHTML = `<h3>تم ✔️</h3><p>حسابك بينحذف نهائيًا يوم <b>${dateOf(j.executeAt)}</b>. سجلناك خروج من كل الأجهزة. لو غيرت رأيك، سجل دخول قبل هالتاريخ وتقدر تتراجع.</p><div class="ad67-acts"><button type="button" class="ad67-no" data-home>تمام</button></div>`;
@@ -39,7 +39,7 @@ function pendingNotice(d) {
   <div class="ad67-err" data-e></div><div class="ad67-acts"><button type="button" class="ad67-keep" data-keep>تراجع عن الحذف</button><button type="button" class="ad67-no" data-out>تسجيل خروج</button></div></div>`;
   document.body.appendChild(sh);
   sh.addEventListener('click', async (e) => {
-    if (e.target.closest('[data-keep]')) { try { const r = await fetch('/api/account/delete-cancel', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' }); if (!r.ok) throw 0; sh.remove(); location.reload(); } catch { sh.querySelector('[data-e]').textContent = 'تعذّر التراجع، جرّب مرة ثانية.'; } }
+    if (e.target.closest('[data-keep]')) { try { const r = await fetch('/api/account-deletion/cancel', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' }); if (!r.ok) throw 0; sh.remove(); location.reload(); } catch { sh.querySelector('[data-e]').textContent = 'تعذّر التراجع، جرّب مرة ثانية.'; } }
     if (e.target.closest('[data-out]')) { try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); } catch {} location.hash = '#/'; location.reload(); }
   });
 }

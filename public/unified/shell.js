@@ -15,7 +15,7 @@ import * as store from './store.js?v=r67ac';
 import * as payments from './payments.js?v=r63a';
 import * as ranks from './ranks.js?v=r67ac';
 import * as vip from './vip.js?v=r67ac';
-import * as social from './social.js?v=r67as';
+import * as social from './social.js?v=r67au';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
 export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','devices','hidden-posts','community','post','u','not-found']);
 export const hasRoute=name=>routes.includes(name);
@@ -48,9 +48,9 @@ export function walletStripHTML(ctx={}){
   return `<section class="lb-wallet-strip" aria-label="رصيد حسابك" dir="ltr">${[['coins','العملات']].map(([key,label])=>`<div class="lb-wallet-capsule"><span class="lb-wallet-art" role="img" aria-label="${label}">${key==='coins'?icon('coin'):giftArt({motif:'diamond',cat:'luxury',variant:0,name:label},32)}</span><span class="lb-wallet-value"><small>${label}</small><b data-lb-balance="${key}" dir="ltr">${fmt(ctx[key]??ctx.me?.[key])}</b></span><a href="#/shop/packs/${key}" class="lb-wallet-plus" aria-label="فتح باقات ${label}">${plus}</a></div>`).join('')}</section>`;
 }
 export function bottomHTML(page,ctx={}){
-  const selected={account:'profile',ranks:'profile',vip:'profile',verification:'profile','rank-rewards':'profile',settings:'profile',family:'profile',auction:'home',missions:'profile',wallet:'profile','social-rooms':'rooms','social-room':'rooms',post:'community',u:'community',friends:'messages',notifications:'messages','notifications-internal':'messages',game:'home',hub:'home',room:'home',join:'home',games:'home',shop:'home',payments:'home',city:'home',lobby:'home',play:'home',offline:'home',daily:'home',challenge:'home',events:'home',tournaments:'home',leaderboard:'home'}[page]||page;
+  const selected={account:'profile',ranks:'profile',vip:'profile',verification:'profile','rank-rewards':'profile',settings:'profile',family:'profile',auction:'home',missions:'profile',wallet:'profile','social-rooms':'rooms','social-room':'rooms',post:'community',u:'community',friends:'messages',notifications:'messages','notifications-internal':'messages',game:'home',hub:'home',room:'home',join:'home',games:'home',shop:'shop',payments:'home',city:'home',lobby:'home',play:'home',offline:'home',daily:'home',challenge:'home',events:'home',tournaments:'home',leaderboard:'home'}[page]||page;
   // Forced physical order: left to right home / rooms / posts / messages / profile.
-  return `<nav class="lb-bottom lb-reference-bottom" aria-label="التنقل الرئيسي" dir="ltr">${[['home','home','الرئيسية','#/'],['rooms','users','الغرف','#/social-rooms'],['community','file','المنشورات','#/community'],['messages','mail','الرسائل','#/messages'],['profile','person','ملفي','#/profile']].map(([key,ic,label,url])=>{
+  return `<nav class="lb-bottom lb-reference-bottom" aria-label="التنقل الرئيسي" dir="ltr">${[['home','home','الرئيسية','#/'],['rooms','users','الغرف','#/social-rooms'],['shop','shop','المتجر','#/shop'],['community','file','المنشورات','#/community'],['messages','mail','الرسائل','#/messages'],['profile','person','ملفي','#/profile']].map(([key,ic,label,url])=>{
     const locked=ctx.noCommunity&&protectedRoute(url);
     const inner=`${icon(ic)}<small>${label}</small>${locked?'<span class="lb-nav-lock" aria-hidden="true">مقفل</span>':''}`;
     return locked?`<button type="button" data-lb-nav="${key}" data-lb-locked aria-disabled="true" aria-label="${label}؛ مقفل من إعدادات ولي الأمر">${inner}</button>`:`<a href="${url}" data-lb-nav="${key}" class="${selected===key?'lb-selected':''}"${selected===key?' aria-current="page"':''}>${inner}</a>`;

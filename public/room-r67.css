@@ -449,3 +449,29 @@ html.pf67-full body .pvp-menu-row{background:transparent!important}
 
 /* R67ae: أيدي رسمي للحسابات الإدارية (خانة لين ثلاث خانات) */
 html body .lpu-special-id-label.is-official{background:linear-gradient(90deg,#f6c444,#c7860f)!important;color:#2a1300!important;border-color:#ffe7a0!important;font-weight:800}
+
+/* R67au: المقعد ينضغط من الدائرة نفسها بس (مو أي مكان حولها) */
+html body .so-page .so-seat .so-seat-available{pointer-events:none!important;-webkit-tap-highlight-color:transparent}
+html body .so-page .so-seat .so-seat-available .so-empty-avatar{pointer-events:auto!important;cursor:pointer;touch-action:manipulation}
+html body .so-page .so-seat .so-member{pointer-events:none!important}
+html body .so-page .so-seat .so-member .so-portrait{pointer-events:auto!important;cursor:pointer}
+html body .so-page .so-seat-grid{-webkit-tap-highlight-color:transparent}
+
+/* R67au: خانة كتابة الدردشة — شفافة داخل الإطار، وزر الإرسال ظاهر دايم */
+html body .so-page .so-chat-input-wrap{display:flex!important;align-items:center;gap:6px}
+html body .so-page .so-chat-input-wrap input#so-chat-text{background:transparent!important;color:#2a1840!important;border:0!important;box-shadow:none!important;outline:none;flex:1;min-width:0;font-size:16px}
+html body .so-page .so-chat-input-wrap input#so-chat-text::placeholder{color:currentColor;opacity:.55}
+html body .so-page .so-chat-input-wrap>.so-send-button{display:inline-flex!important;visibility:visible!important;opacity:.45;flex:none;width:32px!important;height:32px!important;padding:6px!important;border-radius:50%!important;border:0!important;background:linear-gradient(135deg,#ffd66b,#e7a93a)!important;color:#2a1300!important;align-items:center;justify-content:center;transition:opacity .15s,transform .15s}
+html body .so-page .so-chat-input-wrap:has(input:not(:placeholder-shown))>.so-send-button,html body .so-page .so-chat-input-wrap.has-text>.so-send-button{opacity:1;transform:scale(1.05)}
+html body .so-page .so-chat-input-wrap>.so-send-button svg{width:20px!important;height:20px!important}
+html body .so-page .so-seat .ob67{display:none}
+
+/* R67au: المدفع يلف — يتمايل يمين ويسار، وكل شوي يلف لفة كاملة */
+@keyframes c67Spin{0%{transform:rotate(-14deg) scale(1)}12%{transform:rotate(14deg) scale(1.04)}24%{transform:rotate(-14deg) scale(1)}36%{transform:rotate(14deg) scale(1.04)}48%{transform:rotate(-8deg)}60%{transform:rotate(352deg) scale(1.12)}70%{transform:rotate(360deg) scale(1)}85%{transform:rotate(366deg)}100%{transform:rotate(346deg)}}
+html body .so-page .so-cannon-shortcut img.c59-art{transform-origin:50% 60%;animation:c67Spin 6s ease-in-out infinite;will-change:transform}
+html body .so-page .so-cannon-shortcut:hover img.c59-art,html body .so-page .so-cannon-shortcut:active img.c59-art{animation-duration:2.4s}
+@media (prefers-reduced-motion:reduce){html body .so-page .so-cannon-shortcut img.c59-art{animation:none}}
+
+/* R67au: المتجر بالشريط السفلي — 6 أزرار */
+html body .lb-unified .lb-bottom.lb-reference-bottom,html body .pvp-page.pvp-profile-r15 .bottom{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+html body .lb-unified .lb-reference-bottom small,html body .pvp-page.pvp-profile-r15 .bottom small,html body .pvp-page.pvp-profile-r15 .bottom span{font-size:10px!important;white-space:nowrap}

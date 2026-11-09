@@ -444,7 +444,7 @@ function memberCardHTML(c,m){
   const mine=String(m.id)===selfId(c),canMod=moderator(c)&&!mine,isOwner=owner(c)&&!mine,role=publicRole(m,c);
   const portrait=portraitHTML(m,84),frame=typeof m.frame==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(m.frame)?m.frame:null,face=frame?frameOwnedPortrait(frame,portrait,'so-owned-seat-frame'):portrait;
   const pub=/^[A-Za-z0-9_-]{16}$/.test(String(m.id))?String(m.id):'';
-  return `<div class="so-member-card-r55"><div class="so-member-card-face"><span class="so-avatar">${face}</span></div><h3${rankEffects(m.ranks).name?` class="rp-name-${rankEffects(m.ranks).name}"`:''}>${esc(m.name||'عضو')}${m.ranks?.official===true?officialBadge(20):''}</h3><p class="so-member-card-role">${esc(ROLE_NAMES[role]||'عضو')}</p><div class="so-member-card-ranks">${rankBadges(m)}</div>
+  return `<div class="so-member-card-r55"><div class="so-member-card-face"><span class="so-avatar">${face}</span></div><h3${rankEffects(m.ranks).name?` class="rp-name-${rankEffects(m.ranks).name}"`:''}>${esc(m.name||'عضو')}</h3><p class="so-member-card-role">${esc(ROLE_NAMES[role]||'عضو')}</p><div class="so-member-card-ranks">${rankBadges(m)}</div>
   <div class="so-member-card-actions">${pub?`<button type="button" class="so-button so-primary" data-so-action="member-profile" data-id="${esc(pub)}">الملف الشخصي</button>`:''}${pub&&!mine&&!c.ctx.gameRoom?`<button type="button" class="so-button" data-so-action="room-dm" data-peer="${esc(pub)}">رسالة خاصة</button>`:''}${!mine&&typeof c.ctx.socialGifts?.render==='function'?button('member-gift',icon('gift')+' إرسال هدية',`data-id="${esc(m.id)}"`):''}${!mine?button('report-member','إبلاغ',`data-id="${esc(m.id)}"`):''}</div>
   ${canMod?`<div class="so-member-card-mod"><small>إدارة العضو</small><div class="so-actions">${button('mute',m.muted?'إلغاء الكتم':'كتم',`data-id="${esc(m.id)}" data-enabled="${!m.muted}"`)}${button('kick','طرد',`data-id="${esc(m.id)}"`)}${button('ban','حظر',`data-id="${esc(m.id)}"`)}${isOwner?button('moderator',m.role==='moderator'?'إزالة الإشراف':'تعيين مشرف',`data-id="${esc(m.id)}" data-enabled="${m.role!=='moderator'}"`):''}</div></div>`:''}</div>`;
 }
@@ -1032,6 +1032,17 @@ export function mount(root,ctx={}) {
     }
     const target=event.target.closest?.('[data-so-action]');if(!target||!page.contains(target))return;
     event.preventDefault();event.stopPropagation();const action=target.dataset.soAction,id=target.dataset.id,enabled=target.dataset.enabled==='true';
+    /* R67au: قائمة وحدة مفتوحة بس — أي قائمة جديدة تسكّر اللي قبلها */
+    if(['open-panel','emoji','output','room-dm','cinema-open','broadcast-open','room-background','focus-chat','room-heart'].includes(action)){
+      document.querySelectorAll('.dm67 [data-dm="close"]').forEach(b=>{try{b.click();}catch{}});
+      document.querySelectorAll('.st67').forEach(e=>e.remove());
+      if(action!=='broadcast-open')document.querySelectorAll('.bc67-sheet:not([data-pending])').forEach(e=>e.remove());
+      if(action!=='emoji')ui.emoji=false;
+      if(action!=='output')ui.output=false;
+      if(action!=='cinema-open'&&ui.cinemaOpen){ui.cinemaOpen=false;}
+      if(['emoji','output','room-dm','cinema-open','broadcast-open','focus-chat'].includes(action)&&ui.panel){closeGifts();ui.panel='';ui.preview='';if(['room-dm','focus-chat'].includes(action))paint();}
+      if(['emoji','output','room-dm','cinema-open','broadcast-open'].includes(action)&&dialog&&!dialogBusy)closeDialog(false);
+    }
     if(action==='room-photo-clear'){if(!dialogBusy){photoPicker?.clear();dialog?.querySelector('form')?._ownerCreation?.clearPhoto();if(dialog?.querySelector('form'))delete dialog.querySelector('form')._coverKey;}return;}
     // Native retry runs before async network/adult work, preserving a fresh Safari tap.
     if(action==='owner-start-mic-retry'){if(ctx.gameRoom||c.busy||c.loading||dialogBusy||c.voiceBusy||!confirmedOwnerSeat(c.snapshot,c.ownerVoiceStart)||c.voiceState.status!=='connected')return;void c.voice?.microphone(true).then(ok=>{if(alive&&ok&&c.ownerVoiceStart){c.ownerVoiceStart.message='';c.notify();}});return;}

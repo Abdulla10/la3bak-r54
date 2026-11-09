@@ -482,6 +482,8 @@ export async function createApp(
   const offers = new ShopOffers(functionalFile(undefined, 'shop-offers'), storage);
   // R67ae: خصم على قسم كامل (فعالية من اللوحة) لو القطعة ما عليها عرض خاص
   shopcat.offerHook = (id, slot, price) => { const own = offers.forItem(id); if (own) return own; if (!slot || !price) return null; const ev = siteFlags.saleFor(slot); return ev ? { discount: ev.percent ?? 0, startsAt: ev.startsAt, endsAt: ev.endsAt, exclusive: false, live: true } : null; };
+  /** R67au: تذكارات CP الجديدة اللي يرسلها المالك تنضاف هنا (فاضي لين توصل رسوماته) */
+  const SOUVENIR_R67 = new Set<string>();
   const shopView = (id: string) => {
     const pr = progress(id); const got = new Set(wallet.claimed(id)); const owned = new Set(wallet.owned(id));
     const ranks = { level: pr.progression.level.value, vip: pr.progression.vip.enabled && pr.progression.vip.value ? Number(pr.progression.vip.value.slice(1)) : 0, noble: pr.progression.noble.enabled && pr.progression.noble.value ? Number(pr.progression.noble.value.slice(1)) : 0 };
@@ -491,7 +493,7 @@ export async function createApp(
     return {
       ok: true, canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), equipped: wallet.equipped(id), equippedView: equippedView(id),
       // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
-      items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && (specialTaken(id, String(i.css ?? '')) || String(i.css ?? '').length <= 3)) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
+      items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && (specialTaken(id, String(i.css ?? '')) || String(i.css ?? '').length <= 3)) && !(i.slot === 'souvenir' && !owned.has(i.id) && !SOUVENIR_R67.has(i.id)) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
       collectionItems: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && i.set && (i.status !== 'hidden' || owned.has(i.id))),
       sets: SETS, rarities: RARITIES, achievements: achView(achInput(id)),
       economy: economy.view(), gemPacks: [],
@@ -543,6 +545,8 @@ export async function createApp(
       if (it.slot === 'entrance') return { ok: false, code: 'unavailable', error: 'هذا القسم غير متاح.' };
       if (achOf(it.id)) return { ok: false, code: 'reserved', error: 'هذا المعرّف مخصص لإنجاز مكتسب، ولا يُشترى.' };
       if (it.slot === 'special-id' && String(it.css ?? '').length <= 3) return { ok: false, code: 'reserved', error: 'الأيدي من خانة لين ثلاث خانات محجوز للإدارة.' };
+      // R67au: التذكارات القديمة انشالت بطلب المالك؛ القسم ينتظر تذكارات CP الجديدة (ساعات، خواتم، شنط، ورد)
+      if (it.slot === 'souvenir' && !SOUVENIR_R67.has(it.id)) return { ok: false, code: 'unavailable', error: 'التذكارات الجديدة قريبًا.' };
       // السعر دائماً من الخادم. لو العميل أرسل السعر اللي شافه وتغيّر، نرفض ونرجّع المتجر محدّثاً (ما نخصم سعراً ما شافه).
       const shownPrice = SINGLE_CUR && it.currency === 'gems' ? it.price * 20 : it.price, shownCur = SINGLE_CUR && it.currency === 'gems' ? 'coins' : it.currency;
       if ((m.seen !== undefined && m.seen !== it.price && m.seen !== shownPrice) || (m.seenCur !== undefined && m.seenCur !== it.currency && m.seenCur !== shownCur)) return { ...shopView(id), ok: false, error: 'تغيّر سعر العنصر أو نوع عملته. راجع العرض الجديد.', code: 'price' };
@@ -1301,7 +1305,7 @@ export async function createApp(
       return { ok: true, auditOk };
     }, 'owner');
     // R67ae: حذف الحساب (مهلة 30 يوم)
-    functionalHttp.add('POST', '/api/account/delete', async ({ user, body }) => {
+    functionalHttp.add('POST', '/api/account-deletion/request', async ({ user, body }) => {
       adminNeed(accounts.has(user.id), 'الحساب غير موجود.'); adminNeed(String(body.confirm ?? '').trim() === 'حذف', 'اكتب كلمة «حذف» للتأكيد.');
       adminNeed(!platform.roleOf(user.id), 'حسابات الإدارة ما تنحذف من هنا. شيل الدور الإداري أول من لوحة التحكم.');
       const r = deletion.request(user.id);
@@ -1311,7 +1315,7 @@ export async function createApp(
       log('account_deletion_requested', {});
       return { ok: true, executeAt: r.executeAt };
     });
-    functionalHttp.add('POST', '/api/account/delete-cancel', ({ user }) => { const ok = deletion.cancel(user.id); return { ok: true, cancelled: ok }; });
+    functionalHttp.add('POST', '/api/account-deletion/cancel', ({ user }) => { const ok = deletion.cancel(user.id); return { ok: true, cancelled: ok }; });
     functionalHttp.add('GET', '/api/admin/account-deletions', () => ({ ok: true, graceDays: DELETION_GRACE_MS / 86_400_000, list: deletion.list().slice(0, 100).map((x) => ({ ...x, name: x.done ? 'حساب محذوف' : nm(x.id) })) }), 'owner');
     const executeDeletion = async (id: string) => {
       try { const rid = socialRooms.roomIdOf(id); if (rid) await socialRooms.command(id, 'room:leave', { roomId: rid, key: randomUUID() }); } catch { /* */ }

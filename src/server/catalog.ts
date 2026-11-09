@@ -1,4 +1,5 @@
 import { rankPerkCatalogItems } from './rank-perks-r56.js';
+import { r67Price } from './store-price-r67.js';
 import { LUX_ITEMS, LUX_SET, SPECIAL_ID_ITEMS, ROOM_ID_ITEMS, SOUVENIR_ITEMS, ROOM_BG_ITEMS } from './store-lux-r57.js';
 import { luxuryPricedSeed } from './luxury-pricing-r23.js';
 import { gemsOnlyStorePrice } from './store-gems-r58.js';
@@ -177,7 +178,7 @@ for (const i of rankPerkCatalogItems()) { if (perkIds.has(i.id)) throw new Error
 const OLD_RARITY: Record<string, Rarity> = { 'frame-emerald': 'common', 'frame-gold': 'premium', 'frame-royal': 'rare', 'frame-neon': 'epic', 'bg-forest': 'common', 'bg-sunset': 'premium', 'bg-desert': 'rare', 'bg-galaxy': 'epic', 'title-fighter': 'common', 'title-ace': 'rare', 'title-legend': 'epic', 'badge-star': 'common', 'badge-diamond': 'premium', 'badge-falcon': 'rare' };
 for (const i of CATALOG) if (!i.rarity) i.rarity = OLD_RARITY[i.id] ?? (i.slot === 'avatar' ? ({ common: 'common', premium: 'premium', rare: 'rare', legendary: 'legendary', exclusive: 'ultra' } as Record<string, Rarity>)[i.css ?? ''] : undefined) ?? 'common';
 for (const i of CATALOG) if (i.id === 'av-emperor') i.set = 'emperor';
-for (let index=0;index<CATALOG.length;index++) CATALOG[index]=gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index]));
+for (let index=0;index<CATALOG.length;index++) CATALOG[index]=r67Price(gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index])));
 const BY_ID = new Map(CATALOG.map((i) => [i.id, i]));
 export const itemOf = (id: unknown): ShopItem | undefined => (typeof id === 'string' ? BY_ID.get(id) : undefined);
 export const SLOTS: Slot[] = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir', 'mic-frame', 'room-bg'];
