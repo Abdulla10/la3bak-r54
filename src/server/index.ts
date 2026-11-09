@@ -20,7 +20,7 @@ import { MemoryStore, type RoomStore } from './store.js';
 import { Leaderboard, validBoard } from './leaderboard.js';
 import { Matchmaker } from './matchmaker.js';
 import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
-import { CpPoints, cpKey, cpLevelOf } from './cp-r58.js';
+import { CpPoints, cpKey, cpLevelOf, CP_TASKS } from './cp-r58.js';
 import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, tribeLevelOf, type Tribe } from './tribes-r58.js';
 import { TribeTreasure, TreasureError, TREASURE_ERR, TRIBE_TASKS, TRIBE_BOXES, TRIBE_SHOP, ROCKET_PRESTIGE, launchGrants, planetOfLaunch } from './tribe-treasure-r59.js';
 import { achOf, achView, earned, type AchInput } from './achievements.js';
@@ -919,7 +919,7 @@ export async function createApp(
   const tribes = new Tribes(process.env.TRIBES_FILE ?? besideSocial('tribes.json'), Date.now, storage);
   const treasure = new TribeTreasure(process.env.TRIBE_TREASURE_FILE ?? besideSocial('tribe-treasure.json'), Date.now, storage);
   // R58w: هدية بين طرفين بينهم ارتباط افتراضي (R47) ترفع نقاط CP
-  const cpGift = (from: string, to: string, rec: { cur?: string; total?: number; price: number; qty?: number; ts: number }) => { try { if (rec.cur === 'gems') { const tv = rec.total ?? rec.price * (rec.qty ?? 1); tribes.addGift(from, tv); const tt = tribes.of(from); if (tt) { const tr = socialRooms.ownerTopRoom(tt.leader); const inside = !!tr && typeof (rec as any).room === 'string' && (rec as any).room.startsWith(`social:${tr.id}:`); if (treasure.gift(tt.id, from, tv, inside).length) settleTribe(tt.id); } } } catch { /* نقاط القبيلة بس */ } try { if (rec.cur !== 'gems') return; const c = social.coupleOf(from); if (!c || c.partner !== to || rec.ts < c.at) return; const v = rec.total ?? rec.price * (rec.qty ?? 1); if (cpPoints.add(cpKey(c.id, from, to), v)) for (const id of [from, to]) sendToUser(id, { t: 'cp:update', kind: 'points' }); } catch { /* الهدية انحفظت؛ نقاط CP بس */ } };
+  const cpGift = (from: string, to: string, rec: { cur?: string; total?: number; price: number; qty?: number; ts: number }) => { try { if (rec.cur === 'gems') { const tv = rec.total ?? rec.price * (rec.qty ?? 1); tribes.addGift(from, tv); const tt = tribes.of(from); if (tt) { const tr = socialRooms.ownerTopRoom(tt.leader); const inside = !!tr && typeof (rec as any).room === 'string' && (rec as any).room.startsWith(`social:${tr.id}:`); if (treasure.gift(tt.id, from, tv, inside).length) settleTribe(tt.id); } } } catch { /* نقاط القبيلة بس */ } try { if (rec.cur !== 'gems') return; const c = social.coupleOf(from); if (!c || c.partner !== to || rec.ts < c.at) return; const v = rec.total ?? rec.price * (rec.qty ?? 1); cpPoints.giftToday(cpKey(c.id, from, to), v); if (cpPoints.add(cpKey(c.id, from, to), v)) for (const id of [from, to]) sendToUser(id, { t: 'cp:update', kind: 'points' }); } catch { /* الهدية انحفظت؛ نقاط CP بس */ } };
   /* R53: «من الذي رآني» و«ادعُ الأصدقاء» — نفس الحسابات والمعرّف العام والحظر والخصوصية القائمة؛ بدون أي حركة مالية */
   const profileSocial = new ProfileSocial(profileSocialFile, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
@@ -1056,6 +1056,23 @@ export async function createApp(
   const cpPerson = (id: string) => { const photo = avatars.version(id); return { id: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : (wallet.equippedAvatar(id) ?? null) }; };
   const cpStats = (c: { id: number; partner: string; at: number }, me: string) => { const pts = cpPoints.get(cpKey(c.id, me, c.partner)); const lv = cpLevelOf(pts); return { pts, ...lv, days: Math.floor((Date.now() - c.at) / 86_400_000) + 1, since: c.at }; };
   functionalHttp.add('GET', '/api/cp/me', ({ user }) => { const age = accounts.socialAge(user.id); const c = social.coupleOf(user.id); let hidden = true; try { const snap = social.familySnapshot(user.id) as { couple?: { hidden?: boolean } | null }; hidden = !snap?.couple || snap.couple.hidden === true; } catch { /* حد القراءة: نخفي الشريك */ } return { ok: true, adult: age !== null && age >= 18, me: cpPerson(user.id), cp: c ? { partner: hidden ? null : cpPerson(c.partner), hidden, ...cpStats(c, user.id) } : null }; });
+  // R67: مساحة CP — المهام اليومية (المكافأة نقاط CP بس)
+  const cpTaskView = (me: string) => {
+    const c = social.coupleOf(me); if (!c) return null; const key = cpKey(c.id, me, c.partner), day = cpPoints.day(key);
+    const since = Date.parse(day.d + 'T00:00:00+04:00');
+    const mineRoom = socialRooms.mediaAccess(me)?.roomId ?? null, theirRoom = socialRooms.mediaAccess(c.partner)?.roomId ?? null;
+    const progress: Record<string, number> = { msg: social.pairMessagesSince(me, c.partner, since), room: mineRoom && mineRoom === theirRoom ? 1 : 0, gift: day.gift > 0 ? 1 : 0 };
+    return { key, list: CP_TASKS.map((t) => ({ id: t.id, name: t.name, need: t.need, reward: t.reward, have: Math.min(t.need, progress[t.id] ?? 0), claimed: day.claimed.includes(t.id) })) };
+  };
+  functionalHttp.add('GET', '/api/cp/tasks', ({ user }) => { const v = cpTaskView(user.id); return { ok: true, tasks: v ? v.list : [] }; });
+  functionalHttp.add('POST', '/api/cp/tasks/:id/claim', ({ user, params }) => {
+    const v = cpTaskView(user.id); if (!v) return { ok: false, error: 'ما عندك CP.' };
+    const t = v.list.find((x) => x.id === params.id); if (!t) return { ok: false, error: 'المهمة غير موجودة.' };
+    if (t.claimed) return { ok: false, error: 'استلمتها اليوم.' }; if (t.have < t.need) return { ok: false, error: 'المهمة ما خلصت للحين.' };
+    if (!cpPoints.claim(v.key, t.id, t.reward)) return { ok: false, error: 'تعذّر الحفظ، جرّب بعد شوي.' };
+    const c = social.coupleOf(user.id); if (c) for (const id of [user.id, c.partner]) sendToUser(id, { t: 'cp:update', kind: 'points' });
+    return { ok: true, tasks: cpTaskView(user.id)?.list ?? [] };
+  });
   functionalHttp.add('GET', '/api/cp/of/:pub', ({ user, params }) => {
     const id = community.resolvePublicId(String(params.pub ?? '')); if (!id || !accounts.has(id)) return { ok: false, error: 'الحساب غير متاح.' };
     const pub = social.familyPublic(id, user.id) as { couple?: { partnerPub?: string } | null }; const c = social.coupleOf(id);

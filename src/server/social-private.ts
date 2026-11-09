@@ -227,6 +227,8 @@ export class SocialPrivate {
     }
     return rows;
   }
+  /** R67: عدد الرسائل بين طرفين من وقت معيّن (لمهمة CP اليومية) — داخلي */
+  pairMessagesSince(a: string, b: string, since: number): number { return this.d.messages.filter(m => m.at >= since && ((m.from === a && m.to === b) || (m.from === b && m.to === a))).length; }
   private unreadCount(me: string) { const peers = this.inboxRows(me); return this.d.messages.filter(m => m.to === me && m.readAt === null && peers.has(m.from)).length; }
   inbox(me: string, opts: PrivatePage = {}) {
     this.actor(me); this.rate('read', me); const rows = this.inboxRows(me);

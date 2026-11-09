@@ -37,14 +37,30 @@ export function cannon3Panel(m, view, help = false) {
   <p class="c59-note">الأوائل الثلاثة ياخذون نفس الجوايز بالضبط، والأول ياخذ فوقها «للأول بس».</p></section>`;
 }
 const seen = new Set();
-/** الانفجار: المدفع يكبر بنص الشاشة ويهتز، ينفجر، وبعدين بطاقة شفافة فيها الجوايز والفايزين. */
+/** R67 الانفجار مثل الفيديو: عد تنازلي 5→1 فوقه أعلى مساهم، المدفع يطلق وألعاب نارية، وبعدين بطاقة «تهانينا!» بزر حسنًا. */
 export function cannon3Blast(ev) {
   if (!ev || typeof ev.id !== 'string' || seen.has(ev.id) || document.hidden) return false; seen.add(ev.id);
-  const n = document.createElement('section'); n.className = 'c59-blast'; n.setAttribute('role', 'status');
-  const ws = Array.isArray(ev.winners) ? ev.winners.filter((w) => w?.person?.name).map((w) => `<li><span class="c59-face">${face(w.person)}</span><i>${MEDAL[w.rank - 1] || ''}</i><b>${esc(w.person.name)}</b></li>`).join('') : '';
-  const mine = ev.mine && Array.isArray(ev.mine.items) ? `<p class="c59-mine">🎉 لك: ${ev.mine.items.map(esc).join(' + ')} + 🪙 ${nf(ev.mine.coins)}</p>` : '';
-  n.innerHTML = `<div class="c59-bl-cannon">${art(ev.level, 'is-blast')}</div><i class="c59-flash" aria-hidden="true"></i>${Array.from({ length: 22 }, (_, k) => `<i class="c59-spark" style="--a:${k * 16.4}deg;--d:${(k % 5) * 40}ms" aria-hidden="true"></i>`).join('')}${Array.from({ length: 8 }, (_, k) => `<i class="c59-puff" style="--a:${k * 45}deg" aria-hidden="true"></i>`).join('')}<div class="c59-card"><b>💥 انفجر مدفع المستوى ${esc(ev.level)}!</b>${mine}<ol>${ws}</ol></div>`;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const list = Array.isArray(ev.winners) ? ev.winners.filter((w) => w?.person?.name) : [];
+  const top = list.find((w) => w.rank === 1) || list[0];
+  const n = document.createElement('section'); n.className = 'c59-blast c67-blast'; n.setAttribute('role', 'status'); n.setAttribute('dir', 'rtl');
+  const fireworks = Array.from({ length: 6 }, (_, k) => `<i class="c67-fw" style="--x:${[18, 78, 30, 70, 50, 12][k]}%;--y:${[16, 22, 34, 12, 8, 40][k]}%;--h:${[330, 45, 280, 190, 20, 300][k]};--d:${k * 0.55}s" aria-hidden="true">${Array.from({ length: 12 }, (_, j) => `<b style="--r:${j * 30}deg"></b>`).join('')}</i>`).join('');
+  const ws = list.map((w) => `<li><span class="c59-face">${face(w.person)}</span><i>${MEDAL[w.rank - 1] || ''}</i><b>${esc(w.person.name)}</b></li>`).join('');
+  const mine = ev.mine && Array.isArray(ev.mine.items);
+  const prize = mine ? `<p class="c67-prize">حصلت على ${ev.mine.items.map(esc).join(' + ')}${ev.mine.coins ? ` + 🪙 ${nf(ev.mine.coins)}` : ''}</p>` : '<p class="c67-prize">مبروك للفايزين بجوايز المدفع</p>';
+  n.innerHTML = `<i class="c67-sun" aria-hidden="true"></i>${fireworks}
+  <div class="c67-count">${top ? `<span class="c67-top"><span class="c67-frame">${face(top.person)}</span><em>أعلى 1 مساهم</em><small>${esc(top.person.name)}</small></span>` : ''}<b class="c67-num" data-c67-num>5</b></div>
+  <div class="c67-cannon">${art(ev.level, 'is-blast')}<i class="c67-shot" aria-hidden="true"></i></div>
+  <i class="c59-flash" aria-hidden="true"></i>${Array.from({ length: 22 }, (_, k) => `<i class="c59-spark" style="--a:${k * 16.4}deg;--d:${(k % 5) * 40}ms" aria-hidden="true"></i>`).join('')}
+  <div class="c67-card" role="dialog" aria-label="تهانينا"><button type="button" class="c67-x" data-c67-ok aria-label="إغلاق">×</button><span class="c67-card-art">${art(ev.level)}</span><h3>تهانينا! ✨</h3>${prize}${ws ? `<ol>${ws}</ol>` : ''}<button type="button" class="c67-ok" data-c67-ok>حسنًا</button></div>`;
   document.body.appendChild(n);
-  setTimeout(() => { n.classList.add('is-out'); setTimeout(() => n.remove(), 500); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 3000 : 6500);
+  let done = false; const timers = [];
+  const close = () => { if (done) return; done = true; timers.forEach(clearTimeout); n.classList.add('is-out'); setTimeout(() => n.remove(), 450); };
+  n.addEventListener('click', (e) => { if (e.target.closest('[data-c67-ok]')) close(); });
+  const num = n.querySelector('[data-c67-num]'), step = reduced ? 400 : 1000;
+  for (let k = 1; k <= 4; k++) timers.push(setTimeout(() => { num.textContent = String(5 - k); num.classList.remove('is-pop'); void num.offsetWidth; num.classList.add('is-pop'); }, step * k));
+  timers.push(setTimeout(() => n.classList.add('is-boom'), step * 5));
+  timers.push(setTimeout(() => n.classList.add('is-card'), step * 5 + (reduced ? 300 : 1300)));
+  timers.push(setTimeout(close, step * 5 + 9000));
   return true;
 }
