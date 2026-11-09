@@ -253,12 +253,33 @@ function rarityRow68(tab) {
   const f = SH.f, chip = (v, l) => `<button type="button" class="r68-rar r-${v} ${f.rar === v ? 'on' : ''}" data-act="shop-f" data-k="rar" data-v="${v}" aria-pressed="${f.rar === v}">${l}</button>`;
   return `<div class="r68-rars" role="group" aria-label="الندرة">${['common', 'rare', 'epic', 'legendary'].map((r) => chip(r, `<i aria-hidden="true">${RAR_ICON[r]}</i>${RARITY[r].label}`)).join('')}${chip('all', 'الكل')}</div>`;
 }
-function bundles68(d) {
-  const by = {};
-  for (const i of d.collectionItems ?? d.items) if (i.set) (by[i.set] ??= []).push(i);
-  const sets = Object.entries(by).map(([k, items]) => { const missing = items.filter((i) => !d.owned.includes(i.id) && approvedPrice(i) && itemStatus(i) === 'available'); const left = missing.reduce((n, i) => n + (i.currency === 'coins' ? i.price : 0), 0); return { k, items, left, rar: Math.max(...items.map((i) => rarityLv(i.rarity))) }; }).filter((x) => x.left > 0).sort((a, b) => b.rar - a.rar || b.left - a.left).slice(0, 3);
-  if (!sets.length) return '';
-  return `<section class="r68-bundles"><h2><span aria-hidden="true">🎁</span> حزم مميزة</h2><div class="r68-bgrid">${sets.map((x, n) => `<button type="button" class="r68-bundle" data-act="shop-tab" data-v="sets">${n === 0 ? '<i class="r68-best">الأفضل</i>' : ''}<span class="r68-bart">${x.items.slice(0, 3).map((i) => `<span>${thumb(i)}</span>`).join('')}</span><b>${esc(d.sets?.[x.k] ?? x.k)}</b><small>${nf(x.items.length)} قطع بالمجموعة</small><span class="r68-bprice">${CUR.coins}<b>${nf(x.left)}</b></span></button>`).join('')}</div></section>`;
+function bundles68() { return '<section class="r68-bundles" data-bnd68 aria-label="حزم مميزة"></section>'; }
+/* R68t: الحزم المميزة — تنجاب من الخادم وتنشرى من نفس المتجر */
+const BND_ICON = { gift: '/assets/art68/gifts/a17.webp', lion: '/assets/art68/gifts/a03.webp', vip: '/assets/art68/gifts/c01.webp' };
+let bndList = null, bndBusy = false;
+async function bndFetch() { try { const r = await fetch('/api/shop/bundles', { credentials: 'same-origin', cache: 'no-store' }); const j = await r.json(); bndList = j.ok ? j.list : []; } catch { bndList = []; } }
+function bndHTML() {
+  if (!bndList?.length) return '';
+  const byId = new Map((SH.data?.items || []).map((i) => [i.id, i]));
+  return `<h2><span aria-hidden="true">🎁</span> حزم مميزة</h2><div class="r68-bgrid">${bndList.map((b, n) => `<article class="r68-bundle${b.done ? ' is-done' : ''}">${n === bndList.length - 1 ? '<i class="r68-best">الأفضل</i>' : ''}<img class="r68-bicon" src="${BND_ICON[b.icon] || BND_ICON.gift}" alt="" loading="lazy"><b>${esc(b.name)}</b><small>${esc(b.sub)}</small><span class="r68-bart">${b.items.map((it) => { const i = byId.get(it.id); return `<span class="${it.owned ? 'own' : ''}" title="${esc(it.name)}">${i ? thumb(i) : ''}</span>`; }).join('')}</span>${b.done ? '<span class="r68-bprice is-own">تملكها ✓</span>' : `<button type="button" class="r68-bprice" data-bnd-buy="${esc(b.id)}" data-bnd-price="${b.price}"${bndBusy ? ' disabled' : ''}>${CUR.coins}<b>${bndN(b.price)}</b></button>${b.worth > b.price ? `<s>${bndN(b.worth)}</s>` : ''}`}</article>`).join('')}</div>`;
+}
+const bndN = (n) => n >= 1e6 ? `${+(n / 1e6).toFixed(2)} مليون` : nf(n);
+function bndFill() { for (const el of document.querySelectorAll('[data-bnd68]')) el.innerHTML = bndHTML(); }
+if (typeof document !== 'undefined' && !globalThis.__bnd68) {
+  globalThis.__bnd68 = new MutationObserver(() => { const el = document.querySelector('[data-bnd68]:empty'); if (!el) return; if (bndList) bndFill(); else bndFetch().then(bndFill); });
+  globalThis.__bnd68.observe(document.documentElement, { childList: true, subtree: true });
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest?.('[data-bnd-buy]'); if (!b || bndBusy) return; e.preventDefault();
+    const item = bndList?.find((x) => x.id === b.dataset.bndBuy); if (!item) return;
+    if (!confirm(`تشتري «${item.name}» بـ ${nf(item.price)} عملة؟`)) return;
+    bndBusy = true; bndFill();
+    try {
+      const r = await fetch('/api/shop/bundles/buy', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: item.id, seen: item.price }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) { alert(j.error || 'تعذّر الشراء.'); bndList = null; await bndFetch(); }
+      else { alert(`تم! صارت قطع «${item.name}» في مقتنياتك.`); location.reload(); return; }
+    } finally { bndBusy = false; bndFill(); }
+  });
 }
 export function shopHTML(me) {
   if (SH.loading && !SH.data) return '<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="status">جاري تحميل المتجر…</p></div></div>';
@@ -304,7 +325,7 @@ export function shopHTML(me) {
   } else if (tab === 'owned') {
     body = gridFor(full, 'owned');
   } else {
-    body = rarityRow68(tab) + `<details class="r23-filters"><summary>${renderProfileIcon('settings')} تصفية وترتيب</summary>${filtersHTML(d, tab)}</details>` + gridFor(d, tab) + (Object.keys(SH.try).length ? `<details class="r23-appearance" open><summary>${renderProfileIcon('camera')} معاينة مظهري</summary>${previewHTML(d)}</details>` : '') + (tab === 'avatar' && SH.freeAvatars ? SH.freeAvatars() : '');
+    body = rarityRow68(tab) + `<details class="r23-filters"><summary>${renderProfileIcon('settings')} تصفية وترتيب</summary>${filtersHTML(d, tab)}</details>` + gridFor(d, tab) + bundles68() + (Object.keys(SH.try).length ? `<details class="r23-appearance" open><summary>${renderProfileIcon('camera')} معاينة مظهري</summary>${previewHTML(d)}</details>` : '') + (tab === 'avatar' && SH.freeAvatars ? SH.freeAvatars() : '');
   }
   let dlg = previewDialogHTML(full);
   if (SH.gemConfirm && SH.gemKey) dlg = `<div class="sh-modal" role="dialog" aria-modal="true" aria-label="إيصال تحويل سابق"><div class="card"><h2>مراجعة إيصال سابق</h2><p>التحويلات الجديدة مقفولة. يُرسل معرّف الطلب السابق فقط للتحقق من وجود إيصال محفوظ، دون إنشاء عملية جديدة.</p><button class="btn gold" type="button" data-act="shop-gem-buy" ${SH.busy?'disabled':''}>التحقق من الإيصال السابق</button></div></div>`;

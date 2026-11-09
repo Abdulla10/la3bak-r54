@@ -1,7 +1,7 @@
 /* Supplied backgrounds UI integrated into the existing shop singleton and RPC protocol.
  * All balances, ownership, prices and equipped items are authoritative server data.
  */
-import * as SHOP from '../shop.js?v=r68i';
+import * as SHOP from '../shop.js?v=r68u';
 import {backgroundVisual,isSuppliedBackground} from '../background-art.js?v=r58p';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

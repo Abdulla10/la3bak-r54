@@ -54,3 +54,15 @@ html body .r23-store .r23-price-value svg,html body .r23-store .r23-price-value 
 html body .r23-store .r68-rib{font-size:9.5px;padding:2px 7px}
 html body .r23-store .r23-more{border-radius:16px!important;background:rgba(40,14,72,.55)!important;border:1px solid rgba(186,140,255,.3)!important}
 html body .r23-store .r23-store-tabs>*{width:84px!important;max-width:84px!important;flex-basis:84px!important}
+html body .r23-store .r68-bundles:empty{display:none}
+html body .r23-store .r68-bicon{width:76px;height:64px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+html body .r23-store .r68-bundle{gap:5px;padding:10px 6px 12px}
+html body .r23-store .r68-bundle small{text-align:center;line-height:1.35;min-height:28px}
+html body .r23-store .r68-bart{height:36px}
+html body .r23-store .r68-bart>span{width:32px;height:32px;margin:0 -5px}
+html body .r23-store .r68-bart>span.own{outline:2px solid #ffcb47}
+html body .r23-store button.r68-bprice{border:1px solid rgba(255,203,71,.6);color:#fff;font:800 13px Arial,sans-serif}
+html body .r23-store .r68-bprice.is-own{color:#ffcb47}
+html body .r23-store .r68-bundle s{font-size:10.5px;color:#a891c9;margin-top:-2px}
+html body .r23-store .r68-bundle.is-done{opacity:.75}
+html body .r23-store .r68-bprice{white-space:nowrap}

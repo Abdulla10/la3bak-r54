@@ -1289,6 +1289,33 @@ export async function createApp(
       return { ok: true, current: currentTuning(), changed, auditOk };
     }, 'owner');
     const sendAll = (msg: unknown) => { const raw = JSON.stringify(msg); for (const peers of sockets.values()) for (const ws of peers) { try { if (ws.readyState === 1) ws.send(raw); } catch { /* */ } } };
+    // R68t: الحزم المميزة بالمتجر — سعر الحزمة أقل من مجموع قطعها، وتنشرى مرة وحدة، واللي تملكه منها ينخصم من السعر
+    const BUNDLES_R68: { id: string; name: string; sub: string; icon: string; price: number; items: string[] }[] = [
+      { id: 'starter', name: 'حزمة البداية', sub: 'مجموعة مختارة للمبتدئين', icon: 'gift', price: 12_000, items: ['av2-blob', 'frame2-bronze', 'art-bub-10', 'art-bd-01'] },
+      { id: 'heroes', name: 'حزمة الأبطال', sub: 'إطار + فقاعة + إطار مايك + صورة رمزية', icon: 'lion', price: 249_000, items: ['art-f2-08', 'lux-bub-purple', 'art-mf-70', 'ref-p-av-07'] },
+      { id: 'vip', name: 'حزمة VIP', sub: 'مظاهر أسطورية حصرية', icon: 'vip', price: 3_500_000, items: ['art-f2-11', 'lux-bub-legend', 'art-bd-28', 'art-pb-04'] },
+    ];
+    const coinsOf = (it: { price: number; currency?: string }) => it.currency === 'gems' ? it.price * 20 : it.price;
+    const bundleView = (uid: string, b: typeof BUNDLES_R68[number]) => {
+      const owned = new Set(wallet.owned(uid)); const items = b.items.map((id) => shopcat.get(id)).filter((x): x is NonNullable<typeof x> => !!x);
+      const worth = items.reduce((n, i) => n + coinsOf(i), 0), missing = items.filter((i) => !owned.has(i.id)), missWorth = missing.reduce((n, i) => n + coinsOf(i), 0);
+      const price = !missing.length ? 0 : missing.length === items.length ? b.price : Math.max(1000, Math.round(b.price * missWorth / Math.max(1, worth) / 1000) * 1000);
+      return { id: b.id, name: b.name, sub: b.sub, icon: b.icon, price, fullPrice: b.price, worth, items: items.map((i) => ({ id: i.id, name: i.name, slot: i.slot, owned: owned.has(i.id) })), done: !missing.length };
+    };
+    functionalHttp.add('GET', '/api/shop/bundles', ({ user }) => ({ ok: true, list: BUNDLES_R68.map((b) => bundleView(user.id, b)) }));
+    functionalHttp.add('POST', '/api/shop/bundles/buy', async ({ user, body }) => {
+      const b = BUNDLES_R68.find((x) => x.id === body.id); if (!b) throw new FunctionalHttpError(404, 'الحزمة غير موجودة.');
+      const v = bundleView(user.id, b); if (v.done) throw new FunctionalHttpError(409, 'تملك كل قطع هالحزمة.');
+      if (body.seen !== v.price) throw new FunctionalHttpError(409, 'تغير سعر الحزمة. حدّث الصفحة.');
+      const missing = v.items.filter((i) => !i.owned).map((i) => i.id);
+      const ref = `bundle:${b.id}:${missing.join(',')}`.slice(0, 120);
+      const pay = wallet.spendService(user.id, v.price, `شراء ${b.name}`, ref);
+      if (!pay.ok) throw new FunctionalHttpError(pay.code === 'poor' ? 402 : 400, pay.code === 'poor' ? `رصيدك ما يكفي. الحزمة بـ ${v.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
+      const op = ('bnd' + createHash('sha256').update(user.id + ref).digest('hex')).slice(0, 40);
+      await wallet.grantBulk(op, [user.id], missing.map((itemId) => ({ type: 'item', itemId, mode: 'grant' } as const)), `${b.name}`);
+      sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
+      return { ok: true, coins: wallet.balance(user.id), bundle: bundleView(user.id, b) };
+    });
     functionalHttp.add('GET', '/api/broadcast/info', () => ({ ok: true, enabled: siteFlags.get().broadcast, prices: { ...BROADCAST_PRICES }, max: BROADCAST_TEXT_MAX, recent: broadcasts.recent().map(publicBroadcast) }));
     functionalHttp.add('POST', '/api/broadcast', ({ user, body }) => {
       if (!siteFlags.get().broadcast) throw new FunctionalHttpError(403, 'البرقية موقفة حاليًا من الإدارة.');
