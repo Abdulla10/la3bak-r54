@@ -37,9 +37,9 @@ const rankLabel = (system, rank) => system === 'noble' ? `N${rank}` : system ===
 export function rankBadgeArt(system, rawValue) {
   const rank = rankNumber(system, rawValue);
   if (rank === null) return '';
-  // R64: شارات النوبل (9 شارات، شارة لكل رتبة) والـVIP (8 شارات، شارة لكل مستويين) من طقم الشارات الجديد
-  if (system === 'noble') return `/preview/assets/profile/ranks/r64/noble-n${rank}.png?v=r64a`;
-  if (system === 'vip') return `/preview/assets/profile/ranks/r64/vip-${Math.ceil(rank / 2)}.png?v=r64a`;
+  // R65: شارات المالك — 9 للنوبل و15 للـVIP، شارة خاصة لكل رتبة
+  if (system === 'noble') return `/preview/assets/profile/ranks/r65/noble-n${rank}.webp?v=r65a`;
+  if (system === 'vip') return `/preview/assets/profile/ranks/r65/vip-v${rank}.webp?v=r65a`;
   return `/preview/assets/profile/ranks/${system}-${rankTheme(system, rawValue)}.png?v=r58b`;
 }
 

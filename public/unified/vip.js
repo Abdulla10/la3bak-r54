@@ -1,8 +1,8 @@
 /* VIP BODY only. No client crediting, balance deduction, fake perks or sample packs.
  * Only server-approved offers can proceed to preview and explicit confirmation. */
 import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r58i';
-import * as R from './rank-vip-shared.js?v=r64a';
-import * as V from './vip-noble-r52.js?v=r64a';
+import * as R from './rank-vip-shared.js?v=r65a';
+import * as V from './vip-noble-r52.js?v=r65a';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 const STATUS_NAMES = Object.freeze({ active: 'عضوية نشطة', inactive: 'عضوية غير مفعّلة', expired: 'انتهت صلاحية العضوية', legacy: 'رتبة VIP سابقة · دون عضوية مؤرخة' });
 const BENEFIT_SYMBOLS = Object.freeze({ frame: 'frame', title: 'crown', badge: 'medal', bg: 'image', background: 'image', effect: 'star', social: 'users' });
@@ -33,8 +33,8 @@ function priceText(price) { return validPrice(price) ? `${fmt(price.cur === 'gem
 function progressionOf(state, ctx) { return obj(state.data?.progression) ? state.data.progression : ctx.me?.progression?.vip; }
 function benefitEntries(data) { return list(data?.benefits).filter(row => obj(row) && R.identifier(row.id) && typeof row.name === 'string' && Boolean(row.name.trim()) && nat(row.level) && row.level >= 1 && row.level <= 15); }
 /* ---------- R52: واجهة VIP بتصميم المرجع (بطاقة ثابتة، شبكة امتيازات، شريط شحن سفلي) ---------- */
-const VIP_TIERS = Object.freeze([[1, 1, 'شارة الساعة الرملية'], [3, 2, 'شارة الشطرنج'], [5, 3, 'شارة السماعة الملكية'], [7, 4, 'شارة يد التحكم'], [9, 5, 'شارة الخوذة'], [11, 6, 'شارة الحارس المقنّع'], [13, 7, 'شارة القلعة'], [15, 8, 'شارة الملك المقنّع']]);
-const vipBadgeSrc = (n) => `/preview/assets/profile/ranks/r64/vip-${n}.png?v=r64a`;
+const VIP_TIERS = Object.freeze(Array.from({ length: 15 }, (_, i) => [i + 1, i + 1, `شارة VIP${i + 1}`]));
+const vipBadgeSrc = (n) => `/preview/assets/profile/ranks/r65/vip-v${n}.webp?v=r65a`;
 const BENEFIT_GLYPH = Object.freeze({ frame: 'frame', title: 'title', badge: 'badge', bg: 'image', background: 'image', effect: 'star', social: 'bubble', entrance: 'car' });
 /** كل امتيازات VIP من البيانات الحقيقية فقط:
  * 1) علامة VIP بألوانها حسب المستوى (نفس صور الرتب المعتمدة وتظهر فعلاً بالملف والغرف)،
@@ -47,7 +47,7 @@ export function vipPerks(state, ctx) {
   const rank = view.state === 'earned' ? view.rank : 0;
   const items = V.shopItems(state, ctx);
   const out = [];
-  if (entry?.enabled === true) for (const [level, badge, name] of VIP_TIERS) out.push({ level, name, sub: `شارة VIP${level}${level < 15 ? ` و VIP${level + 1}` : ''}`, art: `<img class="vn-rank-art" src="${vipBadgeSrc(badge)}" alt="" loading="lazy" decoding="async">`, desc: 'تظهر بجانب اسمك في ملفك الشخصي وفي الغرف، وتتغير كل مستويين في VIP.', open: rank >= level });
+  if (entry?.enabled === true) for (const [level, badge, name] of VIP_TIERS) out.push({ level, name, sub: `شارة مستوى VIP${level}`, art: `<img class="vn-rank-art" src="${vipBadgeSrc(badge)}" alt="" loading="lazy" decoding="async">`, desc: 'تظهر بجانب اسمك في ملفك الشخصي وفي الغرف، ولكل مستوى VIP شارته الخاصة.', open: rank >= level });
   for (const b of benefitEntries(state.data)) {
     const item = b.itemId ? items.find((i) => i.id === b.itemId) : null;
     const art = R.safeImageURL(b.artwork) ? `<img class="vn-rank-art" src="${esc(R.safeImageURL(b.artwork))}" alt="" loading="lazy" decoding="async">` : item ? V.itemArt(item) : V.hex(BENEFIT_GLYPH[b.type] || BENEFIT_GLYPH[item?.slot] || 'crown');
@@ -74,7 +74,7 @@ function cardHTML(state, ctx) {
   const earned = view.state === 'earned';
   const theme = earned ? R.theme('vip', view.rank) : 'silver';
   const until = status === 'active' ? V.dateLine(state.data?.membership?.expiresAt) : '';
-  const art = `<img class="vx-badge" src="${vipBadgeSrc(earned ? Math.ceil(view.rank / 2) : 1)}" alt="${earned ? `شارة VIP ${view.rank}` : ''}" decoding="async">`;
+  const art = `<img class="vx-badge" src="${vipBadgeSrc(earned ? view.rank : 1)}" alt="${earned ? `شارة VIP ${view.rank}` : ''}" decoding="async">`;
   const points = ['earned', 'unranked'].includes(view.state) ? entry?.points : null;
   const hint = !model.valid ? '' : model.capped ? '(وصلت أعلى مستوى VIP)' : `(لا تزال بحاجة إلى ${V.num(model.remaining)} نقطة خبرة لرفع VIP${model.next})`;
   const pct = model.valid ? model.percentage : 0;

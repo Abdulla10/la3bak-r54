@@ -40,4 +40,4 @@ html.lb-dark :is(.vx-badge,.vn-rank-art,.pvp-rank-milestone img,.lbrv-art img){
 html.lb-dark .pvp-rank-milestone.is-symbolic img{filter:grayscale(.6) brightness(.7);}
 
 /* صور الشارات الجديدة شفافة أصلاً: نلغي الدمج والقناع اللي كانت للصور القديمة ذات الخلفية الغامقة */
-img[src*="/profile/ranks/r64/"]{mix-blend-mode:normal !important;-webkit-mask-image:none !important;mask-image:none !important;object-fit:contain;}
+img[src*="/profile/ranks/r65/"]{mix-blend-mode:normal !important;-webkit-mask-image:none !important;mask-image:none !important;object-fit:contain;}

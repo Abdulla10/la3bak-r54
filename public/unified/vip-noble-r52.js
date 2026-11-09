@@ -1,7 +1,7 @@
 /* R52: أدوات عرض مشتركة لصفحتي VIP ونوبل بتصميم المرجع (داكن، شبكة امتيازات، أوراق سفلية).
  * عرض فقط: كل رقم ومستوى وامتياز يأتي من بيانات الخادم الموجودة (التقدم، عضوية VIP، مكافآت الرتب، شروط عناصر المتجر)،
  * ولا يُخترع امتياز أو رقم. */
-import * as R from './rank-vip-shared.js?v=r64a';
+import * as R from './rank-vip-shared.js?v=r65a';
 // استيراد كمساحة أسماء: لو المتصفح عنده نسخة أقدم من shop.js بالكاش (بدون itemThumb) ما تنكسر الصفحة
 import * as SHOP from '../shop.js?v=r63b';
 import { PERK_ITEMS } from '../rank-perks-r56.js?v=r58i';

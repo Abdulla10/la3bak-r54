@@ -1,0 +1,32 @@
+{
+ "source": "owner-supplied sheet LA3BAK VIP (1-15) / NOBLE (1-9), 2026-11-09",
+ "method": "Each badge cut from the transparent sheet by its own shape (largest connected area), neighbours/header lines removed, centred, 320x320 WebP.",
+ "noble": [
+  "noble-n1.webp",
+  "noble-n2.webp",
+  "noble-n3.webp",
+  "noble-n4.webp",
+  "noble-n5.webp",
+  "noble-n6.webp",
+  "noble-n7.webp",
+  "noble-n8.webp",
+  "noble-n9.webp"
+ ],
+ "vip": [
+  "vip-v1.webp",
+  "vip-v2.webp",
+  "vip-v3.webp",
+  "vip-v4.webp",
+  "vip-v5.webp",
+  "vip-v6.webp",
+  "vip-v7.webp",
+  "vip-v8.webp",
+  "vip-v9.webp",
+  "vip-v10.webp",
+  "vip-v11.webp",
+  "vip-v12.webp",
+  "vip-v13.webp",
+  "vip-v14.webp",
+  "vip-v15.webp"
+ ]
+}

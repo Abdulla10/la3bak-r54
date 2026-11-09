@@ -1,6 +1,6 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r64a';
-import * as UNIFIED from '../unified/shell.js?v=r64a';
+import * as PR from './profile.js?v=r65a';
+import * as UNIFIED from '../unified/shell.js?v=r65a';
 import * as REF from '../unified/home.js?v=r63a';
 import * as SOCIAL from '../unified/social.js?v=r63b';
 const { leaveSocial, refreshSocial } = SOCIAL;
