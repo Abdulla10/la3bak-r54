@@ -1,8 +1,11 @@
 /** R67ae: إعدادات تشغيل يغيّرها المالك من لوحة التحكم (بدون أسرار وبدون إعادة تشغيل).
  * كل قيمة لها حدود ثابتة هنا، وأي قيمة برا الحدود تنرفض. */
 import { loadJsonFile, Persister, StorageMonitor } from './datafile.js';
-export const SITE_FLAGS_DEFAULT = Object.freeze({ cinema: true, broadcast: true, streak: true, invite: true, firstTopupPercent: -1, bigGiftMin: 9000, profileBgVip: 6 });
-export const SITE_FLAG_LIMITS = Object.freeze({ firstTopupPercent: [-1, 200], bigGiftMin: [1000, 10_000_000], profileBgVip: [1, 15] });
+export const STAKE_OPTIONS = Object.freeze([0, 100, 500, 1000, 2500, 5000, 10000, 50000]);
+const validGamesOff = (v) => Array.isArray(v) && v.length <= 100 && v.every((g) => typeof g === 'string' && /^[a-z0-9_-]{1,40}$/i.test(g));
+const validStakes = (v) => Array.isArray(v) && v.length >= 1 && v.length <= STAKE_OPTIONS.length && v.includes(0) && new Set(v).size === v.length && v.every((n) => STAKE_OPTIONS.includes(n));
+export const SITE_FLAGS_DEFAULT = Object.freeze({ cinema: true, broadcast: true, streak: true, invite: true, firstTopupPercent: -1, bigGiftMin: 9000, profileBgVip: 6, gamesOff: [], stakes: [0, 100, 500], prizeBonus: 0 });
+export const SITE_FLAG_LIMITS = Object.freeze({ firstTopupPercent: [-1, 200], bigGiftMin: [1000, 10_000_000], profileBgVip: [1, 15], prizeBonus: [0, 100] });
 export const EVENT_SLOTS = Object.freeze(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'souvenir', 'title', 'badge', 'room-bg', 'special-id', 'room-id']);
 const validEvent = (e) => isObj(e) && typeof e.id === 'string' && (e.kind === 'daily2x' || e.kind === 'slotSale') && typeof e.title === 'string' && Number.isSafeInteger(e.startsAt) && Number.isSafeInteger(e.endsAt) && e.endsAt > e.startsAt && typeof e.by === 'string' && (e.kind !== 'slotSale' || (typeof e.slot === 'string' && Number.isSafeInteger(e.percent) && e.percent >= 5 && e.percent <= 90));
 const isObj = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
@@ -19,6 +22,14 @@ function validFlags(x) {
     for (const [k, v] of Object.entries(x.flags)) {
         if (k === 'cinema' || k === 'broadcast' || k === 'streak' || k === 'invite') {
             if (typeof v !== 'boolean')
+                return false;
+        }
+        else if (k === 'gamesOff') {
+            if (!validGamesOff(v))
+                return false;
+        }
+        else if (k === 'stakes') {
+            if (!validStakes(v))
                 return false;
         }
         else if (k in SITE_FLAG_LIMITS) {
@@ -43,7 +54,7 @@ export class SiteFlagsStore {
         }
         this.disk = new Persister('site-flags', file, () => this.d, now, mon, validFlags);
     }
-    get() { return { ...SITE_FLAGS_DEFAULT, ...this.d.flags }; }
+    get() { const f = { ...SITE_FLAGS_DEFAULT, ...this.d.flags }; return { ...f, gamesOff: [...f.gamesOff], stakes: [...f.stakes] }; }
     meta() { return { at: this.d.at, by: this.d.by }; }
     events() { return structuredClone(this.d.events ?? []); }
     activeEvents(now = this.now()) { return (this.d.events ?? []).filter((e) => !e.ended && e.startsAt <= now && now < e.endsAt); }
@@ -155,6 +166,16 @@ export class SiteFlagsStore {
                     throw new Error('قيمة تشغيل/إطفاء غير صالحة.');
                 next[k] = v;
             }
+            else if (k === 'gamesOff') {
+                if (!validGamesOff(v))
+                    throw new Error('قائمة الألعاب غير صالحة.');
+                next.gamesOff = [...new Set(v)];
+            }
+            else if (k === 'stakes') {
+                if (!validStakes(v))
+                    throw new Error('رسوم الدخول لازم تكون من القائمة وفيها «مجانية».');
+                next.stakes = [...v].sort((a, b) => a - b);
+            }
             else if (k in SITE_FLAG_LIMITS) {
                 const key = k;
                 if (!inRange(key, v))
@@ -175,6 +196,6 @@ export class SiteFlagsStore {
             throw e;
         }
         const after = this.get();
-        return { before, after, changed: Object.keys(after).filter((k) => before[k] !== after[k]) };
+        return { before, after, changed: Object.keys(after).filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k])) };
     }
 }

@@ -1353,6 +1353,13 @@ export class SocialRooms {
     }
     enterRoom(d, r, id, media, now, admission) {
         this.admitRoom(d, r, id, admission);
+        if (this.opts.onEnter) {
+            const cb = this.opts.onEnter, rid = r.id, rn = r.name;
+            queueMicrotask(() => { try {
+                cb(id, rid, rn);
+            }
+            catch { /* السجل اختياري */ } });
+        }
         const old = this.member(d, id);
         if (old?.room.id === r.id)
             return old.member;

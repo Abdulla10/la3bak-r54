@@ -22,7 +22,7 @@ import { Matchmaker } from './matchmaker.js';
 import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
 import { CpPoints, cpKey, cpLevelOf, CP_TASKS, CP_LEVELS, CP_LEVEL_NAMES } from './cp-r58.js';
 import { ROCKET_PLANETS } from './room-rocket-r58.js';
-import { SiteFlagsStore } from './site-flags-r67.js';
+import { STAKE_OPTIONS, SiteFlagsStore } from './site-flags-r67.js';
 import { roomOwnerGift } from './room-extras-r58.js';
 import { AccountDeletion, DELETION_GRACE_MS } from './account-deletion-r67.js';
 import { HomeBanners, HomeBannerError } from './home-banners-r68.js';
@@ -34,7 +34,8 @@ import { TribeTreasure, TreasureError, TREASURE_ERR, TRIBE_TASKS, TRIBE_BOXES, T
 import { achOf, achView, earned, type AchInput } from './achievements.js';
 import { City, CityError, validCity } from './city.js';
 import { ShopCatalog, validShop, shopEligibility } from './shopcatalog.js';
-import { Wallet, STAKES, validWallet } from './wallet.js';
+import { Wallet, STAKES, setStakes, validWallet } from './wallet.js';
+import { PlayerActivity } from './player-activity-r68.js';
 import { Platform, validPlatform } from './platform.js';
 import { createAdmin } from './admin.js';
 import { Accounts, validAccounts, levelOf, xpForLevel } from './account.js';
@@ -351,6 +352,11 @@ export async function createApp(
   accounts.hiddenFilter = (id) => deletion.hidden(id);
   const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
   const homeBanners = new HomeBanners(functionalFile(undefined, 'home-banners'), Date.now, storage);
+  const activity = new PlayerActivity(functionalFile(undefined, 'player-activity'), Date.now, storage);
+  // R68y: التحكم بالألعاب ورسوم الدخول من اللوحة
+  const GAME_STATUS0 = new Map(registry.list().map((g) => [g.id, g.status] as const));
+  const applyGameFlags = () => { const f = siteFlags.get(); setStakes(f.stakes); for (const id of GAME_STATUS0.keys()) { const e = registry.get(id); if (e) e.info.status = f.gamesOff.includes(id) ? 'soon' : (GAME_STATUS0.get(id) ?? 'available'); } };
+  applyGameFlags();
   { const t = siteFlags.tuning(); if (t) try { applyTuning(validateTuning(t, TUNING_DEFAULT)); } catch (e) { log('tuning_invalid', { error: String((e as Error).message).slice(0, 120) }); } }
   /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
   const firstTopup = new FirstTopup(functionalFile(undefined, 'first-topup'), {
@@ -785,6 +791,7 @@ export async function createApp(
     noRewards: (id: string) => isGuest(id),
     onGameFinished(room, players, winners, ref) {
       deliverIntent('game:' + ref);
+      { const gn = registry.historyEngine(room.gameId)?.info.name ?? room.gameId; for (const p of players) activity.note(p.id, 'game', room.code, `${gn}${winners.includes(p.id) ? ' — فاز 🏆' : ''}${room.stake ? ` · رسم ${room.stake}` : ''}`); }
     },
     onRoom(room) {
       for (const p of room.players) {
@@ -804,6 +811,7 @@ export async function createApp(
     onWallet(id, coins, won) {
       sendToUser(id, { t: 'wallet', coins, won });
     },
+    prizeBonus: () => siteFlags.get().prizeBonus,
     log,
   }, Date.now, board, wallet, accounts, (id) => avatars.version(id), (id) => wallet.equippedAvatar(id), (id) => {
     const equipped = Object.fromEntries(Object.entries(equippedView(id)).filter(([slot]) => slot !== 'avatar').map(([slot, item]) => [slot, { ...item, art: typeof item.art === 'string' ? (item.art.startsWith('/') ? item.art : '/assets/' + item.art) : undefined }]));
@@ -957,7 +965,7 @@ export async function createApp(
   }, Date.now, storage);
   const socialEligible=(id:string)=>accounts.has(id)&&!platform.isBanned(id)&&(accounts.socialAge(id)===null||Number(accounts.socialAge(id))>=18);
   let socialVoice:SocialVoice|null=null;
-  const socialRooms=new SocialRooms({file:socialRoomsFile,mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
+  const socialRooms=new SocialRooms({file:socialRoomsFile,onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
     cannon:{wallet,catalog:shopcat,pendingCount:id=>outbox.pending().filter(i=>i.payload.kind==='gift'&&validCannonGiftContext(i.payload.cannonSupport)&&i.payload.cannonSupport.cannonId===id).length,
       onAward:(id,eventId)=>{sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id),won:0});support.announce([id],'مكافأة مدفع الغرفة','تمت إضافة الإطار والخلفية الدائمين إلى ملكيتك. حدّث المتجر لعرضهما.','room-cannon-r27','cannon:'+eventId);}},
     pendingChallengeGift:id=>outbox.pending().some(intent=>intent.payload.kind==='gift'&&validGiftSupportContext(intent.payload.socialSupport)&&intent.payload.socialSupport.challengeId===id),
@@ -1243,6 +1251,7 @@ export async function createApp(
       const input = { ...body } as Record<string, unknown>; delete input.reason;
       let out; try { out = siteFlags.update(input, actor!.name); } catch (e) { throw new FunctionalHttpError(400, (e as Error).message || 'تعذّر الحفظ.'); }
       const auditOk = out.changed.length ? admin.audit(actor!, 'site.flags', 'site-flags', out.changed.map((k) => `${k}: ${String(out.before[k as keyof typeof out.before])} → ${String(out.after[k as keyof typeof out.after])}`).join('، ') + ` — ${reason}`) : true;
+      applyGameFlags();
       if (out.changed.includes('cinema') && !out.after.cinema) { /* الفيديوهات الشغالة تكمل لين يطفونها؛ ما نقدر نوقف الكل بأمر واحد بأمان */ }
       return { ok: true, flags: out.after, changed: out.changed, auditOk };
     }, 'owner');
@@ -1262,6 +1271,64 @@ export async function createApp(
           owned: wallet.owned(id).length, staff: null as string | null };
       };
       return { ok: true, players: ids.map(card) };
+    }, 'owner');
+    // ---- R68y: (8) كشف الحسابات المشبوهة ----
+    const r68Who = (id: string) => { const acc = accounts.all().find((a) => a.id === id); return { id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', since: acc?.since ?? null, banned: platform.isBanned(id), suspect: platform.isSuspect(id), coins: wallet.balance(id) }; };
+    const r68GiftVal = (g: { total?: number; price: number; qty?: number; cur?: string }) => (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1);
+    functionalHttp.add('GET', '/api/admin/suspicious', () => {
+      const now = Date.now(), wk = now - 7 * 86_400_000, day = now - 86_400_000;
+      const net = platform.netGroups(3).map((g) => ({ ref: g.ref, count: g.count, last: g.last, bannedHere: g.bannedHere, players: g.ids.map(r68Who) }));
+      const evasion = platform.suspects().map((x) => ({ ...r68Who(x.id), of: x.ofName || nm(x.of), at: x.at })).sort((a, b) => b.at - a.at).slice(0, 50);
+      const funnel: { player: ReturnType<typeof r68Who>; value: number; count: number; top: ReturnType<typeof r68Who>; share: number; young: boolean }[] = [];
+      const pairs = new Map<string, { from: string; to: string; value: number; count: number }>();
+      for (const a of accounts.all()) {
+        const inn = wallet.giftsOf(a.id, 'in', 300).filter((g) => g.ts > wk && g.from !== a.id);
+        if (inn.length) {
+          const by = new Map<string, number>(); let total = 0;
+          for (const g of inn) { const v = r68GiftVal(g); total += v; by.set(g.from, (by.get(g.from) ?? 0) + v); if (g.ts > day) { const k = g.from + '>' + a.id; const p = pairs.get(k) ?? { from: g.from, to: a.id, value: 0, count: 0 }; p.value += v; p.count++; pairs.set(k, p); } }
+          const [topId, topV] = [...by].sort((x, y) => y[1] - x[1])[0];
+          const young = !!a.since && now - a.since < 14 * 86_400_000;
+          if (total >= (young ? 50_000 : 300_000) && topV / total >= 0.7) funnel.push({ player: r68Who(a.id), value: total, count: inn.length, top: r68Who(topId), share: Math.round(topV / total * 100), young });
+        }
+      }
+      const transfers = [...pairs.values()].filter((p) => p.value >= 500_000).sort((x, y) => y.value - x.value).slice(0, 30).map((p) => ({ from: p.from ? r68Who(p.from) : null, to: r68Who(p.to), value: p.value, count: p.count }));
+      funnel.sort((x, y) => y.value - x.value);
+      return { ok: true, net, evasion, funnel: funnel.slice(0, 30), transfers, at: now };
+    }, 'owner');
+    // ---- R68y: (9) التحكم بالألعاب ----
+    functionalHttp.add('GET', '/api/admin/games-control', () => {
+      const f = siteFlags.get();
+      return { ok: true, games: [...GAME_STATUS0].map(([id, st]) => { const i = registry.historyEngine(id)?.info; return { id, name: i?.name ?? id, icon: i?.icon ?? '🎮', built: st === 'available', off: f.gamesOff.includes(id), waiting: mm.count(id) }; }), stakes: f.stakes, options: [...STAKE_OPTIONS], prizeBonus: f.prizeBonus, paidDisabled: paidGamesDisabled };
+    }, 'owner');
+    functionalHttp.add('POST', '/api/admin/games-control', ({ actor, body }) => {
+      const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+      const input: Record<string, unknown> = {};
+      if (body.gamesOff !== undefined) { adminNeed(Array.isArray(body.gamesOff) && (body.gamesOff as unknown[]).every((g) => GAME_STATUS0.has(String(g))), 'لعبة غير معروفة.'); input.gamesOff = body.gamesOff; }
+      if (body.stakes !== undefined) input.stakes = body.stakes;
+      if (body.prizeBonus !== undefined) input.prizeBonus = body.prizeBonus;
+      let out; try { out = siteFlags.update(input, actor!.name); } catch (e) { throw new FunctionalHttpError(400, (e as Error).message || 'تعذّر الحفظ.'); }
+      applyGameFlags();
+      const auditOk = out.changed.length ? admin.audit(actor!, 'games.control', 'games', out.changed.map((k) => `${k}: ${JSON.stringify(out.before[k as keyof typeof out.before])} → ${JSON.stringify(out.after[k as keyof typeof out.after])}`).join('، ') + ` — ${reason}`) : true;
+      return { ok: true, changed: out.changed, auditOk };
+    }, 'owner');
+    // ---- R68y: (10) سجل اللاعب الكامل ----
+    functionalHttp.add('GET', '/api/admin/player-log', ({ url }) => {
+      const q = String(url.searchParams.get('q') ?? '').trim(); adminNeed(q.length >= 2, 'اكتب رقم اللاعب أو اسمه.');
+      const byDisplay = /^\d{3,12}$/.test(q) ? accounts.findByDisplayPlayerId(q) : null; const ql = q.toLowerCase();
+      const ids = byDisplay ? [byDisplay] : accounts.has(q) ? [q] : accounts.all().filter((a) => (a.name ?? '').toLowerCase().includes(ql)).slice(0, 6).map((a) => a.id);
+      if (ids.length !== 1) return { ok: true, matches: ids.map(r68Who), player: null };
+      const id = ids[0]; const acc = accounts.all().find((a) => a.id === id); const pr = progress(id).progression; const ban = platform.banOf(id);
+      const KIND: Record<string, string> = { start: 'رصيد البداية', daily: 'مكافأة يومية', entry_fee: 'رسم دخول لعبة', prize: 'جائزة لعبة', refund: 'استرجاع', purchase: 'شراء', reward: 'مكافأة', admin: 'تعديل من الإدارة', gift: 'هدية', transfer: 'تحويل/تبديل عملة' };
+      const tl: { t: number; k: string; text: string; delta?: number; cur?: string }[] = [];
+      for (const e of activity.of(id)) tl.push({ t: e.t, k: e.k, text: e.k === 'login' ? 'دخل الموقع' : e.k === 'room' ? `دخل غرفة «${e.label}»` : `لعب ${e.label}` });
+      for (const l of wallet.ledgerOf(id, 200)) if (l.kind !== 'gift' && l.delta !== 0) tl.push({ t: l.ts, k: l.kind === 'purchase' ? 'buy' : 'coin', text: `${KIND[l.kind] ?? l.kind}${l.reason ? ' — ' + l.reason : ''}`, delta: l.delta, cur: l.cur });
+      for (const g of wallet.giftsOf(id, undefined, 150)) tl.push({ t: g.ts, k: g.dir === 'out' ? 'gift-out' : 'gift-in', text: g.dir === 'out' ? `أرسل ${g.name}${(g.qty ?? 1) > 1 ? ' ×' + g.qty : ''} إلى ${g.toName || nm(g.to)}` : `استلم ${g.name}${(g.qty ?? 1) > 1 ? ' ×' + g.qty : ''} من ${g.fromName || nm(g.from)}`, delta: g.dir === 'out' ? -r68GiftVal(g) : r68GiftVal(g), cur: 'coins' });
+      const reports = community.reportsListAgainst(id, 30);
+      for (const r of reports) tl.push({ t: r.at, k: 'report', text: `بلاغ من ${r.by}: ${r.reason}${r.note ? ' — ' + r.note : ''}` });
+      if (ban) tl.push({ t: (ban as { at?: number }).at ?? 0, k: 'ban', text: `انحظر: ${(ban as { reason?: string }).reason ?? ''}` });
+      tl.sort((a, b) => b.t - a.t);
+      const netRef = platform.netRefOf(id); const sameNet = netRef ? (platform.netGroups(2).find((g) => g.ref === netRef)?.ids ?? []).filter((x) => x !== id).map(r68Who) : [];
+      return { ok: true, matches: [], player: { ...r68Who(id), level: pr.level.value, vip: pr.vip.enabled ? pr.vip.value : null, gems: wallet.gems(id), online: (sockets.get(id)?.size ?? 0) > 0, lastSeen: activity.lastSeen(id), played: acc?.played ?? 0, wins: acc?.wins ?? 0, ban: ban ? { reason: (ban as { reason?: string }).reason ?? '', at: (ban as { at?: number }).at ?? null } : null, rooms: socialRooms.ownedRoomsOf(id), reportsCount: community.reportsAgainst(id), sameNet, timeline: tl.slice(0, 400) } };
     }, 'owner');
     functionalHttp.add('POST', '/api/admin/message', ({ actor, body }) => {
       const id = String(body.id ?? ''), title = String(body.title ?? '').trim(), text = String(body.body ?? '').trim();
@@ -1953,7 +2020,7 @@ export async function createApp(
 
     const connectionReady=pendingWrites.track('room-connect', async () => {const rooms=await service.connect(user.id);await socialRooms.connect(user.id);accounts.noteActivity(user.id);return rooms;});
     connectionReady
-      .then((rooms) => send(ws, { t: 'hello', user, rooms, coins: wallet.balance(user.id), canClaim: wallet.canClaim(user.id) }))
+      .then((rooms) => (activity.note(user.id, 'login'), send(ws, { t: 'hello', user, rooms, coins: wallet.balance(user.id), canClaim: wallet.canClaim(user.id), stakes: availableStakes })))
       .catch((e) => { log('connect_error', { message: (e as Error).message });ws.close(4503,'room storage unavailable'); });
 
     ws.on('message', async (raw) => {

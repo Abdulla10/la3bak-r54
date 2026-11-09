@@ -1,6 +1,6 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
 import * as PR from './profile.js?v=r68w';
-import * as UNIFIED from '../unified/shell.js?v=r68w';
+import * as UNIFIED from '../unified/shell.js?v=r68y';
 import * as REF from '../unified/home.js?v=r68l';
 import * as SOCIAL from '../unified/social.js?v=r68w';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -8,14 +8,14 @@ import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-av
 import { createSocialGiftStore } from '../social-gifts.js?v=r68i';
 import {giftArtwork} from '../gift-assets-r27.js?v=r68i-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r67ac';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r68y';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
-import * as HUB from '../hub.js?v=shell-r6';
+import * as HUB from '../hub.js?v=r68y-r6';
 import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
 import { initStatus, checkStatusNow } from '../status.js?v=r68x-navigation-r50';
-import * as LOB from '../lobby.js?v=r68m';
+import * as LOB from '../lobby.js?v=r68y';
 import * as AVT from '../avatar.js?v=shell-r6';
 import * as AUTH from '../auth.js?v=shell-r6';
 import * as FS from '../fullscreen.js?v=shell-r6';
@@ -35,7 +35,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r67as';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68x';
+import * as PWA from '../pwa.js?v=r68y';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68w';
@@ -148,6 +148,7 @@ function connect() {
       S.user = m.user;
       S.coins = m.coins ?? 0;
       S.canClaim = !!m.canClaim;
+      if (Array.isArray(m.stakes)) S.stakes = m.stakes;
       // فتح #/shop مباشرة (تحديث الصفحة) يطلب المتجر قبل جاهزية الاتصال فيفشل؛ أول ما يجهز الاتصال نعيد التحميل
       if (['home','profile','account'].includes(parseRoute().name) && !SHOP.SH.data) SHOP.load(req).then(() => { if (['home','profile','account'].includes(parseRoute().name)) render(); });
       if (parseRoute().name === 'shop' && (SHOP.SH.err || !SHOP.SH.data)) SHOP.load(req).then(() => { if (parseRoute().name === 'shop') render(); });
@@ -388,7 +389,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68x');
+  const M = await import('../settings-r60.js?v=r68y');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -606,7 +607,7 @@ async function render() {
       if (isRetiredGame(r.a)) { unifiedPage(view,'hub',retiredGameHTML()); break; }
       if (needUser('#/hub/' + r.a)) return;
       if (changed) loadOnline(r.a);
-      unifiedPage(view,'hub',HUB.hubHTML(r.a, { nf, esc, coins: S.coins || 0, canClaim: !!S.canClaim }));
+      unifiedPage(view,'hub',HUB.hubHTML(r.a, { nf, esc, coins: S.coins || 0, canClaim: !!S.canClaim, stakes: S.stakes }));
       if (HUB.MM.game === r.a && HUB.MM.seats) HUB.tickTimer();
       break;
     case 'ranks':
@@ -641,7 +642,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r68w').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r68y').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -1920,7 +1921,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r67ac', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r68y', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },

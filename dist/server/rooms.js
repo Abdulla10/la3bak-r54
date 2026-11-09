@@ -141,7 +141,20 @@ export class RoomService {
         const engine = this.engineOf(room);
         if (!engine)
             return {};
-        const got = this.wallet.settle(`${room.code}:${room.gameNo}`, room.payers, room.stake, engine.outcome(room.state).winners);
+        const winners = engine.outcome(room.state).winners;
+        const got = this.wallet.settle(`${room.code}:${room.gameNo}`, room.payers, room.stake, winners);
+        const pct = Object.keys(got).length ? Math.max(0, Math.min(100, Math.floor(this.hooks.prizeBonus?.() ?? 0))) : 0;
+        const w = winners.filter((id) => room.payers.includes(id));
+        if (pct > 0 && w.length) {
+            const each = Math.floor(room.stake * room.payers.length * pct / 100 / w.length);
+            if (each > 0)
+                for (const id of w)
+                    try {
+                        if (this.wallet.grant(id, 'coins', each, `مكافأة فوز إضافية ${pct}%`, `prizebonus:${room.code}:${room.gameNo}:${id}`))
+                            got[id] = (got[id] ?? 0) + each;
+                    }
+                    catch { /* الجائزة الأساسية انصرفت */ }
+        }
         for (const [id, n] of Object.entries(got))
             this.hooks.onWallet?.(id, this.wallet.balance(id), n);
         return got;

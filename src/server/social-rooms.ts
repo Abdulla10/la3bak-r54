@@ -57,6 +57,8 @@ export interface SocialRoomsOptions {
   ownsItem?: (userId: string, itemId: string) => boolean;
   /** R67ae: المالك طفّى وضع اليوتيوب من اللوحة */
   cinemaOff?: () => boolean;
+  /** R68y: سجل دخول الغرف (لسجل اللاعب بلوحة التحكم) */
+  onEnter?: (userId: string, roomId: string, roomName: string) => void;
   /** R67au: الغرفة ارتفع ليفلها (هدية صاحب الغرفة كل 5 ليفلات + تهنئة) */
   roomLevelUp?: (roomId: string, ownerId: string, name: string, from: number, to: number, members: string[]) => void;
   /** R67ae: إخفاء الكلمات الممنوعة بالدردشة */
@@ -888,7 +890,8 @@ export class SocialRooms {
     if(r.password&&!active&&admission?.passwordVerifiedRoomId!==r.id)fail('room_password_required',403);
   }
   private enterRoom(d: State,r: Room,id: string,media: Set<string>,now: number, admission?: DirectoryAdmission) {
-    this.admitRoom(d,r,id,admission);const old=this.member(d,id);if(old?.room.id===r.id)return old.member;
+    this.admitRoom(d,r,id,admission);if(this.opts.onEnter){const cb=this.opts.onEnter,rid=r.id,rn=r.name;queueMicrotask(()=>{try{cb(id,rid,rn);}catch{/* السجل اختياري */}});}
+    const old=this.member(d,id);if(old?.room.id===r.id)return old.member;
     this.remove(d,id,media);const m:Member={id,councilId:null,joinedAt:now,epoch:randomUUID(),muted:false,deadline:(this.connections.get(id)??0)>0?null:now+this.grace};
     r.members.push(m);r.invites=r.invites.filter(x=>x!==id);this.hosts(r);
     const p=this.pref(d,id)!;if(p.remember)p.recentRoomIds=[r.id,...(p.recentRoomIds??[]).filter(roomId=>roomId!==r.id)].slice(0,DIRECTORY_LIMIT_R30);return m;

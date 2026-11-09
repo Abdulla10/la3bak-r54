@@ -51,7 +51,9 @@ export const START_COINS = 1000;
 /** Historical coin→gem offers, retained for receipt identification only; new conversions are closed. */
 export const GEM_PACKS = [{ id: 'gems-10', gems: 10, coins: 1_000 }, { id: 'gems-50', gems: 50, coins: 5_000 }, { id: 'gems-100', gems: 100, coins: 10_000 }, { id: 'gems-500', gems: 500, coins: 50_000 }] as const;
 export const DAILY_COINS = 200;
-export const STAKES = [0, 100, 500];
+export const STAKES: number[] = [0, 100, 500];
+/** R68y: الإدارة تغيّر الرسوم بدون إعادة تشغيل (نفس المصفوفة حتى تشوفها كل الأماكن) */
+export function setStakes(list: readonly number[]): void { STAKES.splice(0, STAKES.length, ...list); }
 const GULF = 4 * 3600_000;
 const dayOf = (t: number) => new Date(t + GULF).toISOString().slice(0, 10);
 /** الحقول الاختيارية (جواهر، ملكية، مجهّز، مكافآت، سجل) تُكمَّل للحسابات القديمة بدون مسح شيء */

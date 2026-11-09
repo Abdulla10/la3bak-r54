@@ -58,7 +58,8 @@ export function hubHTML(id, o) {
   const locked = id === 'ludo' && !ldPlayable();
   const lockAttr = locked ? ' disabled aria-disabled="true"' : '';
   const lockNote = locked ? `<p class="notice" role="status">وضع «${LD_MODES.find((x) => x.id === ldMode()).name}» قيد التطوير، ما تقدر تبدأ مباراة به الحين. اختر «كلاسيكي» عشان تلعب.</p>` : '';
-  const stakeChips = STAKES.map((v) => `<button type="button" class="${stake === v ? 'on' : ''}" data-act="hub-stake" data-g="${id}" data-v="${v}" aria-pressed="${stake === v}">${v ? '🪙 ' + o.nf(v) : 'مجانية'}</button>`).join('');
+  const stakeList = Array.isArray(o.stakes) && o.stakes.length ? o.stakes : STAKES;
+  const stakeChips = stakeList.map((v) => `<button type="button" class="${stake === v ? 'on' : ''}" data-act="hub-stake" data-g="${id}" data-v="${v}" aria-pressed="${stake === v}">${v ? '🪙 ' + o.nf(v) : 'مجانية'}</button>`).join('');
   const wallet = `<section class="card wallet"><div><b>🪙 رصيدك: ${o.nf(o.coins)}</b><small>عملات افتراضية للعب فقط، بدون قيمة مالية. <a href="#/shop">🛍️ المتجر</a></small></div>${o.canClaim ? '<button class="btn sm" type="button" data-act="wallet-daily">استلم مكافأة اليوم +200</button>' : '<span class="hint">استلمت مكافأة اليوم ✅</span>'}</section>`;
   const online = MM.online ? `<p class="hint">🟢 ${o.nf(MM.online.online)} متصل بالموقع الحين · ${o.nf(MM.online.waiting)} ينتظر لاعبين</p>` : '';
   return `<div class="stack hub">

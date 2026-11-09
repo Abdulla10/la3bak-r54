@@ -10,9 +10,15 @@ export type SiteFlags = {
   firstTopupPercent: number;  // نسبة هدية أول شحن (0 = مطفية)، -1 = حسب إعداد الخادم
   bigGiftMin: number;         // أقل قيمة هدية (عملات) تطلع بالشاشة الكاملة
   profileBgVip: number;       // من أي VIP تطلع خلفية الملف كاملة
+  gamesOff: string[];         // R68y: ألعاب مقفلة من الإدارة
+  stakes: number[];           // R68y: رسوم الدخول المسموحة (0 = مجانية)
+  prizeBonus: number;         // R68y: نسبة إضافية فوق جائزة الفائز (0 = بدون)
 };
-export const SITE_FLAGS_DEFAULT: SiteFlags = Object.freeze({ cinema: true, broadcast: true, streak: true, invite: true, firstTopupPercent: -1, bigGiftMin: 9000, profileBgVip: 6 });
-export const SITE_FLAG_LIMITS = Object.freeze({ firstTopupPercent: [-1, 200], bigGiftMin: [1000, 10_000_000], profileBgVip: [1, 15] } as const);
+export const STAKE_OPTIONS = Object.freeze([0, 100, 500, 1000, 2500, 5000, 10000, 50000]);
+const validGamesOff = (v: unknown) => Array.isArray(v) && v.length <= 100 && v.every((g) => typeof g === 'string' && /^[a-z0-9_-]{1,40}$/i.test(g));
+const validStakes = (v: unknown) => Array.isArray(v) && v.length >= 1 && v.length <= STAKE_OPTIONS.length && v.includes(0) && new Set(v).size === v.length && v.every((n) => STAKE_OPTIONS.includes(n as number));
+export const SITE_FLAGS_DEFAULT: SiteFlags = Object.freeze({ cinema: true, broadcast: true, streak: true, invite: true, firstTopupPercent: -1, bigGiftMin: 9000, profileBgVip: 6, gamesOff: [], stakes: [0, 100, 500], prizeBonus: 0 });
+export const SITE_FLAG_LIMITS = Object.freeze({ firstTopupPercent: [-1, 200], bigGiftMin: [1000, 10_000_000], profileBgVip: [1, 15], prizeBonus: [0, 100] } as const);
 export type SiteEvent = { id: string; kind: 'daily2x' | 'slotSale'; slot?: string; percent?: number; title: string; startsAt: number; endsAt: number; by: string; at: number; ended?: boolean };
 export const EVENT_SLOTS = Object.freeze(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'souvenir', 'title', 'badge', 'room-bg', 'special-id', 'room-id'] as const);
 type Data = { v: 1; flags: Partial<SiteFlags>; at: number; by: string; words?: string[]; wordsAt?: number; wordsBy?: string; events?: SiteEvent[]; tuning?: Record<string, unknown>; tuningAt?: number; tuningBy?: string; migrations?: string[] };
@@ -26,6 +32,8 @@ function validFlags(x: unknown): boolean {
   if (x.words !== undefined && (!Array.isArray(x.words) || x.words.length > 500 || x.words.some((w) => typeof w !== 'string' || w.length < 2 || w.length > 40))) return false;
   for (const [k, v] of Object.entries(x.flags)) {
     if (k === 'cinema' || k === 'broadcast' || k === 'streak' || k === 'invite') { if (typeof v !== 'boolean') return false; }
+    else if (k === 'gamesOff') { if (!validGamesOff(v)) return false; }
+    else if (k === 'stakes') { if (!validStakes(v)) return false; }
     else if (k in SITE_FLAG_LIMITS) { if (!inRange(k as keyof typeof SITE_FLAG_LIMITS, v)) return false; }
     else return false;
   }
@@ -38,7 +46,7 @@ export class SiteFlagsStore {
     if (file) { const l = loadJsonFile(file, validFlags as (v: Record<string, unknown>) => boolean); if (l) this.d = l as unknown as Data; }
     this.disk = new Persister('site-flags', file, () => this.d, now, mon, validFlags as (v: Record<string, unknown>) => boolean);
   }
-  get(): SiteFlags { return { ...SITE_FLAGS_DEFAULT, ...this.d.flags }; }
+  get(): SiteFlags { const f = { ...SITE_FLAGS_DEFAULT, ...this.d.flags }; return { ...f, gamesOff: [...f.gamesOff], stakes: [...f.stakes] }; }
   meta() { return { at: this.d.at, by: this.d.by }; }
   events(): SiteEvent[] { return structuredClone(this.d.events ?? []); }
   activeEvents(now = this.now()): SiteEvent[] { return (this.d.events ?? []).filter((e) => !e.ended && e.startsAt <= now && now < e.endsAt); }
@@ -90,6 +98,8 @@ export class SiteFlagsStore {
     const next: Partial<SiteFlags> = { ...this.d.flags };
     for (const [k, v] of Object.entries(input)) {
       if (k === 'cinema' || k === 'broadcast' || k === 'streak' || k === 'invite') { if (typeof v !== 'boolean') throw new Error('قيمة تشغيل/إطفاء غير صالحة.'); next[k] = v; }
+      else if (k === 'gamesOff') { if (!validGamesOff(v)) throw new Error('قائمة الألعاب غير صالحة.'); next.gamesOff = [...new Set(v as string[])]; }
+      else if (k === 'stakes') { if (!validStakes(v)) throw new Error('رسوم الدخول لازم تكون من القائمة وفيها «مجانية».'); next.stakes = [...(v as number[])].sort((a, b) => a - b); }
       else if (k in SITE_FLAG_LIMITS) { const key = k as keyof typeof SITE_FLAG_LIMITS; if (!inRange(key, v)) throw new Error(`القيمة لازم تكون بين ${SITE_FLAG_LIMITS[key][0]} و ${SITE_FLAG_LIMITS[key][1]}.`); next[key] = v as number; }
       else throw new Error('إعداد غير معروف.');
     }
@@ -97,6 +107,6 @@ export class SiteFlagsStore {
     this.d = { ...this.d, v: 1, flags: next, at: this.now(), by };
     try { this.disk.mustSave(); } catch (e) { this.d = prev; throw e; }
     const after = this.get();
-    return { before, after, changed: (Object.keys(after) as (keyof SiteFlags)[]).filter((k) => before[k] !== after[k]) };
+    return { before, after, changed: (Object.keys(after) as (keyof SiteFlags)[]).filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k])) };
   }
 }

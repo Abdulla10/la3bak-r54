@@ -215,6 +215,13 @@ export class Platform {
     for (const [id, v] of Object.entries(this.d.net ?? {})) if (v.at > since) { const l = g.get(v.h) ?? []; l.push({ id, at: v.at }); g.set(v.h, l); }
     return [...g].filter(([, l]) => l.length > threshold).map(([h, l]) => { l.sort((x, y) => y.at - x.at); return { ref: h.slice(0, 6), count: l.length, last: l[0].at, ids: l.slice(0, 20).map((x) => x.id) }; }).sort((x, y) => y.count - x.count);
   }
+  /** R68y: حسابات تشترك بنفس الشبكة (آخر 30 يوم) — للمراجعة فقط */
+  netGroups(min = 3) {
+    const g = new Map<string, { id: string; at: number }[]>();
+    for (const [id, v] of Object.entries(this.d.net ?? {})) { const l = g.get(v.h) ?? []; l.push({ id, at: v.at }); g.set(v.h, l); }
+    return [...g].filter(([, l]) => l.length >= min).map(([h, l]) => { l.sort((x, y) => y.at - x.at); return { ref: h.slice(0, 6), count: l.length, last: l[0].at, ids: l.slice(0, 30).map((x) => x.id), bannedHere: Object.values(this.d.bans).some((b) => (b as { h?: string }).h === h) }; }).sort((x, y) => y.count - x.count).slice(0, 50);
+  }
+  netRefOf(id: string): string { return this.d.net?.[id]?.h?.slice(0, 6) ?? ''; }
   isSuspect(id: string) { return !!this.d.suspects?.[id]; }
   suspects() { return Object.entries(this.d.suspects ?? {}).map(([id, s]) => ({ id, ...s })); }
   clearSuspect(id: string, au?: AuditFn<boolean>) { return this.commit(() => { const had = !!this.d.suspects?.[id]; if (had) delete this.d.suspects![id]; return had; }, au); }

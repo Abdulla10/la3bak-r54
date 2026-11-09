@@ -1,6 +1,6 @@
 import { faceSvg, faceHtml, charOf } from './characters.js?v=shell-r6';
 import { avatarArt } from './avatars.js?v=r67ac';
-import { ldPlayMode, LD_MODES } from './hub.js?v=shell-r6';
+import { ldPlayMode, LD_MODES } from './hub.js?v=r68y-r6';
 import * as SFX from './sfx.js?v=shell-r6';
 import { domino } from './domino.js?v=r67ac';
 import { uno } from './uno.js?v=r67ac';
