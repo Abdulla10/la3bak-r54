@@ -57,6 +57,8 @@ export interface SocialRoomsOptions {
   ownsItem?: (userId: string, itemId: string) => boolean;
   /** R67ae: المالك طفّى وضع اليوتيوب من اللوحة */
   cinemaOff?: () => boolean;
+  /** R67ae: إخفاء الكلمات الممنوعة بالدردشة */
+  maskChat?: (text: string) => string;
   /** R58: مراجعة تلقائية للنصوص */
   moderate?: (text: string, kind: 'room-name' | 'room-ad') => { ok: true } | { ok: false; code: string };
   /** Trusted existing outbox + canonical Wallet check; synchronous, never another queue. */
@@ -1136,7 +1138,7 @@ export class SocialRooms {
         if(b.action.type==='moderate')this.requireMod(r,id,c,'chat');
       }
       this.rate(d,id,now);
-      if(command==='chat:send') {const message:Chat={id:randomUUID(),actor:id,text:text(b.text,1000),at:now};c.chat.push(message);c.chat=c.chat.slice(-100);this.activity(r,command,now);return success({messageId:message.id,roomId:r.id,councilId:c.id});}
+      if(command==='chat:send') {const raw0=text(b.text,1000),masked=this.opts.maskChat?this.opts.maskChat(raw0):raw0;const message:Chat={id:randomUUID(),actor:id,text:masked.slice(0,1000)||raw0,at:now};c.chat.push(message);c.chat=c.chat.slice(-100);this.activity(r,command,now);return success({messageId:message.id,roomId:r.id,councilId:c.id});}
       if(command==='mode:action') {
         if(!SOCIAL_MODE_IDS.includes(b.mode as SocialModeId)||!isObj(b.action)||typeof b.action.type!=='string')fail('invalid_mode_action');
         const mode=b.mode as SocialModeId;if(!c.modeEnabled[mode]&&!withdrawingR47)fail('council_mode_disabled',403);

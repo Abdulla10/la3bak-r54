@@ -78,6 +78,8 @@ export interface CommunityDeps {
   allIds(): string[];
   isBanned(id: string): boolean;
   push(id: string, msg: unknown): void;
+  /** R67ae: كلام مسيء بالمنشورات والتعليقات → رسالة الرفض */
+  moderate?(text: string): string | null;
   log(event: string, data?: Record<string, unknown>): void;
   /** R66: صاحب الحساب مخفي منشوراته عن الكل (إعداد «إخفاء منشوراتي») */
   postsHidden?(id: string): boolean;
@@ -233,6 +235,7 @@ export class Community {
     const media = typeof b.media === 'string' && b.media ? b.media : null;
     if (media) { const m = this.d.media[media]; if (!MEDIA_RE.test(media) || !m || m.by !== me || m.post !== null) throw new CommunityError(400, 'الصورة غير صالحة. ارفعها من جديد.'); }
     if (!text && !media) throw new CommunityError(400, 'اكتب شي أو أضف صورة.');
+    { const bad = text ? this.dep.moderate?.(text) : null; if (bad) throw new CommunityError(422, bad); }
     return this.tx(() => {
       if (text) this.dupCheck(me, text, 'post');
       const p: Post = { id: this.nextId(), by: me, text, media, at: this.now(), edited: null, likes: [] };
@@ -247,6 +250,7 @@ export class Community {
     if (p.by !== me) throw new CommunityError(403, 'تقدر تعدّل منشوراتك بس.');
     const text = cleanText(b.text, POST_MAX);
     if (!text && !p.media) throw new CommunityError(400, 'المنشور ما يصير فاضي.');
+    { const bad = text ? this.dep.moderate?.(text) : null; if (bad) throw new CommunityError(422, bad); }
     return this.tx(() => { p.text = text; p.edited = this.now(); return this.postView(p, me); });
   }
   /** حذف منشور: صاحبه فقط (والإدارة عبر البلاغات). يحذف التعليقات والإعجابات والإشعارات المرتبطة والصورة */
@@ -281,6 +285,7 @@ export class Community {
     const p = this.post(id); this.guard(me, p.by);
     const text = cleanText(b.text, COMMENT_MAX);
     if (!text) throw new CommunityError(400, 'اكتب تعليقك.');
+    { const bad = this.dep.moderate?.(text); if (bad) throw new CommunityError(422, bad); }
     let parent: Comment | undefined;
     if (b.parent !== undefined && b.parent !== null) {
       parent = this.d.comments.find((c) => c.id === Number(b.parent) && c.post === p.id);

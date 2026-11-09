@@ -1203,6 +1203,47 @@ export class Wallet {
   houseView(n = 100) { const h = this.d.house ?? { coins: 0, count: 0, ledger: [] }; return { coins: h.coins, ...(h.gems !== undefined ? { gems: h.gems } : {}), count: h.count, ledger: structuredClone(h.ledger.slice(-n).reverse()) }; }
   /** عدد مرات إرسال كل هدية (للأكثر شعبية — من الإرسال الفعلي فقط) */
   giftPopularity(): Record<string, number> { return { ...(this.d.giftStats ?? {}) }; }
+  /** R67ae: للإدارة — كل الهدايا المرسلة (من سجلات الحسابات المحفوظة)، الأحدث أول */
+  adminGifts(opts: { q?: string; since?: number; limit?: number } = {}) {
+    const q = (opts.q ?? '').trim().toLowerCase(), since = opts.since ?? 0, limit = Math.max(1, Math.min(500, opts.limit ?? 200));
+    const all: GiftRec[] = [];
+    for (const a of Object.values(this.d.acc)) for (const g of a.gifts ?? []) if (g.dir === 'out' && g.ts >= since) all.push(g);
+    all.sort((x, y) => y.ts - x.ts);
+    const val = (g: GiftRec) => (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1);
+    const hit = all.filter((g) => !q || g.fromName.toLowerCase().includes(q) || g.toName.toLowerCase().includes(q) || g.name.toLowerCase().includes(q));
+    // أزواج متكررة (نفس المرسل لنفس المستلم) — مؤشر لتحويل العملات بين الحسابات
+    const pairs = new Map<string, { from: string; to: string; count: number; value: number }>();
+    for (const g of hit) { const k = g.from + '>' + g.to; const p = pairs.get(k) ?? { from: g.fromName, to: g.toName, count: 0, value: 0 }; p.count++; p.value += val(g); pairs.set(k, p); }
+    return {
+      total: hit.length, value: hit.reduce((n, g) => n + val(g), 0),
+      list: hit.slice(0, limit).map((g) => ({ id: g.id, ts: g.ts, from: g.fromName, fromId: g.from, to: g.toName, toId: g.to, gift: g.name, icon: g.icon, qty: g.qty ?? 1, value: val(g), recv: g.recv ?? 0, room: !!g.room })),
+      pairs: [...pairs.values()].sort((x, y) => y.value - x.value).slice(0, 15),
+    };
+  }
+  /** R67ae: للإدارة — حركة العملات يوم بيوم (من سجلات الحسابات المحفوظة، بتوقيت الخليج) */
+  adminEconomy(days = 14, now = Date.now()) {
+    const GULF = 4 * 3600_000, dayOf = (t: number) => new Date(t + GULF).toISOString().slice(0, 10);
+    const since = now - days * 86_400_000;
+    const byDay = new Map<string, { day: string; in: number; out: number; kinds: Record<string, number> }>();
+    for (let i = days - 1; i >= 0; i--) { const d = dayOf(now - i * 86_400_000); byDay.set(d, { day: d, in: 0, out: 0, kinds: {} }); }
+    const spend = new Map<string, number>(); const giftCount = new Map<string, { name: string; icon: string; count: number; value: number }>();
+    for (const [id, a] of Object.entries(this.d.acc)) {
+      for (const l of a.ledger ?? []) {
+        if (l.ts < since) continue; const coins = l.cur === 'gems' ? l.delta * 20 : l.delta; const row = byDay.get(dayOf(l.ts)); if (!row) continue;
+        if (coins > 0) row.in += coins; else row.out += -coins;
+        const k = (coins > 0 ? '+' : '-') + l.kind; row.kinds[k] = (row.kinds[k] ?? 0) + Math.abs(coins);
+        if (coins < 0 && (l.kind === 'purchase' || l.kind === 'gift' || l.kind === 'entry_fee')) spend.set(id, (spend.get(id) ?? 0) - coins);
+      }
+      for (const g of a.gifts ?? []) { if (g.dir !== 'out' || g.ts < since) continue; const v = (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1); const c = giftCount.get(g.gift) ?? { name: g.name, icon: g.icon, count: 0, value: 0 }; c.count += g.qty ?? 1; c.value += v; giftCount.set(g.gift, c); }
+    }
+    const balances = Object.values(this.d.acc).reduce((n, a) => n + (a.coins ?? 0) + (a.gems ?? 0) * 20, 0);
+    return {
+      days: [...byDay.values()], balances, accounts: Object.keys(this.d.acc).length,
+      topSpenders: [...spend.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15).map(([id, v]) => ({ id, spent: v })),
+      topGifts: [...giftCount.values()].sort((a, b) => b.value - a.value).slice(0, 10),
+      house: { coins: this.d.house?.coins ?? 0, gems: this.d.house?.gems ?? 0 },
+    };
+  }
   /** سجل هدايا اللاعب نفسه (الأحدث أولاً). */
   giftsOf(id: string, dir?: 'in' | 'out', n = 50): GiftRec[] { return structuredClone((this.d.acc[id]?.gifts ?? []).filter((g) => !dir || g.dir === dir).slice(-n).reverse()); }
   /** عدد الهدايا المرسلة والمستلمة (عمليات فعلية، للإنجازات) */

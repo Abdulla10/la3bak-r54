@@ -1,4 +1,4 @@
-import { moderateText } from './moderation-r58.js';
+import { moderateText, maskBanned, profanityOnly, setExtraBannedWords, BANNED_WORDS_MAX } from './moderation-r58.js';
 import { Economy, validEconomy, MANUAL_CONVERSION_DISABLED, MANUAL_CONVERSION_CLOSED_MESSAGE } from './economy.js';
 import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
 import {quoteGiftBatch} from './social-gift-batch-r27.js';
@@ -339,6 +339,7 @@ export async function createApp(
   const provider = opts.paymentProvider ?? (!cfg.complimentaryPurchases && paymentSettings && paymentSettings.mode !== 'disabled' && paymentSettings.provider === 'tap' && paymentSettings.secretKey && paymentSettings.merchantId ? new TapPaymentProvider({mode:paymentSettings.mode,secretKey:paymentSettings.secretKey,merchantId:paymentSettings.merchantId}) : null);
   /* R67ae: إعدادات التشغيل من لوحة التحكم */
   const siteFlags = new SiteFlagsStore(functionalFile(undefined, 'site-flags'), Date.now, storage);
+  setExtraBannedWords(siteFlags.words());
   /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
   const firstTopup = new FirstTopup(functionalFile(undefined, 'first-topup'), {
     percentOverride: () => siteFlags.get().firstTopupPercent,
@@ -907,7 +908,7 @@ export async function createApp(
 
   /* المجتمع: نفس الجلسة والحسابات والحظر القائمة. معرّفات الحسابات ما تطلع للعميل (معرّف عام بالـHMAC) */
   const community = new Community(comFile, comMedia, {
-    secret: cfg.cookieSecret, nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
+    secret: cfg.cookieSecret, moderate: (t) => profanityOnly(t), nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
     hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
     push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
     profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg') return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
@@ -948,6 +949,7 @@ export async function createApp(
     giftValue:(from,to,ref,roomId)=>{const rec=wallet.committedGiftReceipt(from,to,ref);if(!rec||rec.cur!=='gems'||rec.status!=='done'||typeof rec.room!=='string'||!rec.room.startsWith(`social:${roomId}:`))return null;const v=rec.total??rec.price*(rec.qty??1);return Number.isSafeInteger(v)&&v>0?v:null;},
     ownsItem:(userId,itemId)=>wallet.owned(userId).includes(itemId),
     cinemaOff:()=>!siteFlags.get().cinema,
+    maskChat:(t)=>maskBanned(t),
     roomIdItem:(userId,itemId)=>{const it=shopcat.get(itemId);return it&&it.slot==='room-id'&&wallet.owned(userId).includes(it.id)&&typeof it.css==='string'?it.css:null;},
     moderate:(text,kind)=>{const m=moderateText(text,kind);return m.ok?{ok:true}:{ok:false,code:m.code};},
     verifyGiftSupport:(context,rec)=>{
@@ -1219,6 +1221,16 @@ export async function createApp(
       const auditOk = out.changed.length ? admin.audit(actor!, 'site.flags', 'site-flags', out.changed.map((k) => `${k}: ${String(out.before[k as keyof typeof out.before])} → ${String(out.after[k as keyof typeof out.after])}`).join('، ') + ` — ${reason}`) : true;
       if (out.changed.includes('cinema') && !out.after.cinema) { /* الفيديوهات الشغالة تكمل لين يطفونها؛ ما نقدر نوقف الكل بأمر واحد بأمان */ }
       return { ok: true, flags: out.after, changed: out.changed, auditOk };
+    }, 'owner');
+    functionalHttp.add('GET', '/api/admin/gifts', ({ url }) => { const days = Math.max(1, Math.min(90, Number(url.searchParams.get('days')) || 7)); return { ok: true, days, ...wallet.adminGifts({ q: url.searchParams.get('q') ?? '', since: Date.now() - days * 86_400_000, limit: 200 }) }; }, 'owner');
+    functionalHttp.add('GET', '/api/admin/economy-daily', ({ url }) => { const days = Math.max(7, Math.min(60, Number(url.searchParams.get('days')) || 14)); const e = wallet.adminEconomy(days); return { ok: true, ...e, topSpenders: e.topSpenders.map((x) => ({ name: nm(x.id), spent: x.spent })) }; }, 'owner');
+    functionalHttp.add('GET', '/api/admin/banned-words', () => ({ ok: true, words: siteFlags.words(), meta: siteFlags.wordsMeta(), max: BANNED_WORDS_MAX }), 'owner');
+    functionalHttp.add('POST', '/api/admin/banned-words', ({ actor, body }) => {
+      const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+      let out; try { out = siteFlags.editWords(body.add, body.remove, actor!.name); } catch (e) { throw new FunctionalHttpError(400, (e as Error).message || 'تعذّر الحفظ.'); }
+      setExtraBannedWords(out.words);
+      const auditOk = admin.audit(actor!, 'moderation.words', 'banned-words', `${out.added.length ? 'إضافة ' + out.added.length : ''}${out.removed.length ? ' حذف ' + out.removed.length : ''} — ${reason}`);
+      return { ok: true, words: out.words, auditOk };
     }, 'owner');
     functionalHttp.add('GET', '/api/admin/posts', ({ url }) => ({ ok: true, posts: community.adminPosts(url.searchParams.get('q') ?? '', 80), counts: community.counts() }), 'owner');
     functionalHttp.add('POST', '/api/admin/posts/delete', ({ actor, body }) => {

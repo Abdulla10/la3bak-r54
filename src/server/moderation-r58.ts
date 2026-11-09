@@ -25,11 +25,27 @@ const PROFANITY_RE = new RegExp(`(?:^|[^\\p{L}])(?:${PROFANITY.map((w) => w.repl
 const IMPERSONATION = ['الاداره', 'اداره الموقع', 'الدعم الفني', 'خدمه العملاء', 'مشرف عام', 'مالك الموقع', 'الحساب الرسمي', 'admin', 'administrator', 'support', 'official', 'moderator', 'la3bak team', 'فريق لعبك'];
 const LINK_RE = /(?:https?:\/\/|www\.|\b[a-z0-9-]{2,}\.(?:com|net|org|me|io|co|app|gg|xyz|link|ly|sa|ae|kw|qa|bh|om)\b|t\.me\/|wa\.me\/|discord\.gg)/i;
 const CONTACT_RE = /(?:\+?\d[\d\s-]{7,}\d|@[a-z0-9_.]{3,}|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(?:snap|سناب|انستا|insta|تلي|telegram|واتس|whats)\s*[:：]?\s*[a-z0-9_.]{3,})/i;
+/** R67ae: كلمات ممنوعة يضيفها المالك من لوحة التحكم (فوق القائمة الثابتة) */
+let EXTRA: string[] = [];
+let EXTRA_RE: RegExp | null = null;
+const reEsc = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function setExtraBannedWords(words: readonly string[]): void {
+  EXTRA = [...new Set(words.map((w) => normalizeForModeration(String(w)).trim()).filter((w) => w.length >= 2))].slice(0, 500);
+  EXTRA_RE = EXTRA.length ? new RegExp(`(?:^|[^\\p{L}])(?:${EXTRA.map(reEsc).join('|')})(?:$|[^\\p{L}])`, 'u') : null;
+}
+export const BANNED_WORDS_MAX = 500;
+const hasBanned = (n: string) => { const spaced = ` ${n.replace(/[^\p{L}\p{N}]+/gu, ' ')} `; return PROFANITY_RE.test(spaced) || PROFANITY.some((w) => w.length >= 4 && n.replace(/[^\p{L}]/gu, '').includes(w)) || (!!EXTRA_RE && EXTRA_RE.test(spaced)) || EXTRA.some((w) => w.length >= 4 && n.replace(/[^\p{L}\p{N}]/gu, '').includes(w.replace(/[^\p{L}\p{N}]/gu, ''))); };
+/** للمنشورات والتعليقات: الكلام المسيء بس (الروابط والمنشن مسموحة هناك) */
+export function profanityOnly(raw: string): string | null { return hasBanned(normalizeForModeration(String(raw ?? ''))) ? MESSAGES.moderation_profanity : null; }
+/** للدردشة: نخفي الكلمة الممنوعة بنجوم بدل ما نرفض الرسالة كلها */
+export function maskBanned(raw: string): string {
+  const all = [...PROFANITY, ...EXTRA]; if (!all.length) return raw;
+  return String(raw ?? '').split(/(\s+)/).map((tok) => { if (/^\s+$/.test(tok) || !tok) return tok; const n = normalizeForModeration(tok).replace(/[^\p{L}\p{N}]/gu, ''); return n && all.some((w) => w.replace(/\s+/g, '') === n || (w.length >= 4 && n.includes(w.replace(/\s+/g, '')))) ? '*'.repeat(Math.min(8, [...tok].length)) : tok; }).join('');
+}
 export function moderateText(raw: string, kind: ModerationKind): ModerationResult {
   const text = String(raw ?? '').trim();
   const n = normalizeForModeration(text);
-  const spaced = ` ${n.replace(/[^\p{L}\p{N}]+/gu, ' ')} `;
-  if (PROFANITY_RE.test(spaced) || PROFANITY.some((w) => w.length >= 4 && n.replace(/[^\p{L}]/gu, '').includes(w))) return fail('moderation_profanity');
+  if (hasBanned(n)) return fail('moderation_profanity');
   if (LINK_RE.test(n)) return fail('moderation_link');
   if (kind !== 'room-name' && CONTACT_RE.test(n)) return fail('moderation_contact');
   if (kind === 'room-name' && /(?:\+?\d[\d\s-]{7,}\d|@[a-z0-9_.]{3,})/i.test(n)) return fail('moderation_contact');
