@@ -11,7 +11,7 @@ const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');
 export const SH = { data: null, err: '', loading: false, world: 'players', tab: 'frame', preview: null, confirm: null, busy: false, giftTab: null, who: null, try: {}, f: { rar: 'all', own: 'all', sort: 'rar', set: 'all' }, lim: 24 };
 // R58p: أسماء أقصر وترتيب أوضح (شبكة 4×2 بأيقونات)
 export const STOREFRONT_TABS = [['avatar', 'الصور الرمزية'], ['frame', 'الإطارات'], ['title', 'الألقاب'], ['mic-frame', 'المايك'], ['chat-bubble', 'الفقاعات'], ['board', 'اللوحات'], ['souvenir', 'التذكارات'], ['special-id', 'أيدي مميز'], ['room-id', 'أيدي الغرف'], ['room-bg', 'خلفيات الغرف'], ['bg', 'الخلفيات']];
-const STORE_TAB_ICON = { avatar: '👤', title: '👑', 'mic-frame': '🎙️', frame: '🏵️', 'chat-bubble': '💬', board: '🪧', souvenir: '🎁', 'special-id': '🆔', 'room-id': '🏠', 'room-bg': '🏰', bg: '🖼️', 'profile-card': '🪪' };
+const STORE_TAB_ICON = { avatar: '👤', title: '👑', 'mic-frame': '🎙️', frame: '🏵️', 'chat-bubble': '💬', board: '🪧', souvenir: '🎁', 'special-id': '🆔', 'room-id': '🏠', 'room-bg': '🏰', bg: '🖼️' };
 export const SLOT_TABS = [['avatar', 'الأفاتارات'], ['frame', 'الإطارات'], ['bg', 'الخلفيات'], ['owned', 'أغراضي'], ['sets', 'المجموعات'], ['title', 'ألقاب'], ['badge', 'شارات'], ['ach', 'المكتسبة'], ['gift', 'الهدايا'], ['coins', 'عملات'], ['tasks', 'مكافآت'], ['log', 'السجل']];
 const CUR = { coins: renderProfileIcon('coin').replace('class="pvp-icon"','class="sh-currency sh-currency-coins"').replace('<svg','<svg width="24" height="24"'), gems: giftArt({motif:'diamond',cat:'luxury',variant:0,name:'جواهر'},24).replace('class="gift-art','class="sh-currency sh-currency-gems gift-art') };
 const TAB_ICON = { avatar: 'person', frame: 'frame', entrance: 'star', owned: 'shirt', bg: 'image', sets: 'shirt', title: 'crown', badge: 'medal', ach: 'trophy', gift: 'star', convert: 'back', tasks: 'calendar', log: 'file' };
@@ -318,8 +318,6 @@ export function shopHTML(me) {
     if (tab === 'badge' && d.items.some((i) => i.slot === 'badge')) body += `<h3 class="r23-sub">شارات للبيع</h3>` + gridFor(d, 'badge');
   } else if (tab === 'souvenir') {
     body = `<p class="souv-note">التذكار ينحفظ في «المقتنيات» بملفك أول ما تشتريه.</p>` + gridFor(d, tab);
-  } else if (['profile-card'].includes(tab)) {
-    body = unavailableHTML(tab, me);
   } else if (['special-id', 'board', 'chat-bubble', 'room-id', 'room-bg'].includes(tab)) {
     body = (tab === 'special-id' ? unavailableHTML(tab, me).replace('data-empty-category', 'data-current-id') : '') + gridFor(d, tab);
   } else if (tab === 'owned') {
