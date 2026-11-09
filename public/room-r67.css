@@ -426,3 +426,12 @@ html body .so-page .so-room-detail .so-seat .so-empty-avatar svg{color:#fff!impo
 html body .so-page .so-room-detail .so-seat-available:hover:not(:disabled) .so-empty-avatar{border-color:#FFD66B!important;}
 html body .so-page .so-room-detail [data-so-seat="locked"] .so-empty-avatar{background:rgba(13,6,20,.28)!important;border-color:rgba(224,165,38,.8)!important;color:#FFD66B!important;}
 html body .so-page .so-room-detail .so-seat .so-seat-available > span:not(.so-empty-avatar),html body .so-page .so-room-detail .so-seat-number{color:#fff!important;text-shadow:0 1px 3px #000c!important;}
+
+/* R67z: شريط المجلس (اسم الغرفة، «مجلسك»، التكبير) ورسالة «أنت عضو في هذا المجلس» شفافة */
+html body .so-page .so-room-detail .so-central-footer .so-seat-count,html[data-theme] body .so-page .so-room-detail .so-central-footer .so-seat-toolbar,html[data-theme] body .so-page .so-room-detail .so-central-footer .so-seat-count,html[data-theme] body .so-page .so-room-detail .so-central-footer .so-council-selector,html[data-theme] body .so-page .so-room-detail .so-chat-system,
+html body .so-page .so-room-detail .so-central-footer .so-council-selector,
+html body .so-page .so-room-detail .so-central-footer .so-circle-button,html body .so-page .so-room-detail .so-central-footer .so-seat-toolbar,
+html body .so-page .so-room-detail .so-chat-system{background:rgba(13,6,20,.38)!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:none!important;color:#fff!important;text-shadow:0 1px 3px #000c!important;}
+html[data-theme] body .so-page .so-room-detail .so-chat-system>p,html[data-theme] body .so-page .so-room-detail .so-chat-system>span,html[data-theme] body .so-page .so-room-detail .so-central-footer :is(.so-council-selector,.so-circle-button,.so-seat-count),html body .so-page .so-room-detail .so-chat-system p,html body .so-page .so-room-detail .so-chat-system span,html body .so-page .so-room-detail .so-central-footer *{color:#fff!important;}
+html body .so-page .so-room-detail .so-chat-system svg,html body .so-page .so-room-detail .so-central-footer svg{color:#fff!important;filter:drop-shadow(0 1px 2px #000a);}
+html[data-theme] body .so-page .so-room-detail .so-central-footer .so-seat-toolbar .so-circle-button,html[data-theme] body .so-page .so-room-detail .so-central-footer .so-seat-toolbar .so-council-selector{background:transparent!important;border:0!important;}
