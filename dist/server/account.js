@@ -643,6 +643,10 @@ export class Accounts {
         const keys = new Set(hb.filter((h) => h.ts >= since).map((h) => h.key));
         return ha.filter((h) => h.ts >= since && keys.has(h.key)).length;
     }
+    /** R68z: كل سجل المباريات + آخر نشاط (للوحة التحكم) */
+    dashScan() {
+        return Object.values(this.d.profiles).map((p) => { const xp = this.displayXp(p); return { id: p.id, name: p.name, since: p.since, lastActiveAt: p.lastActiveAt ?? null, xp, level: levelOf(xp), points: p.points, history: p.history }; });
+    }
     adminProfile(id) { const p = this.d.profiles[id]; return p ? { id: p.id, name: p.name, since: p.since, xp: this.displayXp(p), level: levelOf(this.displayXp(p)), points: p.points, wins: p.wins, played: p.played, games: p.games, history: p.history.slice(-20).reverse() } : null; }
     /** ملف اللاعب نفسه فقط (يُطلب بمعرّف جلسته، ما فيه مسار لحساب غيره) */
     profile(id, coins) {

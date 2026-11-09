@@ -1,0 +1,163 @@
+/* R68z: لوحة التحكم بتصميم المالك (بنفسجي داكن + ذهبي) */
+.ad.ad-royal.ad68{--p1:#7b3cff;--p2:#b44dff;--gold:#ffc83d;--line:#7b3cff40;--card:linear-gradient(160deg,#2a1048 0%,#1a0a30 100%);--ok:#4be38a;color:#f4ecff;background:radial-gradient(ellipse at 70% -10%,#4a1a8a66,transparent 55%),radial-gradient(ellipse at 10% 100%,#3a1070 55%,transparent 0) no-repeat,#12061f;background:radial-gradient(ellipse at 60% -10%,#4a1a8a70,transparent 55%),radial-gradient(ellipse at 0% 110%,#38106a60,transparent 50%),#12061f;font-family:Cairo,Tahoma,Arial,sans-serif;}
+.ad.ad-royal.ad68 .ad-main-wrap{padding:0 22px 26px;}
+/* ---- القائمة الجانبية ---- */
+.ad.ad-royal.ad68 .d68-side{width:262px;min-width:262px;background:linear-gradient(180deg,#1c0a33,#140725);border:0;border-inline-start:1px solid #7b3cff2e;padding:14px 12px 20px;overflow-y:auto;scrollbar-width:none;box-shadow:none;}
+.ad.ad-royal.ad68 .d68-brand{display:flex;justify-content:center;margin:0 0 16px;padding:0;border:0;text-decoration:none;}
+.ad68 .d68-logo{display:flex;flex-direction:column;align-items:center;line-height:1;}
+.ad68 .d68-logo i{font-style:normal;font-size:30px;filter:drop-shadow(0 2px 6px #ffb80066);margin-bottom:-4px;}
+.ad.ad-royal.ad68 .d68-logo b{font-size:44px;font-weight:900;background:linear-gradient(180deg,#f3a6ff,#c04dff 55%,#8a2be2);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 #ffffff22) drop-shadow(0 4px 10px #b44dff55);}
+.ad.ad-royal.ad68 .d68-logo small{font-size:15px;font-weight:900;letter-spacing:3px;color:var(--gold)!important;-webkit-text-fill-color:var(--gold);margin-top:4px;text-shadow:0 1px 4px #ffb80055;}
+.ad.ad-royal.ad68 .d68-nav{display:flex;flex-direction:column;gap:4px;padding:0;}
+.ad.ad-royal.ad68 .d68-nav button.d68-item{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:8px 14px;border-radius:14px;background:transparent;border:1px solid transparent;color:#eadcff;font-size:14px;font-weight:700;text-align:right;box-shadow:none;cursor:pointer;white-space:nowrap;}
+.ad.ad-royal.ad68 .d68-nav button.d68-item i{font-style:normal;font-size:21px;width:28px;text-align:center;filter:saturate(1.2);}
+.ad.ad-royal.ad68 .d68-nav button.d68-item span{flex:1;}
+.ad.ad-royal.ad68 .d68-nav button.d68-item:hover{background:#ffffff0a;}
+.ad.ad-royal.ad68 .d68-nav button.d68-item.on{background:linear-gradient(90deg,#3a1660,#5a2a14 140%);border-color:var(--gold);box-shadow:0 0 0 1px #ffc83d55,0 0 18px #ffb20055 inset,0 0 14px #ffb20033;color:#fff;}
+.ad68 .d68-chev{display:inline-flex;color:#cbb6ff;opacity:.75;padding:4px;border-radius:8px;transition:transform .2s;}
+.ad68 .d68-chev:hover{background:#ffffff14;opacity:1;}
+.ad68 .d68-grp.open .d68-chev{transform:rotate(-90deg);}
+.ad68 .d68-chev-x{pointer-events:none;}
+.ad68 .d68-item.on .d68-chev-x,.ad68 .d68-grp:first-child .d68-chev-x{visibility:hidden;}
+.ad.ad-royal.ad68 .d68-sub{display:flex;flex-direction:column;gap:2px;margin:2px 22px 6px 6px;padding-inline-start:12px;border-inline-start:2px solid #7b3cff44;}
+.ad.ad-royal.ad68 .d68-sub button{min-height:36px;padding:6px 10px;border-radius:10px;background:transparent;border:0;color:#cdbbea;font-size:13px;text-align:right;box-shadow:none;cursor:pointer;}
+.ad.ad-royal.ad68 .d68-sub button.on{background:#7b3cff33;color:#fff;font-weight:800;}
+/* ---- الشريط العلوي ---- */
+.ad.ad-royal.ad68 .d68-head{display:flex;align-items:center;gap:14px;margin:0 -22px 18px;padding:12px 22px;min-height:76px;background:linear-gradient(180deg,#1d0a36,#170830);border:0;border-bottom:1px solid #7b3cff3a;border-radius:0 0 22px 22px;box-shadow:0 6px 24px #00000055;position:sticky;top:0;z-index:20;}
+.ad68 .d68-date{display:flex;align-items:center;gap:10px;white-space:nowrap;}
+.ad68 .d68-date b{display:block;font-size:14px;}
+.ad68 .d68-date small{font-size:12px;opacity:.8;}
+.ad68 .d68-cal{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff1a;font-size:20px;}
+.ad.ad-royal.ad68 .d68-search{flex:1;max-width:470px;margin-inline:auto;position:relative;display:flex;}
+.ad.ad-royal.ad68 .d68-search input{width:100%;height:46px;border-radius:99px;background:#0f0520;border:1px solid #9b5cff88;color:#fff;padding:0 18px 0 46px;font-size:14px;box-shadow:0 0 14px #7b3cff33 inset;}
+.ad.ad-royal.ad68 .d68-search input::placeholder{color:#cbbbe6;}
+.ad.ad-royal.ad68 .d68-search button{position:absolute;left:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:#e8dcff;width:34px;height:34px;padding:0;box-shadow:none;}
+.ad68 .d68-tools{display:flex;align-items:center;gap:10px;}
+.ad.ad-royal.ad68 .d68-ib{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:#ffffff0c;border:1px solid #9b5cff55;font-size:20px;color:#fff;padding:0;box-shadow:none;cursor:pointer;}
+.ad68 .d68-bell em{position:absolute;top:-7px;left:-7px;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:#ff2d55;color:#fff;font-style:normal;font-size:12px;font-weight:900;display:grid;place-items:center;box-shadow:0 0 0 2px #1a0830;}
+.ad.ad-royal.ad68 .d68-acc summary{display:flex;align-items:center;gap:10px;list-style:none;cursor:pointer;padding:4px 4px 4px 10px;border-radius:99px;background:transparent;border:0;}
+.ad68 .d68-acc summary::-webkit-details-marker{display:none;}
+.ad68 .d68-acc-av{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#4a1a80,#1c0833);border:2px solid var(--gold);font-size:24px;box-shadow:0 0 12px #ffc83d55;}
+.ad68 .d68-acc b{display:block;font-size:15px;color:#fff;}
+.ad68 .d68-acc small{display:inline-block;margin-top:2px;padding:1px 12px;border-radius:99px;background:linear-gradient(90deg,#7b3cff,#b44dff);color:#fff;font-size:12px;font-weight:800;}
+.ad.ad-royal.ad68 .d68-menu{display:none;}
+.ad.ad-royal.ad68 .ad-page-title{color:#fff;}
+/* ---- البطاقات العامة ---- */
+.ad68 .d68{display:flex;flex-direction:column;gap:18px;}
+.ad68 .d68-card{position:relative;background:var(--card);border:1px solid #9b5cff4d;border-radius:22px;padding:16px 18px;box-shadow:0 0 0 1px #00000040 inset,0 10px 30px #00000055,0 0 22px #7b3cff22;min-width:0;}
+.ad68 .d68-card header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.ad68 .d68-card h2{margin:0;font-size:18px;font-weight:900;color:#fff;display:flex;align-items:center;gap:8px;}
+.ad68 .d68-card h2 span{font-size:18px;}
+.ad68 .d68-empty{opacity:.7;font-size:13px;text-align:center;padding:16px 0;list-style:none;}
+.ad68 .d68-ch{display:inline-block;font-style:normal;font-weight:900;font-size:14px;color:var(--ok);direction:ltr;}
+.ad68 .d68-ch.dn{color:#ff6b85;}
+.ad.ad-royal.ad68 .d68-all{border:1px solid #ffffff2e;background:#ffffff08;color:#eadcff;border-radius:99px;padding:5px 14px;font-size:13px;min-height:0;box-shadow:none;cursor:pointer;}
+/* KPI */
+.ad68 .d68-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;}
+.ad68 .d68-kpi{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;border-radius:22px;background:linear-gradient(160deg,#3a1468,#200b3a 70%);border:1.5px solid transparent;background-clip:padding-box;box-shadow:0 0 0 1.5px #b44dff99,0 -2px 0 0 #ffc83daa,0 10px 30px #00000066,0 0 26px #b44dff40;}
+.ad68 .d68-kpi h3{margin:0 0 4px;font-size:17px;font-weight:800;color:#fff;}
+.ad68 .d68-kpi b{display:block;font-size:30px;font-weight:900;color:#fff;letter-spacing:.5px;line-height:1.2;direction:ltr;text-align:right;}
+.ad68 .d68-kpi b small{font-size:15px;font-weight:700;opacity:.85;}
+.ad68 .d68-kic{flex:none;display:grid;place-items:center;width:66px;height:66px;border-radius:50%;background:radial-gradient(circle at 50% 30%,#6a2ab8,#2a0e4a);border:1px solid #c58bff66;font-size:30px;box-shadow:0 0 18px #b44dff55;}
+
+.ad68 .d68-kic img{width:66px;height:66px;object-fit:contain;filter:drop-shadow(0 4px 8px #ffb20055);}
+/* الصف الأول */
+.ad68 .d68-row1{display:grid;grid-template-columns:185px minmax(0,1fr) minmax(300px,400px);gap:18px;}
+.ad68 .d68-rate{display:grid;place-items:center;padding:14px;}
+.ad68 .d68-ring{width:160px;height:160px;grid-area:1/1;}
+.ad68 .d68-ring circle{fill:none;stroke-width:14;stroke-linecap:round;}
+.ad68 .d68-ring .bg{stroke:#ffffff12;}
+.ad68 .d68-ring .fg{filter:drop-shadow(0 0 6px #ffb20077);}
+.ad68 .d68-rate-in{grid-area:1/1;display:flex;flex-direction:column;align-items:center;}
+.ad68 .d68-rate-in span{font-size:24px;}
+.ad68 .d68-rate-in small{font-size:14px;color:#fff;font-weight:700;}
+.ad68 .d68-rate-in b{font-size:28px;font-weight:900;}
+.ad68 .d68-sel select{appearance:none;background:#0f0520 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat 12px 50%;border:1px solid #ffffff33;color:#fff;border-radius:12px;padding:6px 14px 6px 34px;font-size:13px;}
+.ad68 .d68-chart{width:100%;height:auto;max-height:230px;display:block;}
+.ad68 .d68-chart text{fill:#d9c9f5;font-size:12px;font-family:inherit;}
+.ad68 .d68-grid line{stroke:#ffffff12;}
+.ad68 .d68-chart circle{fill:#d9a6ff;stroke:#2a0f48;stroke-width:2;}
+.ad68 .d68-chart circle.last{fill:#ff8ad8;stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 0 6px #ff6bd5);}
+.ad68 .d68-air{color:var(--gold);font-weight:900;font-size:14px!important;}
+.ad68 .d68-live-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #ffffff12;color:#fff;text-decoration:none;}
+.ad68 .d68-live-row:last-child{border-bottom:0;}
+.ad68 .d68-live-ic{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:radial-gradient(circle at 50% 30%,#5a2299,#26093f);border:1px solid #c58bff55;font-size:26px;flex:none;}
+.ad68 .d68-live-row div{flex:1;min-width:0;}
+.ad68 .d68-live-row b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ad68 .d68-live-row small{opacity:.85;font-size:13px;}
+.ad68 .d68-thumb{position:relative;width:126px;height:56px;border-radius:12px;overflow:hidden;flex:none;border:1px solid #ffffff22;}
+.ad68 .d68-thumb img{width:100%;height:100%;object-fit:cover;}
+.ad68 .d68-thumb i{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#ff2d55;font-style:normal;font-size:11px;}
+.ad68 .d68-go{opacity:.8;flex:none;}
+/* الصف الثاني */
+.ad68 .d68-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(300px,400px);grid-template-areas:"games games feed" "top matches feed";gap:18px;}
+.ad68 .d68-games{grid-area:games;}.ad68 .d68-feed{grid-area:feed;}.ad68 .d68-top{grid-area:top;}.ad68 .d68-matches{grid-area:matches;}
+.ad68 .d68-glist{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;}
+.ad68 .d68-game{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:10px 6px 12px;border-radius:16px;background:linear-gradient(180deg,#341458,#1f0b37);border:1px solid #9b5cff40;}
+.ad68 .d68-gimg{width:72px;height:60px;object-fit:contain;filter:drop-shadow(0 6px 10px #00000080);}
+.ad68 .d68-gem{display:grid;place-items:center;font-size:40px;}
+.ad68 .d68-game b{font-size:16px;font-weight:900;}
+.ad68 .d68-game small{font-size:13px;color:#e7dbff;}
+.ad68 .d68-game .d68-ch{font-size:13px;}
+.ad68 .d68-feed ul{list-style:none;margin:0;padding:0;}
+.ad68 .d68-feed li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #ffffff12;}
+.ad68 .d68-feed li:last-child{border-bottom:0;}
+.ad68 .d68-fic{display:grid;place-items:center;width:50px;height:50px;border-radius:50%;background:radial-gradient(circle at 50% 30%,#5a2299,#26093f);border:1px solid #c58bff55;font-size:22px;flex:none;}
+.ad68 .d68-feed li div{flex:1;min-width:0;}
+.ad68 .d68-feed li b{display:block;font-size:15px;}
+.ad68 .d68-feed li small{display:block;font-size:13px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ad68 .d68-feed time{font-size:12px;opacity:.75;white-space:nowrap;}
+.ad68 .d68-card table{width:100%;border-collapse:collapse;font-size:14px;}
+.ad68 .d68-card th{font-weight:700;color:#e2d4ff;font-size:13px;padding:7px 8px;background:#ffffff0a;text-align:center;}
+.ad68 .d68-card th:first-child{border-radius:0 10px 10px 0;}.ad68 .d68-card th:last-child{border-radius:10px 0 0 10px;}
+.ad68 .d68-card td{padding:7px 8px;text-align:center;border-bottom:1px solid #ffffff0d;white-space:nowrap;}
+.ad68 .d68-card tr:last-child td{border-bottom:0;}
+.ad68 .d68-pl,.ad68 .d68-tg{display:inline-flex;align-items:center;gap:8px;max-width:100%;}
+.ad68 .d68-top td:nth-child(2),.ad68 .d68-matches td:first-child{text-align:right;}
+.ad68 .d68-pl img,.ad68 .d68-pl i{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid #c58bff;font-style:normal;display:grid;place-items:center;background:#2a0f48;}
+.ad68 .d68-mi{width:30px;height:30px;object-fit:contain;}
+.ad68 .d68-medal{font-size:20px;}
+.ad68 .d68-lv{display:inline-block;padding:1px 10px;border-radius:7px;background:linear-gradient(90deg,#7b3cff,#a64dff);font-weight:800;font-size:12px;direction:ltr;}
+.ad68 .d68-res{display:inline-block;min-width:56px;padding:2px 12px;border-radius:8px;font-weight:800;font-size:13px;}
+.ad68 .d68-res.w{background:#1f6b3a;color:#bfffd4;border:1px solid #4be38a66;}
+.ad68 .d68-res.l{background:#7a1830;color:#ffc4d0;border:1px solid #ff6b8566;}
+/* ---- شاشات أصغر ---- */
+@media(max-width:1300px){.ad68 .d68-glist{grid-template-columns:repeat(3,minmax(0,1fr));}.ad68 .d68-kpi b{font-size:24px;}.ad68 .d68-kic{width:54px;height:54px;font-size:24px;}.ad68 .d68-kic img{width:54px;height:54px;}}
+@media(max-width:1100px){.ad68 .d68-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}.ad68 .d68-row1{grid-template-columns:185px minmax(0,1fr);}.ad68 .d68-live{grid-column:1/-1;}.ad68 .d68-row2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"games games" "feed feed" "top matches";}.ad.ad-royal.ad68 .d68-date{display:none;}}
+@media(max-width:900px){
+  .ad.ad-royal.ad68{display:block;}
+  .ad.ad-royal.ad68 .d68-side{position:fixed;inset:0 0 0 auto;width:280px;min-width:0;height:100dvh;z-index:60;transform:translateX(105%);transition:transform .25s;box-shadow:-10px 0 40px #000a;}
+  .ad.ad-royal.ad68.ad-sidebar-open .d68-side{transform:none;}
+  .ad.ad-royal.ad68.ad-sidebar-open .ad-mobile-shade{display:block;position:fixed;inset:0;background:#0009;z-index:55;border:0;}
+  .ad.ad-royal.ad68 .d68-nav{flex-direction:column;overflow:visible;}
+  .ad.ad-royal.ad68 .d68-nav button.d68-item{width:100%;white-space:normal;}
+  .ad.ad-royal.ad68 .d68-menu{display:grid;}
+  .ad.ad-royal.ad68 .ad-main-wrap{padding:0 12px 24px;}
+  .ad.ad-royal.ad68 .d68-head{margin:0 -12px 14px;padding:10px 12px;gap:8px;flex-wrap:wrap;border-radius:0 0 18px 18px;}
+  .ad.ad-royal.ad68 .d68-search{order:5;flex-basis:100%;max-width:none;}
+  .ad68 .d68-tools{margin-inline-start:auto;gap:8px;}
+  .ad68 .d68-acc summary>span:nth-child(2){display:none;}
+  .ad68 .d68-acc-av{width:44px;height:44px;font-size:20px;}
+  .ad.ad-royal.ad68 .d68-ib{width:42px;height:42px;font-size:18px;}
+}
+@media(max-width:640px){
+  .ad68 .d68{gap:12px;}
+  .ad68 .d68-kpis{gap:10px;}
+  .ad68 .d68-kpi{padding:12px;flex-direction:column-reverse;align-items:flex-start;gap:6px;border-radius:18px;}
+  .ad68 .d68-kpi h3{font-size:13px;}.ad68 .d68-kpi b{font-size:20px;}.ad68 .d68-kic{width:42px;height:42px;font-size:20px;}.ad68 .d68-kic img{width:44px;height:44px;}
+  .ad68 .d68-row1{grid-template-columns:1fr;}.ad68 .d68-rate{order:2;}
+  .ad68 .d68-row2{grid-template-columns:1fr;grid-template-areas:"games" "feed" "top" "matches";gap:12px;}
+  .ad68 .d68-card{padding:14px;border-radius:18px;}
+  .ad68 .d68-card h2{font-size:16px;}
+  .ad68 .d68-glist{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+  .ad68 .d68-gimg{width:56px;height:46px;}
+  .ad68 .d68-thumb{width:92px;height:48px;}
+  .ad68 .d68-card table{font-size:13px;}
+  .ad68 .d68-card td,.ad68 .d68-card th{padding:6px 4px;}
+}
+/* ملاحظات الأقسام الثانية على الخلفية الداكنة */
+.ad.ad-royal.ad68 .ad-note{background:#24103f;border:1px solid #9b5cff55;color:#eadcff;box-shadow:none;}
+.ad.ad-royal.ad68 .ad-note.ok{background:#123a26;border-color:#4be38a66;color:#c8ffdc;}
+.ad.ad-royal.ad68 .ad-note.bad{background:#4a1222;border-color:#ff6b8577;color:#ffd0da;}
+.ad.ad-royal.ad68 .ad-note.warn{background:#4a3410;border-color:#ffc83d77;color:#ffe9b0;}
+.ad68 .d68-glist .d68-empty{grid-column:1/-1;}

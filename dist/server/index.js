@@ -1906,6 +1906,100 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 };
                 return { ok: true, players: ids.map(card) };
             }, 'owner');
+            // ---- R68z: لوحة التحكم الرئيسية (تصميم المالك) ----
+            functionalHttp.add('GET', '/api/admin/dash68', ({ url }) => {
+                const days = url.searchParams.get('days') === '30' ? 30 : 7;
+                const DAY = 86_400_000;
+                const now = Date.now();
+                const dubaiDay = (t) => new Date(t + 4 * 3_600_000).toISOString().slice(0, 10);
+                const from = now - days * DAY, prevFrom = now - 2 * days * DAY;
+                const scan = accounts.dashScan();
+                const pct = (a, b) => Math.max(-100, Math.min(999, b > 0 ? Math.round((a - b) / b * 1000) / 10 : (a > 0 ? 100 : 0)));
+                // المستخدمين
+                const users = scan.length, newNow = scan.filter((p) => p.since >= from).length, base = users - newNow;
+                // النشطين: آخر نشاط + مباريات + مكافأة يومية
+                const dayKeys = [];
+                for (let i = days - 1; i >= 0; i--)
+                    dayKeys.push(dubaiDay(now - i * DAY));
+                const actDay = new Map(dayKeys.map((k) => [k, new Set()]));
+                const gamesDay = new Map(dayKeys.map((k) => [k, new Set()]));
+                const activeNow = new Set(), activePrev = new Set();
+                const mark = (id, t) => { if (t >= from) {
+                    activeNow.add(id);
+                    actDay.get(dubaiDay(t))?.add(id);
+                }
+                else if (t >= prevFrom)
+                    activePrev.add(id); };
+                const gameStat = new Map();
+                const matches = new Map();
+                let coinsTotal = 0, coinsDelta = 0, salesNow = 0, salesPrev = 0;
+                const feed = [];
+                for (const p of scan) {
+                    if (p.lastActiveAt)
+                        mark(p.id, p.lastActiveAt);
+                    mark(p.id, p.since);
+                    for (const h of p.history) {
+                        if (h.ts < prevFrom)
+                            continue;
+                        mark(p.id, h.ts);
+                        const g = gameStat.get(h.game) ?? { now: new Set(), prev: new Set(), plays: 0 };
+                        gameStat.set(h.game, g);
+                        if (h.ts >= from) {
+                            g.now.add(p.id);
+                            g.plays++;
+                            gamesDay.get(dubaiDay(h.ts))?.add(h.key);
+                        }
+                        else
+                            g.prev.add(p.id);
+                        const m = matches.get(h.key) ?? { ts: h.ts, game: h.game, ranked: h.ranked, stake: h.stake, players: h.players, winners: [] };
+                        if (h.result === 'win')
+                            m.winners.push(p.name);
+                        matches.set(h.key, m);
+                    }
+                    for (const e of activity.of(p.id))
+                        mark(p.id, e.t);
+                    coinsTotal += wallet.balance(p.id);
+                    for (const l of wallet.ledgerOf(p.id, 200)) {
+                        if (l.ts < prevFrom)
+                            continue;
+                        if (l.kind === 'daily')
+                            mark(p.id, l.ts);
+                        if (l.ts >= from && l.cur === 'coins')
+                            coinsDelta += l.delta;
+                        if (l.kind === 'purchase' && l.delta < 0) {
+                            const v = -l.delta * (l.cur === 'gems' ? 20 : 1);
+                            if (l.ts >= from)
+                                salesNow += v;
+                            else
+                                salesPrev += v;
+                            if (now - l.ts < DAY)
+                                feed.push({ t: l.ts, k: 'buy', title: 'شراء من المتجر', sub: `${l.reason.replace(/^شراء:?\s*/, '').slice(0, 40)} · ${p.name}` });
+                        }
+                        if ((l.kind === 'admin' || l.kind === 'reward') && l.cur === 'gems' && l.delta >= 1000 && now - l.ts < DAY)
+                            feed.push({ t: l.ts, k: 'gem', title: `تم شحن ${l.delta.toLocaleString('en-US')} جوهرة`, sub: `إلى: ${p.name}` });
+                    }
+                    if (now - p.since < DAY)
+                        feed.push({ t: p.since, k: 'user', title: 'لاعب جديد سجّل', sub: p.name });
+                }
+                for (const a of platform.auditList(30))
+                    feed.push({ t: a.ts, k: a.action.includes('ban') ? 'ban' : 'admin', title: a.action === 'player.ban' ? 'حظر لاعب' : a.action === 'player.unban' ? 'رفع حظر لاعب' : a.action === 'games.control' ? 'تعديل إعدادات الألعاب' : a.action.startsWith('site.') ? 'تعديل إعدادات الموقع' : a.action.startsWith('shop.') ? 'تعديل بالمتجر' : 'إجراء إداري', sub: `${(a.detail || a.target).split(' — ').pop()} · ${a.actor}`.slice(0, 60) });
+                feed.sort((a, b) => b.t - a.t);
+                const gname = (id) => registry.historyEngine(id)?.info.name ?? id;
+                const games = [...gameStat].map(([id, g]) => ({ id, name: gname(id), players: g.now.size, plays: g.plays, ch: pct(g.now.size, g.prev.size) })).filter((g) => g.players > 0).sort((a, b) => b.players - a.players || b.plays - a.plays).slice(0, 6);
+                const recent = [...matches.values()].sort((a, b) => b.ts - a.ts).slice(0, 6).map((m) => ({ ts: m.ts, game: m.game, name: gname(m.game), mode: m.ranked ? 'تصنيف' : m.stake > 0 ? `رسم ${m.stake}` : 'ودّية', win: m.winners.length > 0, winner: m.winners[0] ?? '' }));
+                const avatarOf = (id) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); };
+                const top = [...scan].sort((a, b) => b.xp - a.xp || b.points - a.points).slice(0, 5).map((p) => ({ id: p.id, name: p.name, level: p.level, points: p.points, displayId: accounts.displayPlayerId(p.id) ?? '', avatar: avatarOf(p.id) }));
+                let online = 0;
+                for (const set of sockets.values())
+                    if (set.size)
+                        online++;
+                const live = socialRooms.liveRooms().slice(0, 3).map((r, i) => ({ id: r.id, name: r.name, members: r.members, level: r.level, owner: r.owner, img: `/assets/art58/roombg/r${(i % 5) + 1}.jpg` }));
+                return { ok: true, days, now,
+                    kpi: { users: { v: users, ch: pct(users, base) }, active: { v: activeNow.size, ch: pct(activeNow.size, activePrev.size) }, coins: { v: coinsTotal, ch: pct(coinsTotal, coinsTotal - coinsDelta) }, sales: { v: salesNow, ch: pct(salesNow, salesPrev) } },
+                    rate: users ? Math.round(activeNow.size / users * 100) : 0, online,
+                    chart: dayKeys.map((d) => ({ d, active: actDay.get(d).size, games: gamesDay.get(d).size })),
+                    live, games, feed: feed.slice(0, 6), matches: recent, top, bell: community.openReports() };
+            }, 'owner');
             // ---- R68y: (8) كشف الحسابات المشبوهة ----
             const r68Who = (id) => { const acc = accounts.all().find((a) => a.id === id); return { id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', since: acc?.since ?? null, banned: platform.isBanned(id), suspect: platform.isSuspect(id), coins: wallet.balance(id) }; };
             const r68GiftVal = (g) => (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1);

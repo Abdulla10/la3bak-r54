@@ -1,10 +1,11 @@
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r68y';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r68z';
+import { side68, head68, brand68, dash68HTML } from './admin-dash-r68.js?v=r68z';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=r68l-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=r68y';
+import {mountPaymentAdmin} from './payment-admin.js?v=r68z';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
-import {mountSocialAdmin} from './social-admin.js?v=r68y';
-import { pricingHTML, progressionHTML } from './economy-admin.js?v=r68y';
+import {mountSocialAdmin} from './social-admin.js?v=r68z';
+import { pricingHTML, progressionHTML } from './economy-admin.js?v=r68z';
 import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r68w';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
@@ -42,6 +43,7 @@ function ensureCss() {
     if (!document.querySelector('link[data-ad-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin.css?v=r61a'; l.dataset.adCss = '1'; document.head.appendChild(l); }
     if(!document.querySelector('link[data-payment-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/payment-admin.css?v=r58p';l.dataset.paymentAdminCss='1';document.head.appendChild(l);}
     if (!document.querySelector('link[data-ad-dashboard-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin-dashboard.css?v=r58p'; l.dataset.adDashboardCss = '1'; document.head.appendChild(l); }
+    if (!document.querySelector('link[data-ad68-css]')) { const l=document.createElement('link');l.rel='stylesheet';l.href='/admin-dash-r68.css?v=r68z';l.dataset.ad68Css='1';document.head.appendChild(l); }
     if (!document.querySelector('link[data-ad-royal-css]')) { const l=document.createElement('link');l.rel='stylesheet';l.href='/admin-royal.css?v=r58p';l.dataset.adRoyalCss='1';document.head.appendChild(l); }
   }
 
@@ -86,7 +88,7 @@ export function mountAdmin(root) {
     const extra=tabs.filter(t=>!covered.has(t[0]));
     const extraIcons={'home-banners':'image',suspicious:'shield','games-control':'settings','player-log':'users',tuning:'trophy',live:'users',watch:'chart','tribes-cp':'crown','site-ops':'settings',pricing:'wallet',payments:'wallet',progression:'crown',functional:'gift',verification:'shield',bulk:'gift',gifts:'gift',reports:'megaphone',maintenance:'settings',system:'chart',health:'shield','owner-tools':'crown'};
     const label = primary.find(x=>x[0]===S.navId)?.[1] || tabs.find(t=>t[0]===S.tab)?.[1] || 'لوحة التحكم';
-    return `<div class="ad ad-modern ad-royal${S.sidebarOpen?' ad-sidebar-open':''}"><button type="button" class="ad-mobile-shade" data-ad="close-menu" aria-label="إغلاق القائمة"></button><aside class="ad-side" id="ad-royal-sidebar"><a class="ad-brand" href="#/" aria-label="العودة لموقع لعبك">${adminRoyalBrand()}</a><nav class="ad-nav" aria-label="أقسام لوحة الإدارة">${primary.map(btn).join('')}<details class="ad-more" ${extra.some(t=>t[0]===S.tab)?'open':''}><summary>أدوات الإدارة الإضافية</summary>${extra.map(t=>btn([t[0],t[1],t[0],extraIcons[t[0]]||'settings'])).join('')}</details><p data-ad-search-empty class="ad-empty" hidden>ما لقينا قسم. اضغط بحث للبحث عن لاعب.</p></nav><img class="ad-side-art" src="/admin-royal-assets/sidebar-controller.png" alt="" loading="lazy"><div class="ad-side-foot">${esc(S.me.name)} · ${esc(S.me.roleLabel)}</div></aside><section class="ad-main-wrap"><header class="ad-head ad-royal-top"><button class="ad-menu-toggle ad-btn ghost" type="button" data-ad="menu" aria-controls="ad-royal-sidebar" aria-expanded="${S.sidebarOpen}">${adminRoyalIcon('menu')}<span class="sr-only">القائمة</span></button><form class="ad-global-search" data-adf="navsearch"><input class="ad-in" name="q" value="${esc(S.search)}" autocomplete="off" placeholder="ابحث في لوحة التحكم أو باسم اللاعب وID…" aria-label="بحث بالأقسام أو اسم اللاعب أو ID"><button type="submit" aria-label="بحث">${adminRoyalIcon('search')}</button></form><details class="ad-account-menu"><summary><span class="ad-manager-symbol">${adminRoyalIcon('crown')}</span><span><b>${esc(S.me.name)}</b><small>${esc(S.me.roleLabel)}</small></span>${adminRoyalIcon('chevron')}</summary><div><p>${esc(S.me.roleLabel)} · ${nf(S.me.perms?.length||0)} صلاحية</p><button type="button" class="ad-btn ghost" data-ad="tab" data-t="settings" ${can('settings.view')?'':'disabled'}>صلاحيات وإعدادات الحساب</button><button type="button" class="ad-btn danger" data-ad="logout">تسجيل الخروج</button></div></details><button class="ad-btn ghost ad-refresh" type="button" data-ad="refresh" aria-label="تحديث بيانات القسم">${adminRoyalIcon('refresh')}</button></header>${S.tab!=='overview'?`<h1 class="ad-page-title">${esc(label)}</h1>`:''}${S.msg?`<div class="ad-note ok" role="status">${esc(S.msg)}</div>`:''}${S.err?`<div class="ad-note bad" role="alert">${esc(S.err)}</div>`:''}<main class="ad-main">${S.navId==='matches'?'<div class="ad-note">المباريات الحالية والمنتهية المتاحة موجودة ضمن الغرف. سجل تاريخي مستقل لكل مباراة مب متوفر؛ ما نعرض أرقام تاريخية غير موثقة.</div>':''}${S.navId==='rewards'?'<div class="ad-note"><a class="ad-btn ghost" href="#/leaderboard">فتح الترتيب الحقيقي للاعبين</a> · إدارة الإنجازات والمكافآت الحالية تحت.</div>':''}${S.navId==='events'?'<div class="ad-note">الفعاليات الحالية إعلانات مجدولة من نوع فعالية، مب نظام بطولة مستقل.</div>':''}${inner}</main></section></div>`;
+    return `<div class="ad ad-modern ad-royal ad68${S.sidebarOpen?' ad-sidebar-open':''}"><button type="button" class="ad-mobile-shade" data-ad="close-menu" aria-label="إغلاق القائمة"></button><aside class="ad-side d68-side" id="ad-royal-sidebar"><a class="ad-brand d68-brand" href="#/" aria-label="العودة لموقع لعبك">${brand68()}</a><nav class="ad-nav d68-nav" aria-label="أقسام لوحة الإدارة">${side68({tabs,tab:S.tab,open:S.grpOpen||(S.grpOpen={})})}<p data-ad-search-empty class="ad-empty" hidden>ما لقينا قسم. اضغط بحث للبحث عن لاعب.</p></nav></aside><section class="ad-main-wrap">${head68({me:S.me,search:S.search,bell:S.data?.dash68?.bell||0,sidebarOpen:S.sidebarOpen,menuIcon:adminRoyalIcon('menu'),searchIcon:adminRoyalIcon('search')})}${S.tab!=='overview'?`<h1 class="ad-page-title">${esc(label)}</h1>`:''}${S.msg?`<div class="ad-note ok" role="status">${esc(S.msg)}</div>`:''}${S.err?`<div class="ad-note bad" role="alert">${esc(S.err)}</div>`:''}<main class="ad-main">${S.navId==='matches'?'<div class="ad-note">المباريات الحالية والمنتهية المتاحة موجودة ضمن الغرف. سجل تاريخي مستقل لكل مباراة مب متوفر؛ ما نعرض أرقام تاريخية غير موثقة.</div>':''}${S.navId==='rewards'?'<div class="ad-note"><a class="ad-btn ghost" href="#/leaderboard">فتح الترتيب الحقيقي للاعبين</a> · إدارة الإنجازات والمكافآت الحالية تحت.</div>':''}${S.navId==='events'?'<div class="ad-note">الفعاليات الحالية إعلانات مجدولة من نوع فعالية، مب نظام بطولة مستقل.</div>':''}${inner}</main></section></div>`;
   }
   const loginView = () => adminRoyalLogin({error:S.err,busy:S.checking,checking:S.checking});
 
@@ -122,7 +124,7 @@ export function mountAdmin(root) {
       const r=d.verification, labels={pending:'بانتظار المراجعة',accepted:'مقبول',rejected:'مرفوض',revoked:'مسحوب'};
       return `<section class="ad-card"><h2>مراجعة التوثيق</h2><p class="ad-muted">علامة التوثيق لا تُمنح عبر Google أو تلقائيًا؛ تظهر فقط بقرار قبول إداري محفوظ.</p><form data-adf="vfilter" class="ad-form"><select class="ad-in" name="status">${Object.entries({...labels,all:'الكل'}).map(([id,label])=>`<option value="${id}" ${(S.vstatus||'pending')===id?'selected':''}>${label}</option>`).join('')}</select><button class="ad-btn" type="submit">عرض</button></form>${!r?empty('جاري التحميل…'):`<div class="ad-list">${(r.list??r.requests??[]).map(x=>`<article class="ad-card"><h3>${esc(x.name||x.playerId)} <em class="ad-tag">${esc(labels[x.status]||x.status)}</em></h3><code dir="ltr">${esc(x.id)}</code><p>${esc(x.reason||x.note||'')}</p><p class="ad-muted">${dt(x.createdAt||x.at)} · ${esc(x.decisionReason||'')}</p>${x.status==='pending'?`<form data-adf="vdecide" data-id="${esc(x.id)}" class="ad-form"><input class="ad-in" name="reason" required minlength="3" maxlength="180" placeholder="سبب القرار"><input class="ad-in" name="ref" required minlength="8" maxlength="100" pattern="[A-Za-z0-9:_-]+" placeholder="مرجع قرار فريد" dir="ltr"><button class="ad-btn" type="submit" name="op" value="accept" data-arm="1">قبول</button><button class="ad-btn danger" type="submit" name="op" value="reject" data-arm="1">رفض</button></form>`:''}</article>`).join('')||empty('لا طلبات مطابقة.')}</div><div class="ad-pager"><button class="ad-btn ghost" data-ad="vpage" data-d="-1" ${(S.voff||0)===0?'disabled':''}>السابق</button><span>إزاحة ${nf(S.voff||0)}</span><button class="ad-btn ghost" data-ad="vpage" data-d="1" ${(r.list??r.requests??[]).length<25?'disabled':''}>التالي</button></div>`}</section><section class="ad-card"><h2>سحب علامة التوثيق</h2><form data-adf="vrevoke" class="ad-form col"><input class="ad-in" name="playerId" required dir="ltr" placeholder="معرّف الحساب UUID"><input class="ad-in" name="reason" required minlength="3" maxlength="180" placeholder="سبب السحب"><input class="ad-in" name="ref" required minlength="8" maxlength="100" pattern="[A-Za-z0-9:_-]+" dir="ltr" placeholder="مرجع قرار فريد"><button class="ad-btn danger" type="submit" data-arm="1">سحب التوثيق</button></form></section>`;
     },
-    overview: (d) => adminRoyalOverview({...d,actor:S.me}),
+    overview: (d) => S.me?.role==='owner' ? dash68HTML(d.dash68,{days:S.dashDays||7}) : adminRoyalOverview({...d,actor:S.me}),
     players(d) {
       const p = S.player; if (p) return V.player(p);
       const l = d.players; const su = d.suspects;
@@ -289,7 +291,7 @@ export function mountAdmin(root) {
     pricing: () => [['pricing','pricing']],
     progression: () => [['progression','progression']],
     verification: () => [['verification','verifications?'+new URLSearchParams({status:S.vstatus||'pending',offset:S.voff||0,limit:25})]],
-    overview: () => [['overview', 'overview?period='+S.period], ...(can('community.moderate') ? [['homeReports','reports?status=open']] : []), ...(can('audit.view') ? [['homeAudit','audit?limit=5']] : [])], players: () => [['players', 'players?' + new URLSearchParams({ q: S.q, sort: S.sort, offset: S.off, limit: 25 })], ['suspects', 'suspects'], ['netsig', 'net-signals']],
+    overview: () => S.me?.role==='owner' ? [['dash68','dash68?days='+(S.dashDays||7)]] : [['overview', 'overview?period='+S.period], ...(can('community.moderate') ? [['homeReports','reports?status=open']] : []), ...(can('audit.view') ? [['homeAudit','audit?limit=5']] : [])], players: () => [['players', 'players?' + new URLSearchParams({ q: S.q, sort: S.sort, offset: S.off, limit: 25 })], ['suspects', 'suspects'], ['netsig', 'net-signals']],
     economy: () => [['overview', 'overview'], ...(can('wallet.adjust') || can('wallet.approve') ? [['adj', 'adjustments']] : []), ...(can('audit.view') ? [['auditEco', 'audit?limit=200', (j) => j.list.filter((a) => a.action === 'wallet.adjust').slice(0, 20)]] : [])],
     shop: () => [['shop', 'shop'], ...(S.me?.role === 'owner' ? [['offers', 'offers']] : [])], rooms: () => [['rooms', 'rooms']], reports: () => [['reports', 'reports?status=' + (S.rstatus || 'open')]], gifts: () => [['gifts', 'gifts?' + new URLSearchParams({ q: S.gq || '', cat: S.gcat || '', off: S.goff || 0 })], ...(can('wallet.view') ? [['house', 'gift-house']] : [])], achievements: () => [['achievements', 'achievements']], notices: () => [['notices', 'notices']],
     staff: () => [['staff', 'staff']], audit: () => [['audit', 'audit?limit=100'], ['bans', 'bans']], settings: () => [['settings', 'settings']], maintenance: () => [['maintenance', 'maintenance']], system: () => [['system', 'system']], health: () => [['health', 'health'], ...(S.me?.role === 'owner' ? [['backups', 'backups']] : [])],
@@ -346,7 +348,7 @@ export function mountAdmin(root) {
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=r68y').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r68z').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { if (tab !== 'player-log') S.logQ = ''; S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {
@@ -367,6 +369,7 @@ export function mountAdmin(root) {
     // أزرار حساسة: أول ضغطة تُسلّح الزر وثاني ضغطة تنفّذ (بدون نوافذ confirm)
     const arm = e.target.closest('[data-arm="1"]');
     if (arm && arm.dataset.armed !== '1') { e.preventDefault(); arm.dataset.armed = '1'; const t = arm.textContent; arm.textContent = 'اضغط للتأكيد'; setTimeout(() => { if (arm.isConnected) { arm.dataset.armed = ''; arm.textContent = t; } }, 4000); return; }
+    const g68 = e.target.closest('[data-ad68-grp]'); if (g68) { e.preventDefault(); e.stopPropagation(); const k = g68.dataset.ad68Grp; S.grpOpen ??= {}; const cur = g68.getAttribute('aria-expanded') === 'true'; S.grpOpen[k] = !cur; paint(); return; }
     const el = e.target.closest('[data-ad]'); if (!el) return;
     const a = ds(el).ad;
     if (a === 'tab') {S.navId=ds(el).navid||ds(el).t;return go(ds(el).t);}
@@ -425,7 +428,7 @@ export function mountAdmin(root) {
     // مفتاح التعديل مرتبط ببصمة المحتوى عند الإرسال؛ حدث input بروحه ما يلغي حماية إعادة المحاولة.
     if(f.dataset.adf==='bulk'&&e.target.name!=='confirmCount') { S.bulkPreview=null; const b=f.querySelector('[value="execute"]'); if(b)b.disabled=true; }
   };
-  root.addEventListener('input',e=>{if(e.target.closest('[data-adf=navsearch]')){S.search=e.target.value;filterNavigation();return;}remember(e);}); root.addEventListener('change',remember);
+  root.addEventListener('input',e=>{if(e.target.closest('[data-adf=navsearch]')){S.search=e.target.value;filterNavigation();return;}remember(e);}); root.addEventListener('change',(e)=>{const d68=e.target.closest('[data-ad68-days]');if(d68){S.dashDays=Number(d68.value)===30?30:7;load().then(paint);return;}remember(e);});
   /* حالة «جاري التنفيذ»: الزر يتعطل وتتغير كتابته طول الطلب (ضغطة ثانية ما ترسل شي)، ويرجع بعد النجاح أو الفشل.
      ما نغيّر مهلة الطلبات؛ الرسالة النهائية (نجاح/خطأ) تطلع فوق كالعادة. */
   root.addEventListener('submit', async (e) => {
@@ -546,7 +549,7 @@ export function mountAdmin(root) {
   async function init(quiet=false) {
     if(S.checking)return;
     const epoch=++authEpoch;S.checking=true;S.err='';S.msg='';paint();
-    try{const actor=await call('me');if(epoch!==authEpoch||!live())return;S.me=actor;S.msg='تم التحقق من صلاحيات حسابك من الخادم.';}
+    try{const actor=await call('me');if(epoch!==authEpoch||!live())return;S.me=actor;S.msg=actor?.role==='owner'?'':'تم التحقق من صلاحيات حسابك من الخادم.';}
     catch(e){if(epoch!==authEpoch||!live())return;S.me=null;const hadToken=!!getTok();setTok('');S.data={};S.err=(quiet&&!hadToken&&[401,403].includes(e.code))?'':e.code===429?'محاولات كثيرة؛ انتظر شوي قبل المحاولة.':e.code===0?'تعذّر الاتصال بالخادم.':e.code===401||e.code===403?'بيانات الدخول غير صحيحة أو الحساب ما عنده صلاحية إدارة.':'تعذّر التحقق من الإدارة؛ حاول مرة ثانية.';}
     finally{if(epoch===authEpoch)S.checking=false;}
     if(epoch!==authEpoch||!live())return;
