@@ -29,8 +29,14 @@ function bombSVG(txt, cls = '') {
 }
 const PLIERS = '<svg viewBox="0 0 120 140" class="lr-pliers" aria-hidden="true"><path d="M52 6l8 46-14 4z" fill="#c7ccd6" stroke="#555" stroke-width="2"/><path d="M68 6l-8 46 14 4z" fill="#aab0bc" stroke="#555" stroke-width="2"/><circle cx="60" cy="58" r="7" fill="#777"/><path d="M50 62C30 90 26 118 34 134l14-4c-6-16-2-40 10-62z" fill="#ffcf1a" stroke="#7a5a00" stroke-width="2"/><path d="M70 62c20 28 24 56 16 72l-14-4c6-16 2-40-10-62z" fill="#e8342e" stroke="#7a1010" stroke-width="2"/></svg>';
 const clock = (g, cls = '') => { const left = Math.max(0, g.endsAt - g.serverNow); return `<span class="lr-clock ${cls}" data-lr-left="${left}" data-lr-at="${Date.now()}" role="timer">${Math.ceil(left / 1000)}</span>`; };
+const BAR = '<svg class="lr-bar" viewBox="0 0 390 700" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><defs><linearGradient id="lrw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2516"/><stop offset="1" stop-color="#1c0b06"/></linearGradient><radialGradient id="lrl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffcf7a" stop-opacity=".9"/><stop offset="1" stop-color="#ffcf7a" stop-opacity="0"/></radialGradient><linearGradient id="lrsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4426"/><stop offset="1" stop-color="#3a1c0e"/></linearGradient></defs><rect width="390" height="700" fill="url(#lrw)"/>'
+  + [0,1,2,3,4,5,6,7].map((i) => `<rect x="${i * 52 - 6}" y="0" width="3" height="330" fill="#00000040"/>`).join('')
+  + '<path d="M40 30h80v120H40zM270 30h80v120h-80z" fill="#1d2a4a"/><path d="M40 30h80v120H40zM270 30h80v120h-80z" fill="none" stroke="#7a4426" stroke-width="8"/><path d="M80 30v120M40 90h80M310 30v120M270 90h80" stroke="#7a4426" stroke-width="4"/><path d="M48 40l20 50M280 40l18 46" stroke="#9fc3ff55" stroke-width="6"/>'
+  + [60, 190, 330].map((x) => `<circle cx="${x}" cy="40" r="60" fill="url(#lrl)"/><path d="M${x - 14} 14h28l-6 22h-16z" fill="#c98a3a"/><circle cx="${x}" cy="38" r="6" fill="#fff3c4"/>`).join('')
+  + [180, 250].map((y) => `<rect x="130" y="${y}" width="130" height="8" fill="url(#lrsh)"/>` + [0, 1, 2, 3, 4].map((k) => `<rect x="${140 + k * 24}" y="${y - (18 + (k % 2) * 8)}" width="14" height="${18 + (k % 2) * 8}" rx="3" fill="${['#8a3a2a', '#c98a3a', '#3a6a5a', '#a05a8a', '#d9b27a'][k]}" opacity=".85"/>`).join('')).join('')
+  + '<rect x="0" y="300" width="390" height="40" fill="#2a120a"/><rect x="0" y="300" width="390" height="6" fill="#7a4426"/></svg>';
 /* أماكن الخصوم حسب عددهم (نسب من عرض/ارتفاع الطاولة) */
-const SEATS = { 1: [[50, 4]], 2: [[20, 10], [80, 10]], 3: [[16, 18], [50, 3], [84, 18]] };
+const SEATS = { 1: [[50, 1]], 2: [[24, 4], [76, 4]], 3: [[17, 6], [50, 0], [83, 6]] };
 
 export function liars(room) {
   const g = room.game;
@@ -43,7 +49,7 @@ export function liars(room) {
   const lastBy = g.last?.by;
   const seat = (p, k) => {
     const id = g.players[p]; const [x, y] = spots[k] || [50, 4]; const dead = !g.alive[p]; const turn = g.phase === 'play' && g.turnId === id;
-    return `<div class="lr-seat${dead ? ' dead' : ''}${turn ? ' turn' : ''}" style="left:${x}%;top:${y}%" data-lr-seat="${esc(id)}"><span class="lr-av">${faceOf(room, id, p, 64)}${dead ? '<i class="lr-x">💥</i>' : ''}${turn ? clock(g, 'sm') : ''}</span><b class="lr-nm">${esc(nm(room, id))}</b><span class="lr-cnt" title="أوراقه">${g.counts[p]}</span><span class="lr-wire" title="الأسلاك المقطوعة">💣 ${g.cuts[p]}/${g.wires}</span>${lastBy === id && g.phase === 'play' ? `<em class="lr-claim">${g.last.n}</em>` : ''}</div>`;
+    return `<div class="lr-seat${dead ? ' dead' : ''}${turn ? ' turn' : ''}" style="left:${x}%;top:${y}%" data-lr-seat="${esc(id)}"><span class="lr-av">${faceOf(room, id, p, 110)}${dead ? '<i class="lr-x">💥</i>' : ''}${turn ? clock(g, 'sm') : ''}</span><b class="lr-nm">${esc(nm(room, id))}</b><span class="lr-cnt" title="أوراقه">${g.counts[p]}</span><span class="lr-wire" title="الأسلاك المقطوعة">💣 ${g.cuts[p]}/${g.wires}</span>${lastBy === id && g.phase === 'play' ? `<em class="lr-claim">${g.last.n}</em>` : ''}</div>`;
   };
   const myTurn = g.phase === 'play' && g.turnId === room.you;
   const pile = g.pile ? `<div class="lr-pile">${Array.from({ length: Math.min(g.pile, 6) }, (_, i) => `<span style="transform:translate(${(i % 3) * 6 - 6}px,${-i * 3}px) rotate(${(i * 37) % 24 - 12}deg)">${BACK}</span>`).join('')}</div>` : '';
@@ -59,9 +65,9 @@ export function liars(room) {
   const hand = me >= 0 ? `<div class="lr-hand${myTurn ? ' on' : ''}">${g.hand.map((c) => `<button type="button" class="lr-card${LR.sel.includes(c.id) ? ' sel' : ''}" data-act="lr-card" data-id="${c.id}" ${g.canPlay ? '' : 'disabled'} aria-pressed="${LR.sel.includes(c.id)}" aria-label="${RANK_NAME[c.r]}">${cardSVG(c.r)}</button>`).join('')}</div>` : '';
   const acts = myTurn ? `<div class="lr-acts">${g.canLiar ? `<button type="button" class="lr-liar" data-act="lr-liar" ${LR.busy ? 'disabled' : ''}>كذاب ⁉️</button>` : ''}${clock(g)}${g.mustLiar ? '' : `<button type="button" class="lr-play${LR.sel.length ? ' go' : ''}" data-act="lr-play" ${!LR.sel.length || LR.busy ? 'disabled' : ''}>العب${LR.sel.length ? ` (${LR.sel.length})` : ''}</button>`}</div>${g.mustLiar ? '<p class="lr-hint">خلصت أوراقك — لازم تقول «كذاب!»</p>' : ''}` : '';
   const myCuts = me >= 0 ? g.cuts[me] : 0;
-  return `<div class="lr" dir="rtl"><div class="lr-top"><span class="lr-tcard">${cardSVG(g.table)}<b>طاولة: <em>${RANK_NAME[g.table]}</em></b></span><span class="lr-mybomb" title="أسلاك قنبلتك المقطوعة">🧨 (${myCuts}/${g.wires})</span></div>
+  return `<div class="lr" dir="rtl">${BAR}<div class="lr-top"><span class="lr-tcard">${cardSVG(g.table)}<b>طاولة: <em>${RANK_NAME[g.table]}</em></b></span><span class="lr-mybomb" title="أسلاك قنبلتك المقطوعة">🧨 (${myCuts}/${g.wires})</span></div>
     <div class="lr-room"><div class="lr-table${myTurn ? ' myturn' : ''}"><div class="lr-felt">${pile}${reveal}</div></div>${order.map((p, k) => seat(p, k)).join('')}
-    ${me >= 0 ? `<div class="lr-me${!meAlive ? ' dead' : ''}${myTurn ? ' turn' : ''}"><span class="lr-av">${faceOf(room, room.you, me, 64)}</span><span class="lr-cnt">${g.hand.length}</span>${lastBy === room.you && g.phase === 'play' ? `<em class="lr-claim">${g.last.n}</em>` : ''}</div>` : ''}${overlay}</div>
+    ${me >= 0 ? `<div class="lr-me${!meAlive ? ' dead' : ''}${myTurn ? ' turn' : ''}"><span class="lr-av">${faceOf(room, room.you, me, 120)}</span><span class="lr-cnt">${g.hand.length}</span>${lastBy === room.you && g.phase === 'play' ? `<em class="lr-claim">${g.last.n}</em>` : ''}</div>` : ''}${overlay}</div>
     ${!meAlive && me >= 0 && g.phase !== 'final' ? '<p class="lr-hint">💥 طلعت من اللعبة — تقدر تتفرج لين تخلص.</p>' : ''}${acts}${hand}</div>`;
 }
 let clockTimer = 0;

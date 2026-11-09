@@ -1,0 +1,26 @@
+/* R68z: ٨ بول — نفس جو الفيديو: خلفية زرقا مزخرفة، طاولة واقفة، شريط القوة يمين */
+.pl{position:relative;min-height:calc(100dvh - 170px);padding:8px 8px 12px;color:#fff;border-radius:18px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#1f6fd6 0%,#0c3a86 45%,#06204f 100%)}
+.pl::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(60deg,#ffffff08 0 2px,transparent 2px 46px),repeating-linear-gradient(-60deg,#ffffff08 0 2px,transparent 2px 46px);pointer-events:none}
+.pl-bar{position:relative;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 8px}
+.pl-p{display:flex;align-items:center;gap:8px;flex:1;min-width:0}.pl-p.r{flex-direction:row-reverse}
+.pl-av{position:relative;width:50px;height:50px;border-radius:50%;border:2.5px solid #fff;overflow:visible;flex:none;background:#0a2a5a}
+.pl-av>img,.pl-av>svg,.pl-av>span{width:100%;height:100%;border-radius:50%;object-fit:cover;overflow:hidden}
+.pl-p.turn .pl-av{border-color:#7dff4a;box-shadow:0 0 0 3px #7dff4a66,0 0 16px #7dff4a}
+.pl-t{position:absolute;inset:-3px;display:grid;place-items:center;border-radius:50%;background:#2fbf2fcc;font-size:20px;font-weight:900;color:#fff;-webkit-text-stroke:1px #135a13}.pl-t.low{background:#e0262fcc}
+.pl-who{display:flex;flex-direction:column;gap:4px;min-width:0}.pl-p.r .pl-who{align-items:flex-end}
+.pl-who b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.pl-row{display:flex;gap:2px;direction:ltr}.pl-mb{width:15px;height:15px;display:inline-block;border-radius:50%}.pl-mb.empty{background:#0a1a3a;box-shadow:inset 0 1px 3px #000}
+.pl-vs{font-weight:900;font-style:italic;font-size:22px;color:#ffd34d;-webkit-text-stroke:1px #7a4a00;flex:none}
+.pl-stage{position:relative;direction:ltr;display:flex;justify-content:center;align-items:flex-start;gap:8px}
+.pl-table{flex:1;max-width:min(78vw,420px)}.pl-cv{width:100%;height:auto;display:block;touch-action:none;filter:drop-shadow(0 12px 24px #000a)}
+.pl-side{display:flex;flex-direction:column;align-items:center;gap:10px;width:44px;padding-top:30%}
+.pl-side small{font-size:10px;text-align:center;opacity:.8;line-height:1.3}
+.pl-spin{position:relative;width:42px;height:42px;border-radius:50%;border:0;background:radial-gradient(circle at 40% 35%,#fff,#d8dce4);box-shadow:0 3px 8px #0008;cursor:pointer;padding:0}
+.pl-spin i{position:absolute;left:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#e0262f}
+.pl-power{position:relative;width:30px;height:220px;border-radius:16px;background:linear-gradient(180deg,#2a1a0a,#0c0703);border:2px solid #c9a24a;touch-action:none;cursor:ns-resize;overflow:hidden}
+.pl-pf{position:absolute;left:0;right:0;top:0;background:linear-gradient(180deg,#7dff4a,#ffd34d 50%,#ff3d3d)}
+.pl-cue{position:absolute;left:50%;top:6px;bottom:6px;width:6px;margin-left:-3px;border-radius:3px;background:linear-gradient(180deg,#f1e6cf 0 6%,#2a5bd7 6% 9%,#d9b27a 9%,#7a4a1c);opacity:.85}
+.pl-msg{position:relative;text-align:center;font-weight:800;margin:8px 0 0;font-size:14px}.pl-msg.bad{color:#ffb3c0}
+.pl-hint{position:relative;text-align:center;font-size:12px;opacity:.85;margin:6px 0 0}
+.pl-final{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0009;text-align:center}
+.pl-final div{font-size:70px}.pl-final b{font-size:22px}.pl-final small{opacity:.85;margin-top:6px}

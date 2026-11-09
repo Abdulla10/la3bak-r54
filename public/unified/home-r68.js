@@ -21,9 +21,9 @@ const SHORT = [
   ['#/events', 'الفعاليات', '<svg viewBox="0 0 40 38"><rect x="4" y="15" width="32" height="21" rx="2" fill="#ff4b5c"/><rect x="2" y="10" width="36" height="7" rx="2" fill="#ff6f7d"/><rect x="17" y="10" width="6" height="26" fill="#ffd34d"/><path d="M20 10c-4 0-9-1.8-8-5.4C13 1.4 17 3 20 10c3-7 7-8.6 8-5.4 1 3.6-4 5.4-8 5.4z" fill="#ffd34d"/></svg>', 'events'],
 ];
 /* الألعاب: بطاقات من تصميم المالك للأربع الأولى، والباقي بنفس الأسلوب من صور الألعاب الموجودة */
-const TILE = { liars: '/preview/assets/game-liars.svg', carrom: '/assets/art68/tile-carrom.webp', jackaro: '/assets/art68/tile-jackaro.webp', baloot: '/assets/art68/tile-baloot.webp', ludo: '/assets/art68/tile-ludo.webp' };
+const TILE = { pool: '/preview/assets/game-pool.svg', liars: '/preview/assets/game-liars.svg', carrom: '/assets/art68/tile-carrom.webp', jackaro: '/assets/art68/tile-jackaro.webp', baloot: '/assets/art68/tile-baloot.webp', ludo: '/assets/art68/tile-ludo.webp' };
 const ART = { domino: '/preview/assets/game-domino.webp', uno: '/preview/assets/game-uno.webp', codewords: '/preview/assets/game-codewords-3d-r45.webp', minaboli: '/preview/assets/game-minaboli-3d-r49.webp' };
-const ORDER = ['liars', 'carrom', 'jackaro', 'baloot', 'ludo', 'domino', 'uno', 'codewords', 'minaboli'];
+const ORDER = ['pool', 'liars', 'carrom', 'jackaro', 'baloot', 'ludo', 'domino', 'uno', 'codewords', 'minaboli'];
 const HUBS = new Set(['ludo', 'baloot', 'jackaro']);
 export const DEFAULT_BANNERS = [{ id: 'default-cup', title: 'بطولة لعبك الكبرى', gold: 'بطولة', text: 'نافس اللاعبين واربح جوائز حصرية!', cta: 'شارك الآن', href: '#/tournaments', img: '/assets/art68/banner-trophy.webp', full: false }];
 let bannerCache = null;

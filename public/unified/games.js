@@ -9,6 +9,7 @@ const ART = Object.freeze({
   domino: '/preview/assets/game-domino.webp',
   uno: '/preview/assets/game-uno.webp',
   liars: '/preview/assets/game-liars.svg',
+  pool: '/preview/assets/game-pool.svg',
   carrom: '/preview/assets/game-carrom.webp',
   codewords: '/preview/assets/game-codewords-3d-r45.webp',
   minaboli: '/preview/assets/game-minaboli-3d-r49.webp',
@@ -20,7 +21,7 @@ const CATEGORIES = Object.freeze([
 ]);
 const CATEGORY_OF = Object.freeze({
   jackaro: 'party', ludo: 'party', baloot: 'party', domino: 'party',
-  uno: 'party', liars: 'party', carrom: 'party', codewords: 'party',
+  uno: 'party', liars: 'party', pool: 'party', carrom: 'party', codewords: 'party',
 });
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
