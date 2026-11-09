@@ -1,0 +1,162 @@
+/* R68d: الغرفة بتصميم المالك */
+html body .so-page .so-room-detail.r68.r68{--r68-line:rgba(186,140,255,.45);color:#fff!important;
+  background:radial-gradient(90% 40% at 50% 0%,rgba(150,70,255,.35),transparent 70%),linear-gradient(180deg,rgba(26,8,52,.92) 0%,rgba(30,10,60,.78) 45%,rgba(20,6,40,.55) 70%,rgba(20,6,40,.85) 100%),url("/assets/art58/roombg/r1.jpg?v=r58s") center bottom/cover no-repeat,#1a0833!important}
+html body .so-page .so-room-detail.r68.r68:is([data-so-room-theme^="img"]){background:linear-gradient(180deg,rgba(26,8,52,.85) 0%,rgba(26,8,52,.55) 40%,rgba(20,6,40,.35) 70%,rgba(20,6,40,.8) 100%),var(--so-room-theme) center/cover no-repeat,#1a0833!important}
+html body .so-page .so-room-detail.r68.r68 *{text-shadow:none}
+/* الرأس */
+html body .so-page .so-room-detail.r68.r68 .r68-head{display:grid!important;gap:8px;padding:calc(env(safe-area-inset-top) + 4px) 12px 4px!important;background:none!important;border:0!important;box-shadow:none!important;position:relative}
+html body .so-page .so-room-detail.r68.r68 .r68-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center}
+html body .so-page .so-room-detail.r68.r68 .r68-ico{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:none;border:0;color:#fff;padding:0}
+html body .so-page .so-room-detail.r68.r68 .r68-ico svg{width:28px;height:28px}
+html body .so-page .so-room-detail.r68.r68 .r68-more{background:rgba(70,30,120,.55);border:1.5px solid var(--r68-line);width:44px;height:44px}
+html body .so-page .so-room-detail.r68.r68 .r68-more svg{width:22px;height:22px}
+html body .so-page .so-room-detail.r68.r68 .r68-logo{justify-self:center;position:relative;display:flex;flex-direction:column;align-items:center;line-height:1;background:none;border:0;padding:12px 0 0;cursor:pointer}
+html body .so-page .so-room-detail.r68.r68 .r68-logo i{position:absolute;top:-6px;font-style:normal;font-size:18px}
+html body .so-page .so-room-detail.r68.r68 .r68-logo b{font-size:30px;font-weight:900;background:linear-gradient(180deg,#f3d4ff,#c46bff 45%,#8b2ff0);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 8px rgba(190,90,255,.7))}
+html body .so-page .so-room-detail.r68.r68 .r68-logo small{font:900 11px/1 Arial,sans-serif;letter-spacing:1.5px;color:#e9c8ff!important;margin-top:2px}
+html body .so-page .so-room-detail.r68.r68 .r68-idrow{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+html body .so-page .so-room-detail.r68.r68 .r68-room{display:flex!important;align-items:center;gap:9px;min-width:0;flex:1;padding:0!important;background:none!important;border:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-roomic{flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:rgba(70,30,120,.6);border:1.5px solid var(--r68-line)}
+html body .so-page .so-room-detail.r68.r68 .r68-roomic svg{width:30px;height:22px}
+html body .so-page .so-room-detail.r68.r68 .r68-room .so-room-title{display:flex!important;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html body .so-page .so-room-detail.r68.r68 .r68-room h1{display:flex!important;align-items:center;gap:6px;margin:0!important;font-size:17px!important;font-weight:800!important;color:#fff!important;max-width:100%}
+html body .so-page .so-room-detail.r68.r68 .r68-rname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+html body .so-page .so-room-detail.r68.r68 .r68-room .so-room-heart{width:24px!important;height:24px!important;min-width:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;color:#b46cff!important}
+html body .so-page .so-room-detail.r68.r68 .r68-room .so-room-heart svg{width:20px;height:20px;fill:#b46cff;color:#b46cff}
+html body .so-page .so-room-detail.r68.r68 .r68-room .so-room-id{font:600 15px/1.2 Arial,sans-serif!important;color:#d6c4f2!important;background:none!important;border:0!important;padding:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-room .rr-chip-btn{transform:scale(.85);transform-origin:right center}
+html body .so-page .so-room-detail.r68.r68 .r68-hostcol{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+html body .so-page .so-room-detail.r68.r68 .r68-host{position:relative;display:flex;align-items:center;gap:8px;padding:4px 30px 4px 14px;border-radius:999px;background:rgba(40,14,72,.7);border:1.5px solid var(--r68-line);color:#fff;max-width:200px;direction:ltr}
+html body .so-page .so-room-detail.r68.r68 .r68-hpic{order:3;width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid #ffcb47;box-shadow:0 0 8px rgba(255,203,71,.5);display:grid;place-items:center;background:#2a1350;flex:none}
+html body .so-page .so-room-detail.r68.r68 .r68-hpic>*{width:100%!important;height:100%!important;object-fit:cover;border-radius:50%}
+html body .so-page .so-room-detail.r68.r68 .r68-hinfo{order:2;display:flex;flex-direction:column;align-items:flex-end;min-width:0}
+html body .so-page .so-room-detail.r68.r68 .r68-hinfo b{font-size:15px;font-weight:800;color:#fff;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body .so-page .so-room-detail.r68.r68 .r68-hinfo small{font:600 11px/1.2 Arial,sans-serif;color:#d6c4f2!important}
+html body .so-page .so-room-detail.r68.r68 .r68-hcrown{order:1;font-style:normal;font-size:18px}
+html body .so-page .so-room-detail.r68.r68 .r68-chev{position:absolute;right:-22px;top:50%;transform:translateY(-50%);font-size:30px;line-height:1;color:#fff}
+html body .so-page .so-room-detail.r68.r68 .r68-hostcol{margin-right:20px}
+html body .so-page .so-room-detail.r68.r68 .r68-lv{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:999px;background:linear-gradient(180deg,#8d43e6,#5a1fae);border:1.5px solid #c58cff;color:#fff;font:900 14px/1.3 Arial,sans-serif;box-shadow:0 0 10px rgba(160,80,255,.6)}
+html body .so-page .so-room-detail.r68.r68 .r68-lv i{font-style:normal;font-size:14px}
+html body .so-page .so-room-detail.r68.r68 .r68-joinrow{display:flex;justify-content:center;gap:8px}
+html body .so-page .so-room-detail.r68.r68 .r68-joinrow .so-button{border-radius:999px!important;background:linear-gradient(180deg,#b65cff,#7c2ae0)!important;color:#fff!important;border:0!important;padding:6px 16px!important;font-weight:800!important}
+/* المقاعد */
+html body .so-page .so-room-detail.r68.r68 .so-central-council{background:none!important;border:0!important;box-shadow:none!important;padding:0 6px!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-grid{display:grid!important;grid-template-columns:repeat(var(--so-seat-columns,5),minmax(0,1fr))!important;gap:14px 4px!important;padding:6px 0 4px!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat{width:auto!important;height:auto!important;min-height:0!important;grid-column:auto!important;grid-row:auto!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;transform:none!important;position:relative!important;inset:auto!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-number{display:none!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-available{display:flex!important;flex-direction:column!important;align-items:center!important;gap:7px!important;width:100%!important;height:auto!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;color:#fff!important}
+html body .so-page .so-room-detail.r68.r68 .so-empty-avatar{width:58px!important;height:58px!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:radial-gradient(circle,rgba(120,50,200,.35),rgba(50,18,90,.55))!important;border:2px solid #b06cff!important;box-shadow:0 0 12px rgba(176,92,255,.6),inset 0 0 10px rgba(176,92,255,.35)!important;color:#fff!important}
+html body .so-page .so-room-detail.r68.r68 .so-empty-avatar svg{width:26px!important;height:26px!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-label{font-size:12.5px!important;font-weight:700!important;color:#e9dcff!important;white-space:nowrap}
+html body .so-page .so-room-detail.r68.r68 .so-seat[data-so-seat="locked"] .so-empty-avatar{opacity:.6}
+html body .so-page .so-room-detail.r68.r68 .so-member{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;width:100%!important;background:none!important;border:0!important;padding:0!important}
+html body .so-page .so-room-detail.r68.r68 .so-portrait{position:relative!important;width:60px!important;height:60px!important;margin:0!important}
+html body .so-page .so-room-detail.r68.r68 .so-avatar{width:60px!important;height:60px!important;border-radius:50%!important;overflow:visible!important;border:0!important;box-shadow:0 0 0 2px #e9a64c,0 0 12px rgba(255,180,80,.45)!important;display:grid!important;place-items:center!important;background:#2a1350!important}
+html body .so-page .so-room-detail.r68.r68 .so-avatar>img,html body .so-page .so-room-detail.r68.r68 .so-avatar>.so-avatar-initial{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover}
+html body .so-page .so-room-detail.r68.r68 .so-member .so-member-ranks,html body .so-page .so-room-detail.r68.r68 .so-member .so-portrait>.so-rank,html body .so-page .so-room-detail.r68.r68 .so-member .so-member-role{display:none!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-mic{position:absolute!important;top:-6px!important;left:-14px!important;right:auto!important;bottom:auto!important;width:22px!important;height:22px!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:rgba(40,14,72,.85)!important;border:1px solid rgba(190,150,255,.5)!important;color:#d6c4f2!important;padding:0!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-mic svg{width:13px!important;height:13px!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-mic-server-muted{background:#d0336a!important;color:#fff!important}
+html body .so-page .so-room-detail.r68.r68 .so-member-nameline{display:flex;align-items:center;justify-content:center;gap:3px;max-width:100%}
+html body .so-page .so-room-detail.r68.r68 .so-member-name{font-size:13px!important;font-weight:800!important;color:#fff!important;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:none!important;padding:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-vchip{flex:none;font:900 9.5px/1 Arial,sans-serif;font-style:normal;padding:2px 4px;border-radius:6px;color:#5a3300;background:linear-gradient(180deg,#fff0b3,#ffc941 60%,#e7a218);border:1px solid #fff2c0}
+html body .so-page .so-room-detail.r68.r68 .so-member.is-host .so-avatar,html body .so-page .so-room-detail.r68.r68 .so-member[data-so-role="owner"] .so-avatar{box-shadow:0 0 0 3px #ffcb47,0 0 18px rgba(255,203,71,.7)!important}
+html body .so-page .so-room-detail.r68.r68 .so-member .so-crown,html body .so-page .so-room-detail.r68.r68 .so-portrait>svg.so-crown{top:-18px!important}
+/* شريط الحضور */
+html body .so-page .so-room-detail.r68.r68 .r68-bar{display:flex!important;align-items:center;justify-content:space-between;gap:6px;margin:10px 0 0!important;padding:0!important;background:none!important;border:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-count{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;background:rgba(40,14,72,.7);border:1.5px solid var(--r68-line);color:#fff;font:800 15px/1 Arial,sans-serif}
+html body .so-page .so-room-detail.r68.r68 .r68-count svg{width:18px;height:18px}
+html body .so-page .so-room-detail.r68.r68 .r68-auds{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden}
+html body .so-page .so-room-detail.r68.r68 .r68-aud{width:30px;height:30px;border-radius:50%;overflow:hidden;flex:none;border:1.5px solid #e9a64c;display:grid;place-items:center;background:#2a1350}
+html body .so-page .so-room-detail.r68.r68 .r68-aud>*{width:100%!important;height:100%!important;object-fit:cover;font-size:13px}
+html body .so-page .so-room-detail.r68.r68 .r68-plus{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(40,14,72,.7);border:1.5px solid var(--r68-line);color:#fff;font-size:20px;line-height:1;padding:0}
+html body .so-page .so-room-detail.r68.r68 .r68-sel{display:flex;align-items:center;border-radius:999px;background:rgba(40,14,72,.7);border:1.5px solid var(--r68-line);flex:none}
+html body .so-page .so-room-detail.r68.r68 .r68-sel .so-council-selector{display:flex!important;align-items:center;gap:4px;padding:5px 10px!important;background:none!important;border:0!important;color:#fff!important;font-size:15px!important;font-weight:800!important;max-width:110px}
+html body .so-page .so-room-detail.r68.r68 .r68-sel .so-council-selector span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body .so-page .so-room-detail.r68.r68 .r68-sel .so-council-selector svg{width:16px;height:16px}
+html body .so-page .so-room-detail.r68.r68 .r68-expand{padding:5px 10px;background:none;border:0;border-inline-start:1px solid var(--r68-line);color:#fff;display:grid}
+html body .so-page .so-room-detail.r68.r68 .r68-expand svg{width:18px;height:18px}
+/* الدردشة */
+html body .so-page .so-room-detail.r68.r68 .so-chat{background:none!important;border:0!important;box-shadow:none!important;padding-inline-start:78px!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-messages{background:none!important;padding:4px 4px 8px!important;gap:10px!important;display:flex!important;flex-direction:column!important}
+html body .so-page .so-room-detail.r68.r68 .r68-welcome-msg{align-self:flex-start!important;display:block!important;padding:8px 14px!important;border-radius:14px!important;background:rgba(60,22,104,.75)!important;border:1px solid rgba(190,150,255,.35)!important;color:#fff!important;width:auto!important;max-width:100%!important}
+html body .so-page .so-room-detail.r68.r68 .r68-welcome-msg p{margin:0!important;font-size:14.5px!important;font-weight:700!important;color:#fff!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-message{position:relative!important;display:block!important;align-self:flex-start!important;max-width:100%!important;padding:0 52px 0 0!important;background:none!important;border:0!important;box-shadow:none!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-message>header{display:flex!important;align-items:center;gap:5px;margin:0 0 4px!important;background:none!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-author{display:flex!important;align-items:center;gap:5px}
+html body .so-page .so-room-detail.r68.r68 .so-chat-author>b{font-size:13.5px!important;font-weight:800!important;color:#fff!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-author .so-rank{transform:scale(.8)}
+html body .so-page .so-room-detail.r68.r68 .so-chat-avatar{position:absolute!important;right:0!important;top:2px!important;width:44px!important;height:44px!important;border-radius:50%!important;overflow:hidden!important;border:2px solid #e9a64c!important;display:grid!important;place-items:center!important;background:#2a1350!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-avatar>*{width:100%!important;height:100%!important;object-fit:cover}
+html body .so-page .so-room-detail.r68.r68 .so-chat-message>header time{display:none!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-message>p{display:inline-block!important;margin:0!important;padding:9px 15px!important;border-radius:16px 4px 16px 16px!important;background:rgba(66,24,112,.8)!important;border:1px solid rgba(190,150,255,.3)!important;color:#fff!important;font-size:15.5px!important;font-weight:600!important;max-width:100%}
+html body .so-page .so-room-detail.r68.r68 .so-chat-message .so-chat-message-actions{position:absolute!important;left:-22px;top:20px;opacity:.5}
+/* العمود الجانبي */
+html body .so-page .so-room-detail.r68.r68 .r68-side{position:absolute!important;left:10px!important;right:auto!important;top:auto!important;bottom:84px!important;z-index:20!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:10px!important;width:70px!important;background:none!important;border:0!important;padding:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-sbtn{position:relative;width:66px;height:66px;display:grid;place-items:center;border-radius:14px;background:rgba(36,12,66,.6);border:1px solid rgba(190,150,255,.28);padding:4px;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+html body .so-page .so-room-detail.r68.r68 .r68-sbtn img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+html body .so-page .so-room-detail.r68.r68 .r68-sbtn.is-chest{height:82px;align-content:start}
+html body .so-page .so-room-detail.r68.r68 .r68-sbtn.is-chest img{height:52px}
+html body .so-page .so-room-detail.r68.r68 .r68-sbtn.is-chest b{display:block;margin-top:2px;padding:2px 8px;border-radius:8px;background:#0d0418;color:#fff;font:800 14px/1.2 Arial,sans-serif}
+html body .so-page .so-room-detail.r68.r68 .r68-sbtn[data-r68-locked]{opacity:.85}
+html body .so-page .so-room-detail.r68.r68 .r68-fold{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(36,12,66,.6);border:0;color:#fff;padding:0}
+html body .so-page .so-room-detail.r68.r68 .r68-fold svg{width:20px;height:20px}
+/* الشريط السفلي */
+html body .so-page .so-room-detail.r68.r68 .r68-dock{background:linear-gradient(180deg,transparent,rgba(16,4,32,.85) 40%)!important;border:0!important;box-shadow:none!important;padding:8px 10px calc(env(safe-area-inset-bottom) + 8px)!important}
+html body .so-page .so-room-detail.r68.r68 .r68-row{display:flex!important;align-items:center!important;gap:6px!important}
+html body .so-page .so-room-detail.r68.r68 .r68-dbtn{position:relative;flex:none;width:44px;height:44px;display:grid;place-items:center;background:none;border:0;color:#fff;padding:0}
+html body .so-page .so-room-detail.r68.r68 .r68-dbtn svg{width:30px;height:30px}
+html body .so-page .so-room-detail.r68.r68 .r68-badge{position:absolute!important;top:-2px!important;left:-4px!important;right:auto!important;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#ff2b55!important;color:#fff!important;font:800 11.5px/20px Arial,sans-serif;border:2px solid #1a0833}
+html body .so-page .so-room-detail.r68.r68 .r68-form{flex:1!important;min-width:0!important;margin:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-form .so-chat-input-wrap{display:flex!important;align-items:center!important;gap:4px;height:48px;padding:0 6px!important;border-radius:999px!important;background:rgba(30,10,56,.75)!important;border:1.5px solid var(--r68-line)!important}
+html body .so-page .so-room-detail.r68.r68 .r68-form input{flex:1;min-width:0;height:100%;background:transparent!important;border:0!important;color:#fff!important;font-size:16px!important;padding:0 8px!important;text-align:right}
+html body .so-page .so-room-detail.r68.r68 .r68-form input::placeholder{color:#c8b3ea!important}
+html body .so-page .so-room-detail.r68.r68 .r68-emoji{flex:none;width:36px;height:36px;display:grid;place-items:center;background:none;border:0;color:#fff;padding:0}
+html body .so-page .so-room-detail.r68.r68 .r68-emoji svg{width:28px;height:28px}
+html body .so-page .so-room-detail.r68.r68 .r68-form .so-send-button{flex:none;width:34px!important;height:34px!important;min-width:0!important;border-radius:50%!important;background:linear-gradient(180deg,#ffd76a,#e8a01a)!important;color:#4a2600!important;border:0!important;display:grid!important;place-items:center!important;padding:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-form input:placeholder-shown~.so-send-button{opacity:.55}
+html body .so-page .so-room-detail.r68.r68 .r68-mic{flex:none;width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:rgba(40,14,72,.8);border:1.5px solid var(--r68-line);color:#fff;padding:0}
+html body .so-page .so-room-detail.r68.r68 .r68-mic.is-on{background:linear-gradient(180deg,#b65cff,#7c2ae0);box-shadow:0 0 14px rgba(182,92,255,.7)}
+html body .so-page .so-room-detail.r68.r68 .r68-mic svg{width:26px;height:26px}
+html body .so-page .so-room-detail.r68.r68 .r68-unread{display:block;margin:0 auto 6px;padding:4px 12px;border-radius:999px;background:#7c2ae0;color:#fff;border:0;font-size:12.5px;font-weight:800}
+html body .so-page .so-room-detail.r68.r68 .so-emoji-picker{background:rgba(30,10,56,.95)!important;border:1px solid var(--r68-line)!important}
+html body .so-page .so-room-detail.r68.r68 .r68-head>*{margin-left:0!important;margin-right:0!important;width:auto!important;max-width:100%!important}
+html body .so-page .so-room-detail.r68.r68 .r68-top{display:grid!important;grid-template-columns:44px minmax(0,1fr) 44px!important;grid-template-rows:auto!important;direction:ltr!important;height:auto!important;padding:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-top>*{position:static!important;grid-row:1!important;order:0!important;transform:none!important;inset:auto!important;margin:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-top>.so-back{grid-column:1!important}
+html body .so-page .so-room-detail.r68.r68 .r68-top>.r68-logo{grid-column:2!important;width:auto!important;height:auto!important}
+html body .so-page .so-room-detail.r68.r68 .r68-top>.r68-more{grid-column:3!important}
+html body .so-page .so-room-detail.r68.r68 .r68-idrow{direction:ltr!important;padding:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-idrow>.r68-room{order:1;direction:rtl!important}
+html body .so-page .so-room-detail.r68.r68 .r68-idrow>.r68-hostcol{order:2}
+html body .so-page .so-room-detail.r68.r68 .r68-head{grid-template-columns:minmax(0,1fr)!important;padding:4px 10px 4px!important;padding-top:max(4px,env(safe-area-inset-top))!important}
+html body .so-page .so-room-detail.r68.r68 .r68-idrow{min-width:0}
+html body .so-page .so-room-detail.r68.r68 .r68-idrow>.r68-room{flex:1 1 0!important;min-width:0!important}
+html body .so-page .so-room-detail.r68.r68 .r68-hostcol{flex:0 1 auto;min-width:0;margin-right:18px}
+html body .so-page .so-room-detail.r68.r68 .r68-host{max-width:168px;padding:3px 26px 3px 10px;gap:6px}
+html body .so-page .so-room-detail.r68.r68 .r68-hinfo b{max-width:70px}
+html body .so-page .so-room-detail.r68.r68 .r68-hpic{width:40px;height:40px}
+html body .so-page .so-room-detail.r68.r68 .r68-roomic{width:46px;height:46px}
+html body .so-page .so-room-detail.r68.r68 .r68-room h1{font-size:16px!important}
+html body .so-page .so-room-detail.r68.r68 .r68-top .so-back{color:#fff!important;background:none!important;border:0!important;box-shadow:none!important}
+html body .so-page .so-room-detail.r68.r68 .r68-idrow>.r68-room{direction:ltr!important}
+html body .so-page .so-room-detail.r68.r68 .r68-room .so-room-title{direction:rtl;align-items:flex-end}
+html body .so-page .so-room-detail.r68.r68 .r68-room h1{flex-direction:row-reverse}
+html body .so-page .so-room-detail.r68.r68 .r68-hinfo small{white-space:nowrap}
+html body .so-page .so-room-detail.r68.r68 .r68-hpic .so-avatar-initial{display:grid!important;place-items:center;color:#ffd76a!important;font-size:18px;font-weight:900}
+html body .so-page .so-room-detail.r68.r68 .r68-form .so-send-button{background:linear-gradient(180deg,#b65cff,#7c2ae0)!important;color:#fff!important;width:32px!important;height:32px!important}
+html body .so-page .so-room-detail.r68.r68 .so-avatar-initial{color:#ffd76a!important}
+
+html body .so-page .so-room-detail.r68.r68 .so-central-council{max-height:none!important;flex:0 0 auto!important;overflow:visible!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-grid{max-height:min(46vh,430px)!important;overflow-y:auto!important;overflow-x:hidden!important;grid-auto-rows:auto!important;align-items:start!important;scrollbar-width:none}
+html body .so-page .so-room-detail.r68.r68 .so-seat{height:auto!important;min-height:0!important;overflow:visible!important}
+html body .so-page .so-room-detail.r68.r68 .r68-lower{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 76px;gap:6px;align-items:stretch}
+html body .so-page .so-room-detail.r68.r68 .r68-lower>.so-chat{grid-column:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0!important;margin:0!important;max-height:none!important;height:auto!important}
+html body .so-page .so-room-detail.r68.r68 .r68-lower .so-chat-messages{flex:1;min-height:0;overflow-y:auto!important;max-height:none!important;height:auto!important}
+html body .so-page .so-room-detail.r68.r68 .r68-lower>.r68-side{grid-column:2;position:static!important;align-self:end;justify-self:center;margin:0 0 4px}
+html body .so-page .so-room-detail.r68.r68 .so-avatar-initial{display:grid!important;place-items:center!important;width:100%!important;height:100%!important;font-size:22px!important;line-height:1!important;font-weight:900!important;position:static!important;transform:none!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-message{align-self:stretch!important;width:auto!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-message>header{justify-content:flex-start!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-author .so-rank-level,html body .so-page .so-room-detail.r68.r68 .so-chat-author .so-rank-noble{display:none!important}
+html body .so-page .so-room-detail.r68.r68 .so-chat-avatar .so-avatar-initial{font-size:18px!important}
+html body .so-page .so-room-detail.r68.r68 .so-seat-grid{padding-top:18px!important}
