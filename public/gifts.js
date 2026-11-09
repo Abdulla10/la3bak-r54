@@ -1,5 +1,5 @@
 import { mini } from './avatars.js?v=r67ac';
-import { safeGiftArt as giftArt, giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon, ONE_CUR, GEM_RATE, shownAmt } from './gift-reward-ui.js?v=r63a';
+import { safeGiftArt as giftArt, giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon, ONE_CUR, GEM_RATE, shownAmt } from './gift-reward-ui.js?v=r68i';
 /* الهدايا: نافذة اختيار بأقسام وبحث وفرز وعدد، داخل الغرفة (طبقة ثابتة فوق اللعب، ما تقفل الغرفة) أو من المتجر.
    الأسعار وعروض مكافآت العملات والتحقق والخصم من الخادم؛ لا يحسب العميل المكافآت ولا يضيف أرصدة،
    وما يعرض الحركة أو رسالة المحادثة إلا بعد ما يوصل حدث مؤكد من الخادم. */

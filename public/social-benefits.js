@@ -1,8 +1,8 @@
 /* R12 social benefits. Auth, room membership, prices, awards and balances remain server-owned.
  * API adapter: api(path, method, body?, {signal}?). See reports/lucky-bag-frontend-report.md.
  * R13 prepaid redemption displays only supplied server reward quotes; no wallet mutation. */
-import { giftArt } from './giftart.js?v=release-r14';
-import { giftRewardQuote, giftRewardEventQuote, giftRewardCard } from './gift-reward-ui.js?v=r63a';
+import { giftArt } from './giftart.js?v=r68i-r14';
+import { giftRewardQuote, giftRewardEventQuote, giftRewardCard } from './gift-reward-ui.js?v=r68i';
 import { frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r67ac';
 import { avatarArt } from './avatars.js?v=r67ac';
 import { backgroundVisual, isSuppliedBackground } from './background-art.js?v=r58p';

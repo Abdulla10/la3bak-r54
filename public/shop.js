@@ -4,7 +4,7 @@ import { avatarArt } from './avatars.js?v=r67ac';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r67ac';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
-import { giftArt } from './giftart.js?v=release-r14';
+import { giftArt } from './giftart.js?v=r68i-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const nf = (n) => Number(n).toLocaleString('ar-EG-u-nu-latn');

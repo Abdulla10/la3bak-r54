@@ -1,0 +1,17 @@
+/* R68i: هدايا ثلاثية الأبعاد — صور المالك مع ميلان ثلاثي الأبعاد ولمعة وطفو */
+.gift-art.g3d{position:relative;display:inline-grid!important;place-items:center;perspective:420px;background:none!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+.gift-art.g3d img{display:block;width:100%!important;height:100%!important;max-width:none!important;object-fit:contain;transform:rotateY(-10deg) rotateX(6deg);transform-style:preserve-3d;filter:drop-shadow(0 6px 6px rgba(0,0,0,.5)) drop-shadow(0 0 6px rgba(190,110,255,.35));backface-visibility:visible;will-change:transform}
+.gift-art.g3d::after{content:"";position:absolute;inset:0;pointer-events:none;-webkit-mask:var(--g3m) center/contain no-repeat;mask:var(--g3m) center/contain no-repeat;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 45%,transparent 60%) -150% 0/250% 100% no-repeat;opacity:0;transform:rotateY(-10deg) rotateX(6deg)}
+.gift-art.g3d.r4 img,.gift-art.g3d.r5 img{filter:drop-shadow(0 6px 6px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(255,200,90,.55))}
+/* الهدية المختارة واللي تنرسل: طفو ودوران ثلاثي الأبعاد + لمعة */
+:is(.is-picked,.so-gift-2d-art,.gb67-art,.gfx-gift,.g3d-live) .gift-art.g3d img{animation:g3dFloat 3.4s ease-in-out infinite}
+:is(.is-picked,.so-gift-2d-art,.gb67-art,.g3d-live) .gift-art.g3d::after{animation:g3dShine 2.8s ease-in-out infinite;opacity:1}
+@keyframes g3dFloat{0%,100%{transform:translateY(0) rotateY(-18deg) rotateX(6deg)}50%{transform:translateY(-6%) rotateY(18deg) rotateX(-4deg)}}
+@keyframes g3dShine{0%,30%{background-position:-150% 0}70%,100%{background-position:150% 0}}
+/* بالشاشة الكاملة: تدخل لافّة من بعيد ثم تطفو */
+.gb67-art .gift-art.g3d{width:min(62vw,300px)!important;height:min(62vw,300px)!important}
+.gb67-art .gift-art.g3d img{animation:g3dIn 1.1s cubic-bezier(.2,.9,.25,1.15) both,g3dFloat 3.4s ease-in-out 1.1s infinite}
+@keyframes g3dIn{0%{transform:translateZ(-400px) rotateY(-540deg) scale(.15);opacity:0}60%{opacity:1}100%{transform:translateY(0) rotateY(-18deg) rotateX(6deg) scale(1);opacity:1}}
+.so-gift-2d-art .gift-art.g3d{width:min(46vw,220px)!important;height:min(46vw,220px)!important}
+.so-gift-2d-art .gift-art.g3d img{animation:g3dIn 1s cubic-bezier(.2,.9,.25,1.15) both,g3dFloat 3.4s ease-in-out 1s infinite}
+@media (prefers-reduced-motion:reduce){.gift-art.g3d img,.gift-art.g3d::after{animation:none!important}}

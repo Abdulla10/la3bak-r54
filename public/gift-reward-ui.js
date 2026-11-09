@@ -1,4 +1,4 @@
-import { giftArt } from './giftart.js?v=release-r14';
+import { giftArt } from './giftart.js?v=r68i-r14';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const amount = value => Number.isSafeInteger(value) && value >= 0;

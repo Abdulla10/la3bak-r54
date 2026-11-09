@@ -2,7 +2,7 @@
  * No redirect/query parameter is evidence of payment; only OrderView is trusted.
  */
 import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
-import { giftArt } from '../giftart.js?v=release-r14';
+import { giftArt } from '../giftart.js?v=r68i-r14';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const nat = value => Number.isSafeInteger(value) && value >= 0;

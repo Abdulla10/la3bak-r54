@@ -1,6 +1,6 @@
-import * as PACKS from './payments.js?v=r63a';
+import * as PACKS from './payments.js?v=r68i';
 import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
-import { giftArt } from '../giftart.js?v=release-r14';
+import { giftArt } from '../giftart.js?v=r68i-r14';
 
 // Presentation-only adapter: all balances, policy and ledger entries come from
 // the canonical wallet. No new account, payment gateway or wallet is created.

@@ -1,4 +1,4 @@
-import { giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon, safeGiftArt, ONE_CUR, GEM_RATE, shownAmt } from './gift-reward-ui.js?v=r63a';
+import { giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon, safeGiftArt, ONE_CUR, GEM_RATE, shownAmt } from './gift-reward-ui.js?v=r68i';
 import {giftTarget, publicGiftCouncils} from './social-gift-context-r33.js?v=complete-r33';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nf=n=>Number(n).toLocaleString('ar-u-nu-latn');

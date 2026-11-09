@@ -209,6 +209,8 @@ const scaleAt = (svg, s, x, y) => `<g transform="translate(${x} ${y}) scale(${s}
 /** يرسم هدية من مواصفاتها: {motif, variant, cat, rarity} */
 export function giftArt(g, size = 64, extra = '') {
   let motif = g.motif || '', cat = g.cat || 'normal', v = g.variant || 0;
+  // R68i: هدايا المالك ثلاثية الأبعاد (صور)
+  if (motif.startsWith('img:')) { const id = motif.slice(4); if (/^[a-c][0-9]{2}$/.test(id)) return `<span class="gift-art g3d r${g.rarity || 0}" style="--g3m:url(/assets/art68/gifts/${id}.webp);width:${size}px;height:${size}px" role="img" aria-label="${String(g.name || '').replace(/[<>"&]/g, '')}" ${extra}><img src="/assets/art68/gifts/${id}.webp" alt="" width="${size}" height="${size}" loading="lazy" decoding="async" draggable="false"></span>`; }
   if (motif.startsWith('legacy:')) {
     const id = motif.slice(7);
     return `<svg class="gift-art legacy r${g.rarity || 0}" viewBox="0 0 64 64" width="${size}" height="${size}" role="img" aria-label="${(g.name || '').replace(/"/g, '')}" focusable="false" style="direction:ltr" ${extra}><circle cx="32" cy="32" r="30" fill="#2a1a5e"/><circle cx="32" cy="32" r="29" fill="none" stroke="#e7c76b" stroke-width="2"/>${LEGACY_ART[id] || M.star('#ffd166', '#fff', '#fff3c4', '#7a3b12')}</svg>`;

@@ -2,9 +2,9 @@
  * The versioned import deliberately shares the host's canonical SHOP singleton.
  * No catalogue, balances, cash prices, exchange rate or account is invented here.
  */
-import * as SHOP from '../shop.js?v=r68h';
+import * as SHOP from '../shop.js?v=r68i';
 import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
-import * as BACKGROUNDS from './backgrounds.js?v=r68h';
+import * as BACKGROUNDS from './backgrounds.js?v=r68i';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'

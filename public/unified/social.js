@@ -7,14 +7,14 @@ import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room
 import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r68h';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
 import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r67al';
-import {framed as frameOwnedPortrait} from '../shop.js?v=r68h';
+import {framed as frameOwnedPortrait} from '../shop.js?v=r68i';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
-import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r63a';
-import {bigGift} from './gift-big-r67.js?v=r67ag';
+import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r68i';
+import {bigGift} from './gift-big-r67.js?v=r68i';
 import {cinemaHTML,cinemaMount,cinemaUnmount,cinemaPosition,parseYouTube} from './room-cinema-r67.js?v=r67s';
 import {cannon3Shortcut,cannon3Panel,cannon3Blast} from './room-cannon-r59.js?v=r67i';
-import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r68h';
+import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r68i';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
 import { mini as avatarMini } from '../avatars.js?v=r67ac';
@@ -122,7 +122,7 @@ async function openOwnBenefits(c,options={}) {
   const epoch=c.epoch,roomId=c.routeRoom;
   if(!roomId||c.snapshot?.current?.roomId!==roomId)throw Error('ادخل الغرفة بحسابك قبل فتح حقيبة الحظ أو المكافأة.');
   if(!c.benefits){
-    const module=await import('../social-benefits.js?v=r67ac');
+    const module=await import('../social-benefits.js?v=r68i');
     if(c!==live||c.epoch!==epoch||c.routeRoom!==roomId)return;
     c.benefitsHost=document.createElement('div');c.benefitsHost.dataset.soBenefitsHost='';if(!c.ctx.gameRoom)c.benefitsHost.dataset.soReferenceR28='';document.body.append(c.benefitsHost);
     c.benefits=module.createSocialBenefits({api:(...args)=>c.api(...args),roomId,getUserId:()=>c===live&&c.routeRoom===roomId?c.uid:'',openPacks:currency=>{c.benefits?.close();(globalThis.__LA3BAK_NAV__ || location).hash='#/payments/'+(currency==='gems'?'gems':'coins');},toast:message=>c.ctx.toast?.(message)});

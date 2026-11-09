@@ -9,6 +9,7 @@ export function giftAsset(gift){
 export const resolveGiftAsset=({gift}={})=>giftAsset(gift);
 export const gift3DReady=gift=>giftAsset(gift)!==null;
 export function giftArtwork(gift){
+ if(gift&&typeof gift.motif==='string'&&/^img:[a-c][0-9]{2}$/.test(gift.motif))return `<span class="gift-art g3d r${Number(gift.rarity)||0}" data-gift-art-3d="true" style="--g3m:url(/assets/art68/gifts/${gift.motif.slice(4)}.webp)"><img src="/assets/art68/gifts/${gift.motif.slice(4)}.webp" loading="lazy" decoding="async" width="70" height="70" alt="" draggable="false"></span>`;
  const asset=giftAsset(gift);
  return asset?`<span class="gift-art" data-gift-art-3d="true" data-gift-variant="${asset.variantKey}"><img src="${asset.poster}" loading="lazy" decoding="async" width="70" height="70" alt=""></span>`:null;
 }
