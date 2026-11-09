@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
-import * as PR from './profile.js?v=r68z';
-import * as UNIFIED from '../unified/shell.js?v=r68z6';
+import * as PR from './profile.js?v=r68z9';
+import * as UNIFIED from '../unified/shell.js?v=r68z9';
 import * as REF from '../unified/home.js?v=r68z5';
-import * as SOCIAL from '../unified/social.js?v=r68z5';
+import * as SOCIAL from '../unified/social.js?v=r68z9';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68i';
@@ -22,8 +22,8 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r68z';
-import * as SHOP from '../shop.js?v=r68z';
+import * as PF from '../profile.js?v=r68z9';
+import * as SHOP from '../shop.js?v=r68z9';
 import * as GIFT from '../gifts.js?v=r68i';
 import * as GFX from '../giftfx.js?v=r68i';
 import * as AVR from '../avatars.js?v=r67ac';
@@ -37,10 +37,10 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68z6';
+import * as PWA from '../pwa.js?v=r68z9';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r68z';
+import * as MIS from '../missions.js?v=r68z9';
 import * as CHAT from '../chat.js?v=r68i';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -391,7 +391,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68z6');
+  const M = await import('../settings-r60.js?v=r68z9');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -571,6 +571,13 @@ async function render() {
       unifiedPage(view,'phone','<div data-phone68></div>');
       import('../phone-r68.js?v=r68z').then(({mountPhone})=>{const el=view.querySelector('[data-phone68]');if(el&&parseRoute().name==='phone')mountPhone(el,{api:functionalApi});}).catch(()=>{});
       break;
+    case 'ids':
+      if (needUser('#/ids')) return;
+      if (!SHOP.SH.data && S.helloDone && !SHOP.SH.idsLoading) { SHOP.SH.idsLoading = true; SHOP.load(req).then(() => { SHOP.SH.idsLoading = false; if (parseRoute().name === 'ids') render(); }); }
+      if (changed && r.a === 'room') SHOP.SH.idsTab = 'room-id';
+      unifiedPage(view,'ids',SHOP.idsPageHTML());
+      { const inp = view.querySelector('[data-ids-q]'); if (inp && !inp.dataset.bound) { inp.dataset.bound = '1'; inp.addEventListener('input', () => { SHOP.SH.idsQ = inp.value; const b = view.querySelector('.ids-body'); if (b) b.outerHTML = SHOP.idsBodyHTML(SHOP.SH.data, SHOP.SH.idsTab || 'special-id'); }); if (SHOP.SH.idsFocus) { SHOP.SH.idsFocus = false; inp.focus(); } } }
+      break;
     case 'wheel':
       if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,'wheel','<div data-wheel68></div>');
@@ -654,7 +661,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r68z').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r68z9').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -2116,6 +2123,10 @@ const ACTIONS = {
     if (!res.ok) { toast(res.error, true); renderRoom(r.code, true); return; }
     SFX.play('tap'); afterRoomOk(res);
   },
+  'ids-f'(el) { SHOP.SH.idsF = el.dataset.v; render(); },
+  'ids-tab'(el) { SHOP.SH.idsTab = el.dataset.v; SHOP.SH.idsF = 'rec'; render(); },
+  'ids-search'() { SHOP.SH.idsSearch = !SHOP.SH.idsSearch; if (!SHOP.SH.idsSearch) SHOP.SH.idsQ = ''; else SHOP.SH.idsFocus = true; render(); },
+  'ids-help'() { SHOP.SH.idsHelp = !SHOP.SH.idsHelp; render(); },
   'pl-spin'() { const s = PLV.PL.spin; PLV.PL.spin = s === 0 ? 0.8 : s > 0 ? -0.8 : 0; toast(PLV.PL.spin > 0 ? 'دوران لقدام (البيضا تكمل)' : PLV.PL.spin < 0 ? 'دوران لورا (البيضا ترجع)' : 'بدون دوران'); const sp = document.querySelector('.pl-spin i'); if (sp) sp.style.top = (50 - PLV.PL.spin * 34) + '%'; },
   'lr-card'(el) { const id = Number(el.dataset.id); const s = LRV.LR.sel; const i = s.indexOf(id); if (i >= 0) s.splice(i, 1); else if (s.length < 3) s.push(id); else return toast('تقدر تحط 3 أوراق بالأكثر.', true); SFX.play('tap'); if (roomUI.code) renderRoom(roomUI.code, true); },
   'lr-play'() { if (!LRV.LR.sel.length) return; ACTIONS['lr-send']({ type: 'play', cards: [...LRV.LR.sel] }); },

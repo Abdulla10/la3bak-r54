@@ -73,3 +73,38 @@ html body .r23-store .r68-bprice{white-space:nowrap}
 .du68-o.on{border-color:#ffc83d;background:linear-gradient(160deg,#4a2a0a,#2a1048);box-shadow:0 0 12px #ffc83d55}
 .du68-o:disabled{opacity:.4;cursor:default}
 .du68-left{display:inline-flex;align-items:center;padding:6px 12px;border-radius:99px;background:#ffc83d22;color:#ffd76b;font-weight:800;font-size:13px}
+/* R68z: متجر الأرقام المميزة — مثل الفيديو */
+.ids-page{min-height:calc(100dvh - 140px);padding:0 12px 90px;color:#fff;background:linear-gradient(180deg,#2a1748 0%,#120a1e 30%,#0b0710 100%);margin:0 -4px;border-radius:0}
+.ids-head{display:flex;align-items:center;gap:10px;padding:10px 2px 6px}.ids-head h1{flex:1;margin:0;font-size:18px;text-align:right}
+.ids-back{font-size:28px;color:#fff;text-decoration:none;line-height:1;padding:0 4px}
+.ids-ic{width:30px;height:30px;border-radius:50%;border:1.8px solid #fff;background:none;color:#fff;font-weight:900;font-size:15px;display:grid;place-items:center;cursor:pointer;padding:0}
+.ids-help{font-size:13px;line-height:1.7;background:#ffffff10;border-radius:12px;padding:10px;margin:4px 0 8px;opacity:.9}
+.ids-search{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid #ffffff33;background:#0b0710;color:#fff;padding:10px 12px;font:inherit;margin:4px 0 8px;direction:ltr;text-align:center}
+.ids-tabs{display:flex;gap:22px;justify-content:flex-start;padding:4px 4px 10px}.ids-tabs button{background:none;border:0;color:#ffffff88;font:inherit;font-size:15px;font-weight:700;padding:4px 0;position:relative;cursor:pointer}
+.ids-tabs button.sel{color:#fff;font-weight:900}.ids-tabs button.sel::after{content:"";position:absolute;left:50%;bottom:-4px;width:14px;height:3px;border-radius:2px;background:#fff;transform:translateX(-50%)}
+.ids-chips{display:flex;gap:8px;padding:2px 0 12px}.ids-chips button{border:1px solid #ffffff2a;background:#ffffff0c;color:#ffffffaa;border-radius:10px;padding:5px 14px;font:inherit;font-size:12px;cursor:pointer}
+.ids-chips button.sel{border-color:#fff;color:#fff;background:#ffffff18}
+.ids-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ids-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;min-height:132px;border-radius:16px;background:linear-gradient(180deg,#1a1a1d,#121214);border:1px solid #ffffff10;color:#fff;font:inherit;cursor:pointer;box-shadow:0 6px 16px #0008}
+.ids-card.own{border-color:#4be38a55}
+.ids-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 12px;border-radius:99px;font-weight:900;font-size:16px;letter-spacing:.5px}
+.ids-pill i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;font-style:normal;font-size:8px;font-weight:900}
+.ids-pill.blue{background:linear-gradient(180deg,#1d3b5e,#0f2238);border:1.5px solid #5fb8ff;color:#dff1ff;box-shadow:0 0 10px #3fa0ff55,inset 0 1px 0 #ffffff33}
+.ids-pill.blue i{border:1.5px solid #8fd0ff;color:#8fd0ff;background:#0f2238}
+.ids-pill.gold{background:linear-gradient(180deg,#5a2a0a,#2a1204);border:1.5px solid #ffc83d;color:#ffe08a;box-shadow:0 0 12px #ffb02066,inset 0 1px 0 #fff3}
+.ids-pill.gold i{background:radial-gradient(circle,#ffe08a,#c98a1a);color:#5a2a00;border:1.5px solid #ffe9a0;box-shadow:0 0 6px #ffc83d}
+.ids-pill.big{font-size:26px;padding:6px 8px 6px 18px}.ids-pill.big i{width:32px;height:32px;font-size:11px}
+.ids-pr{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700}.ids-pr em{font-style:normal;color:#7be0a0}
+.ids-coin{display:inline-block;width:13px;height:16px;border-radius:4px 4px 6px 6px;background:linear-gradient(160deg,#d9a6ff,#8a3cff);transform:skewX(-8deg);box-shadow:inset -2px -2px 0 #6a2acc}
+.ids-empty{text-align:center;opacity:.7;padding:30px 0}
+.ids-foot{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:14px 18px calc(14px + env(safe-area-inset-bottom));background:#0b0710;border-top:1px solid #ffffff10;direction:rtl}
+.ids-bal{display:flex;align-items:center;gap:6px;font-weight:800}.ids-go{color:#ffffffaa;text-decoration:none;font-size:13px}
+.r23-store .ids-body{padding:0 2px}
+html body .ids-page .ids-tabs button,html body .ids-page .ids-tabs button.sel{background:none!important;box-shadow:none!important;border:0!important;min-height:0;padding:4px 0!important}
+html body .ids-page .ids-tabs button.sel{color:#fff!important}
+html body .ids-chips button,html body .ids-chips button:hover{background:#ffffff0c!important;box-shadow:none!important;border:1px solid #ffffff2a!important;color:#ffffffaa!important;min-height:0}
+html body .ids-chips button.sel{background:#ffffff14!important;border-color:#fff!important;color:#fff!important}
+html body .ids-page .ids-ic{background:none!important;box-shadow:none!important;border:1.8px solid #fff!important;min-height:0}
+html body .ids-card,html body .ids-card:hover{background:linear-gradient(180deg,#1a1a1d,#121214)!important;box-shadow:0 6px 16px #0008!important}
+.ids-foot{bottom:calc(84px + env(safe-area-inset-bottom));border-radius:14px;margin:0 10px;border:1px solid #ffffff14}
+.ids-page{padding-bottom:160px}

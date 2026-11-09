@@ -290,6 +290,33 @@ if (typeof document !== 'undefined' && !globalThis.__bnd68) {
     } finally { bndBusy = false; bndFill(); }
   });
 }
+/* ---------- R68z: متجر الأرقام المميزة (نفس تصميم الفيديو) ---------- */
+const ID_CHIPS = [['rec', 'ترشيح'], ['king', 'ملك'], ['seq', 'مستمر'], ['rep', 'إعادة']];
+const allSame = (v) => /^(\d)\1+$/.test(v);
+const isSeq = (v) => { if (v.length < 3) return false; const d = [...v].map(Number); const up = d.every((x, i) => !i || x === d[i - 1] + 1), dn = d.every((x, i) => !i || x === d[i - 1] - 1); return up || dn; };
+const isRep = (v) => !allSame(v) && !isSeq(v) && (/^(\d+)\1+\d?$/.test(v) || v === [...v].reverse().join('') || /(\d)\1/.test(v));
+export function idKind(v) { v = String(v || ''); return allSame(v) ? 'king' : isSeq(v) ? 'seq' : isRep(v) ? 'rep' : 'other'; }
+const idPill = (v, big = false) => `<span class="ids-pill ${String(v).length <= 4 ? 'gold' : 'blue'}${big ? ' big' : ''}" dir="ltr"><b>${esc(v)}</b><i aria-hidden="true">ID</i></span>`;
+export function idsBodyHTML(d, tab) {
+  const f = SH.idsF || 'rec'; const q = String(SH.idsQ || '').replace(/\D/g, '');
+  let list = d.items.filter((i) => i.slot === tab && i.css);
+  if (f !== 'rec') list = list.filter((i) => idKind(i.css) === f);
+  if (q) list = list.filter((i) => String(i.css).includes(q));
+  list.sort((a, b) => String(a.css).length - String(b.css).length || Number(a.css) - Number(b.css));
+  const chips = `<div class="ids-chips">${ID_CHIPS.map(([k, l]) => `<button type="button" class="ids-c${f === k ? ' sel' : ''}" aria-pressed="${f === k}" data-act="ids-f" data-v="${k}">${l}</button>`).join('')}</div>`;
+  const grid = list.length ? `<div class="ids-grid">${list.map((i) => { const own = d.owned.includes(i.id); return `<button type="button" class="ids-card${own ? ' own' : ''}" data-act="shop-preview" data-id="${esc(i.id)}" aria-label="${esc(i.css)} — ${nf(i.price)}">${idPill(i.css)}<span class="ids-pr">${own ? '<em>تملكه ✓</em>' : `${nf(i.price)} <i class="ids-coin" aria-hidden="true"></i>`}</span></button>`; }).join('')}</div>` : `<p class="ids-empty">${q ? 'ما لقينا رقم بهالبحث.' : 'ما فيه أرقام بهالقسم حالياً.'}</p>`;
+  return `<div class="ids-body">${chips}${grid}</div>`;
+}
+export function idsPageHTML() {
+  const d = SH.data; if (!d) return `<div class="ids-page"><p class="ids-empty">${esc(SH.err || 'جاري التحميل…')}</p></div>`;
+  const tab = SH.idsTab || 'special-id';
+  return `<div class="ids-page" dir="rtl"><header class="ids-head"><a class="ids-back" href="#/shop" aria-label="رجوع">›</a><h1>متجر الأرقام المميزة</h1><button type="button" class="ids-ic" data-act="ids-help" aria-label="شرح">?</button><button type="button" class="ids-ic" data-act="ids-search" aria-label="بحث"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button></header>
+    ${SH.idsHelp ? '<p class="ids-help">الرقم المميز يصير رقمك الظاهر بملفك (أو رقم غرفتك الصوتية) بدال الرقم العادي. كل رقم ينباع لشخص واحد بس. «ملك» = أرقام مكررة، «مستمر» = أرقام متسلسلة، «إعادة» = أرقام فيها تكرار.</p>' : ''}
+    ${SH.idsSearch ? `<input class="ids-search" data-ids-q inputmode="numeric" placeholder="ابحث برقم…" value="${esc(SH.idsQ || '')}" aria-label="بحث برقم">` : ''}
+    <nav class="ids-tabs"><button type="button" class="ids-t${tab === 'special-id' ? ' sel' : ''}" data-act="ids-tab" data-v="special-id">مستخدم</button><button type="button" class="ids-t${tab === 'room-id' ? ' sel' : ''}" data-act="ids-tab" data-v="room-id">الغرف الصوتية</button></nav>
+    ${idsBodyHTML(d, tab)}
+    <footer class="ids-foot"><span class="ids-bal">${nf(d.coins)} <i class="ids-coin" aria-hidden="true"></i></span><a href="#/shop/packs" class="ids-go">اذهب للشحن ‹</a></footer>${previewDialogHTML(d)}</div>`;
+}
 export function shopHTML(me) {
   if (SH.loading && !SH.data) return '<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="status">جاري تحميل المتجر…</p></div></div>';
   if (SH.err || !SH.data) return `<div class="r23-store" dir="rtl"><div class="card empty-state"><p role="alert">${esc(SH.err || 'تعذّر التحميل.')}</p><button class="btn" type="button" data-act="shop-reload">إعادة المحاولة</button></div></div>`;
@@ -327,6 +354,8 @@ export function shopHTML(me) {
     if (tab === 'badge' && d.items.some((i) => i.slot === 'badge')) body += `<h3 class="r23-sub">شارات للبيع</h3>` + gridFor(d, 'badge');
   } else if (tab === 'souvenir') {
     body = `<p class="souv-note">التذكار ينحفظ في «المقتنيات» بملفك أول ما تشتريه.</p>` + gridFor(d, tab);
+  } else if (tab === 'special-id' || tab === 'room-id') {
+    body = idsBodyHTML(full, tab);
   } else if (['special-id', 'board', 'chat-bubble', 'room-id', 'room-bg'].includes(tab)) {
     body = (tab === 'special-id' ? unavailableHTML(tab, me).replace('data-empty-category', 'data-current-id') : '') + gridFor(d, tab);
   } else if (tab === 'owned') {
