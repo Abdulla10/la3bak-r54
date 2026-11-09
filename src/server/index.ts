@@ -23,6 +23,7 @@ import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
 import { CpPoints, cpKey, cpLevelOf, CP_TASKS, CP_LEVELS, CP_LEVEL_NAMES } from './cp-r58.js';
 import { ROCKET_PLANETS } from './room-rocket-r58.js';
 import { SiteFlagsStore } from './site-flags-r67.js';
+import { roomOwnerGift } from './room-extras-r58.js';
 import { AccountDeletion, DELETION_GRACE_MS } from './account-deletion-r67.js';
 import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
@@ -965,6 +966,11 @@ export async function createApp(
     ownsItem:(userId,itemId)=>wallet.owned(userId).includes(itemId),
     cinemaOff:()=>!siteFlags.get().cinema,
     maskChat:(t)=>maskBanned(t),
+    roomLevelUp:(roomId,ownerId,name,from,to,members)=>{
+      for(let lv=from+1;lv<=to&&lv<=from+50;lv++){const g=roomOwnerGift(lv);if(g&&accounts.has(ownerId)){try{if(wallet.grant(ownerId,'coins',g,`هدية ليفل الغرفة ${lv}`,`roomlv:${roomId}:${lv}`))sendToUser(ownerId,{t:'wallet',coins:wallet.balance(ownerId),gems:wallet.gems(ownerId),won:0});}catch{/* */}}}
+      try{support.announce([ownerId],`🎉 غرفتك وصلت Lv ${to}`,`مبروك! «${name}» وصلت Lv ${to}. افتح «ليفل الغرفة» تشوف المميزات الجديدة.`,'الغرف',`roomlv-${roomId}-${to}`);}catch{/* */}
+      for(const id of new Set([...members,ownerId]))sendToUser(id,{t:'room:levelup',roomId,name,level:to});
+    },
     roomIdItem:(userId,itemId)=>{const it=shopcat.get(itemId);return it&&it.slot==='room-id'&&wallet.owned(userId).includes(it.id)&&typeof it.css==='string'?it.css:null;},
     moderate:(text,kind)=>{const m=moderateText(text,kind);return m.ok?{ok:true}:{ok:false,code:m.code};},
     verifyGiftSupport:(context,rec)=>{

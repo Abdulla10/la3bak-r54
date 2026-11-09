@@ -1,10 +1,10 @@
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r67at';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r67av';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=admin-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=r67at';
+import {mountPaymentAdmin} from './payment-admin.js?v=r67av';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
-import {mountSocialAdmin} from './social-admin.js?v=r67at';
-import { pricingHTML, progressionHTML } from './economy-admin.js?v=r67at';
+import {mountSocialAdmin} from './social-admin.js?v=r67av';
+import { pricingHTML, progressionHTML } from './economy-admin.js?v=r67av';
 import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r67ac';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
@@ -322,7 +322,7 @@ export function mountAdmin(root) {
     const tcRoot=root.querySelector('[data-tribes-cp-admin]');
     if(tcRoot && S.me?.role==='owner') import('./tribes-cp-admin-r67.js?v=r67al').then(({mountTribesCpAdmin})=>{if(tcRoot.isConnected)mountTribesCpAdmin(tcRoot,{call});}).catch(()=>{if(tcRoot.isConnected)tcRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const tnRoot=root.querySelector('[data-tuning-admin]');
-    if(tnRoot && S.me?.role==='owner') import('./tuning-admin-r67.js?v=r67an').then(({mountTuningAdmin})=>{if(tnRoot.isConnected)mountTuningAdmin(tnRoot,{call});}).catch(()=>{if(tnRoot.isConnected)tnRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
+    if(tnRoot && S.me?.role==='owner') import('./tuning-admin-r67.js?v=r67av').then(({mountTuningAdmin})=>{if(tnRoot.isConnected)mountTuningAdmin(tnRoot,{call});}).catch(()=>{if(tnRoot.isConnected)tnRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const laRoot=root.querySelector('[data-live-admin]');
     if(laRoot && S.me?.role==='owner') import('./live-admin-r67.js?v=r67ak').then(({mountLiveAdmin})=>{if(laRoot.isConnected)mountLiveAdmin(laRoot,{call});}).catch(()=>{if(laRoot.isConnected)laRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const waRoot=root.querySelector('[data-watch-admin]');
@@ -334,7 +334,7 @@ export function mountAdmin(root) {
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=r67at').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r67av').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {

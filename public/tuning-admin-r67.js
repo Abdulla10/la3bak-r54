@@ -22,7 +22,7 @@ export function mountTuningAdmin(root, { call }) {
     ${form('cannon', '💣 مدفع الغرفة', 'الهدف = نقاط الهدايا لانفجار المستوى. العملات تنقسم على المشاركين الأوائل.', c.cannon.map((x, i) => `<div class="tn67-blk"><b>المستوى ${i + 1}</b><div class="tn67-g">${inp(`cg${i}`, x.goal, d.cannon[i].goal, 'الهدف')}${inp(`cc${i}`, x.coins, d.cannon[i].coins, 'العملات')}</div></div>`).join(''))}
     ${form('tribe', '🏰 مستويات القبائل', 'النقاط اللي تحتاجها القبيلة لكل مستوى، وأقصى عدد أعضاء فيه.', c.tribe.map((x, i) => `<div class="tn67-blk"><b>${i + 1}. ${esc(n.tribe[i])}</b><div class="tn67-g">${i === 0 ? '<label>النقاط<input class="ad-in" value="0" disabled></label>' : inp(`tm${i}`, x.min, d.tribe[i].min, 'النقاط')}${inp(`tc${i}`, x.cap, d.tribe[i].cap, 'أقصى أعضاء')}</div></div>`).join(''))}
     ${form('cp', '💞 مستويات CP', 'نقاط CP اللي يحتاجها الارتباط لكل مستوى.', `<div class="tn67-g">${c.cp.map((v, i) => i === 0 ? '' : inp(`cp${i}`, v, d.cp[i], `${i + 1}. ${esc(n.cp[i])}`)).join('')}</div>`)}
-    ${form('roomLevels', '🏠 مستويات الغرف', 'كم دعم تحتاجه الغرفة عشان توصل كل مستوى.', `<div class="tn67-g">${c.roomLevels.map((v, i) => i === 0 ? '' : inp(`rl${i}`, v, d.roomLevels[i], `المستوى ${i + 1}`)).join('')}</div>`)}
+    ${form('roomCurve', '🏠 مستويات الغرف (لين Lv300)', 'كم عملة دعم تحتاجها الغرفة توصل كل محطة؛ الليفلات اللي بينها تنحسب تلقائيًا بتدرّج.', `<div class="tn67-g">${[['l2', 'Lv 2'], ['l10', 'Lv 10'], ['l50', 'Lv 50'], ['l100', 'Lv 100'], ['l300', 'Lv 300']].map(([k, l]) => inp(`rc_${k}`, c.roomCurve?.[k] ?? 0, d.roomCurve?.[k] ?? 0, l)).join('')}</div>`)}
     ${form('roomBg', '🖼️ خلفيات الغرف حسب المستوى', 'أي مستوى غرفة يفتح كل خلفية.', `<div class="tn67-g">${Object.keys(c.roomBg).map((k) => inp(`bg_${k}`, c.roomBg[k], d.roomBg[k], esc(BG_NAME[k] ?? k))).join('')}</div>`)}
     ${form('streak', '📅 هدية الدخول اليومي المتتالي', 'العملات الزيادة فوق المكافأة اليومية لكل يوم بالسلسلة.', `<div class="tn67-g">${c.streak.map((v, i) => inp(`st${i}`, v, d.streak[i], `اليوم ${i + 1}`)).join('')}</div>`)}
     ${form('broadcast', '📢 أسعار البرقية العالمية', 'بالعملات. العادية ≤ الذهبية ≤ الشاشة الكاملة.', `<div class="tn67-g c3">${inp('bc_normal', c.broadcast.normal, d.broadcast.normal, 'عادية')}${inp('bc_gold', c.broadcast.gold, d.broadcast.gold, 'ذهبية')}${inp('bc_full', c.broadcast.full, d.broadcast.full, 'شاشة كاملة')}</div>`)}
@@ -35,7 +35,7 @@ export function mountTuningAdmin(root, { call }) {
     if (k === 'cannon') return { cannon: c.cannon.map((_, i) => ({ goal: num(f, `cg${i}`), coins: num(f, `cc${i}`) })) };
     if (k === 'tribe') return { tribe: c.tribe.map((_, i) => ({ min: i === 0 ? 0 : num(f, `tm${i}`), cap: num(f, `tc${i}`) })) };
     if (k === 'cp') return { cp: c.cp.map((_, i) => i === 0 ? 0 : num(f, `cp${i}`)) };
-    if (k === 'roomLevels') return { roomLevels: c.roomLevels.map((_, i) => i === 0 ? 0 : num(f, `rl${i}`)) };
+    if (k === 'roomCurve') return { roomCurve: Object.fromEntries(['l2', 'l10', 'l50', 'l100', 'l300'].map((x) => [x, num(f, `rc_${x}`)])) };
     if (k === 'roomBg') return { roomBg: Object.fromEntries(Object.keys(c.roomBg).map((b) => [b, num(f, `bg_${b}`)])) };
     if (k === 'streak') return { streak: c.streak.map((_, i) => num(f, `st${i}`)) };
     if (k === 'invite') return { invite: { inviter: num(f, 'iv_inviter'), invitee: num(f, 'iv_invitee'), games: num(f, 'iv_games'), monthlyCap: num(f, 'iv_cap') } };

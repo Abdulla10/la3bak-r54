@@ -5,7 +5,7 @@ const LEGACY_CANNON = false;
 /** R59: صاروخ الغرفة انقفل (انتقل للقبيلة) */
 const ROOM_ROCKET = false;
 import { ROCKET_PLANETS, ROCKET_SENDERS_MAX, ROCKET_LUCK_MIN_MS, currentRocket, rocketBoundaries, validRoomRocket, rocketCampaignId, rocketFingerprint, rocketGrants, rocketWinners, rocketLuckPick, rocketShareOf, rocketGiftArt, type RoomRocket } from './room-rocket-r58.js';
-import { roomCodeOf, roomLevelOf, ROOM_VANITY, ROOM_ADS_MAX, type RoomAd, currentRoomMonth, roomRankView, validRoomMonth, ROOM_MONTH_SENDERS_MAX, type RoomMonth } from './room-extras-r58.js';
+import { roomCapacityBonus, roomLevelPerks, ROOM_LEVEL_MAX, roomCodeOf, roomLevelOf, ROOM_VANITY, ROOM_ADS_MAX, type RoomAd, currentRoomMonth, roomRankView, validRoomMonth, ROOM_MONTH_SENDERS_MAX, type RoomMonth } from './room-extras-r58.js';
 import { ENTRANCE_ART_PATHS } from './entrance-catalog.js';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { lstatSync } from 'node:fs';
@@ -57,6 +57,8 @@ export interface SocialRoomsOptions {
   ownsItem?: (userId: string, itemId: string) => boolean;
   /** R67ae: المالك طفّى وضع اليوتيوب من اللوحة */
   cinemaOff?: () => boolean;
+  /** R67au: الغرفة ارتفع ليفلها (هدية صاحب الغرفة كل 5 ليفلات + تهنئة) */
+  roomLevelUp?: (roomId: string, ownerId: string, name: string, from: number, to: number, members: string[]) => void;
   /** R67ae: إخفاء الكلمات الممنوعة بالدردشة */
   maskChat?: (text: string) => string;
   /** R58: مراجعة تلقائية للنصوص */
@@ -459,7 +461,10 @@ export class SocialRooms {
       const r = this.state.rooms.find((x) => x.id === roomId); if (!r) return;
       const before = this.state, d = structuredClone(before), room = this.room(d, roomId), now = this.clock();
       const next = (room.support ?? 0) + value; if (!nat(next)) return;
+      const lvBefore = roomLevelOf(room.support ?? 0).level;
       room.support = next;
+      const lvAfter = roomLevelOf(next).level;
+      if (lvAfter > lvBefore) { room.activity.push({ action: 'room:levelup', at: now }); room.activity = room.activity.slice(-100); }
       // R58c: نقاط رتبة الشهر + بيانات الشهر لأداة مراجعة بيانات الغرفة
       const m = structuredClone(currentRoomMonth(room.month, now)); const pts = m.pts + value;
       if (nat(pts)) { m.pts = pts; m.gifts += 1; const prev = m.senders[sender] ?? 0; if (prev || Object.keys(m.senders).length < ROOM_MONTH_SENDERS_MAX) m.senders[sender] = prev + value; room.month = m; }
@@ -482,6 +487,7 @@ export class SocialRooms {
         room.rocket = rk;
       }
       this.save(d, now); this.state = d; this.notice(before, d);
+      if (lvAfter > lvBefore) { try { this.opts.roomLevelUp?.(roomId, room.ownerId, room.name, lvBefore, lvAfter, room.members.map((mm) => mm.id)); } catch { /* */ } }
       this.settleRocket(roomId);
       this.settleCannon3(roomId);
     } catch { /* الهدية انصرفت؛ الليفل يكمل مع الهدايا الجاية */ }
@@ -588,7 +594,7 @@ export class SocialRooms {
   }
   /** R58: الرقم الظاهر للغرفة: الأيدي المميز إذا موجود، وإلا رقم 8 خانات الثابت */
   private roomCode(r: Room): string { return r.vanity ?? roomCodeOf(r.id); }
-  private roomExtrasView(r: Room) { const lv = roomLevelOf(r.support ?? 0); return { weekPts: Object.values(currentWeek(r.week, this.clock()).senders).reduce((n, v) => n + v, 0), rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })), video: r.video ? { vid: r.video.vid, paused: r.video.paused, base: r.video.base, now: this.clock() } : null, }; }
+  private roomExtrasView(r: Room) { const lv = roomLevelOf(r.support ?? 0); return { weekPts: Object.values(currentWeek(r.week, this.clock()).senders).reduce((n, v) => n + v, 0), rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, levelMax: ROOM_LEVEL_MAX, nextPerks: roomLevelPerks(lv.level + 1), capacity: r.maxMembers + roomCapacityBonus(lv.level), ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })), video: r.video ? { vid: r.video.vid, paused: r.video.paused, base: r.video.base, now: this.clock() } : null, }; }
   /** R55: فحص جوائز المدفع بدون رمي خطأ. لو عنصر جائزة صار مقفول برتبة أو موقوف بالمتجر، الغرف والدردشة والهدايا تكمل عادي والمدفع ما ينفعّل لين ترجع الجوائز صالحة. */
   private cannonCatalogReady(): boolean {
     if (!this.opts.cannon) return false;
@@ -878,7 +884,7 @@ export class SocialRooms {
     if(r.bans.some(b=>b.id===id)||this.blocked(id,r.ownerId)||r.members.some(m=>m.id!==id&&this.blocked(id,m.id)))fail('room_access_denied',403);
     const active=r.members.some(m=>m.id===id&&(m.deadline===null||m.deadline>this.clock()));
     if(r.privacy==='private'&&!r.invites.includes(id)&&r.ownerId!==id&&!r.moderators.includes(id)&&!active)fail('room_invitation_required',403);
-    if(!active&&r.members.length>=r.maxMembers)fail('room_full',409);
+    if(!active&&r.members.length>=r.maxMembers+roomCapacityBonus(roomLevelOf(r.support??0).level))fail('room_full',409);
     if(r.password&&!active&&admission?.passwordVerifiedRoomId!==r.id)fail('room_password_required',403);
   }
   private enterRoom(d: State,r: Room,id: string,media: Set<string>,now: number, admission?: DirectoryAdmission) {
@@ -1508,7 +1514,7 @@ export class SocialRooms {
   }
   async list(userId:string):Promise<SocialResult> {
     return this.serial(()=>this.guard(()=>{
-      this.ready();this.actor(userId);const visible=this.visibleRoomIds(userId);return {ok:true,rooms:this.state.rooms.filter(r=>visible.has(r.id)).map(r=>({id:r.id,mine:r.ownerId===userId,name:r.name,description:r.description,photo:this.photo(r),privacy:r.privacy,memory:r.memory,maxMembers:r.maxMembers,...this.directoryRoomView(r),owner:this.who(r.ownerId),host:r.hostId&&!this.blocked(userId,r.hostId)?this.who(r.hostId):null,count:r.members.length,councils:r.councils.length,joined:r.members.some(m=>m.id===userId&&(m.deadline===null||m.deadline>this.clock())),createdAt:r.createdAt,updatedAt:r.updatedAt})),directory:this.directoryView(userId,visible),current:this.current(userId),preferences:this.prefsView(userId),config:{enabled:this.state.config.enabled,requireAdultAck:this.opts.requireAdultAck!==false,minimumAge:18,ageVerification:'parent-eligibility-hook-plus-self-acknowledgement',maxCouncilSeats:this.state.config.maxCouncilSeats,defaultCouncilSeats:this.state.config.defaultCouncilSeats,modes:structuredClone(this.state.config.content.settings),capabilities:directoryCapabilitiesR30()}};
+      this.ready();this.actor(userId);const visible=this.visibleRoomIds(userId);return {ok:true,rooms:this.state.rooms.filter(r=>visible.has(r.id)).sort((a,b)=>Number(roomLevelOf(b.support??0).level>=100)-Number(roomLevelOf(a.support??0).level>=100)).map(r=>({id:r.id,mine:r.ownerId===userId,name:r.name,description:r.description,photo:this.photo(r),privacy:r.privacy,memory:r.memory,maxMembers:r.maxMembers,...this.directoryRoomView(r),owner:this.who(r.ownerId),host:r.hostId&&!this.blocked(userId,r.hostId)?this.who(r.hostId):null,count:r.members.length,councils:r.councils.length,joined:r.members.some(m=>m.id===userId&&(m.deadline===null||m.deadline>this.clock())),createdAt:r.createdAt,updatedAt:r.updatedAt})),directory:this.directoryView(userId,visible),current:this.current(userId),preferences:this.prefsView(userId),config:{enabled:this.state.config.enabled,requireAdultAck:this.opts.requireAdultAck!==false,minimumAge:18,ageVerification:'parent-eligibility-hook-plus-self-acknowledgement',maxCouncilSeats:this.state.config.maxCouncilSeats,defaultCouncilSeats:this.state.config.defaultCouncilSeats,modes:structuredClone(this.state.config.content.settings),capabilities:directoryCapabilitiesR30()}};
     }));
   }
   async detail(userId:string,roomId:string):Promise<SocialResult> {
