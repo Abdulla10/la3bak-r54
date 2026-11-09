@@ -1064,6 +1064,14 @@ export async function createApp(
     const progress: Record<string, number> = { msg: social.pairMessagesSince(me, c.partner, since), room: mineRoom && mineRoom === theirRoom ? 1 : 0, gift: day.gift > 0 ? 1 : 0 };
     return { key, list: CP_TASKS.map((t) => ({ id: t.id, name: t.name, need: t.need, reward: t.reward, have: Math.min(t.need, progress[t.id] ?? 0), claimed: day.claimed.includes(t.id) })) };
   };
+  // R67: بطاقة البيانات الشخصية + بطاقة المملكة بالملف
+  functionalHttp.add('GET', '/api/profile-cards/me', ({ user }) => {
+    const c = social.coupleOf(user.id); let cpName: string | null = null;
+    try { const snap = social.familySnapshot(user.id) as { couple?: { hidden?: boolean } | null }; if (c && snap?.couple && snap.couple.hidden !== true) cpName = accounts.nameOf(c.partner); } catch { /* مخفي */ }
+    const t = tribes.of(user.id);
+    const pv = progression.view(user.id), vip = pv.vip.value && /^V(?:[1-9]|1[0-5])$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0, noble = pv.noble.value && /^N[1-9]$/.test(pv.noble.value) ? Number(pv.noble.value.slice(1)) : 0;
+    return { ok: true, me: cpPerson(user.id), ranks: { vip, noble }, cp: cpName, tribe: t ? t.name : null, gifts: wallet.giftCounts(user.id), friends: social.friendsCount(user.id), kingdom: socialRooms.kingdomView(user.id, user.id) };
+  });
   functionalHttp.add('GET', '/api/cp/tasks', ({ user }) => { const v = cpTaskView(user.id); return { ok: true, tasks: v ? v.list : [] }; });
   functionalHttp.add('POST', '/api/cp/tasks/:id/claim', ({ user, params }) => {
     const v = cpTaskView(user.id); if (!v) return { ok: false, error: 'ما عندك CP.' };

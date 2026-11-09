@@ -482,6 +482,13 @@ export class SocialRooms {
     let best: Room | null = null; for (const r of this.state.rooms) if (r.ownerId === userId && (!best || (r.support ?? 0) > (best.support ?? 0))) best = r;
     return best ? { id: best.id, name: best.name, level: roomLevelOf(best.support ?? 0).level, members: best.members.length, code: this.roomCode(best) } : null;
   }
+  /** R67: «مملكتي» — أعلى غرفة دعم يملكها الحساب، مع أكثر 3 داعمين هالشهر (بدون المحظورين عن المشاهد) */
+  kingdomView(ownerId: string, viewer: string) {
+    let best: Room | null = null; for (const r of this.state.rooms) if (r.ownerId === ownerId && (!best || (r.support ?? 0) > (best.support ?? 0))) best = r;
+    if (!best) return null; const r = best, lv = roomLevelOf(r.support ?? 0), m = currentRoomMonth(r.month, this.clock()), rank = roomRankView(r.month, this.clock());
+    const top = Object.entries(m.senders).sort((a, b) => b[1] - a[1]).filter(([id]) => !this.blocked(viewer, id)).slice(0, 3).map(([id, pts]) => ({ ...this.who(id), pts }));
+    return { id: r.id, name: r.name, photo: this.photo(r), code: this.roomCode(r), level: lv.level, members: r.members.length, monthPts: m.pts, tier: rank.tier, tierName: rank.tierName, top };
+  }
   /** R59: من متى الحساب حاضر بالغرفة (للمهمة «ابقَ 5 دقايق») */
   /** R62: اللي قاعدين على مقعد (مايك) ومتصلين بصوت الغرفة الحين — لعدّ دقايق المايك بالمهام */
   seatedNow(): string[] { const out: string[] = []; for (const r of this.state.rooms) for (const m of r.members) if (m.councilId !== null && this.mediaAccess(m.id)?.roomId === r.id) out.push(m.id); return out; }

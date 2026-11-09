@@ -1,5 +1,5 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r66b';
+import * as PR from './profile.js?v=r67j';
 import * as UNIFIED from '../unified/shell.js?v=r67i';
 import * as REF from '../unified/home.js?v=r63a';
 import * as SOCIAL from '../unified/social.js?v=r67i';
