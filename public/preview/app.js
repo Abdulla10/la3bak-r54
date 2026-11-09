@@ -1,45 +1,45 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r67aa';
-import * as UNIFIED from '../unified/shell.js?v=r67aa';
+import * as PR from './profile.js?v=r67ac';
+import * as UNIFIED from '../unified/shell.js?v=r67ac';
 import * as REF from '../unified/home.js?v=r63a';
-import * as SOCIAL from '../unified/social.js?v=r67w';
+import * as SOCIAL from '../unified/social.js?v=r67ac';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
-import { createSocialGiftStore } from '../social-gifts.js?v=r63a';
+import { createSocialGiftStore } from '../social-gifts.js?v=r67ac';
 import {giftArtwork} from '../gift-assets-r27.js?v=unique-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r59d';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r67ac';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
 import * as HUB from '../hub.js?v=shell-r6';
 import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
 import { initStatus, checkStatusNow } from '../status.js?v=root-navigation-r50';
-import * as LOB from '../lobby.js?v=r59d';
+import * as LOB from '../lobby.js?v=r67ac';
 import * as AVT from '../avatar.js?v=shell-r6';
 import * as AUTH from '../auth.js?v=shell-r6';
 import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r67aa';
-import * as SHOP from '../shop.js?v=r67w';
-import * as GIFT from '../gifts.js?v=r63a';
+import * as PF from '../profile.js?v=r67ac';
+import * as SHOP from '../shop.js?v=r67ac';
+import * as GIFT from '../gifts.js?v=r67ac';
 import * as GFX from '../giftfx.js?v=r57';
-import * as AVR from '../avatars.js?v=r59d';
-import * as DMV from '../domino.js?v=r59d';
-import * as UNV from '../uno.js?v=r59d';
-import * as CRV from '../carrom.js?v=r59d';
+import * as AVR from '../avatars.js?v=r67ac';
+import * as DMV from '../domino.js?v=r67ac';
+import * as UNV from '../uno.js?v=r67ac';
+import * as CRV from '../carrom.js?v=r67ac';
 import * as MNV from '../minaboli-r47.js?v=r57';
 import * as CITY from '../city.js?v=r57';
-import * as COM from '../community.js?v=r67aa';
+import * as COM from '../community.js?v=r67ac';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r67aa';
+import * as PWA from '../pwa.js?v=r67ac';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r67aa';
-import * as CHAT from '../chat.js?v=r63a';
+import * as MIS from '../missions.js?v=r67ac';
+import * as CHAT from '../chat.js?v=r67ac';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -352,7 +352,7 @@ function loadFunctionalModule(name) {
       : key === 'family' ? import('../family-r47.js?v=build-all-r47')
       : key === 'private' ? import('../social-private.js?v=r57')
       : key === 'missions' ? import('../missions-server.js?v=r63a')
-      : key === 'profile-social' ? import('../profile-social-r53.js?v=r63a')
+      : key === 'profile-social' ? import('../profile-social-r53.js?v=r67ac')
       : import('../functional-pages.js?v=r63a');
     functionalModules.set(key, promise);
     promise.catch(() => { if (functionalModules.get(key) === promise) functionalModules.delete(key); });
@@ -384,7 +384,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r67aa');
+  const M = await import('../settings-r60.js?v=r67ac');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -637,7 +637,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r67w').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r67ac').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -1916,7 +1916,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r59d', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r67ac', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },

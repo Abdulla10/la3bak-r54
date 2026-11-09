@@ -1,8 +1,8 @@
 /* الصالة الموحدة: جكارو وبلوت ولودو بحساب واحد. كل رقم هنا جاي من الخادم (/api/account و/api/rankings)، ولا يوجد رقم ثابت أو تقريبي. */
 import { HUBS } from './hub.js?v=shell-r6';
-import { mini } from './avatars.js?v=r59d';
-import { frameArt, isFrame2 } from './cosmetics.js?v=r59d';
-import { referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r59d';
+import { mini } from './avatars.js?v=r67ac';
+import { frameArt, isFrame2 } from './cosmetics.js?v=r67ac';
+import { referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r67ac';
 
 export const L = { me: null, rk: {}, tab: 'all', err: '', loading: false, loaded: false };
 export const GAME_IDS = ['jackaro', 'baloot', 'ludo'];

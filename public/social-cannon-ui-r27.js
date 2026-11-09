@@ -1,6 +1,6 @@
-import {bgLayer} from './shop.js?v=r67w';
+import {bgLayer} from './shop.js?v=r67ac';
 import {createCannon3D} from './cannon3d-r29.js?v=gifts-cannon-r29';
-import {referenceOf} from './reference-assets.js?v=r59d';
+import {referenceOf} from './reference-assets.js?v=r67ac';
 /* R58t: مدفع المراحل الخمس برسومات المالك (2D). مدفع v1 (3 مراحل) يبقى ثلاثي الأبعاد مثل ما هو. */
 const isV2=m=>Array.isArray(m?.stages)&&m.stages.length===5;
 const stageArt=(n,cls)=>`<img class="cn58-art ${cls}" src="/assets/art58/cannon/c${Math.max(1,Math.min(5,n|0))}.webp?v=r58t" alt="" decoding="async">`;
