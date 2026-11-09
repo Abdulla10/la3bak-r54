@@ -39,7 +39,7 @@ export function cannon3Panel(m, view, help = false) {
 }
 const seen = new Set();
 /** R67b الانفجار بالرسومات الجديدة: الدائرة الذهبية تدور، أعلى مساهم بالإطار، أرقام ذهبية 5→1، المدفع يطلق والألعاب النارية، انفجار، وبعدين «تهانينا!». */
-const FX = '/assets/art67/cannon/', FXV = 'r67g';
+const FX = '/assets/art67/cannon/', FXV = 'r67i';
 const fx = (n) => `${FX}${n}.webp?v=${FXV}`;
 const CANNON_ART = ['cannon-green', 'cannon-red', 'cannon-purple'];
 const FW = ['fireworks-gold', 'fireworks-purple', 'fireworks-pink'];
