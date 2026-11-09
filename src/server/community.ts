@@ -79,6 +79,8 @@ export interface CommunityDeps {
   isBanned(id: string): boolean;
   push(id: string, msg: unknown): void;
   log(event: string, data?: Record<string, unknown>): void;
+  /** R66: صاحب الحساب مخفي منشوراته عن الكل (إعداد «إخفاء منشوراتي») */
+  postsHidden?(id: string): boolean;
 }
 export interface CommunityLimits { post: [number, number]; comment: [number, number]; like: [number, number]; follow: [number, number]; report: [number, number]; upload: [number, number]; read: [number, number] }
 /** [سعة، إعادة تعبئة بالثانية] لكل نوع */
@@ -154,6 +156,8 @@ export class Community {
    * كله بالخادم على كل مسار قراءة/كتابة، فما ينتجاوز من الواجهة. */
   private blocked(a: string, b: string) { return !!(this.d.blocks?.[a]?.includes(b) || this.d.blocks?.[b]?.includes(a)); }
   private hidden(me: string | null, author: string) { return !!me && me !== author && (this.blocked(me, author) || !!this.d.mutes?.[me]?.includes(author)); }
+  /** R66: منشورات صاحبها مخفية عن الكل غيره */
+  private priv(me: string | null, author: string) { return me !== author && this.dep.postsHidden?.(author) === true; }
   private guard(me: string, other: string) { if (me !== other && this.blocked(me, other)) throw new CommunityError(403, 'ما تقدر تتفاعل مع هذا الحساب.', 'blocked'); }
   private notify(to: string, kind: Notif['kind'], from: string, post: number | null, comment: number | null, key: string) {
     if (to === from || this.hidden(to, from)) return;
@@ -173,7 +177,7 @@ export class Community {
   feed(me: string | null, opts: { before?: unknown; scope?: unknown; limit?: unknown } = {}) {
     const before = Number(opts.before) > 0 ? Number(opts.before) : Infinity;
     const lim = Math.max(1, Math.min(PAGE, Number(opts.limit) || PAGE));
-    let pool = this.d.posts.filter((p) => p.id < before && this.visible(p) && !this.hidden(me, p.by));
+    let pool = this.d.posts.filter((p) => p.id < before && this.visible(p) && !this.hidden(me, p.by) && !this.priv(me, p.by));
     if (opts.scope === 'following') { if (!me) return { posts: [], more: false }; const f = new Set(this.d.follows[me] ?? []); pool = pool.filter((p) => f.has(p.by) || p.by === me); }
     const page = pool.slice(-lim - 1).reverse();
     const more = page.length > lim;
@@ -182,6 +186,7 @@ export class Community {
   postDetail(me: string | null, id: unknown) {
     const p = this.post(id);
     if (me && this.blocked(me, p.by)) throw new CommunityError(404, 'المنشور غير موجود أو انحذف.');
+    if (this.priv(me, p.by)) throw new CommunityError(404, 'صاحب المنشور مخفي منشوراته.', 'posts_hidden');
     const all = this.d.comments.filter((c) => c.post === p.id && !this.dep.isBanned(c.by) && !this.hidden(me, c.by));
     const cv = (c: Comment) => ({ id: c.id, author: this.who(c.by), text: c.text, at: c.at, parent: c.parent, mine: me === c.by, canDelete: me === c.by || me === p.by });
     return { post: this.postView(p, me), comments: all.slice(-200).map(cv) };
@@ -203,6 +208,7 @@ export class Community {
     const posts = allPosts.filter((p) => p.id < b);
     const page = posts.slice(-PAGE - 1).reverse();
     if (iBlocked) return { user: { ...this.who(id), stats: null, ...counts, followers, following, followed: false, me: false, posts: 0, blocked: true, muted: iMuted }, posts: [], more: false };
+    if (this.priv(me, id)) return { user: { ...this.who(id), stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: false, posts: 0, blocked: false, muted: iMuted, postsHidden: true }, posts: [], more: false };
     return { user: { ...this.who(id), stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: me === id, posts: allPosts.length, blocked: false, muted: iMuted }, posts: page.slice(0, PAGE).map((p) => this.postView(p, me)), more: page.length > PAGE };
   }
   followList(pub: unknown, which: 'followers' | 'following', me: string | null = null) {

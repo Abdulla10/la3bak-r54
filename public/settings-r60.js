@@ -29,8 +29,8 @@ export function settingsHTML(ctx) {
     ${link('إعدادات الإشعارات', '#/notifications')}
     ${link('إعدادات الخصوصية', '#/privacy-settings')}
     ${link('القائمة السوداء', '#/friends')}
-    ${soonRow('إخفاء منشوراتي')}
-    ${soonRow('إخفاء جميع منشوراته')}
+    ${row('إخفاء منشوراتي<small class="s60-sub">منشوراتك ما تطلع لأحد غيرك</small>', toggle('hidePosts', ctx.settings?.hidePosts === true, !ctx.settings))}
+    ${link('إخفاء جميع منشوراته', '#/hidden-posts')}
   </ul>
   <ul class="s60-list">
     ${row('المؤثرات الصوتية', toggle('sound', ctx.settings?.sound === true, !ctx.settings))}
@@ -72,6 +72,14 @@ export function privacyHTML(d, m = '', bad = false) {
 const countries = (() => { try { return new Intl.DisplayNames(['ar'], { type: 'region' }); } catch { return null; } })();
 const country = (c) => c === 'AE' ? 'الإمارات' : c ? (countries?.of(c) || c) : 'غير محدد';
 /** صفحة «معلومات الحساب» */
+/* R66: «إخفاء جميع منشوراته» — الأشخاص اللي أخفيت منشوراتهم عنك (الكتم بالمجتمع، بالخادم) */
+export function hiddenPostsHTML(d, m = '', bad = false) {
+  const top = `${head('إخفاء جميع منشوراته', '#/settings')}<p class="s60-note">منشورات هالأشخاص وتعليقاتهم ما تطلع لك بالمجتمع، وهم ما يدرون. تقدر تخفي منشورات أي شخص من ملفه بزر «🙈 إخفاء منشوراته».</p>${msg(m, bad)}`;
+  if (!d) return `<section class="s60" dir="rtl">${top}<p class="s60-msg">جاري التحميل…</p></section>`;
+  if (d.ok === false || d.error || !Array.isArray(d.muted)) return `<section class="s60" dir="rtl">${top}${msg(d.error || 'تعذّر التحميل.', true)}</section>`;
+  const list = d.muted.map((u) => `<li class="s60-row hp66"><a class="s60-label hp66-who" href="#/u/${esc(u.pub)}"><i class="hp66-face" aria-hidden="true">${esc([...String(u.name || 'ل').trim()][0] || 'ل')}</i><b>${esc(u.name)}</b></a><span class="s60-right"><button type="button" class="hp66-btn" data-s60="unmute" data-pub="${esc(u.pub)}">إظهار منشوراته</button></span></li>`).join('');
+  return `<section class="s60" dir="rtl">${top}<ul class="s60-list">${list || '<li class="s60-row"><span class="s60-label"><small>ما أخفيت منشورات أحد.</small></span></li>'}</ul></section>`;
+}
 /* R62: الأجهزة */
 const ago = (t) => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 2 ? 'الحين' : m < 60 ? `قبل ${m} دقيقة` : m < 1440 ? `قبل ${Math.round(m / 60)} ساعة` : `قبل ${Math.round(m / 1440)} يوم`; };
 export function devicesHTML(d, m = '', bad = false) {
@@ -119,6 +127,7 @@ export function bind(root, host) {
       host.after?.(r && r.ok !== false && !r.error ? '' : (r.error || 'تعذّر الحفظ.'), !(r && r.ok !== false && !r.error)); return;
     }
     const b = e.target.closest?.('[data-s60]'); if (!b) return; const a = b.dataset.s60;
+    if (a === 'unmute') { b.disabled = true; const r = await api(`/api/community/user/${encodeURIComponent(b.dataset.pub || '')}/mute`, 'POST', { on: false }); host.after?.(r && !r.error ? 'رجعت منشوراته تطلع لك ✓' : (r?.error || 'ما قدرنا نحفظ.'), !(r && !r.error)); return; }
     if (a === 'dev-out' || a === 'dev-out-all') {
       b.disabled = true;
       const r = await api(a === 'dev-out' ? '/api/devices/revoke' : '/api/devices/revoke-others', 'POST', a === 'dev-out' ? { id: b.dataset.id } : {});

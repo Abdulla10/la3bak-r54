@@ -903,7 +903,7 @@ export async function createApp(
   const community = new Community(comFile, comMedia, {
     secret: cfg.cookieSecret, nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
     hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
-    push: (id, msg) => sendToUser(id, msg), log,
+    push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
   }, Date.now, storage, opts.communityLimits);
   const social = new SocialPrivate(socialFile, Date.now, storage, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id),
@@ -1081,6 +1081,8 @@ export async function createApp(
     for (const { week, l } of treasure.pendingLaunches(tribeId)) {
       try { for (const g of launchGrants(tribeId, week, l)) { const res = wallet.grantCampaignBatch(g.campaignId, g.fp, g.ids, { coins: g.coins, gems: g.gems, itemIds: g.itemIds }, g.reason); if (res.some((x) => x.status === 'failed' && x.code !== 'BALANCE_OVERFLOW')) return; } } catch { return; }
       treasure.markDone(tribeId, l.n);
+      // R66: عملة وحدة — جوايز الصاروخ (المحسوبة بالجواهر) تتحول عملات للفايزين على طول بدل ما تنتظر دورة التحويل كل دقيقة
+      if (process.env.SINGLE_CURRENCY !== '0') for (const id of l.winners) { try { if (wallet.sweepGems(id)) sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }); } catch { /* دورة التحويل الدورية تكمّلها */ } }
       const t = tribes.get(tribeId); if (!t) continue; const p = planetOfLaunch(l.n);
       const ev = { id: `tribe-${tribeId}-${week}-${l.n}`, n: l.n, planet: p.name, stage: ((l.n - 1) % 7) + 1, winners: l.winners.map((id, k) => ({ rank: k + 1, ...cpPerson(id) })), luck: l.luck ? cpPerson(l.luck) : null };
       for (const m of t.members) { const k = l.winners.indexOf(m.id); sendToUser(m.id, { t: 'tribe:rocket', event: { ...ev, mine: k >= 0 ? { rank: k + 1, gems: p.prizes[k], gifts: p.gifts[k].map((x) => x.name) } : l.luck === m.id ? { rank: 0, gems: 0, gifts: [p.luck.name] } : null } }); sendToUser(m.id, { t: 'tribe:update' }); }

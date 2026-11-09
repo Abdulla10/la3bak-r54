@@ -181,13 +181,13 @@ export function userPageHTML(signed, gameName) {
   const facts = st ? [`المستوى ${nf(st.level)}`, `${nf(st.played)} مباراة`, `${nf(st.wins)} فوز`, st.fav ? `لعبته المفضلة: ${esc(gameName(st.fav))}` : ''].filter(Boolean) : [];
   const followBtn = signed && !u.me ? `<button type="button" class="btn ${u.followed ? 'ghost' : ''}" data-act="cm-follow" data-pub="${esc(u.pub)}" data-on="${u.followed ? 0 : 1}" ${CM.busy.has('f' + u.pub) ? 'disabled aria-busy="true"' : ''}>${u.followed ? 'تتابعه ✓' : 'متابعة'}</button>` : '';
   // الكتم والحظر (التطبيق كله بالخادم)
-  const relBtns = signed && !u.me ? `<div class="cm-rel">${u.blocked ? '' : `<button type="button" class="pill-btn" data-act="cm-rel" data-k="mute" data-pub="${esc(u.pub)}" data-on="${u.muted ? 0 : 1}">${u.muted ? '🔊 فك الكتم' : '🔇 كتم'}</button>`}<button type="button" class="pill-btn ${u.blocked ? '' : 'danger'}" data-act="cm-rel" data-k="block" data-pub="${esc(u.pub)}" data-on="${u.blocked ? 0 : 1}">${u.blocked ? '✅ فك الحظر' : '⛔ حظر'}</button></div>` : '';
+  const relBtns = signed && !u.me ? `<div class="cm-rel">${u.blocked ? '' : `<button type="button" class="pill-btn" data-act="cm-rel" data-k="mute" data-pub="${esc(u.pub)}" data-on="${u.muted ? 0 : 1}">${u.muted ? '👁 إظهار منشوراته' : '🙈 إخفاء منشوراته'}</button>`}<button type="button" class="pill-btn ${u.blocked ? '' : 'danger'}" data-act="cm-rel" data-k="block" data-pub="${esc(u.pub)}" data-on="${u.blocked ? 0 : 1}">${u.blocked ? '✅ فك الحظر' : '⛔ حظر'}</button></div>` : '';
   return `<div class="stack cm-page">
     <section class="card cm-prof">${faceOf(u, 84)}<div class="cm-pi"><h1>${esc(u.name)}${u.me ? ' <small>(أنت)</small>' : ''}</h1>
       <p class="cm-facts">${facts.map((f) => `<span>${f}</span>`).join('')}</p>
       ${U.data.relations?.couple && PUB_RE.test(U.data.relations.couple.partnerPub) && !u.blocked ? `<p class="cm-facts" data-public-couple-r47><a href="#/u/${esc(U.data.relations.couple.partnerPub)}">ارتباط افتراضي · ملف الشريك</a></p>` : ''}
       <p class="cm-fol"><a href="#/u/${esc(u.pub)}/followers"><b>${nf(u.followers)}</b> متابِع</a><a href="#/u/${esc(u.pub)}/following"><b>${nf(u.following)}</b> يتابع</a><span><b>${nf(u.posts)}</b> منشور</span></p></div>${u.blocked ? '' : followBtn}${relBtns}</section>
-    ${u.blocked ? '<section class="card empty-state"><p>حظرت هذا الحساب: ما تشوف منشوراته وما يقدر يتفاعل معك ولا يفتح ملفك.</p></section>' : U.list ? followListHTML(U.list) : `<h2 class="section-title sm">المنشورات</h2>${listHTML(posts, more, U.loading, U.err, 'cm-umore', signed, u.me ? 'ما نشرت شي بعد.' : 'ما نشر شي بعد.')}`}
+    ${u.blocked ? '<section class="card empty-state"><p>حظرت هذا الحساب: ما تشوف منشوراته وما يقدر يتفاعل معك ولا يفتح ملفك.</p></section>' : U.list ? followListHTML(U.list) : `<h2 class="section-title sm">المنشورات</h2>${u.postsHidden ? '<section class="card empty-state"><p>🙈 صاحب الحساب مخفي منشوراته.</p></section>' : listHTML(posts, more, U.loading, U.err, 'cm-umore', signed, u.me ? 'ما نشرت شي بعد.' : 'ما نشر شي بعد.')}`}
   </div>${reportSheet()}`;
 }
 function followListHTML(L) {

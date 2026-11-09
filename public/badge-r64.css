@@ -41,3 +41,12 @@ html.lb-dark .pvp-rank-milestone.is-symbolic img{filter:grayscale(.6) brightness
 
 /* صور الشارات الجديدة شفافة أصلاً: نلغي الدمج والقناع اللي كانت للصور القديمة ذات الخلفية الغامقة */
 img[src*="/profile/ranks/r65/"]{mix-blend-mode:normal !important;-webkit-mask-image:none !important;mask-image:none !important;object-fit:contain;}
+
+/* R66: لوحة الإدارة في الستايل الداكن — نصوص واضحة (كانت رمادي غامق على بنفسجي غامق) */
+html.lb-dark #adminRoot{color:#F5E9FF;}
+html.lb-dark #adminRoot :is(h1,h2,h3,h4,b,strong,legend,th,.ad-stat b,.ad-kv dd){color:#F5E9FF !important;}
+html.lb-dark #adminRoot :is(p,small,dt,label,span,em,.ad-muted,.ad-kv dt,.ad-line,td,li){color:#CDB8E6;}
+html.lb-dark #adminRoot :is(.ad-in,input,select,textarea){background:#140822 !important;color:#F5E9FF !important;border-color:#3A1466 !important;}
+html.lb-dark #adminRoot :is(.ad-in,input,textarea)::placeholder{color:#8E78A8 !important;}
+html.lb-dark #adminRoot .ad-row{color:#F5E9FF;}
+html.lb-dark #adminRoot code{color:#FFD66B;}

@@ -4,7 +4,7 @@ import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inli
 import {giftArt} from '../giftart.js?v=release-r14';
 import * as rooms from './rooms.js?v=r58p';
 import * as wallet from './wallet.js?v=r63b';
-import * as notifications from './notifications.js?v=r59d';
+import * as notifications from './notifications.js?v=r66a';
 import * as messages from './messages.js?v=r57';
 import * as friends from './friends.js?v=r58p';
 import * as drawer from './drawer.js?v=r59d';
@@ -17,7 +17,7 @@ import * as ranks from './ranks.js?v=r65a';
 import * as vip from './vip.js?v=r65a';
 import * as social from './social.js?v=r63b';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
-export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','devices','community','post','u','not-found']);
+export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','devices','hidden-posts','community','post','u','not-found']);
 export const hasRoute=name=>routes.includes(name);
 const pageKey=name=>({leaderboard:'ranking',shop:'store','social-rooms':'social','social-room':'social'}[name]||name);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

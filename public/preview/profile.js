@@ -9,7 +9,7 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
 import { framed as shopFramed, bgLayer } from '../shop.js?v=r63b';
 import { avatarArt } from '../avatars.js?v=r59d';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r63b';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r66a';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r59d';
 import { rankSummary, renderRankOverview } from './rank-overview.js?v=r65a';
 

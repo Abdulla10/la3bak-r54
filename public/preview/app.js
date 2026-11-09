@@ -1,6 +1,6 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r65a';
-import * as UNIFIED from '../unified/shell.js?v=r65a';
+import * as PR from './profile.js?v=r66a';
+import * as UNIFIED from '../unified/shell.js?v=r66a';
 import * as REF from '../unified/home.js?v=r63a';
 import * as SOCIAL from '../unified/social.js?v=r63b';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -32,7 +32,7 @@ import * as UNV from '../uno.js?v=r59d';
 import * as CRV from '../carrom.js?v=r59d';
 import * as MNV from '../minaboli-r47.js?v=r57';
 import * as CITY from '../city.js?v=r57';
-import * as COM from '../community.js?v=r59d';
+import * as COM from '../community.js?v=r66a';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
 import * as PWA from '../pwa.js?v=r62e';
@@ -326,12 +326,12 @@ function parseRoute() {
   return { name, a: dec(parts[1]), b: dec(parts[2]), c: dec(parts[3]) };
 }
 
-const NAV_OF = { lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
+const NAV_OF = { lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', 'hidden-posts': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
 /* R51: الأب المنطقي يُستخدم فقط لو فُتحت الصفحة مباشرة (ما فيه صفحة سابقة داخل الموقع)؛ غير كذا زر الرجوع يرجع للصفحة السابقة الفعلية.
    صفحات قائمة «ملفي» (VIP، نوبل، المحفظة…) أبوها الملف الشخصي، مو الرئيسية. */
 const PROFILE_CHILDREN = new Set(['vip','ranks','rank-rewards','missions','wallet','settings','family','visitors','invite']);
 /* R53b: توثيق الحساب والمساعدة والخصوصية والشروط صارت داخل الإعدادات */
-const SETTINGS_CHILDREN = new Set(['verification','support','privacy','terms','privacy-settings','account-info','devices','about']);
+const SETTINGS_CHILDREN = new Set(['verification','support','privacy','terms','privacy-settings','account-info','devices','hidden-posts','about']);
 const BACK_OF = (r) => (r.name === 'social-room' ? '#/social-rooms' : ['game','hub','city'].includes(r.name) ? '#/games' : r.name === 'room' ? '#/rooms' : PROFILE_CHILDREN.has(r.name) ? '#/profile' : SETTINGS_CHILDREN.has(r.name) ? '#/settings' : '#/');
 
 function needUser(nextHash) {
@@ -384,18 +384,19 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r64a');
+  const M = await import('../settings-r60.js?v=r66a');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
-    const html = name === 'devices' ? M.devicesHTML(st.dev, st.msg, st.bad) : name === 'privacy-settings' ? M.privacyHTML(st.priv, st.msg, st.bad) : name === 'account-info' ? M.accountInfoHTML({ me: ACCT.me, user: S.user, google: S.google }) : M.settingsHTML({ google: S.google, settings: st.settings, msg: st.msg, bad: st.bad });
+    const html = name === 'hidden-posts' ? M.hiddenPostsHTML(st.rel, st.msg, st.bad) : name === 'devices' ? M.devicesHTML(st.dev, st.msg, st.bad) : name === 'privacy-settings' ? M.privacyHTML(st.priv, st.msg, st.bad) : name === 'account-info' ? M.accountInfoHTML({ me: ACCT.me, user: S.user, google: S.google }) : M.settingsHTML({ google: S.google, settings: st.settings, msg: st.msg, bad: st.bad });
     const root = view.querySelector('[data-s60-root]'); if (root) { root.innerHTML = html; if (name === 'settings') M.pushState?.(root); }
   };
   unifiedPage(view, 'settings', '<div data-s60-root></div>', true);
   const root = view.querySelector('[data-s60-root]');
   M.bind(root, { google: S.google, nav: (h) => { (globalThis.__LA3BAK_NAV__ || location).hash = h; }, logout: () => previewLogout(), after: async (m, bad) => { st.msg = m; st.bad = bad; await load(); paint(); } });
   async function load() {
-    if (name === 'devices') st.dev = await fetch('/api/devices', { credentials: 'same-origin', cache: 'no-store' }).then((r) => r.json()).catch(() => ({ ok: false, list: [] }));
+    if (name === 'hidden-posts') st.rel = await fetch('/api/community/relations', { credentials: 'same-origin', cache: 'no-store' }).then((r) => r.json()).catch(() => ({ ok: false }));
+    else if (name === 'devices') st.dev = await fetch('/api/devices', { credentials: 'same-origin', cache: 'no-store' }).then((r) => r.json()).catch(() => ({ ok: false, list: [] }));
     else if (name === 'privacy-settings') st.priv = await fetch('/api/privacy', { credentials: 'same-origin' }).then((r) => r.json()).catch(() => ({ ok: false }));
     else if (name === 'settings') st.settings = await fetch('/api/account-tools/settings', { credentials: 'same-origin' }).then((r) => r.ok ? r.json() : null).catch(() => null);
     else if (!ACCT.me) await loadAcct(false);
@@ -628,13 +629,14 @@ async function render() {
     case 'privacy-settings':
     case 'account-info':
     case 'devices':
+    case 'hidden-posts':
       if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       S.pf.sec = 'settings';
       void settingsR60(view, r.name);
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r63b').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r66a').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -2059,7 +2061,7 @@ const ACTIONS = {
     if (on && k === 'block' && el.dataset.sure !== '1') { el.dataset.sure = '1'; el.textContent = 'متأكد؟ اضغط مرة ثانية للحظر'; return; }
     const res = await COM.api(`user/${pub}/${k}`, { method: 'POST', body: { on } });
     if (!res.ok) return toast(res.error, true);
-    toast(k === 'block' ? (on ? 'تم الحظر ⛔' : 'تم فك الحظر') : (on ? 'تم الكتم 🔇' : 'تم فك الكتم'));
+    toast(k === 'block' ? (on ? 'تم الحظر ⛔' : 'تم فك الحظر') : (on ? 'انخفت منشوراته عنك 🙈' : 'رجعت منشوراته تطلع لك 👁'));
     if (el.dataset.from === 'settings') { await COM.loadRelations(); return render(); }
     COM.CM.feed.loaded = false; await COM.loadUser(pub); render();
   },
