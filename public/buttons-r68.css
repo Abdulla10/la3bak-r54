@@ -1,0 +1,25 @@
+/* R68r: قاعدة الأزرار الموحدة — بنفسجي أساسي، ذهبي للصرف/المهم، غامق ثانوي، أحمر للخطر */
+:root{--b68-pri:linear-gradient(180deg,#b65cff,#7c2ae0);--b68-gold:linear-gradient(180deg,#ffe58a,#ffc83d 55%,#e8a01a);--b68-sec:rgba(50,20,90,.75);--b68-line:rgba(190,150,255,.5);--b68-red:linear-gradient(180deg,#ff5d7a,#c8203f)}
+/* 1) أساسي */
+html:is([data-theme],:not([data-theme])) body :is(.btn:not(.ghost):not(.gold),.gold-btn,.pv-button,.so-button.so-primary,.ad-btn:not(.ghost):not(.danger),.pvp-button,.lb-message-toolbar .btn){background:var(--b68-pri)!important;color:#fff!important;border:0!important;box-shadow:0 0 12px rgba(160,80,255,.45),inset 0 1px 0 rgba(255,255,255,.3)!important;text-shadow:none!important}
+/* زر الإرسال بالهدايا (كان أخضر) */
+html:is([data-theme],:not([data-theme])) body [data-so-gift-action="send"],html:is([data-theme],:not([data-theme])) body .so-gift-send,html:is([data-theme],:not([data-theme])) body [data-so-gift-action="confirm"]{background:var(--b68-gold)!important;color:#4a2600!important;border:0!important;box-shadow:0 0 12px rgba(255,200,71,.5)!important}
+html:is([data-theme],:not([data-theme])) body .so-gift-item.is-picked{border-color:#ffcb47!important;box-shadow:0 0 14px rgba(255,203,71,.45)!important}
+/* 2) ذهبي للصرف والمهم */
+html:is([data-theme],:not([data-theme])) body :is(.btn.gold,.vn-gold-btn,.nx-cta,a.lb-play,.r23-store .btn.gold,.pv-hero-cta){background:var(--b68-gold)!important;color:#4a2600!important;border:0!important;box-shadow:0 3px 0 #9a5a00,0 0 12px rgba(255,200,71,.45)!important;text-shadow:none!important}
+/* 3) ثانوي */
+html:is([data-theme],:not([data-theme])) body :is(.btn.ghost,.ad-btn.ghost,.pvp-text-button,.so-button:not(.so-primary):not(.is-danger),.lb-route-back){background:var(--b68-sec)!important;color:#f1e8ff!important;border:1.5px solid var(--b68-line)!important;box-shadow:none!important}
+html:is([data-theme],:not([data-theme])) body :is(.btn,.btn.ghost,.gold-btn,.so-button)[disabled]{opacity:.55!important;filter:saturate(.7)}
+/* مكافآت الرتب: زر غير مكتسب */
+html:is([data-theme],:not([data-theme])) body .lb-unified [data-rank-claim][disabled]{background:var(--b68-sec)!important;color:#cdb8e6!important;border:1.5px dashed var(--b68-line)!important;opacity:1!important}
+/* 4) الشارات الصغيرة: بنفسجي أو ذهبي بس */
+html:is([data-theme],:not([data-theme])) body .so-directory-r30 .r68-dir-tags :is(.so-dir-owned,.so-dir-current-label){background:var(--b68-gold)!important;color:#4a2600!important}
+html:is([data-theme],:not([data-theme])) body .so-directory-r30 .r68-dir-lv{background:var(--b68-pri)!important;border-color:#d7a8ff!important}
+html:is([data-theme],:not([data-theme])) body .so-directory-r30 .r68-dir-lv i{color:#ffd76a!important}
+html:is([data-theme],:not([data-theme])) body .so-directory-r30 .so-dir-bars{fill:#c99bff!important}
+html:is([data-theme],:not([data-theme])) body .devices .tag,html:is([data-theme],:not([data-theme])) body .dv62 :is(.tag,em){background:var(--b68-pri)!important;color:#fff!important}
+/* الخطر بس أحمر */
+html:is([data-theme],:not([data-theme])) body :is(.btn.danger,.ad-btn.danger,.is-danger>.s60-link,.so-button.is-danger,[data-act="av-del"]){background:var(--b68-red)!important;color:#fff!important;border:0!important}
+html:is([data-theme],:not([data-theme])) body .s60 .is-danger .s60-label{color:#ff8fa3!important}
+html:is([data-theme],:not([data-theme])) body .so-page .so-room-detail .so-room-panel[data-so-panel="gifts"] .so-gift-send-inline,html:is([data-theme],:not([data-theme])) body .so-page .so-room-detail .so-room-panel[data-so-panel="gifts"] [data-so-gift-action="send"]{background:var(--b68-gold)!important;color:#4a2600!important}
+html:is([data-theme],:not([data-theme])) body .lb-unified button.btn[data-rank-claim][disabled]{background:var(--b68-sec)!important;color:#cdb8e6!important;border:1.5px dashed var(--b68-line)!important;box-shadow:none!important;opacity:1!important}
