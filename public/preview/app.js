@@ -35,7 +35,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r67as';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68m';
+import * as PWA from '../pwa.js?v=r68o';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68l';
@@ -357,7 +357,7 @@ function loadFunctionalModule(name) {
       : key === 'private' ? import('../social-private.js?v=r57')
       : key === 'missions' ? import('../missions-server.js?v=r63a')
       : key === 'profile-social' ? import('../profile-social-r53.js?v=r67ac')
-      : import('../functional-pages.js?v=r68m');
+      : import('../functional-pages.js?v=r68o');
     functionalModules.set(key, promise);
     promise.catch(() => { if (functionalModules.get(key) === promise) functionalModules.delete(key); });
   }
@@ -388,7 +388,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68m');
+  const M = await import('../settings-r60.js?v=r68o');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

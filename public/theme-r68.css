@@ -40,3 +40,9 @@ html body .lb-unified:is([data-lb-route="vip"],[data-lb-route="ranks"],[data-lb-
 html body .lb-unified .s60-head:not(.s68-head) .s60-back{display:none!important}
 html body .lb-unified .s60-head:not(.s68-head){display:block!important;margin:4px 0 12px!important}
 html body .lb-unified .s60-head:not(.s68-head) h1{text-align:right!important;font-size:22px!important;color:#fff!important}
+/* R68o: إصلاحات الفحص الثاني */
+html body .lb-unified>.lb-topbar.lb68-head{background:#1d0b37!important}
+html body .nx-board a{background:linear-gradient(180deg,rgba(74,32,128,.7),rgba(42,16,80,.7))!important;border:1px solid rgba(186,140,255,.35)}
+html body .so-directory-r30 .so-dir-empty-icon{background:rgba(60,24,106,.7)!important;border:1.5px solid rgba(190,150,255,.45)!important;color:#fff!important}
+html body .so-directory-r30 .so-dir-empty :is(h2,p){color:#efe6ff!important}
+html body .lb-unified .fp68-rank{display:none}
