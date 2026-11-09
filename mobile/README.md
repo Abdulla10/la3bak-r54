@@ -12,7 +12,7 @@
 ```bash
 cd mobile
 npm install
-npm run setup      # يركّب المكتبات بالنسخ المتوافقة مع Expo
+npm run setup      # يضبط نسخ المكتبات على Expo SDK 58
 npx expo login
 npm start
 ```
