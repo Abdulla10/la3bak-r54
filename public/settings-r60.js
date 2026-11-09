@@ -42,7 +42,6 @@ export function settingsHTML(ctx) {
     ${link('إرشادات المجتمع', '#/terms')}
     ${link('سياسة الخصوصية', '#/privacy')}
     ${link('المساعدة والدعم', '#/support')}
-    ${soonRow('تبديل النطاق')}
   </ul>
   <ul class="s60-list">
     ${btn('تبديل الحساب', 'switch')}
