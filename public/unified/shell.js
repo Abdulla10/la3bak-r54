@@ -1,4 +1,5 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
+import { nav68HTML } from '../nav-r68.js?v=r68b';
 import * as home from './home.js?v=r63a';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import {giftArt} from '../giftart.js?v=release-r14';
@@ -48,13 +49,8 @@ export function walletStripHTML(ctx={}){
   return `<section class="lb-wallet-strip" aria-label="رصيد حسابك" dir="ltr">${[['coins','العملات']].map(([key,label])=>`<div class="lb-wallet-capsule"><span class="lb-wallet-art" role="img" aria-label="${label}">${key==='coins'?icon('coin'):giftArt({motif:'diamond',cat:'luxury',variant:0,name:label},32)}</span><span class="lb-wallet-value"><small>${label}</small><b data-lb-balance="${key}" dir="ltr">${fmt(ctx[key]??ctx.me?.[key])}</b></span><a href="#/shop/packs/${key}" class="lb-wallet-plus" aria-label="فتح باقات ${label}">${plus}</a></div>`).join('')}</section>`;
 }
 export function bottomHTML(page,ctx={}){
-  const selected={account:'profile',ranks:'profile',vip:'profile',verification:'profile','rank-rewards':'profile',settings:'profile',family:'profile',auction:'home',missions:'profile',wallet:'profile','social-rooms':'rooms','social-room':'rooms',post:'community',u:'community',friends:'messages',notifications:'messages','notifications-internal':'messages',game:'home',hub:'home',room:'home',join:'home',games:'home',shop:'shop',payments:'home',city:'home',lobby:'home',play:'home',offline:'home',daily:'home',challenge:'home',events:'home',tournaments:'home',leaderboard:'home'}[page]||page;
-  // Forced physical order: left to right home / rooms / posts / messages / profile.
-  return `<nav class="lb-bottom lb-reference-bottom" aria-label="التنقل الرئيسي" dir="ltr">${[['home','home','الرئيسية','#/'],['rooms','users','الغرف','#/social-rooms'],['shop','shop','المتجر','#/shop'],['community','file','المنشورات','#/community'],['messages','mail','الرسائل','#/messages'],['profile','person','ملفي','#/profile']].map(([key,ic,label,url])=>{
-    const locked=ctx.noCommunity&&protectedRoute(url);
-    const inner=`${icon(ic)}<small>${label}</small>${locked?'<span class="lb-nav-lock" aria-hidden="true">مقفل</span>':''}`;
-    return locked?`<button type="button" data-lb-nav="${key}" data-lb-locked aria-disabled="true" aria-label="${label}؛ مقفل من إعدادات ولي الأمر">${inner}</button>`:`<a href="${url}" data-lb-nav="${key}" class="${selected===key?'lb-selected':''}"${selected===key?' aria-current="page"':''}>${inner}</a>`;
-  }).join('')}</nav>`;
+  // R68b: الشريط السفلي الجديد بتصميم المالك
+  return nav68HTML(page,{locked:url=>!!ctx.noCommunity&&protectedRoute(url)});
 }
 function drawerHTML(ctx){
   const html=drawer.render(ctx);
