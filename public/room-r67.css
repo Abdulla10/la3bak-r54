@@ -190,7 +190,7 @@
 .c67b-face img{width:100%;height:100%;object-fit:cover;}
 .c67b-top em{font-style:normal;font-weight:900;font-size:17px;color:#fff;text-shadow:0 2px 8px #000,0 0 12px #E0A526;}
 .c67b-top small{font-size:13px;color:#FFD66B;text-shadow:0 1px 4px #000;}
-.c67b-num{position:absolute;top:44%;left:50%;height:min(30vh,210px);width:auto;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 0 #4a1d05) drop-shadow(0 0 26px #E0A526cc);}
+.c67b-num{position:absolute;top:44%;left:50%;height:min(19vh,150px);width:auto;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 0 #4a1d05) drop-shadow(0 0 26px #E0A526cc);}
 .c67b-num.is-pop{animation:c67bPop .55s cubic-bezier(.2,1.6,.4,1);}
 @keyframes c67bPop{0%{transform:translate(-50%,-130%) scale(1.6);opacity:0}60%{transform:translate(-50%,-46%) scale(.94);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
 .c67b-cannon{position:absolute;left:50%;bottom:calc(3% + env(safe-area-inset-bottom,0px));width:min(62vw,280px);transform:translateX(-62%);}

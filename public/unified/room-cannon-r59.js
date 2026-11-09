@@ -39,7 +39,7 @@ export function cannon3Panel(m, view, help = false) {
 }
 const seen = new Set();
 /** R67b الانفجار بالرسومات الجديدة: الدائرة الذهبية تدور، أعلى مساهم بالإطار، أرقام ذهبية 5→1، المدفع يطلق والألعاب النارية، انفجار، وبعدين «تهانينا!». */
-const FX = '/assets/art67/cannon/', FXV = 'r67b';
+const FX = '/assets/art67/cannon/', FXV = 'r67c';
 const fx = (n) => `${FX}${n}.webp?v=${FXV}`;
 const CANNON_ART = ['cannon-green', 'cannon-red', 'cannon-purple'];
 const FW = ['fireworks-gold', 'fireworks-purple', 'fireworks-pink'];
@@ -73,7 +73,7 @@ export function cannon3Blast(ev) {
     if (reduced) return;
     for (let j = 0; j < 2; j++) {
       const b = document.createElement('i'); b.className = 'c67b-fw';
-      b.style.cssText = `--x:${8 + Math.random() * 74}%;--y:${6 + Math.random() * 46}%;--s:${0.7 + Math.random() * 0.7};background-image:url(${fx(FW[(k + j) % 3])});animation-delay:${j * 0.35}s`;
+      b.style.cssText = `--x:${(j + k) % 2 ? 6 + Math.random() * 18 : 76 + Math.random() * 18}%;--y:${8 + Math.random() * 56}%;--s:${0.7 + Math.random() * 0.7};background-image:url(${fx(FW[(k + j) % 3])});animation-delay:${j * 0.35}s`;
       fws.append(b); setTimeout(() => b.remove(), 1600);
     }
   };
