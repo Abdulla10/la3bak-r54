@@ -10,6 +10,7 @@ type Day = { d: string; gift: number; claimed: string[] };
 type Data = { v: 1; pts: Record<string, number>; days?: Record<string, Day> };
 /** R67: مهام CP اليومية — المكافأة نقاط CP فقط (مب عملات). اليوم بتوقيت الإمارات. */
 export const CP_TASKS = Object.freeze([
+  { id: 'game', name: 'العبوا لعبة وحدة', need: 1, reward: 360 },
   { id: 'msg', name: 'تراسلوا مع بعض', need: 10, reward: 360 },
   { id: 'room', name: 'تواجدوا في غرفة وحدة', need: 1, reward: 360 },
   { id: 'gift', name: 'اهدوا بعض', need: 1, reward: 1080 },

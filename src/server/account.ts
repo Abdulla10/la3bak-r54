@@ -505,6 +505,12 @@ export class Accounts {
   /** مشاركات اللاعبين لكل لعبة (مجموع played من الحسابات: لاعبين × مباريات) */
   gameTotals() { const o: Record<string, { played: number; won: number }> = {}; for (const p of Object.values(this.d.profiles)) for (const [g, s] of Object.entries(p.games)) { const t = (o[g] ??= { played: 0, won: 0 }); t.played += s.played; t.won += s.won; } return o; }
   /** ملف كامل لمراجعة الإدارة (معرّف كامل) */
+  /** R67: هل لعب الحسابين نفس المباراة من وقت معيّن (مهمة CP «العبوا لعبة وحدة») */
+  playedTogetherSince(a: string, b: string, since: number): number {
+    const ha = this.d.profiles[a]?.history ?? [], hb = this.d.profiles[b]?.history ?? [];
+    const keys = new Set(hb.filter((h) => h.ts >= since).map((h) => h.key));
+    return ha.filter((h) => h.ts >= since && keys.has(h.key)).length;
+  }
   adminProfile(id: string) { const p = this.d.profiles[id]; return p ? { id: p.id, name: p.name, since: p.since, xp: this.displayXp(p), level: levelOf(this.displayXp(p)), points: p.points, wins: p.wins, played: p.played, games: p.games, history: p.history.slice(-20).reverse() } : null; }
 
   /** ملف اللاعب نفسه فقط (يُطلب بمعرّف جلسته، ما فيه مسار لحساب غيره) */

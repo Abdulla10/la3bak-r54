@@ -35,7 +35,7 @@ async function ask(btn) {
 /* R67: مساحة CP — صفحة كاملة: الثنائي فوق، شريط المستوى، تبويب المهام اليومية والامتيازات (مثل الفيديو) */
 const LV_NAMES = ['بداية', 'قريبين', 'متفاهمين', 'روح وحدة', 'أسطورة CP'];
 const PERKS = [[1, 'بطاقة CP بملفكم الشخصي', 'تطلع لكل من يزور ملفكم (لو الاثنين موافقين على الظهور)'], [1, 'شارة CP', 'جنب بطاقة العلاقة'], [4, 'شارة CP الذهبية', 'تتبدل الشارة لذهبية من مستوى «روح وحدة»'], [5, 'لقب «أسطورة CP»', 'أعلى مستوى للثنائي']];
-const TASK_ICON = { msg: '💬', room: '🎙️', gift: '🎁' };
+const TASK_ICON = { game: '🎮', msg: '💬', room: '🎙️', gift: '🎁' };
 async function openSpace() {
   if (document.querySelector('.cp67')) return;
   const root = document.createElement('div'); root.className = 'cp67'; root.setAttribute('dir', 'rtl'); document.body.append(root);

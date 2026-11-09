@@ -1061,7 +1061,7 @@ export async function createApp(
     const c = social.coupleOf(me); if (!c) return null; const key = cpKey(c.id, me, c.partner), day = cpPoints.day(key);
     const since = Date.parse(day.d + 'T00:00:00+04:00');
     const mineRoom = socialRooms.mediaAccess(me)?.roomId ?? null, theirRoom = socialRooms.mediaAccess(c.partner)?.roomId ?? null;
-    const progress: Record<string, number> = { msg: social.pairMessagesSince(me, c.partner, since), room: mineRoom && mineRoom === theirRoom ? 1 : 0, gift: day.gift > 0 ? 1 : 0 };
+    const progress: Record<string, number> = { game: accounts.playedTogetherSince(me, c.partner, since), msg: social.pairMessagesSince(me, c.partner, since), room: mineRoom && mineRoom === theirRoom ? 1 : 0, gift: day.gift > 0 ? 1 : 0 };
     return { key, list: CP_TASKS.map((t) => ({ id: t.id, name: t.name, need: t.need, reward: t.reward, have: Math.min(t.need, progress[t.id] ?? 0), claimed: day.claimed.includes(t.id) })) };
   };
   // R67: بطاقة البيانات الشخصية + بطاقة المملكة بالملف
