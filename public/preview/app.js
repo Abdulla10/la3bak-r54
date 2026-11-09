@@ -1,5 +1,5 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r67au';
+import * as PR from './profile.js?v=r68a';
 import * as UNIFIED from '../unified/shell.js?v=r67av';
 import * as REF from '../unified/home.js?v=r63a';
 import * as SOCIAL from '../unified/social.js?v=r67av';
@@ -22,7 +22,7 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r67au';
+import * as PF from '../profile.js?v=r68a';
 import * as SHOP from '../shop.js?v=r67ac';
 import * as GIFT from '../gifts.js?v=r67ac';
 import * as GFX from '../giftfx.js?v=r57';
@@ -35,10 +35,10 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r67as';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r67av';
+import * as PWA from '../pwa.js?v=r68a';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r67au';
+import * as MIS from '../missions.js?v=r68a';
 import * as CHAT from '../chat.js?v=r67ac';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -388,7 +388,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r67av');
+  const M = await import('../settings-r60.js?v=r68a');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

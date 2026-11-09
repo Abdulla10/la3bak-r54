@@ -1,0 +1,180 @@
+/* R68: الملف الشخصي بتصميم المالك */
+.pv-profile.pf68{--p68-bg:#1a0b30;--p68-card:rgba(60,28,108,.42);--p68-line:rgba(186,140,255,.32);--p68-violet:#b05cff;--p68-gold:#ffcb47;--p68-ink:#f4ecff;--p68-mute:#c9b4ec;
+  background:radial-gradient(120% 60% at 50% 0%,#2b1150 0%,#1a0b30 55%,#12071f 100%)!important;color:var(--p68-ink);padding:0 0 96px;min-height:100vh;font-family:inherit}
+.pf68 svg{width:1em;height:1em;flex:none}
+.pf68 .pf68-top{position:absolute;z-index:6;top:0;left:0;right:0;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 12px) 14px 0}
+.pf68 .pf68-round{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(24,10,46,.6);border:1.5px solid rgba(190,150,255,.45);color:#fff;font-size:22px;backdrop-filter:blur(6px)}
+.pf68 .pf68-logo{justify-self:start;display:flex;flex-direction:column;align-items:center;line-height:1;text-decoration:none;margin-inline-start:4px}
+.pf68 .pf68-logo b{font-size:34px;font-weight:900;background:linear-gradient(180deg,#f3d4ff 0%,#c46bff 45%,#8b2ff0 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 8px rgba(190,90,255,.7)) drop-shadow(0 2px 0 #3d0b78)}
+.pf68 .pf68-logo small{font:900 12px/1 Arial,sans-serif;letter-spacing:1px;color:var(--p68-gold);text-shadow:0 1px 0 #6b3d00;margin-top:2px}
+.pf68 .pf68-coins{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:999px;background:rgba(24,10,46,.7);border:1.5px solid rgba(190,150,255,.45);color:#fff;text-decoration:none;font:800 17px/1 Arial,sans-serif;backdrop-filter:blur(6px)}
+.pf68 .pf68-coin{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:15px;color:#a35a00;background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc531 55%,#e08a00);box-shadow:inset 0 -2px 0 #c46e00,0 0 0 2px #ffd56a}
+.pf68 .pf68-coins span{font-size:22px;font-weight:700;margin-inline-start:4px}
+/* الغلاف والصورة */
+.pf68 .pf68-hero{position:relative;padding-top:0}
+.pf68 .pf68-cover{position:relative;height:230px;overflow:hidden;border-radius:0 0 50% 50%/0 0 26px 26px}
+.pf68 .pf68-cover img,.pf68 .pf68-cover>*{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pf68 .pf68-cover.is-default img{object-position:50% 62%}
+.pf68 .pf68-cover-fade{position:absolute;left:0;right:0;top:150px;height:84px;background:linear-gradient(180deg,transparent,#1f0c38 85%);pointer-events:none}
+.pf68 .pf68-av{position:relative;z-index:3;width:150px;height:150px;margin:-128px auto 0;display:grid;place-items:center}
+.pf68 .pf68-portrait{display:grid;place-items:center}
+.pf68 .pf68-ring{display:grid;place-items:center;padding:5px;border-radius:50%;background:conic-gradient(from 200deg,#ffd76a,#ff9ce8,#b05cff,#ffd76a);box-shadow:0 0 0 2px #3c1470,0 0 24px rgba(190,90,255,.75)}
+.pf68 .pf68-ring>*{border-radius:50%;overflow:hidden}
+.pf68 .pf68-cam{position:absolute;right:14px;bottom:10px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:19px;color:#fff;background:#2a1350;border:2px solid #b07cff;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+/* السطر الأوسط */
+.pf68 .pf68-mid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:6px 12px 0}
+.pf68 .pf68-who{text-align:center;min-width:0}
+.pf68 .pf68-name{display:flex;align-items:center;justify-content:center;gap:7px;margin:0;font-size:24px;font-weight:900;color:#fff;line-height:1.25}
+.pf68 .pf68-name>span{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf68 .pf68-name em{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#c084ff,#7c3aed);color:#fff;font-style:normal;font-size:14px;box-shadow:0 0 8px rgba(176,92,255,.6)}
+.pf68 .pf68-name em svg{width:15px;height:15px}
+.pf68 .pf68-vip{display:inline-flex;align-items:baseline;gap:2px;padding:2px 10px;border-radius:999px;font:900 15px/1.25 Arial,sans-serif;color:#5a3300;background:linear-gradient(180deg,#fff0b3,#ffc941 55%,#e7a218);border:1.5px solid #fff2c0;box-shadow:0 0 8px rgba(255,200,71,.45)}
+.pf68 .pf68-vip small{font-size:10px}
+.pf68 .pf68-id{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;font:700 17px/1.3 Arial,sans-serif;color:var(--p68-mute)}
+.pf68 .pf68-id b{color:#d9c8f6}
+.pf68 .pf68-copy{background:none;border:0;color:var(--p68-mute);font-size:20px;padding:2px;display:grid}
+.pf68 .pf68-edit{justify-self:start;display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;background:rgba(55,24,96,.75);border:1.5px solid rgba(190,150,255,.5);color:#fff;font-size:15px;font-weight:800;white-space:nowrap}
+.pf68 .pf68-edit svg{font-size:17px}
+.pf68 .pf68-lv{justify-self:end;display:flex;align-items:center;gap:0;background:none;border:0;padding:0;color:#fff}
+.pf68 .pf68-lvmedal{position:relative;z-index:1;width:54px;height:54px;flex:none;border-radius:50%;display:grid;place-content:center;text-align:center;line-height:1;background:radial-gradient(circle at 50% 40%,#5b2aa8,#2a0f55 70%);border:3px solid #ffcb47;box-shadow:0 0 0 2px #7a4a00,0 0 12px rgba(255,203,71,.5)}
+.pf68 .pf68-lvmedal i{position:absolute;top:-13px;left:50%;transform:translateX(-50%);color:#ffcb47;font-size:20px;font-style:normal;filter:drop-shadow(0 1px 0 #7a4a00)}
+.pf68 .pf68-lvmedal small{font:700 10px/1 Arial,sans-serif;color:#fff}
+.pf68 .pf68-lvmedal b{font:900 19px/1 Arial,sans-serif;color:#fff}
+.pf68 .pf68-lvbar{display:flex;flex-direction:column;align-items:center;gap:3px;margin-inline-start:-6px}
+.pf68 .pf68-xp{display:block;width:84px;height:12px;border-radius:0 999px 999px 0;background:rgba(20,8,40,.9);border:1.5px solid rgba(190,150,255,.5);overflow:hidden}
+.pf68 .pf68-xp i{display:block;height:100%;min-width:6px;background:linear-gradient(90deg,#8b2ff0,#c77dff,#e9b8ff);box-shadow:0 0 8px #b05cff}
+.pf68 .pf68-lvbar small{font:700 10.5px/1 Arial,sans-serif;color:#e7dbfb}
+/* النبذة والشرائح */
+.pf68 .pf68-bio{display:flex;align-items:center;gap:10px;width:calc(100% - 56px);margin:14px auto 0;padding:11px 16px;border-radius:999px;background:rgba(55,24,96,.55);border:1.5px solid rgba(190,150,255,.38);color:#fff;font-size:16.5px;font-weight:700;text-align:center}
+.pf68 .pf68-bio>span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf68 .pf68-bio>svg{color:var(--p68-mute);font-size:18px;order:2}
+.pf68 .pf68-bio i{font-style:normal}
+.pf68 .pf68-chips{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:12px 12px 0}
+.pf68 .pf68-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;border-radius:999px;background:rgba(55,24,96,.55);border:1.5px solid rgba(190,150,255,.35);font-size:15px;font-weight:700;color:#fff}
+.pf68 .pf68-chip.is-online i{width:10px;height:10px;border-radius:50%;background:#2fe06b;box-shadow:0 0 6px #2fe06b}
+.pf68 .pf68-chip.is-female svg{color:#d784ff}.pf68 .pf68-chip.is-male svg{color:#6fb8ff}
+/* الإحصائيات */
+.pf68 .pf68-stats{display:grid;grid-template-columns:repeat(4,1fr);margin:16px 16px 0;padding:14px 4px;border-radius:20px;background:linear-gradient(180deg,rgba(82,38,140,.55),rgba(46,18,86,.55));border:1.5px solid var(--p68-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.25)}
+.pf68 .pf68-stat{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;color:#fff;padding:0 2px;position:relative}
+.pf68 .pf68-stat+.pf68-stat::before{content:"";position:absolute;inset-inline-start:0;top:12%;bottom:12%;width:1px;background:rgba(190,150,255,.28)}
+.pf68 .pf68-stat svg{font-size:26px;color:#c99bff;filter:drop-shadow(0 0 5px rgba(176,92,255,.55))}
+.pf68 .pf68-stat:last-child svg{color:var(--p68-gold);filter:drop-shadow(0 0 5px rgba(255,203,71,.45))}
+.pf68 .pf68-stat b{font:800 20px/1.1 Arial,sans-serif}
+.pf68 .pf68-stat small{font-size:14px;color:#e6dbf8}
+/* التبويبات */
+.pf68 .pf68-tabs{display:grid;grid-template-columns:repeat(4,1fr);margin:16px 12px 0;padding:4px;border-radius:999px;background:rgba(18,7,36,.85);border:1.5px solid rgba(190,150,255,.22)}
+.pf68 .pf68-tabs button{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 4px;border-radius:999px;background:none;border:0;color:#efe6ff;font-size:14px;font-weight:800;white-space:nowrap}
+.pf68 .pf68-tabs button svg{font-size:20px;color:#d6b8ff}
+.pf68 .pf68-tabs button.is-on{background:linear-gradient(180deg,#b65cff,#7c2ae0);box-shadow:0 0 14px rgba(182,92,255,.65),inset 0 1px 0 rgba(255,255,255,.3);color:#fff}
+.pf68 .pf68-tabs button.is-on svg{color:#fff}
+/* البطاقات */
+.pf68 .pf68-body{padding:14px 14px 0;display:grid;gap:14px}
+.pf68 .pf68-card{border-radius:20px;background:linear-gradient(180deg,rgba(74,34,128,.5),rgba(40,16,76,.5));border:1.5px solid var(--p68-line);padding:12px 14px 14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.pf68 .pf68-card>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pf68 .pf68-card h2{display:flex;align-items:center;gap:8px;margin:0;font-size:19px;font-weight:900;color:#fff}
+.pf68 .pf68-card h2 i{font-style:normal;font-size:24px;color:var(--p68-gold);display:grid}
+.pf68 .pf68-card.is-badges h2 i{color:var(--p68-gold)}
+.pf68 .pf68-more{background:none;border:0;color:#fff;font-size:22px;padding:2px;display:grid}
+.pf68 .pf68-badges{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;justify-items:center}
+.pf68 .pf68-badge{width:74px;height:74px;display:grid;place-items:center}
+.pf68 .pf68-badge img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))}
+.pf68 .pf68-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pf68 .pf68-two .pf68-card{padding-bottom:10px}
+.pf68 .pf68-avcard,.pf68 .pf68-frcard{display:grid;place-items:center;min-height:104px}
+.pf68 .pf68-avcard>*{border-radius:50%;overflow:hidden;box-shadow:0 0 0 3px #e9a64c,0 0 12px rgba(0,0,0,.4)}
+.pf68 .pf68-blank{display:block;width:96px;height:96px;border-radius:50%;background:rgba(20,8,40,.6)}
+.pf68 .pf68-noframe{display:grid;place-items:center;width:92px;height:92px;border-radius:50%;border:3px dashed rgba(190,150,255,.4);color:var(--p68-mute);font-size:13px}
+.pf68 .pf68-games{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.pf68 .pf68-game{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;aspect-ratio:.82;padding:8px 3px 7px;border-radius:14px;text-decoration:none;color:#fff;border:1.5px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 10px rgba(0,0,0,.3)}
+.pf68 .pf68-game b{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pf68 .pf68-gart{flex:1;display:grid;place-items:center;width:100%;overflow:hidden}
+.pf68 .pf68-gart img{width:100%;height:100%;max-height:52px;object-fit:contain}
+.pf68 .pf68-gart>*{max-width:100%;max-height:52px;font-size:30px}
+.pf68 .pf68-game.t0{background:linear-gradient(180deg,#3d63ff,#2337a8)}
+.pf68 .pf68-game.t1{background:linear-gradient(180deg,#1fa65a,#0e6b38)}
+.pf68 .pf68-game.t2{background:linear-gradient(180deg,#c0394d,#7d1830)}
+.pf68 .pf68-game.t3{background:linear-gradient(180deg,#8a3dd6,#4d1a8c)}
+.pf68 .pf68-game.t4{background:linear-gradient(180deg,#2a4fd6,#14267a)}
+.pf68 .pf68-game.t5{background:linear-gradient(180deg,#9b46e6,#5a1fa3)}
+.pf68 .pf68-empty{margin:4px 0;color:var(--p68-mute);font-size:14px;text-align:center}
+.pf68 .pf68-rows{display:grid;gap:8px}
+.pf68 .pf68-row{display:flex;align-items:center;gap:10px;width:100%;padding:12px;border-radius:14px;background:rgba(20,8,40,.45);border:1px solid rgba(190,150,255,.25);color:#fff;font-size:15px;font-weight:700}
+.pf68 .pf68-row>span{flex:1;text-align:start}.pf68 .pf68-row>svg:first-child{color:var(--p68-gold);font-size:20px}
+.pf68 .pf68-row b{font:800 16px Arial,sans-serif}
+/* بقية الأقسام تحت (القائمة والبطاقات القديمة) بنفس الألوان */
+.pf68 .pf68-body .pvp-rooms-card,.pf68 .pf68-body .pvp-family-card,.pf68 .pf68-inline .pvp-panel,.pf68 .pf68-inline .souv-shelf{background:linear-gradient(180deg,rgba(74,34,128,.5),rgba(40,16,76,.5))!important;border:1.5px solid var(--p68-line)!important;border-radius:20px!important;color:#fff!important;margin:0!important}
+.pf68 .pf68-body .pvp-menu-row{color:#fff!important}
+.pf68 .pf68-inline{display:grid;gap:14px}
+.pf68>.lpu-status:empty{display:none}
+html.pf67-full .pv-profile.pf68{background:transparent!important}
+@media (max-width:370px){.pf68 .pf68-edit span{display:none}.pf68 .pf68-xp{width:64px}.pf68 .pf68-tabs button{font-size:12.5px}.pf68 .pf68-games{grid-template-columns:repeat(3,1fr)}}
+.pf68 .pf68-body{grid-template-columns:minmax(0,1fr)}
+.pf68 .pf68-body>*,.pf68 .pf68-card,.pf68 .pf68-two>*{min-width:0;max-width:100%}
+.pf68 .pf68-two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.pf68 .pf68-games{grid-template-columns:repeat(6,minmax(0,1fr))}
+.pf68 .pf68-badges{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pf68 .pf68-mid{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+.pv-profile.pf68{overflow-x:hidden;max-width:100%}
+.pf68 .pf68-coverbox{position:relative;height:236px;overflow:hidden;border-radius:0 0 50% 50%/0 0 28px 28px}
+.pf68 .pf68-coverbox .pf68-cover{position:absolute!important;inset:0!important;height:auto!important;border-radius:0!important;opacity:1!important;z-index:0!important}
+.pf68 .pf68-coverbox .pf68-cover::after{display:none!important}
+.pf68 .pf68-cover-fade{top:auto;bottom:0;height:90px;z-index:1}
+html.pf67-full .pf68 .pf68-coverbox{border-radius:0}
+html.pf67-full .pf68 .pf68-cover-fade{display:none}
+.pf68 .pf68-mid{grid-template-columns:108px minmax(0,1fr) 108px;gap:4px;padding:8px 10px 0}
+.pf68 .pf68-edit{padding:8px 10px;font-size:13.5px;gap:5px;justify-self:stretch;justify-content:center}
+.pf68 .pf68-lv{justify-self:stretch}
+.pf68 .pf68-lvmedal{width:48px;height:48px}
+.pf68 .pf68-lvmedal b{font-size:17px}
+.pf68 .pf68-xp{width:62px;height:10px}
+.pf68 .pf68-name{font-size:21px;gap:5px}
+.pf68 .pf68-name>span{max-width:100%;min-width:0}
+.pf68 .pf68-id{font-size:15px;gap:5px;flex-wrap:wrap}
+.pf68 .pf68-id .lpu-special-id-label{font-size:11px}
+.pf68 .pf68-lv{direction:ltr}.pf68 .pf68-lvbar{margin-inline-start:-6px}
+.pf68 .pf68-body .pvp-profile-menu{background:none!important;border:0!important;padding:0!important;margin:0!important}
+.pf68 .pf68-body .pvp-menu-group{background:linear-gradient(180deg,rgba(74,34,128,.5),rgba(40,16,76,.5))!important;border:1.5px solid var(--p68-line)!important;border-radius:20px!important}
+.pf68 .pf68-two .pf68-card h2{font-size:16px;white-space:nowrap}
+.pf68 .pf68-body>[data-cp-me],.pf68 .pf68-body>[data-tribe-me],.pf68 .pf68-body>[data-kingdom-me]{margin:0}
+.pf68 .pf68-body>[data-kingdom-me]>*,.pf68 .pf68-body>[data-cp-me]>*{margin-inline:0!important}
+.pf68 .pf68-inline .pvp-item,.pf68 .pf68-inline .pvp-shortcut,.pf68 .pf68-inline .pvp-honor,.pf68 .pf68-inline .pvp-achievement,.pf68 .pf68-card .pvp-achievement{background:rgba(20,8,40,.55)!important;border:1px solid rgba(190,150,255,.28)!important;color:#fff!important;box-shadow:none!important}
+.pf68 .pf68-inline .pvp-shortcut.is-active{background:linear-gradient(180deg,#b65cff,#7c2ae0)!important;border-color:transparent!important}
+.pf68 .pf68-inline .pvp-shortcut *{color:#fff!important}
+.pf68 .pf68-inline .pvp-item h3,.pf68 .pf68-inline .pvp-item small,.pf68 .pf68-inline :is(h2,h3,p,small,b){color:#fff!important}
+.pf68 .pf68-inline .pvp-item small,.pf68 .pf68-inline p{color:var(--p68-mute)!important}
+.pf68 .pf68-inline .souv-shelf{padding:12px 14px!important}
+.pf68 .pf68-inline .souv-empty{color:var(--p68-mute)!important;flex-wrap:wrap}
+.pf68 .pf68-inline .pvp-section-head a,.pf68 .pf68-inline .pvp-text-link{color:var(--p68-gold)!important}
+.pf68 .pf68-inline{grid-template-columns:minmax(0,1fr)}
+.pf68 .pf68-inline>*{min-width:0;max-width:100%;box-sizing:border-box}
+.pf68 .pf68-inline [role="tablist"],.pf68 .pf68-inline .pvp-shortcuts{overflow-x:auto;scrollbar-width:none;max-width:100%}
+.pf68 .pf68-inline .souv-empty{display:flex;align-items:center;gap:6px;min-width:0}
+.pf68 .pf68-inline .souv-empty span{white-space:normal}
+.pf68 .lpu-google-details{margin:14px!important;border-radius:16px!important;background:rgba(40,16,76,.5)!important;border:1px solid var(--p68-line)!important;color:#fff!important}
+.pf68 .pf68-name,.pf68 .pf68-id,.pf68 .pf68-lvbar small,.pf68 .pf68-logo{text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.8)}
+html.pf67-full .pf68 .pf68-mid{background:linear-gradient(180deg,rgba(18,7,34,0),rgba(18,7,34,.55) 30%,rgba(18,7,34,.55) 80%,rgba(18,7,34,0));border-radius:16px}
+/* R68a: تقريب المقاسات من التصميم */
+.pf68 .pf68-logo{text-shadow:none}
+.pf68 .pf68-logo b{font-size:30px}
+.pf68 .pf68-coverbox{height:206px}
+.pf68 .pf68-av{width:132px;height:132px;margin-top:-118px}
+.pf68 .pf68-av .pf68-ring>*{width:118px!important;height:118px!important}
+.pf68 .pf68-av .pf68-ring img{width:118px!important;height:118px!important;object-fit:cover}
+.pf68 .pf68-cam{width:32px;height:32px;font-size:16px;right:8px;bottom:6px}
+.pf68 .pf68-mid{padding-top:2px}
+.pf68 .pf68-name{font-size:20px}
+.pf68 .pf68-bio{margin-top:10px;padding:8px 14px;font-size:14.5px;width:calc(100% - 80px)}
+.pf68 .pf68-chips{margin-top:9px;gap:8px}
+.pf68 .pf68-chip{padding:5px 12px;font-size:13px}
+.pf68 .pf68-stats{margin-top:12px;padding:11px 2px}
+.pf68 .pf68-stat svg{font-size:22px}
+.pf68 .pf68-stat b{font-size:17px}
+.pf68 .pf68-stat small{font-size:12.5px}
+.pf68 .pf68-tabs{margin-top:12px}
+.pf68 .pf68-tabs button{padding:9px 2px;font-size:13px;gap:4px}
+.pf68 .pf68-tabs button svg{font-size:17px}
+.pf68 .pf68-body{gap:11px;padding-top:12px}
+.pf68 .pf68-card{padding:10px 12px 12px}
+.pf68 .pf68-card h2{font-size:16.5px}
+.pf68 .pf68-badge{width:62px;height:62px}
+.pf68 .pf68-avcard,.pf68 .pf68-frcard{min-height:88px}

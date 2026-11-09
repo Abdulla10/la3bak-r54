@@ -339,13 +339,100 @@ function profileGiftLog(ctx) {
  return `<section class="pvp-gift-log" data-pvp-section="gift-log" aria-labelledby="pvp-gift-log-heading"><header><h2 id="pvp-gift-log-heading">${ctx.giftLogDirection==='received'?'الهدايا المستلمة':'الهدايا المرسلة'}</h2><a class="pvp-text-link" href="#/profile">العودة إلى ملفي</a></header><div class="pvp-gift-log-content">${ctx.giftLogHTML}</div></section>`;
 }
 
+/* R68: الملف الشخصي بتصميم المالك (صورة التصميم المعتمدة) — رأس، إحصائيات، تبويبات، بطاقات */
+const PF68_TABS=[['profile','person','الملف الشخصي'],['gifts','gift','الهدايا'],['items','shirt','المقتنيات'],['ach','medal','الإنجازات']];
+const PF68_SVG={
+ back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ chev:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ cam:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+ pen:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4 11-11 3 3-11 11zM14 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+ copy:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+ users:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.6" fill="currentColor"/><path d="M2 20c0-4 3.2-6.5 7-6.5s7 2.5 7 6.5z" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".75"/><path d="M15.5 13.6c3.6-.4 6.5 1.8 6.5 6.4h-4.4" fill="currentColor" opacity=".75"/></svg>',
+ follow:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4" fill="currentColor"/><path d="M2 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/><path d="M19 6v6M16 9h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+ pad:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10a5 5 0 0 1 4.9 6l-.7 3.4a2.6 2.6 0 0 1-4.5 1.2L14.6 15H9.4l-2.1 2.6a2.6 2.6 0 0 1-4.5-1.2L2.1 13A5 5 0 0 1 7 7z" fill="currentColor"/><path d="M7 10v3.4M5.3 11.7h3.4" stroke="#1b0d33" stroke-width="1.6" stroke-linecap="round"/><circle cx="16.4" cy="10.6" r="1.1" fill="#1b0d33"/><circle cx="18.2" cy="12.8" r="1.1" fill="#1b0d33"/></svg>',
+ trophy:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v5a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 5H3.5a3.5 3.5 0 0 0 3.8 4.2M17 5h3.5a3.5 3.5 0 0 1-3.8 4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10.5 13h3l.6 4h-4.2zM8 18h8v3H8z" fill="currentColor"/></svg>',
+ person:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="4.5" fill="currentColor"/><path d="M3.5 21c0-5 3.8-7.5 8.5-7.5s8.5 2.5 8.5 7.5z" fill="currentColor"/></svg>',
+ gift:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18v4H3zM4.5 13h15v8h-15z" fill="currentColor"/><path d="M12 9v12" stroke="#1b0d33" stroke-width="2"/><path d="M12 9C9 9 6.5 7.8 7.3 5.6 8.2 3.2 11 5.5 12 9c1-3.5 3.8-5.8 4.7-3.4.8 2.2-1.7 3.4-4.7 3.4z" fill="currentColor"/></svg>',
+ shirt:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3 3 6.3l2.4 4.4L7.5 9.6V21h9V9.6l2.1 1.1L21 6.3 15.5 3a3.5 3.5 0 0 1-7 0z" fill="currentColor"/></svg>',
+ medal:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h4l2 5-2.6 2.2zM18 2h-4l-2 5 2.6 2.2z" fill="currentColor"/><circle cx="12" cy="15.5" r="6" fill="currentColor"/><path d="M9.8 13.3l4.4 4.4M14.2 13.3l-4.4 4.4" stroke="#1b0d33" stroke-width="1.8" stroke-linecap="round"/></svg>',
+ crown:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 3.5L12 5l4.5 6.5L21 8l-2 10H5z" fill="currentColor"/><path d="M5 20h14" stroke="currentColor" stroke-width="2"/></svg>',
+ female:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="14" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M10.4 12.6 4 19m0-4.5V19h4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+ male:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="14" r="5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M13.6 10.4 20 4m-4.5 0H20v4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+};
+const PF68_FLAGS={AE:'🇦🇪',SA:'🇸🇦',KW:'🇰🇼',QA:'🇶🇦',BH:'🇧🇭',OM:'🇴🇲',EG:'🇪🇬',JO:'🇯🇴',IQ:'🇮🇶',SY:'🇸🇾',LB:'🇱🇧',PS:'🇵🇸',YE:'🇾🇪',MA:'🇲🇦',DZ:'🇩🇿',TN:'🇹🇳',LY:'🇱🇾',SD:'🇸🇩'};
+const pf68Flag=code=>typeof code==='string'&&/^[A-Z]{2}$/.test(code)?(PF68_FLAGS[code]||String.fromCodePoint(...[...code].map(c=>0x1f1e6+c.charCodeAt(0)-65))):'🏳️';
+function pf68Top(ctx) {
+ const coins=ctx.me&&finite(ctx.me.coins)?new Intl.NumberFormat('en-US').format(Number(ctx.me.coins)):'—';
+ return `<header class="pf68-top" dir="ltr"><button type="button" class="pf68-round" data-pvp="pf-back" aria-label="رجوع">${PF68_SVG.back}</button><a class="pf68-logo" href="#/" aria-label="لعبك — الرئيسية"><b lang="ar">لعبك</b><small>LA3BAK</small></a>${ctx.user?`<a class="pf68-coins" href="#/wallet" aria-label="رصيدك ${coins} عملة — شحن"><i class="pf68-coin" aria-hidden="true">★</i><b>${coins}</b><span aria-hidden="true">+</span></a>`:'<span></span>'}</header>`;
+}
+function pf68Hero(ctx,s) {
+ const m=ctx.me,id=playerID(ctx),fr=equipped(ctx,'frame'),background=equipped(ctx,'bg'),avatar=equipped(ctx,'avatar');
+ const name=m?.name||ctx.user?.name||'الملف الشخصي';
+ const vip=rankSummary(ctx,'vip'),vipN=vip.state==='earned'&&Number.isSafeInteger(vip.rank)&&vip.rank>=1?vip.rank:0;
+ const nameCls=vipN&&ctx.accountSettings?.hideNameColor!==true&&m?.settings?.hideNameColor!==true?'rp-name-v'+vipN:'';
+ const lv=finite(m?.level)?Number(m.level):null,span=m&&finite(m.xpNext)&&finite(m.xpFloor)?Math.max(1,m.xpNext-m.xpFloor):null,cur=span!==null&&finite(m.xp)?Math.max(0,Math.min(span,m.xp-m.xpFloor)):null;
+ const pct=span&&cur!==null?Math.round(cur/span*100):0;
+ const portrait=fr?frame(ctx,face(ctx,112),fr,112):`<span class="pf68-ring">${face(ctx,112)}</span>`;
+ const cover=background?`<div class="lpu-cover pf68-cover" aria-hidden="true" data-pf67-full="1" data-pf67-rar="${esc(background.rarity||'')}" data-pf67-vip="${vipN}" data-pf67-flat="${ctx.accountSettings?.flatProfileBg===true||m?.settings?.flatProfileBg===true?1:0}">${bg(ctx,background)}</div>`:'<div class="pf68-cover is-default" aria-hidden="true"><img src="/assets/art58/pbg/p09.jpg" alt="" decoding="async"></div>';
+ const g=m?.gender==='female'?['female','أنثى']:m?.gender==='male'?['male','ذكر']:null;
+ const restricted=!ctx.user||ctx.noCommunity;
+ const stat=(ic,label,value,attrs='')=>`<${attrs?'button type="button"':'div'} class="pf68-stat" ${attrs}>${PF68_SVG[ic]}<b dir="ltr">${value}</b><small>${label}</small></${attrs?'button':'div'}>`;
+ const rate=m&&finite(m.played)&&Number(m.played)>0&&finite(m.wins)?`${new Intl.NumberFormat('en-US',{maximumFractionDigits:1}).format(Number(m.wins)/Number(m.played)*100)}%`:'—';
+ return `${pf68Top(ctx)}<section class="pf68-hero" data-pvp-section="identity" aria-label="هوية اللاعب"><div class="pf68-coverbox">${cover}<div class="pf68-cover-fade" aria-hidden="true"></div></div>
+ <div class="pf68-av" data-pvp-section="avatar-frame"><div class="pf68-portrait">${portrait}</div>${ctx.user?`<button type="button" class="pf68-cam" data-pvp="upload-photo" aria-label="رفع وتغيير صورة اللاعب" ${typeof ctx.pickPhoto!=='function'?'disabled':''}>${PF68_SVG.cam}</button>`:''}</div>
+ <div class="pf68-mid">
+  ${ctx.user?`<button type="button" class="pf68-edit" data-pvp="edit" ${!m||typeof ctx.rename!=='function'||typeof ctx.savePresentation!=='function'?'disabled':''}>${PF68_SVG.pen}<span>تعديل الملف</span></button>`:'<span></span>'}
+  <div class="pf68-who"><h1 class="pf68-name">${verificationBadge(ctx)}<span class="${nameCls}" title="${esc(name)}">${esc(name)}</span>${vipN?`<button type="button" class="pf68-vip" data-pvp="rank-system" data-system="vip" aria-label="VIP ${vipN}">VIP<small>${vipN}</small></button>`:''}</h1>
+   <div class="pf68-id${specialID(ctx)?' lpu-special-id':''}" dir="ltr"><span>ID: <b data-pvp-player-id>${esc(id||'—')}</b></span>${specialID(ctx)?`<small class="lpu-special-id-label${String(id).length<=3?' is-official':''}">${String(id).length<=3?'ID رسمي':'ID مميّز'}</small>`:''}${id?`<button type="button" class="pf68-copy" data-pvp="copy" aria-label="نسخ رقم اللاعب">${PF68_SVG.copy}</button>`:''}</div></div>
+  <button type="button" class="pf68-lv" data-pvp="rank-system" data-system="level" aria-label="المستوى ${lv??'—'} — التفاصيل"><span class="pf68-lvmedal"><i aria-hidden="true">${PF68_SVG.crown}</i><small>Lv.</small><b>${lv??'—'}</b></span><span class="pf68-lvbar"><span class="pf68-xp"><i style="width:${pct}%"></i></span><small dir="ltr">${cur!==null?`${fmt(cur)} / ${fmt(span)}`:'—'}</small></span></button>
+ </div>
+ ${ctx.user?`<button type="button" class="pf68-bio" data-pvp="edit-bio" aria-label="تعديل النبذة">${PF68_SVG.pen}<span>${esc(m?.bio||'اكتب نبذة عنك…')} <i aria-hidden="true">💜</i></span></button>`:''}
+ <div class="pf68-chips"><span class="pf68-chip is-online"><i aria-hidden="true"></i>متصل الآن</span>${g?`<span class="pf68-chip is-${g[0]}">${PF68_SVG[g[0]]}${g[1]}</span>`:''}${m?.country?`<span class="pf68-chip">${pf68Flag(m.country)} ${esc(countryName(m.country))}</span>`:''}</div>
+ <div class="pf68-stats" role="group" aria-label="إحصائيات">${stat('users','المتابعون',restricted?'—':headerCount(m?.followersCount),restricted?'':'data-pvp="self-follows" data-follow-kind="followers"')}${stat('follow','أتابع',restricted?'—':headerCount(m?.followingCount),restricted?'':'data-pvp="self-follows" data-follow-kind="following"')}${stat('pad','المباريات',fmt(m?.played))}${stat('trophy','نسبة الفوز',rate)}</div>
+ ${avatar?'<p class="pvp-upload-note">أفاتار المتجر مجهّز الآن. لإظهار صورتك المرفوعة، أزله من «المقتنيات»؛ صورتك المحفوظة لا تُحذف.</p>':''}
+ <nav class="pf68-tabs" role="tablist" aria-label="أقسام الملف">${PF68_TABS.map(([k,ic,label])=>`<button type="button" role="tab" aria-selected="${s.pfTab===k}" class="${s.pfTab===k?'is-on':''}" data-pvp="pf-tab" data-pf="${k}">${PF68_SVG[ic]}<span>${label}</span></button>`).join('')}</nav>
+ </section>`;
+}
+function pf68Card(title,ic,body,action='',cls='') {
+ return `<section class="pf68-card ${cls}"><header><h2>${ic?`<i aria-hidden="true">${PF68_SVG[ic]}</i>`:''}${title}</h2>${action?`<button type="button" class="pf68-more" ${action} aria-label="عرض ${title}">${PF68_SVG.chev}</button>`:''}</header>${body}</section>`;
+}
+function pf68Badges(ctx) {
+ const out=[];
+ for(const sys of ['vip','noble','level']){const r=rankSummary(ctx,sys);if(r.art)out.push(`<img src="${esc(r.art)}" alt="${esc(r.text)}" title="${esc(r.text)}" loading="lazy">`);}
+ const eqb=equipped(ctx,'badge');if(eqb){const a=achArt(ctx,eqb);if(a)out.push(a);}
+ for(const a of achievements(ctx).filter(a=>a.done===true)){if(out.length>=4)break;const art=achArt(ctx,a);if(art)out.push(art);}
+ return out.length?`<div class="pf68-badges">${out.slice(0,4).map(h=>`<span class="pf68-badge">${h}</span>`).join('')}</div>`:'<p class="pf68-empty">لسا ما عندك شارات — العب وكمّل الإنجازات.</p>';
+}
+function pf68TopGames(ctx) {
+ let ids=arr(ctx.me?.favoriteGames);
+ if(!ids.length&&ctx.me?.allGames&&typeof ctx.me.allGames==='object')ids=Object.entries(ctx.me.allGames).filter(([,v])=>finite(v?.played)&&v.played>0).sort((a,b)=>b[1].played-a[1].played).map(([k])=>k);
+ const games=ids.map(id=>arr(ctx.games).find(g=>g.id===id)).filter(Boolean).slice(0,6);
+ if(!games.length)return '<p class="pf68-empty">اختار ألعابك المفضلة من السهم.</p>';
+ return `<div class="pf68-games">${games.map((g,i)=>`<a class="pf68-game t${i%6}" href="#/${['ludo','baloot','jackaro'].includes(g.id)?'hub':'game'}/${encodeURIComponent(g.id)}" aria-label="فتح ${esc(g.name)}"><span class="pf68-gart">${gameArt(ctx,g)}</span><b>${esc(g.name)}</b></a>`).join('')}</div>`;
+}
+function pf68TabBody(ctx,s) {
+ if(s.pfTab==='gifts'){
+  const gc=ctx.me?.giftCounts||{};
+  const row=(dir,label,n)=>ctx.user&&ctx.profileBridges?.giftLog===true?`<button type="button" class="pf68-row" data-pvp="gift-log" data-direction="${dir}">${PF68_SVG.gift}<span>${label}</span><b dir="ltr">${headerCount(n)}</b>${PF68_SVG.chev}</button>`:`<div class="pf68-row">${PF68_SVG.gift}<span>${label}</span><b dir="ltr">${headerCount(n)}</b></div>`;
+  return `${profileGiftLog(ctx)}${pf68Card('الهدايا','gift',`<div class="pf68-rows">${row('incoming','الهدايا المستلمة',gc.recv)}${row('outgoing','الهدايا المرسلة',gc.sent)}</div>`)}`;
+ }
+ if(s.pfTab==='items')return `<div class="pf68-inline">${souvenirShelf(ctx)}${inventory(ctx,s)}</div>`;
+ if(s.pfTab==='ach')return `<div class="pf68-inline">${honors(ctx)}${pf68Card('الإنجازات','medal',inventoryBody(ctx,{...s,tab:'achievements'}))}</div>`;
+ const av=face(ctx,96),fr=equipped(ctx,'frame');
+ return `${pf68Card('شاراتي','crown',pf68Badges(ctx),'data-pvp="pf-tab" data-pf="ach"','is-badges')}
+ <div class="pf68-two">${pf68Card('صورتي الرمزية','',`<div class="pf68-avcard">${av}</div>`,ctx.user?'data-pvp="edit-appearance"':'')}${pf68Card('إطاري','',`<div class="pf68-frcard">${fr?frame(ctx,'<span class="pf68-blank"></span>',fr,96):'<span class="pf68-noframe">بدون إطار</span>'}</div>`,'data-pvp="pf-tab" data-pf="items" data-slot="frame"')}</div>
+ ${pf68Card('أفضل الألعاب','pad',pf68TopGames(ctx),ctx.user?'data-pvp="edit-favorites"':'')}
+ ${profileMenu(ctx,s)}${familyCard(ctx,s)}${ctx.user?'<div data-cp-me></div><div data-tribe-me class="tr58-me"></div><div data-kingdom-me></div>':''}${savedRoomsCard(ctx,s)}`;
+}
+
 export function profileHTML(ctx={}) {
  if(typeof document!=='undefined' && (specialID(ctx) || ctx.me?.verificationKind==='administration'))ensureOwnerToolsCss();
  const s=state(ctx);s.ctx=ctx;activeState=s;
  if(requestedTab){s.tab=requestedTab;s.collectionOpen=true;requestedTab=null;}
  const journey=s.rankOpen?renderRankOverview({...ctx,rankOverviewOpen:true,profileJourneyDefault:false,rankRewards:s.rankRewards??ctx.rankRewards,rankRewardsLoading:s.rankLoading,rankRewardsError:s.rankError,rankClaimPending:s.rankPending},s.rankSystem):'';
  const error=ctx.error || s.error;
- return `<article class="pv-profile lpu pvp-page pvp-profile-r15 pvp-profile-r19" data-profile-build="profile-list-r19" dir="rtl">${referenceHero(ctx,s)}${familyCard(ctx,s)}<div data-pvp-status class="lpu-status" ${error?'role="alert"':'role="status"'} aria-live="polite">${esc(error || s.message || (ctx.loading?'جاري تحميل بيانات حسابك…':''))}${ctx.error&&typeof ctx.refreshMe==='function'?button('account-retry','إعادة تحميل الحساب','','pvp-text-button'):''}</div>${profileGiftLog(ctx)}${ctx.user?'<div data-idcard-me></div><div data-kingdom-me></div>'+'<div data-cp-me></div><div data-tribe-me class="tr58-me"></div>':''}${profileMenu(ctx,s)}${savedRoomsCard(ctx,s)}${s.rankOpen?`<div class="pvp-rank-details">${rankCards(ctx,s)}${journey}</div>`:''}${profileDetails(ctx)}${!ctx.user?`<section class="lpu-login">${guestStart(ctx)}${ctx.googleCard?ctx.googleCard():''}</section>`:ctx.google===false&&ctx.googleCard?`<details class="lpu-google-details"><summary>حماية حساب الضيف بربطه بـ Google</summary>${ctx.googleCard()}</details>`:''}${referenceDrawer(ctx,s)}${referenceBottomNav(ctx)}${collection(ctx,s)}${editor(ctx,s)}</article>`;
+ if(!s.pfTab)s.pfTab='profile';
+ return `<article class="pv-profile lpu pvp-page pvp-profile-r15 pvp-profile-r19 pf68" data-profile-build="profile-r68" dir="rtl">${pf68Hero(ctx,s)}<div data-pvp-status class="lpu-status" ${error?'role="alert"':'role="status"'} aria-live="polite">${esc(error || s.message || (ctx.loading?'جاري تحميل بيانات حسابك…':''))}${ctx.error&&typeof ctx.refreshMe==='function'?button('account-retry','إعادة تحميل الحساب','','pvp-text-button'):''}</div><div class="pf68-body" role="tabpanel">${s.rankOpen?`<div class="pvp-rank-details">${rankCards(ctx,s)}${journey}</div>`:''}${pf68TabBody(ctx,s)}</div>${!ctx.user?`<section class="lpu-login">${guestStart(ctx)}${ctx.googleCard?ctx.googleCard():''}</section>`:ctx.google===false&&ctx.googleCard?`<details class="lpu-google-details"><summary>حماية حساب الضيف بربطه بـ Google</summary>${ctx.googleCard()}</details>`:''}${referenceBottomNav(ctx)}${collection(ctx,s)}${editor(ctx,s)}</article>`;
 }
 
 function redraw(s) {
@@ -512,6 +599,8 @@ export function mountProfile(root,ctx = {}) {
       try {await ctx.refreshMe();} catch(e) {announce(s,e?.message||'تعذّر تحديث الحساب. أعد المحاولة.',true);}
       finally {s.pending=false;redraw(s);}return;
     }
+    if (action === 'pf-back') {if(history.length>1)history.back();else (globalThis.__LA3BAK_NAV__||location).hash='#/';return;}
+    if (action === 'pf-tab') {const k=el.dataset.pf;if(PF68_TABS.some(([x])=>x===k)){s.pfTab=k;if(k==='items'&&el.dataset.slot&&TABS.some(([x])=>x===el.dataset.slot))s.tab=el.dataset.slot;else if(k==='items'&&s.tab==='achievements')s.tab='inventory';s.collectionOpen=false;redraw(s);requestAnimationFrame(()=>s.root?.querySelector('.pf68-tabs')?.scrollIntoView({block:'start',behavior:'smooth'}));}return;}
     if (action === 'copy') return copyID(s,el);
     if (action === 'hub-toggle') {s.hubOpen=!s.hubOpen;try{sessionStorage.setItem('la3bak:profile-hub',s.hubOpen?'1':'');}catch{}redraw(s);requestAnimationFrame(()=>s.root?.querySelector('[data-pvp-hub-toggle]')?.focus({preventScroll:true}));return;}
     if (action === 'rank-system') return selectRank(s,el.dataset.system);
@@ -524,6 +613,7 @@ export function mountProfile(root,ctx = {}) {
     if (action === 'upload-photo') {if(!ctx.user){announce(s,'سجّل الدخول قبل حفظ صورة حسابك.',true);redraw(s);return;}ctx.pickPhoto?.();return;}
     if (action === 'drawer-close' || action === 'drawer-link') { setDrawer(page, false); if (action === 'drawer-close') return; }
     if (s.pending) return;
+    if (action === 'tab' && s.pfTab==='items' && el.closest('.pf68-inline')) {if(TABS.some(([key])=>key===el.dataset.tab)){s.tab=el.dataset.tab;redraw(s);}return;}
     if (action === 'tab') {if(TABS.some(([key])=>key===el.dataset.tab)){s.tab=el.dataset.tab;s.collectionOpen=true;redraw(s);requestAnimationFrame(()=>s.root?.querySelector(`#pvp-tab-${s.tab}`)?.focus());}return;}
     if (action === 'shop') {if(typeof ctx.onAction === 'function')ctx.onAction('shop',el.dataset.slot);else (globalThis.__LA3BAK_NAV__ || location).hash='#/shop';return;}
     if (action === 'edit' || action === 'edit-bio' || action === 'edit-personal') return openEditor(s,'account',el);
