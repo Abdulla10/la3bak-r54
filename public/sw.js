@@ -1,6 +1,6 @@
 /* لعبك — عامل الخدمة: تحديث الشبكة أولاً، واللعب الجماعي يحتاج اتصال. */
 const CACHE_PREFIX = 'la3bak-shell-';
-const VER = CACHE_PREFIX + 'r67m';
+const VER = CACHE_PREFIX + 'r67n';
 const LEGACY_SHELL_CACHES = ['la3bak-rank-vip-1'];
 // Deduplicate exact URLs; keep the existing network-first/offline policy.
 // The unused legacy codewords image is not precached; the shipped R45 cover stays.

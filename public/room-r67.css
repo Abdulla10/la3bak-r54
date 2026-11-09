@@ -257,5 +257,5 @@
 .kd67 a.kd67-go,.kd67 a.kd67-go:visited{color:#1C0A30!important;}
 /* المنجم: قريبًا */
 .pvp-menu-row.pvp-mine-soon{opacity:1;}
-.pvp-mine-soon .pvp-menu-label{opacity:.75;}
+.pvp-mine-soon .pvp-menu-label,.pvp-mine-soon .pvp-menu-icon{opacity:1!important;color:#CDB8E6!important;filter:none!important;}
 .pvp-mine-soon .pvp-menu-value{opacity:1!important;padding:3px 10px;border-radius:10px;background:linear-gradient(135deg,#FFD66B,#E0A526);color:#1C0A30!important;font-weight:800;font-size:12px;}
