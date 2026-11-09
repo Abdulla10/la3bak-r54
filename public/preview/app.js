@@ -1,11 +1,11 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r62m';
-import * as UNIFIED from '../unified/shell.js?v=r62n';
-import * as REF from '../unified/home.js?v=r60b';
-import * as SOCIAL from '../unified/social.js?v=r62m';
+import * as PR from './profile.js?v=r63b';
+import * as UNIFIED from '../unified/shell.js?v=r63b';
+import * as REF from '../unified/home.js?v=r63a';
+import * as SOCIAL from '../unified/social.js?v=r63b';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
-import { createSocialGiftStore } from '../social-gifts.js?v=r59v';
+import { createSocialGiftStore } from '../social-gifts.js?v=r63a';
 import {giftArtwork} from '../gift-assets-r27.js?v=unique-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
 import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r59d';
@@ -22,9 +22,9 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r59d';
-import * as SHOP from '../shop.js?v=r62m';
-import * as GIFT from '../gifts.js?v=r59d';
+import * as PF from '../profile.js?v=r63a';
+import * as SHOP from '../shop.js?v=r63b';
+import * as GIFT from '../gifts.js?v=r63a';
 import * as GFX from '../giftfx.js?v=r57';
 import * as AVR from '../avatars.js?v=r59d';
 import * as DMV from '../domino.js?v=r59d';
@@ -38,8 +38,8 @@ import * as THEME from '../theme.js?v=r62a';
 import * as PWA from '../pwa.js?v=r62e';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r59d';
-import * as CHAT from '../chat.js?v=r59d';
+import * as MIS from '../missions.js?v=r63a';
+import * as CHAT from '../chat.js?v=r63a';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -185,7 +185,7 @@ function connect() {
       if(S.user&&S.ws===ws&&parseRoute().name==='social-room')refreshSocial(m);
     } else if (m.t === 'tribe:rocket') {
       // R59: صاروخ القبيلة انطلق — نفس حركة الإطلاق لكل أعضاء القبيلة، مع جايزتك إذا فزت
-      if(S.user&&S.ws===ws&&!S.accountSettings?.hideChatEffects){const e=m.event||{};import('../unified/room-rocket-r58.js?v=r59t').then(x=>x.rocketLaunch({id:String(e.id||''),stage:e.stage,planet:e.planet,title:`🚀 تم إطلاق صاروخ القبيلة رقم ${e.n} — كوكب ${e.planet||''}!`,rank:e.mine?e.mine.rank:-1,gems:e.mine?.gems||0,gifts:e.mine?.gifts||[],winners:(e.winners||[]).map(w=>({rank:w.rank,person:{name:w.name,avatar:w.avatar}})),luck:e.luck||null})).catch(()=>{});}
+      if(S.user&&S.ws===ws&&!S.accountSettings?.hideChatEffects){const e=m.event||{};import('../unified/room-rocket-r58.js?v=r63a').then(x=>x.rocketLaunch({id:String(e.id||''),stage:e.stage,planet:e.planet,title:`🚀 تم إطلاق صاروخ القبيلة رقم ${e.n} — كوكب ${e.planet||''}!`,rank:e.mine?e.mine.rank:-1,gems:e.mine?.gems||0,gifts:e.mine?.gifts||[],winners:(e.winners||[]).map(w=>({rank:w.rank,person:{name:w.name,avatar:w.avatar}})),luck:e.luck||null})).catch(()=>{});}
       try{dispatchEvent(new CustomEvent('la3bak:tribe'));}catch{}
     } else if (m.t === 'social:cannon3') {
       if(S.user&&S.ws===ws&&parseRoute().name==='social-room'&&!S.accountSettings?.hideChatEffects)SOCIAL.receiveSocialCannon3?.(m);
@@ -348,12 +348,12 @@ const functionalModules = new Map();
 function loadFunctionalModule(name) {
   const key = ['auction','family'].includes(name) ? name : name === 'friends' || name === 'messages' ? 'private' : name === 'missions' ? 'missions' : ['visitors','invite'].includes(name) ? 'profile-social' : 'pages';
   if (!functionalModules.has(key)) {
-    const promise = key === 'auction' ? import('../auction-r47.js?v=r57')
+    const promise = key === 'auction' ? import('../auction-r47.js?v=r63a')
       : key === 'family' ? import('../family-r47.js?v=build-all-r47')
       : key === 'private' ? import('../social-private.js?v=r57')
-      : key === 'missions' ? import('../missions-server.js?v=r57')
-      : key === 'profile-social' ? import('../profile-social-r53.js?v=r62k')
-      : import('../functional-pages.js?v=r57');
+      : key === 'missions' ? import('../missions-server.js?v=r63a')
+      : key === 'profile-social' ? import('../profile-social-r53.js?v=r63a')
+      : import('../functional-pages.js?v=r63a');
     functionalModules.set(key, promise);
     promise.catch(() => { if (functionalModules.get(key) === promise) functionalModules.delete(key); });
   }
@@ -634,7 +634,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r62m').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r63b').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -851,7 +851,7 @@ function homeStore() {
   const CUR = { coins: '🪙', gems: '💎' };
   const grid = items === null ? (SHOP.SH.err ? `<p class="muted">${esc(SHOP.SH.err)}</p>` : COM.skeleton(1)) : items.length ? `<div class="hm-items">${items.map((i) => `<a class="hm-item" href="#/shop" aria-label="${esc(i.name)} بـ ${nf(i.price)}"><span class="sh-prev sh-${esc(i.slot)}-${esc(i.css ?? '')}" aria-hidden="true">${i.icon}</span><b>${esc(i.name)}</b><small>${CUR[i.currency] ?? '🪙'} ${nf(i.price)}</small></a>`).join('')}</div>` : '<p class="muted">تملك كل المعروض حالياً 👏</p>';
   return `<section class="card hm-store" aria-labelledby="hmStore"><div class="hm-hrow"><h2 class="hm-h" id="hmStore">المتجر والعملات</h2><a class="hm-all" href="#/shop">افتح المتجر</a></div>
-    <p class="hm-bal"><span>رصيدك</span><b>🪙 ${nf(S.coins ?? 0)}</b>${d ? `<b>💎 ${nf(d.gems)}</b>` : ''}</p>
+    <p class="hm-bal"><span>رصيدك</span><b>🪙 ${nf(S.coins ?? 0)}</b></p>
     ${(S.coins ?? 0) === 0 ? '<p class="muted">رصيدك صفر. العملات تجيك من المكافأة اليومية والمباريات.</p>' : ''}
     ${grid}<p class="hm-fine">الشراء من صفحة المتجر بعد التأكيد فقط. العملات افتراضية بدون قيمة مالية.</p></section>`;
 }
@@ -959,7 +959,7 @@ function termsView() {
   return `<div class="stack"><h1 class="section-title" style="margin-top:0">شروط الاستخدام</h1>${DRAFT_NOTE}
     <section class="card"><ul class="steps">
     <li><span>«لعبك» منصة ألعاب للتسلية. الدخول مجاني وما نطلب كلمة سر.</span></li>
-    <li><span>العملات 🪙 والجواهر 💎 والهدايا افتراضية داخل اللعبة فقط: ما تُشترى بمال حقيقي حالياً، وما تنسحب ولا تتحول لمال، وما لها قيمة خارج الموقع.</span></li>
+    <li><span>العملات 🪙 والهدايا افتراضية داخل اللعبة فقط: ما تُشترى بمال حقيقي حالياً، وما تنسحب ولا تتحول لمال، وما لها قيمة خارج الموقع.</span></li>
     <li><span>الهدية تنقسم: 50% لمستلمها كعملات افتراضية و50% حصة تشغيل للمنصة (افتراضية أيضاً، ما هي إيراد نقدي).</span></li>
     <li><span>المظاهر (أفاتارات، إطارات، خلفيات، ألقاب، شارات) شكلية وما تعطي أفضلية باللعب. المشتريات دائمة ما لم يُوقف الحساب لمخالفة.</span></li>
     <li><span>ممنوع: الغش أو استغلال الأخطاء، انتحال شخصية، الإساءة أو المحتوى غير اللائق بالمجتمع، فتح حسابات للتحايل على الحظر.</span></li>
@@ -1785,7 +1785,7 @@ const ACTIONS = {
   async 'shop-claim'(el) {
     const res = await req('shop:claim', { mid: el.dataset.id });
     if (!res.ok) return toast(res.error, true);
-    SHOP.apply(res); S.coins = res.coins; ACCT.me = null; toast(`استلمت ${res.cur === 'gems' ? '💎' : '🪙'} ${nf(res.got)}!`); render();
+    SHOP.apply(res); S.coins = res.coins; ACCT.me = null; toast(`استلمت 🪙 ${nf(res.cur === 'gems' ? res.got * 20 : res.got)}!`); render();
   },
   async 'wallet-daily'() {
     const res = await req('wallet:daily');

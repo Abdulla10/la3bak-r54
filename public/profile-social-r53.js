@@ -54,7 +54,7 @@ export function visitorsView(root, { api }) {
 function rewardsHTML(r) {
   if (!r) return '';
   const rows = (r.pending || []).map((p) => `<li class="iv62-row"><b>${esc(p.who || 'صديق')}</b><span>${p.linked ? '✓ ربط Google' : '✗ ما ربط Google'} · ${esc(p.games)}/${esc(r.games)} مباريات</span></li>`).join('');
-  return `<div class="iv62"><h3>🎁 مكافأة الدعوة</h3><p>كل صديق يسوي حساب عن طريق رابطك، ويربطه بـGoogle، ويلعب ${esc(r.games)} مباريات مع لاعبين (مب ضد الكمبيوتر): تاخذ <b>${nf(r.inviter.coins)} عملة + ${nf(r.inviter.gems)} جوهرة</b>، وهو ياخذ ${nf(r.invitee.coins)} عملة. (حد أعلى ${esc(r.monthlyCap)} مكافأة بالشهر)</p>
+  return `<div class="iv62"><h3>🎁 مكافأة الدعوة</h3><p>كل صديق يسوي حساب عن طريق رابطك، ويربطه بـGoogle، ويلعب ${esc(r.games)} مباريات مع لاعبين (مب ضد الكمبيوتر): تاخذ <b>${nf(r.inviter.coins)} عملة</b>، وهو ياخذ ${nf(r.invitee.coins)} عملة. (حد أعلى ${esc(r.monthlyCap)} مكافأة بالشهر)</p>
     <p class="iv62-sum">استلمت مكافأة <b>${nf(r.earned)}</b> دعوة${r.thisMonth ? ` · هالشهر ${nf(r.thisMonth)}` : ''}</p>${rows ? `<h4>بانتظار الشروط</h4><ul class="iv62-list">${rows}</ul>` : ''}
     ${r.mine && !r.mine.done ? `<p class="iv62-me">هديتك أنت: ${r.mine.linked ? '✓ ربطت Google' : '✗ اربط حسابك بـGoogle'} · ${esc(r.mine.games)}/${esc(r.games)} مباريات</p>` : ''}</div>`;
 }

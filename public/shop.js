@@ -12,13 +12,13 @@ export const SH = { data: null, err: '', loading: false, world: 'players', tab: 
 // R58p: أسماء أقصر وترتيب أوضح (شبكة 4×2 بأيقونات)
 export const STOREFRONT_TABS = [['frame', 'الإطارات'], ['mic-frame', 'المايك'], ['chat-bubble', 'الفقاعات'], ['board', 'اللوحات'], ['souvenir', 'التذكارات'], ['special-id', 'أيدي مميز'], ['room-id', 'أيدي الغرف'], ['bg', 'الخلفيات'], ['profile-card', 'البطاقات']];
 const STORE_TAB_ICON = { 'mic-frame': '🎙️', frame: '💍', 'chat-bubble': '💬', board: '🪧', souvenir: '🎁', 'special-id': '🆔', 'room-id': '🏠', bg: '🖼️', 'profile-card': '🪪' };
-export const SLOT_TABS = [['avatar', 'الأفاتارات'], ['frame', 'الإطارات'], ['bg', 'الخلفيات'], ['owned', 'أغراضي'], ['sets', 'المجموعات'], ['title', 'ألقاب'], ['badge', 'شارات'], ['ach', 'المكتسبة'], ['gift', 'الهدايا'], ['coins', 'عملات'], ['gems', 'الجواهر'], ['convert', 'التحويل'], ['tasks', 'مكافآت'], ['log', 'السجل']];
+export const SLOT_TABS = [['avatar', 'الأفاتارات'], ['frame', 'الإطارات'], ['bg', 'الخلفيات'], ['owned', 'أغراضي'], ['sets', 'المجموعات'], ['title', 'ألقاب'], ['badge', 'شارات'], ['ach', 'المكتسبة'], ['gift', 'الهدايا'], ['coins', 'عملات'], ['tasks', 'مكافآت'], ['log', 'السجل']];
 const CUR = { coins: renderProfileIcon('coin').replace('class="pvp-icon"','class="sh-currency sh-currency-coins"').replace('<svg','<svg width="24" height="24"'), gems: giftArt({motif:'diamond',cat:'luxury',variant:0,name:'جواهر'},24).replace('class="gift-art','class="sh-currency sh-currency-gems gift-art') };
 const TAB_ICON = { avatar: 'person', frame: 'frame', entrance: 'star', owned: 'shirt', bg: 'image', sets: 'shirt', title: 'crown', badge: 'medal', ach: 'trophy', gift: 'star', convert: 'back', tasks: 'calendar', log: 'file' };
 const tabIcon = (tab) => CUR[tab] || renderProfileIcon(TAB_ICON[tab]);
 // Keep economy-view's quantities, payment lock and form hooks; replace only its currency artwork.
 const packViewHTML = (policy, currency) => packHTML(policy, currency).replaceAll(currency === 'gems' ? '💎' : '🪙', CUR[currency]);
-const conversionHint = () => 'التحويل اليدوي بين العملات والجواهر مقفول بالاتجاهين؛ السجلات السابقة محفوظة.';
+const conversionHint = () => 'الموقع صار بعملة وحدة: الجواهر تحولت لعملات (جوهرة = 20 عملة).';
 const KIND = { start: 'رصيد البداية', daily: 'مكافأة يومية', entry_fee: 'رسم دخول', prize: 'جائزة', refund: 'استرجاع رسوم', purchase: 'شراء', gift: 'هدية', reward: 'مكافأة', admin: 'تعديل إدارة' };
 export const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2));
 
@@ -36,6 +36,8 @@ export function load(req) {
 export function apply(r) { if (r && r.items && r.coins !== undefined) { SH.data = r; invalidateLedger(); } }
 
 export function txListHTML(list, emptyMsg = 'ما فيه معاملات بعد.') {
+  // R63: عملة وحدة — نفس تصفية سجل المحفظة
+  list = (list || []).filter((t) => !(t.ref === 'single-currency' && (t.cur === 'gems' || String(t.reason).startsWith('تحويل تلقائي')))).map((t) => t.cur === 'gems' ? { ...t, cur: 'coins', delta: t.delta * 20, before: undefined } : t);
   if (!list?.length) return `<p class="muted" style="text-align:start">${emptyMsg}</p>`;
   return `<ul class="tx-list">${list.map((t) => `<li><span class="tx-ic" aria-hidden="true">${CUR[t.cur] ?? CUR.coins}</span>
     <div><b>${esc(t.reason || KIND[t.kind] || t.kind)}</b><small>${new Date(t.ts).toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' })} · ${t.before === undefined ? '' : nf(t.before) + ' ← ' + nf(t.after)}</small></div>
@@ -83,7 +85,7 @@ function thumb(i) {
   const art = referenceOf(key);
   return art && art.slot === i.slot ? referenceImage(key, 'r23-item-art') : renderProfileIcon(TAB_ICON[i.slot] || 'image');
 }
-const curBal = (d, c) => (c === 'coins' ? d.coins : d.gems);
+const curBal = (d, c) => (c === 'coins' ? d.coins : (d.coins ?? 0) / 20 + (d.gems ?? 0)); // R63: عملة وحدة
 const itemStatus = (i) => i.status ?? (i.active === false || i.retired ? 'unavailable' : 'available');
 const statusLabel = (i) => itemStatus(i) === 'coming-soon' ? 'قريبًا' : itemStatus(i) === 'hidden' ? 'مخفي من المتجر' : 'غير متاح';
 const visibleItem = (i, d) => itemStatus(i) !== 'hidden' || d.owned.includes(i.id);
@@ -254,7 +256,7 @@ export function shopHTML(me) {
   const world = `<div class="ref-worlds" role="group" aria-label="عالم المتجر">${[['players','مظاهر اللاعبين'],['kids','عالم الأطفال'],['legacy','المكتبة السابقة']].map(([v,l])=>`<button type="button" class="${SH.world===v?'on':''}" data-act="shop-world" data-v="${v}" aria-pressed="${SH.world===v}">${renderProfileIcon(v === 'players' ? 'person' : v === 'kids' ? 'game' : 'file')}${l}</button>`).join('')}</div>`;
   const activeTabs = SLOT_TABS.map(([k,l]) => [k, SH.world !== 'legacy' && k === 'badge' ? 'شارات الإنجازات' : SH.world !== 'legacy' && k === 'title' ? 'الألقاب المكتسبة' : l]);
   const tabs = `<div class="sh-tabs r23-store-tabs" role="tablist" aria-label="أقسام المتجر" dir="rtl">${STOREFRONT_TABS.map(([k, l]) => `<button type="button" role="tab" aria-selected="${tab === k}" aria-controls="r23-store-panel" class="${tab === k ? 'on' : ''}" data-act="shop-tab" data-v="${k}"><i aria-hidden="true">${STORE_TAB_ICON[k] || ''}</i><span>${l}</span></button>`).join('')}</div>`;
-  const more = `<details class="r23-more"><summary>${renderProfileIcon('menu')} المزيد <small>${esc(activeTabs.find(([k]) => k === tab)?.[1] || (SH.world === 'kids' ? 'عالم الأطفال' : SH.world === 'legacy' ? 'المكتبة السابقة' : 'مظاهر اللاعبين'))}</small></summary><div class="r23-more-panel">${world}<nav class="r23-legacy-nav" aria-label="أقسام المتجر الإضافية">${activeTabs.map(([k, l]) => `<button type="button" class="${tab === k ? 'on' : ''}" data-act="shop-tab" data-v="${k}" aria-pressed="${tab === k}">${tabIcon(k)}${l}</button>`).join('')}</nav><details class="r23-policy"><summary>سياسة المتجر</summary><p>المظاهر شكلية فقط ولا تعطي أي أفضلية في اللعب. العملات والجواهر افتراضية ولا تتحول إلى مال. الأسعار والاستحقاق والملكية كما يحددها الخادم. باقات الشحن تخضع للوضع المعتمد بالخادم. ${conversionHint(d.economy)}</p></details></div></details>`;
+  const more = `<details class="r23-more"><summary>${renderProfileIcon('menu')} المزيد <small>${esc(activeTabs.find(([k]) => k === tab)?.[1] || (SH.world === 'kids' ? 'عالم الأطفال' : SH.world === 'legacy' ? 'المكتبة السابقة' : 'مظاهر اللاعبين'))}</small></summary><div class="r23-more-panel">${world}<nav class="r23-legacy-nav" aria-label="أقسام المتجر الإضافية">${activeTabs.map(([k, l]) => `<button type="button" class="${tab === k ? 'on' : ''}" data-act="shop-tab" data-v="${k}" aria-pressed="${tab === k}">${tabIcon(k)}${l}</button>`).join('')}</nav><details class="r23-policy"><summary>سياسة المتجر</summary><p>المظاهر شكلية فقط ولا تعطي أي أفضلية في اللعب. العملات افتراضية ولا تتحول إلى مال. الأسعار والاستحقاق والملكية كما يحددها الخادم. باقات الشحن تخضع للوضع المعتمد بالخادم. ${conversionHint(d.economy)}</p></details></div></details>`;
   let body;
   if (tab === 'tasks') {
     body = `<section class="card ref-daily"><h2>${SH.world === 'kids' ? 'مكافأة الطفل اليومية' : 'المكافأة اليومية'}</h2><p>200 عملة افتراضية، مرة واحدة لكل حساب في اليوم بتوقيت الإمارات. نفس المكافأة في كل أقسام الموقع، مب مكافأة ثانية.</p><button class="btn gold" data-act="wallet-daily" ${d.canDaily ? '' : 'disabled'}>${d.canDaily ? 'استلام المكافأة اليومية' : 'استلمتها اليوم'}</button></section><section class="card"><h2>مكافآت الإنجازات</h2><ul class="ach">${d.milestones.map((m) => `<li class="${m.done ? 'done' : ''}"><span class="ach-ico" aria-hidden="true">${CUR[m.cur]}</span><div><b>${esc(m.label)} · ${CUR[m.cur]} ${nf(m.amount)}</b><small>${m.done ? 'استلمتها ✅' : `${nf(Math.min(m.value, m.goal))}/${nf(m.goal)}`}</small></div>${m.ready ? `<button class="btn gold" type="button" data-act="shop-claim" data-id="${esc(m.id)}">استلام</button>` : ''}</li>`).join('')}</ul>

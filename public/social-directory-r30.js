@@ -1,5 +1,5 @@
 import {roomPhotoFields} from './room-photo-r31.js?v=room-photo-r31';
-import {tierChip,perkActive} from './unified/room-rank-r58.js?v=r58i';
+import {tierChip,perkActive} from './unified/room-rank-r58.js?v=r63a';
 /* LA3BAK R30 directory: pure HTML/data helpers. The existing parent controller
  * owns requests, delegated actions, keyboard handling, dialogs and repaint focus.
  * No fake rooms, ratings, rankings, image imports, storage or event listeners. */

@@ -312,7 +312,6 @@ export function heroHTML(p, userName, me, acct) {
       <div class="pf-chips">
         <div><i aria-hidden="true">🏆</i><b>${num(me.points)}</b><span>نقاط التصنيف</span></div>
         <div><i aria-hidden="true">🪙</i><b>${num(me.coins)}</b><span>العملات</span></div>
-        <div><i aria-hidden="true">💎</i><b>${num(me.gems ?? 0)}</b><span>الجواهر</span></div>
       </div>
       <div class="pf-chips pf-chips2">
         <div><b>${num(me.played)}</b><span>مباريات</span></div>
@@ -336,7 +335,7 @@ export function heroHTML(p, userName, me, acct) {
         <small>${me ? 'رقم اللاعب: <bdi dir="ltr" class="pf-num">' + esc(me.id) + '</bdi> · ' + (me.rank ? 'الترتيب #' + num(me.rank) + ' · ' : '') : ''}${sinceText(me || p)}</small></div></div>
     ${server}
     ${me?.avatar && eq.avatar ? '<p class="pf-note">صورتك المرفوعة محفوظة، لكن أفاتار المتجر مجهّز حاليًا. لإظهار الصورة، افتح المتجر واضغط «إزالة» على الأفاتار المجهّز؛ ما بتفقد ملكيته.</p>' : ''}
-    ${me ? '<p class="pf-legend"><b>🪙 العملات</b> و<b>💎 الجواهر</b> افتراضية بلا قيمة مالية؛ التحويل يخضع لسياسة المالك المفعّلة · <b>🏆 نقاط التصنيف</b> للترتيب فقط، وتنحسب من مباريات فيها لاعبان حقيقيان فأكثر.</p>' : ''}
+    ${me ? '<p class="pf-legend"><b>🪙 العملات</b> افتراضية بلا قيمة مالية؛ التحويل يخضع لسياسة المالك المفعّلة · <b>🏆 نقاط التصنيف</b> للترتيب فقط، وتنحسب من مباريات فيها لاعبان حقيقيان فأكثر.</p>' : ''}
     <div class="btn-row pf-acts"><button class="btn" type="button" data-act="av-pick">${me?.avatar ? 'استبدال الصورة' : 'رفع صورة'}</button>${me?.avatar ? '<button class="btn ghost" type="button" data-act="av-del">حذف الصورة</button>' : ''}<a class="btn gold" href="#/shop">🛍️ المتجر</a><button class="btn ghost" type="button" data-act="pf-edit">${p.saved ? 'تعديل الشخصية' : 'صمّم شخصيتك'}</button></div>
   </section>`;
 }

@@ -12,7 +12,7 @@ function unwrap(result) {
   return view;
 }
 const rewardText = (rewards) => [
-  rewards.coins ? `${num(rewards.coins)} عملة` : '', rewards.gems ? `${num(rewards.gems)} جوهرة` : '',
+  rewards.coins ? `${num(rewards.coins)} عملة` : '', rewards.gems ? `${num(rewards.gems * 20)} عملة` : '',
   ...(rewards.items || []).map((id) => `عنصر: ${id}`),
 ].filter(Boolean).join(' + ');
 

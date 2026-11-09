@@ -8,7 +8,9 @@ const TEXT = {
 };
 const STATUS = { open: 'مفتوح', settled: 'تم التسليم', cancelled: 'ملغي — أُعيد الحجز', refunded: 'تعذر التسليم — أُعيد الحجز', expired: 'انتهى بلا عروض' };
 const number = n => Number(n).toLocaleString('ar-u-nu-latn');
-const currency = c => c === 'gems' ? 'جوهرة' : 'عملة';
+const currency = () => 'عملة';
+/* R63: عملة وحدة — مزادات الجواهر تنعرض وتنزايد بالعملات (جوهرة = 20 عملة) */
+const sh = (lot, n) => lot.currency === 'gems' && n != null ? n * 20 : n;
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
 function key() { return globalThis.crypto.randomUUID(); }
 /** api(path, {method, body}) must use the SAME authenticated site bridge; body is an object. */
@@ -37,20 +39,20 @@ export function auctionView(root, { api, getUserId, refreshMe = async () => {}, 
     const heading = el('h2', '', names.get(lot.itemId) || lot.itemName || lot.itemId);
     const status = el('span', 'auction-r47-status', STATUS[lot.status] || 'غير معروف');
     const detail = el('dl');
-    for (const [label, value] of [['السعر الاحتياطي', `${number(lot.reservePrice)} ${currency(lot.currency)}`], ['أعلى عرض', lot.highestAmount == null ? 'لا يوجد' : `${number(lot.highestAmount)} ${currency(lot.currency)}`], ['نهاية العرض', new Date(lot.endsAt).toLocaleString('ar-u-nu-latn')], ['عدد العروض', number(lot.bidCount)]]) detail.append(el('dt', '', label), el('dd', '', value));
+    for (const [label, value] of [['السعر الاحتياطي', `${number(sh(lot, lot.reservePrice))} ${currency(lot.currency)}`], ['أعلى عرض', lot.highestAmount == null ? 'لا يوجد' : `${number(sh(lot, lot.highestAmount))} ${currency(lot.currency)}`], ['نهاية العرض', new Date(lot.endsAt).toLocaleString('ar-u-nu-latn')], ['عدد العروض', number(lot.bidCount)]]) detail.append(el('dt', '', label), el('dd', '', value));
     item.append(heading, status, detail);
-    if (lot.held > 0) item.append(el('p', 'auction-r47-held', `حجزك الحالي: ${number(lot.held)} ${currency(lot.currency)} — خارج الرصيد المتاح.`));
+    if (lot.held > 0) item.append(el('p', 'auction-r47-held', `حجزك الحالي: ${number(sh(lot, lot.held))} ${currency(lot.currency)} — خارج الرصيد المتاح.`));
     if (lot.won) item.append(el('p', 'auction-r47-held', 'فزت بهذا العنصر وأُضيف إلى مقتنياتك. يمكنك تجهيزه من المتجر.'));
     const ended = lot.settlementPending || lot.endsAt <= Date.now() + serverOffset;
     if (lot.status === 'open' && ended) item.append(el('p', 'auction-r47-pending', 'انتهى وقت المزايدة. التسوية الخادمية قيد التأكيد؛ اضغط تحديث ولا ترسل عرضًا جديدًا.'));
     if (lot.status === 'open' && !ended && lot.minimumBid != null) {
       const form = el('form', 'auction-r47-bid'); const label = el('label', '', `عرضك (${currency(lot.currency)})`);
-      const amount = el('input'); amount.type = 'number'; amount.name = 'amount'; amount.min = String(lot.minimumBid); amount.step = '1'; amount.required = true; amount.inputMode = 'numeric'; amount.value = String(pending.get(lot.id)?.amount ?? lot.minimumBid); label.append(amount);
+      const amount = el('input'); amount.type = 'number'; amount.name = 'amount'; amount.min = String(sh(lot, lot.minimumBid)); amount.step = lot.currency === 'gems' ? '20' : '1'; amount.required = true; amount.inputMode = 'numeric'; amount.value = String(sh(lot, pending.get(lot.id)?.amount ?? lot.minimumBid)); label.append(amount);
       const submit = el('button', '', lot.mine ? 'زيادة عرضي وحجز المبلغ' : 'تأكيد العرض وحجز المبلغ'); submit.type = 'submit';
-      const hint = el('small', '', `الحد الأدنى ${number(lot.minimumBid)}. لا يمكنك سحب العرض؛ يُخصم الحجز فقط مرة واحدة عند الفوز.`);
+      const hint = el('small', '', `الحد الأدنى ${number(sh(lot, lot.minimumBid))}${lot.currency === 'gems' ? ' (من مضاعفات 20)' : ''}. لا يمكنك سحب العرض؛ يُخصم الحجز فقط مرة واحدة عند الفوز.`);
       form.append(label, hint, submit); item.append(form);
       form.addEventListener('submit', async event => {
-        event.preventDefault(); const value = Number(amount.value);
+        event.preventDefault(); const typed = Number(amount.value); const value = lot.currency === 'gems' ? (typed % 20 === 0 ? typed / 20 : NaN) : typed;
         if (!getUserId()) { feedback.textContent = 'سجّل الدخول بالحساب الحالي للمزايدة.'; return; }
         if (!Number.isSafeInteger(value) || value < lot.minimumBid) { feedback.textContent = 'أدخل عددًا صحيحًا لا يقل عن الحد الأدنى.'; return; }
         const old = pending.get(lot.id), operation = old?.amount === value ? old : { amount: value, key: key() }; pending.set(lot.id, operation);

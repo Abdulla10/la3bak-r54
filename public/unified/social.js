@@ -1,18 +1,18 @@
 // room-tools-r33: imports
-import {roomRankPageHTML,tierChip,welcomeHTML,perkActive,tierIndex as rankTierIndex} from './room-rank-r58.js?v=r58i';
+import {roomRankPageHTML,tierChip,welcomeHTML,perkActive,tierIndex as rankTierIndex} from './room-rank-r58.js?v=r63a';
 import {createRoomToolsR33} from '../social-room-tools-r33.js?v=r58p';
 import {SOCIAL_GAME_LABELS_R47,renderSocialGame,normalizeSocialGameActionR47,createSocialGamesR47} from '../social-games-r47.js?v=r58p';
 import {renderUpgradePanel,roomUpgradeConfirmationR47,roomUpgradeErrorR47} from '../room-upgrade-r47.js?v=build-all-r47';
 import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room-photo-r31';
-import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r62h';
+import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r63a';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
 import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r58s';
-import {framed as frameOwnedPortrait} from '../shop.js?v=r62m';
+import {framed as frameOwnedPortrait} from '../shop.js?v=r63b';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
-import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r57';
-import {cannon3Shortcut,cannon3Panel,cannon3Blast} from './room-cannon-r59.js?v=r59b';
-import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r62m';
+import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r63a';
+import {cannon3Shortcut,cannon3Panel,cannon3Blast} from './room-cannon-r59.js?v=r63a';
+import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r63b';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
 import { mini as avatarMini } from '../avatars.js?v=r59d';
@@ -116,7 +116,7 @@ async function openOwnBenefits(c,options={}) {
   const epoch=c.epoch,roomId=c.routeRoom;
   if(!roomId||c.snapshot?.current?.roomId!==roomId)throw Error('ادخل الغرفة بحسابك قبل فتح حقيبة الحظ أو المكافأة.');
   if(!c.benefits){
-    const module=await import('../social-benefits.js?v=r59d');
+    const module=await import('../social-benefits.js?v=r63a');
     if(c!==live||c.epoch!==epoch||c.routeRoom!==roomId)return;
     c.benefitsHost=document.createElement('div');c.benefitsHost.dataset.soBenefitsHost='';if(!c.ctx.gameRoom)c.benefitsHost.dataset.soReferenceR28='';document.body.append(c.benefitsHost);
     c.benefits=module.createSocialBenefits({api:(...args)=>c.api(...args),roomId,getUserId:()=>c===live&&c.routeRoom===roomId?c.uid:'',openPacks:currency=>{c.benefits?.close();(globalThis.__LA3BAK_NAV__ || location).hash='#/payments/'+(currency==='gems'?'gems':'coins');},toast:message=>c.ctx.toast?.(message)});
@@ -252,8 +252,8 @@ function supportersPanel(s,tab='day'){
   if(!s)return '<p class="so-note">قائمة الداعمين غير متاحة.</p>';
   const key=SUP_TABS.some(([k])=>k===tab)?tab:'day',list=Array.isArray(s[key])?s[key]:[];
   const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
-  const rows=list.length?`<ol class="sup58-list">${list.map((p,i)=>`<li class="${i<3?'is-top is-top'+(i+1):''}"><i>${medal(i)}</i><span class="sup58-face">${portraitHTML(p,40)}</span><b>${esc(p.name)}</b><span dir="ltr">${Number(p.pts).toLocaleString('en-US')} 💎</span></li>`).join('')}</ol>`:'<p class="so-note">ما فيه دعم بهالفترة للحين. أرسل هدية وكن أول داعم!</p>';
-  return `<section class="sup58-panel"><div class="sup58-tabs" role="tablist">${SUP_TABS.map(([k,l])=>`<button type="button" role="tab" data-so-action="sup-tab" data-tab="${k}" aria-selected="${k===key}">${l}</button>`).join('')}</div>${rows}<p class="so-cannon-unit">الترتيب حسب قيمة الهدايا (بالجواهر) اللي انرسلت داخل الغرفة. الأسبوع يبدأ السبت، واليوم يبدأ 12 بالليل بتوقيت الخليج.</p><button type="button" class="so-button so-primary so-cannon-support" data-so-action="open-panel" data-panel="gifts">أرسل هدية وادعم الغرفة</button></section>`;
+  const rows=list.length?`<ol class="sup58-list">${list.map((p,i)=>`<li class="${i<3?'is-top is-top'+(i+1):''}"><i>${medal(i)}</i><span class="sup58-face">${portraitHTML(p,40)}</span><b>${esc(p.name)}</b><span dir="ltr">${Number(p.pts * 20).toLocaleString('en-US')} 🪙</span></li>`).join('')}</ol>`:'<p class="so-note">ما فيه دعم بهالفترة للحين. أرسل هدية وكن أول داعم!</p>';
+  return `<section class="sup58-panel"><div class="sup58-tabs" role="tablist">${SUP_TABS.map(([k,l])=>`<button type="button" role="tab" data-so-action="sup-tab" data-tab="${k}" aria-selected="${k===key}">${l}</button>`).join('')}</div>${rows}<p class="so-cannon-unit">الترتيب حسب قيمة الهدايا (كل 20 عملة = نقطة) اللي انرسلت داخل الغرفة. الأسبوع يبدأ السبت، واليوم يبدأ 12 بالليل بتوقيت الخليج.</p><button type="button" class="so-button so-primary so-cannon-support" data-so-action="open-panel" data-panel="gifts">أرسل هدية وادعم الغرفة</button></section>`;
 }
 function referenceShortcuts(c) {
   if(c.ctx.gameRoom)return '';
@@ -957,7 +957,7 @@ export function mount(root,ctx={}) {
     if(key==='luckyBag'){requireSettingsRight('owner');return openDialog('من يمكنه ارسال حقيبة الحظ',select('luckyBag','المسموح لهم',{everyone:'الجميع',moderators:'المالك والمشرفون',owner:'المالك فقط'},s.luckyBag)+'<p class="so-note">هذا الإعداد يحدد من يمكنه الإرسال فقط؛ لا ينشئ حقيبة ولا يخصم رصيدًا.</p>',async f=>{const value=f.elements.luckyBag.value;if(!['everyone','moderators','owner'].includes(value))throw Error('خيار غير صالح.');return settingsUpdate('owner',{settings:{luckyBag:value}});},'حفظ');}
     if(key==='ads'){requireSettingsRight('identity');const ads=arr(r.ads).map(a=>a.text);return openDialog('إعلانات الغرفة',`<p class="so-note">لين 10 إعلانات تتحرك تحت اسم الغرفة. كل إعلان يمر على مراجعة تلقائية: الكلام المسيء والروابط وأرقام التواصل ممنوعة، والسليم ينقبل فورًا.</p>${Array.from({length:10},(_,i)=>`<label class="so-field"><span>إعلان ${i+1}</span><input name="ad${i}" maxlength="200" value="${esc(ads[i]||'')}" dir="auto"></label>`).join('')}`,async f=>{const list=Array.from({length:10},(_,i)=>f.elements['ad'+i].value.trim()).filter(Boolean);await command(c,'room:ads',{roomId:c.routeRoom,ads:list});},'حفظ الإعلانات');}
     if(key==='roomId'){requireSettingsRight('owner');return (async()=>{let mine=[];try{const res=await c.api('/api/room-ids/mine');mine=arr(res?.items);}catch{}const opts=mine.map(it=>`<label class="so-radio"><input type="radio" name="rid" value="${esc(it.id)}" ${r.code===it.code?'checked':''}><b dir="ltr">${esc(it.code)}</b></label>`).join('');return openDialog('أيدي الغرفة',`<p class="so-note">رقم غرفتك الحالي: <b dir="ltr">${esc(r.code||'')}</b>. تقدر تشتري رقم مميز من المتجر (قسم «أيدي الغرف») وتختاره هنا.</p>${opts||'<p class="so-note">ما تملك أيدي غرفة مميز بعد.</p>'}<label class="so-radio"><input type="radio" name="rid" value="" ${r.vanity?'':'checked'}><span>الرقم العادي (8 أرقام)</span></label><a class="so-button" href="#/shop">افتح المتجر</a>`,async f=>{const v=f.querySelector('input[name=rid]:checked')?.value||'';await command(c,'room:vanity',{roomId:c.routeRoom,itemId:v||null});},'تطبيق');})();}
-    if(key==='level'){const lv=r.level||1,next=r.levelNext,floor=r.levelFloor||0,s=r.support||0,pct=next?Math.min(100,Math.round((s-floor)/(next-floor)*100)):100;const perks=[[2,'شارة ليفل ملونة بجانب اسم الغرفة'],[3,'إطار فضي لبطاقة الغرفة بقائمة الغرف'],[5,'اسم الغرفة ذهبي'],[7,'بطاقة الغرفة تلمع بقائمة الغرف'],[8,'إطار ذهبي متحرك لبطاقة الغرفة'],[10,'تاج ذهبي وهالة أسطورية للغرفة']];return openDialog('ليفل الغرفة',`<div class="rl-level-sheet"><span class="rl-chip rl-chip-${lv} is-big has-art58"><img class="art58-chip" src="${RANK_CHIP("room",lv)}" alt="" decoding="async"><b class="art58-chip-tx">Lv ${lv}</b></span><p>دعم الغرفة: <b dir="ltr">${s.toLocaleString('en-US')}</b> جوهرة${next?` · الليفل الجاي عند <b dir="ltr">${next.toLocaleString('en-US')}</b>`:' · وصلت أعلى ليفل'}</p><div class="rl-bar"><i style="width:${pct}%"></i></div><ul>${perks.map(([l,t])=>`<li class="${lv>=l?'is-open':''}"><b>Lv ${l}</b> ${esc(t)}</li>`).join('')}</ul><p class="so-note">الليفل يرتفع تلقائيًا بقيمة الهدايا (بالجواهر) اللي تنرسل داخل الغرفة.</p></div>`,null);}
+    if(key==='level'){const lv=r.level||1,next=r.levelNext,floor=r.levelFloor||0,s=r.support||0,pct=next?Math.min(100,Math.round((s-floor)/(next-floor)*100)):100;const perks=[[2,'شارة ليفل ملونة بجانب اسم الغرفة'],[3,'إطار فضي لبطاقة الغرفة بقائمة الغرف'],[5,'اسم الغرفة ذهبي'],[7,'بطاقة الغرفة تلمع بقائمة الغرف'],[8,'إطار ذهبي متحرك لبطاقة الغرفة'],[10,'تاج ذهبي وهالة أسطورية للغرفة']];return openDialog('ليفل الغرفة',`<div class="rl-level-sheet"><span class="rl-chip rl-chip-${lv} is-big has-art58"><img class="art58-chip" src="${RANK_CHIP("room",lv)}" alt="" decoding="async"><b class="art58-chip-tx">Lv ${lv}</b></span><p>دعم الغرفة: <b dir="ltr">${s.toLocaleString('en-US')}</b> نقطة${next?` · الليفل الجاي عند <b dir="ltr">${next.toLocaleString('en-US')}</b>`:' · وصلت أعلى ليفل'}</p><div class="rl-bar"><i style="width:${pct}%"></i></div><ul>${perks.map(([l,t])=>`<li class="${lv>=l?'is-open':''}"><b>Lv ${l}</b> ${esc(t)}</li>`).join('')}</ul><p class="so-note">الليفل يرتفع تلقائيًا بقيمة الهدايا (كل 20 عملة = نقطة) اللي تنرسل داخل الغرفة.</p></div>`,null);}
     if(key==='name'){requireSettingsRight('identity');return openDialog('الإسم',field('name','اسم الغرفة','text',r.name,80),async f=>{const name=f.elements.name.value.trim();if(!name)throw Error('اكتب اسم الغرفة.');await settingsUpdate('identity',{name});},'حفظ');}
     if(key==='announcement'){requireSettingsRight('identity');return openDialog('الإعلان',textField('description','إعلان الغرفة',400,r.description||'',false),async f=>settingsUpdate('identity',{description:f.elements.description.value.trim()}),'حفظ');}
     if(key==='cover'){

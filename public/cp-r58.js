@@ -12,7 +12,7 @@ function card(cp, me, opts = {}) {
   <p class="cp58-meta"><span>معًا منذ <b dir="ltr">${nf(cp.days)}</b> يوم</span><span>CP Lv${cp.level} · ${esc(cp.name)}</span></p>
   <div class="cp58-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
   <p class="cp58-pts"><b dir="ltr">${nf(cp.pts)}</b> نقطة CP${cp.next ? ` · المستوى الجاي عند <b dir="ltr">${nf(cp.next)}</b>` : ' · أعلى مستوى'}</p>
-  ${opts.mine ? '<p class="cp58-hint">كل جوهرة بهدية بينكم = نقطة CP. تقدر تتحكم بظهور العلاقة أو تنهيها من «العائلة والارتباط الافتراضي».</p>' : ''}</section>`;
+  ${opts.mine ? '<p class="cp58-hint">كل 20 عملة بهدية بينكم = نقطة CP. تقدر تتحكم بظهور العلاقة أو تنهيها من «العائلة والارتباط الافتراضي».</p>' : ''}</section>`;
 }
 async function fillMe(el) {
   const r = await get('/api/cp/me'); if (!el.isConnected || !r?.ok) return;

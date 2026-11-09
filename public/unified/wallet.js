@@ -1,4 +1,4 @@
-import * as PACKS from './payments.js?v=r58p';
+import * as PACKS from './payments.js?v=r63a';
 import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from '../giftart.js?v=release-r14';
 
@@ -10,7 +10,7 @@ const positive = (value) => nat(value) && value > 0;
 const number = (value) => typeof value === 'number' && Number.isSafeInteger(value) ? value.toLocaleString('ar-AE-u-nu-latn') : '—';
 const currencies = { coins: 'عملة', gems: 'جوهرة' };
 const kinds = { start: 'رصيد البداية', daily: 'مكافأة يومية', entry_fee: 'رسوم دخول', prize: 'جائزة', refund: 'استرجاع رسوم', purchase: 'شراء', reward: 'مكافأة', admin: 'تعديل الإدارة', gift: 'هدية', transfer: 'تحويل الرصيد' };
-const tabs = [['ledger', 'file', 'سجل المعاملات'], ['packs', 'shop', 'شحن الرصيد'], ['vip', 'crown', 'اشتراك VIP'], ['convert', 'back', 'تحويل الرصيد'], ['rewards', 'star', 'المكافآت']];
+const tabs = [['ledger', 'file', 'سجل المعاملات'], ['packs', 'shop', 'شحن الرصيد'], ['vip', 'crown', 'اشتراك VIP'], ['rewards', 'star', 'المكافآت']];
 const art = (cur, size = 30) => cur === 'gems' ? giftArt({motif:'diamond',cat:'luxury',variant:0,name:'الجواهر'},size).replace('class="gift-art','class="lbw-currency-art gift-art') : icon('coin').replace('class="pvp-icon"','class="lbw-currency-art"').replace('<svg','<svg width="'+size+'" height="'+size+'"');
 const button = (label, action, disabled = false, extra = '', gold = false) => `<button type="button" class="${gold ? 'gold-btn' : 'btn'}" data-lbw-action="${action}" ${disabled ? 'disabled aria-disabled="true"' : ''} ${extra}>${label}</button>`;
 const panel = (title, content) => `<section class="panel"><h2 class="panel-title">${title}</h2>${content}</section>`;
@@ -20,7 +20,7 @@ let currentState;
 function stateFor(ctx) {
   const owner = ctx.user ? String(ctx.user.id ?? ctx.me?.id ?? 'current-session') : null;
   if (!currentState || currentState.owner !== owner) {
-    currentState = { owner, views: new Set(), tab: 'ledger', packCur: 'gems', data: null, ledger: null, offset: 0, total: null, loading: false, busy: false, error: '', notice: '', confirm: null, uncertain: false };
+    currentState = { owner, views: new Set(), tab: 'ledger', packCur: 'coins', data: null, ledger: null, offset: 0, total: null, loading: false, busy: false, error: '', notice: '', confirm: null, uncertain: false };
   }
   return currentState;
 }
@@ -33,7 +33,7 @@ function balance(state, ctx, cur) {
   return nat(ctx.me?.[cur]) ? ctx.me[cur] : undefined;
 }
 function balanceCards(state, ctx) {
-  return `<div class="grid2 lbw-balances" aria-label="رصيد المحفظة">${[['gems', 'الجواهر'], ['coins', 'العملات']].map(([cur, label]) => `<article class="card lbw-balance"><div class="card-art">${art(cur, 64)}</div><h2>${label}</h2><strong class="lbw-value">${esc(number(balance(state, ctx, cur)))}</strong><small>رصيدك الافتراضي من الخادم</small>${button(`${icon('plus')} عرض الباقات`, 'currency', !ctx.user, `data-lbw-cur="${cur}"`)}</article>`).join('')}</div>`;
+  return `<div class="grid2 lbw-balances" aria-label="رصيد المحفظة">${[['coins', 'العملات']].map(([cur, label]) => `<article class="card lbw-balance"><div class="card-art">${art(cur, 64)}</div><h2>${label}</h2><strong class="lbw-value">${esc(number(balance(state, ctx, cur)))}</strong><small>رصيدك الافتراضي من الخادم</small>${button(`${icon('plus')} عرض الباقات`, 'currency', !ctx.user, `data-lbw-cur="${cur}"`)}</article>`).join('')}</div>`;
 }
 function dateText(timestamp) {
   if (!nat(timestamp)) return 'التاريخ مب متوفر';
@@ -43,8 +43,10 @@ function dateText(timestamp) {
 }
 function ledgerView(state, ctx) {
   if (!Array.isArray(state.ledger)) return panel(`${icon('clock')} آخر العمليات`, note(state.error ? 'ما قدرنا نحمّل السجل. جرّب تحدّث المحفظة.' : 'بنحمّل معاملاتك من الخادم…'));
-  const rows = state.ledger.filter((entry) => entry && currencies[entry.cur]);
-  const list = rows.length ? `<ul class="lbw-transactions">${rows.map((entry) => `<li class="list-row">${art(entry.cur)}<div class="grow"><b>${esc(entry.reason || kinds[entry.kind] || entry.kind || 'عملية بالمحفظة')}</b><small>${esc(dateText(entry.ts))} · بتوقيت الإمارات</small><small>الرصيد قبل: ${esc(number(entry.before))} · بعد: ${esc(number(entry.after))}</small>${entry.ref ? `<details class="lbw-reference"><summary>مرجع العملية</summary><span dir="ltr">${esc(entry.ref)}</span><small dir="ltr">${esc(entry.id)}</small></details>` : ''}</div><strong class="lbw-delta ${entry.delta < 0 ? 'lbw-negative' : 'lbw-positive'}"><bdi>${entry.delta > 0 ? '+' : ''}${esc(number(entry.delta))}</bdi><small>${currencies[entry.cur]}</small></strong></li>`).join('')}</ul>` : note('ما عندك معاملات مسجّلة للحين.');
+  // R63: عملة وحدة — سطور التحويل الداخلي تنخفى، وعمليات الجواهر القديمة تنعرض بالعملات (×20) بدون رصيد قبل/بعد
+  const rows = state.ledger.filter((entry) => entry && currencies[entry.cur] && !(entry.ref === 'single-currency' && (entry.cur === 'gems' || String(entry.reason).startsWith('تحويل تلقائي'))))
+    .map((e) => e.cur === 'gems' ? { ...e, cur: 'coins', delta: e.delta * 20, before: null, after: null } : e);
+  const list = rows.length ? `<ul class="lbw-transactions">${rows.map((entry) => `<li class="list-row">${art(entry.cur)}<div class="grow"><b>${esc(entry.reason || kinds[entry.kind] || entry.kind || 'عملية بالمحفظة')}</b><small>${esc(dateText(entry.ts))} · بتوقيت الإمارات</small>${entry.before == null ? '' : `<small>الرصيد قبل: ${esc(number(entry.before))} · بعد: ${esc(number(entry.after))}</small>`}${entry.ref ? `<details class="lbw-reference"><summary>مرجع العملية</summary><span dir="ltr">${esc(entry.ref)}</span><small dir="ltr">${esc(entry.id)}</small></details>` : ''}</div><strong class="lbw-delta ${entry.delta < 0 ? 'lbw-negative' : 'lbw-positive'}"><bdi>${entry.delta > 0 ? '+' : ''}${esc(number(entry.delta))}</bdi><small>${currencies[entry.cur]}</small></strong></li>`).join('')}</ul>` : note('ما عندك معاملات مسجّلة للحين.');
   // Pagination arithmetic concerns record offsets only, never account balances.
   const next = state.offset + state.ledger.length;
   const canNext = nat(state.total) && next < state.total && state.ledger.length > 0;
@@ -52,13 +54,13 @@ function ledgerView(state, ctx) {
   return panel(`${icon('clock')} آخر العمليات`, `<p class="lbw-muted">${esc(count)} · الأحدث أول · حتى 60 عملية بالصفحة.</p>${list}<nav class="pagination" aria-label="صفحات سجل المحفظة">${button('الأحدث', 'ledger', locked(state, ctx) || state.offset === 0, `data-lbw-offset="${Math.max(0, state.offset - 60)}"`)}<span>بداية الصفحة: ${esc(number(state.offset))}</span>${button('الأقدم', 'ledger', locked(state, ctx) || !canNext, `data-lbw-offset="${next}"`)}</nav><p class="lbw-muted">السجل للعرض بس؛ ما فيه حذف أو تصدير مربوط هنا. الرصيد قبل وبعد من نفس سجل الخادم، مب محسوب عندك.</p>`);
 }
 function packsView(state, ctx) {
-  return `<section class="lbw-packs-section" aria-label="شراء العملات والجواهر داخل المحفظة"><h2>شراء العملات والجواهر</h2><div data-lbw-packs-host></div></section>`;
+  return `<section class="lbw-packs-section" aria-label="شراء العملات داخل المحفظة"><h2>شراء العملات</h2><div data-lbw-packs-host></div></section>`;
 }
 
 function conversionView(state, ctx) {
   // Closure is unconditional, even if a stale server/cache advertises an enabled policy.
   const pending = state.uncertain ? state.confirm : null;
-  let body = note('التحويل اليدوي من العملات إلى الجواهر ومن الجواهر إلى العملات مقفول. أرصدتك وسجل معاملاتك السابقة محفوظة.');
+  let body = note('الموقع صار بعملة وحدة: الجواهر تحولت لعملات (جوهرة = 20 عملة). سجل معاملاتك السابق محفوظ.');
   if (pending) {
     body += `<section class="card lbw-confirm" aria-label="التحقق من إيصال سابق"><h3>التحقق من طلب سابق انقطع ردّه</h3><p>الطلب السابق: <b>${esc(number(pending.gems))}</b> جوهرة، بنسبة <b>${esc(number(pending.seenRate))}</b> عملة لكل جوهرة.</p><p class="lbw-muted">بنرسل نفس المفتاح والطلب فقط لقراءة إيصال محفوظ. إذا الطلب ما انحفظ سابقاً، الخادم يرفضه بدون خصم أو إضافة. ما بننشئ تحويل جديد.</p>${note('نتيجة الطلب السابق مب مؤكدة. عرض السجل وحده ما يؤكد نتيجته.', true)}<div class="action-row">${button(state.busy ? 'جاري التحقق…' : 'التحقق من نفس الإيصال السابق', 'convert-replay', locked(state, ctx), '', true)}${button('عرض السجل للتحقق', 'check-ledger', state.busy)}</div></section>`;
   }
@@ -77,12 +79,12 @@ function rewardsView(state, ctx) {
   return day + panel(`${icon('star')} مكافآت الإنجازات`, list);
 }
 function html(ctx, state) {
-  const hero = `<section class="hero"><div class="hero-symbol lbw-hero-symbol">${art('coins', 62)}${art('gems', 62)}</div><h1>المحفظة</h1><div class="subtitle">رصيدك ومشترياتك، كلّها في مكان واحد</div></section>`;
+  const hero = `<section class="hero"><div class="hero-symbol lbw-hero-symbol">${art('coins', 62)}</div><h1>المحفظة</h1><div class="subtitle">رصيدك ومشترياتك، كلّها في مكان واحد</div></section>`;
   if (!ctx.user) return `<div data-lb-page="wallet" class="lbw-page" dir="rtl">${hero}${panel('ادخل لحسابك', '<p>سجّل دخولك بحسابك الحالي عشان تشوف رصيدك ومعاملاتك. ما بننشئ لك حساب أو محفظة من هالصفحة.</p><a class="gold-btn" href="#/account">فتح صفحة الحساب</a>')}</div>`;
   const unavailable = ctx.connected === false ? note('الاتصال بالخادم مقطوع. الأرقام الظاهرة آخر رصيد متوفر؛ حدّث المحفظة عقب ما يرجع الاتصال.', true) : typeof ctx.req !== 'function' ? note('مساعد طلبات المحفظة مب متوفر بهالربط. العمليات مقفولة لين يكتمل الربط.', true) : '';
   const tabbar = `<div class="tabs lbw-tabs" aria-label="أقسام المحفظة">${tabs.map(([key, name, label]) => `<button type="button" data-lbw-action="tab" data-lbw-tab="${key}" class="${state.tab === key ? 'active' : ''}" aria-pressed="${state.tab === key}">${icon(name)}${label}</button>`).join('')}</div>`;
   const body = state.tab === 'packs' ? packsView(state, ctx) : state.tab === 'convert' ? conversionView(state, ctx) : state.tab === 'vip' ? vipView(state, ctx) : state.tab === 'rewards' ? rewardsView(state, ctx) : ledgerView(state, ctx);
-  return `<div data-lb-page="wallet" class="lbw-page" dir="rtl">${hero}${balanceCards(state, ctx)}<div class="lbw-toolbar"><p class="lbw-muted">العملات والجواهر افتراضية، مب فلوس قابلة للسحب.</p>${button(`${icon('clock')} تحديث المحفظة`, 'refresh', locked(state, ctx) || state.uncertain)}</div>${unavailable}${state.loading ? note('جاري تحميل المحفظة من الخادم…') : ''}${state.error ? note(state.error, true) : ''}${state.notice ? note(state.notice) : ''}${state.uncertain && state.tab !== 'convert' ? note('عندك تحويل نتيجته مب مؤكدة. افتح تحويل الرصيد عشان تعيد نفس الطلب؛ تحديث السجل ما يعني تأكيد التحويل.', true) : ''}${tabbar}<div class="lbw-tab-content" aria-busy="${state.loading || state.busy}">${body}</div></div>`;
+  return `<div data-lb-page="wallet" class="lbw-page" dir="rtl">${hero}${balanceCards(state, ctx)}<div class="lbw-toolbar"><p class="lbw-muted">العملات افتراضية، مب فلوس قابلة للسحب.</p>${button(`${icon('clock')} تحديث المحفظة`, 'refresh', locked(state, ctx) || state.uncertain)}</div>${unavailable}${state.loading ? note('جاري تحميل المحفظة من الخادم…') : ''}${state.error ? note(state.error, true) : ''}${state.notice ? note(state.notice) : ''}${state.uncertain && state.tab !== 'convert' ? note('عندك تحويل نتيجته مب مؤكدة. افتح تحويل الرصيد عشان تعيد نفس الطلب؛ تحديث السجل ما يعني تأكيد التحويل.', true) : ''}${tabbar}<div class="lbw-tab-content" aria-busy="${state.loading || state.busy}">${body}</div></div>`;
 }
 
 export function render(ctx = {}) { return html(ctx, stateFor(ctx)); }

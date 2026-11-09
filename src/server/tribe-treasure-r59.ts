@@ -13,9 +13,9 @@ import { ROCKET_PLANETS } from './room-rocket-r58.js';
 export const ROCKET_PRESTIGE = 3_000_000;
 export const TRIBE_GIFT = Object.freeze({ inside: { prestige: 1, fuelPer200: 16, wealthPer100: 1 }, outside: { prestige: 0.5, fuelPer200: 16, wealthPer200: 1 } });
 export const TRIBE_TASKS = Object.freeze([
-  Object.freeze({ id: 'gift-in', title: 'أرسل الهدايا في غرفة قبيلتك (كل 200 جوهرة)', fuel: 16, prestige: 200, wealth: 2, auto: true }),
-  Object.freeze({ id: 'gift-out', title: 'أرسل الهدايا خارج غرفة قبيلتك (كل 200 جوهرة)', fuel: 16, prestige: 100, wealth: 1, auto: true }),
-  Object.freeze({ id: 'shop', title: 'كل 100 جوهرة تنصرف على شراء الأغراض', fuel: 8, prestige: 0, wealth: 0, auto: true }),
+  Object.freeze({ id: 'gift-in', title: 'أرسل الهدايا في غرفة قبيلتك (كل 4,000 عملة)', fuel: 16, prestige: 200, wealth: 2, auto: true }),
+  Object.freeze({ id: 'gift-out', title: 'أرسل الهدايا خارج غرفة قبيلتك (كل 4,000 عملة)', fuel: 16, prestige: 100, wealth: 1, auto: true }),
+  Object.freeze({ id: 'shop', title: 'كل 2,000 عملة تنصرف على شراء الأغراض', fuel: 8, prestige: 0, wealth: 0, auto: true }),
   Object.freeze({ id: 'checkin', title: 'سجّل حضورك بصفحة القبيلة', fuel: 5, prestige: 5, wealth: 0, auto: false }),
   Object.freeze({ id: 'stay', title: 'ابقَ 5 دقايق في غرفة القبيلة', fuel: 5, prestige: 5, wealth: 0, auto: false }),
 ]);

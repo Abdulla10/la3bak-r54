@@ -1,21 +1,21 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
-import * as home from './home.js?v=r60b';
+import * as home from './home.js?v=r63a';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import {giftArt} from '../giftart.js?v=release-r14';
 import * as rooms from './rooms.js?v=r58p';
-import * as wallet from './wallet.js?v=r58p';
+import * as wallet from './wallet.js?v=r63b';
 import * as notifications from './notifications.js?v=r59d';
 import * as messages from './messages.js?v=r57';
 import * as friends from './friends.js?v=r58p';
 import * as drawer from './drawer.js?v=r59d';
-import * as ranking from './ranking.js?v=r62j';
+import * as ranking from './ranking.js?v=r63a';
 import * as games from './games.js?v=r57';
 import * as settings from './settings.js?v=r58p';
-import * as store from './store.js?v=r62m';
-import * as payments from './payments.js?v=r58p';
-import * as ranks from './ranks.js?v=r62m';
-import * as vip from './vip.js?v=r62m';
-import * as social from './social.js?v=r62m';
+import * as store from './store.js?v=r63b';
+import * as payments from './payments.js?v=r63a';
+import * as ranks from './ranks.js?v=r63b';
+import * as vip from './vip.js?v=r63b';
+import * as social from './social.js?v=r63b';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
 export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','devices','community','post','u','not-found']);
 export const hasRoute=name=>routes.includes(name);
@@ -45,7 +45,7 @@ export function headerHTML(ctx={}){
 // Both currency artworks are existing transparent vectors. No financial writes.
 export function walletStripHTML(ctx={}){
   if(ctx.page!=='home'||!ctx.user||!ctx.me||ctx.walletOwnerId!==ctx.user.id)return '';
-  return `<section class="lb-wallet-strip" aria-label="أرصدة حسابك؛ العملات للألعاب والجواهر للهدايا" dir="ltr">${[['coins','العملات'],['gems','الجواهر']].map(([key,label])=>`<div class="lb-wallet-capsule"><span class="lb-wallet-art" role="img" aria-label="${label}">${key==='coins'?icon('coin'):giftArt({motif:'diamond',cat:'luxury',variant:0,name:label},32)}</span><span class="lb-wallet-value"><small>${label}</small><b data-lb-balance="${key}" dir="ltr">${fmt(ctx[key]??ctx.me?.[key])}</b></span><a href="#/shop/packs/${key}" class="lb-wallet-plus" aria-label="فتح باقات ${label}">${plus}</a></div>`).join('')}</section>`;
+  return `<section class="lb-wallet-strip" aria-label="رصيد حسابك" dir="ltr">${[['coins','العملات']].map(([key,label])=>`<div class="lb-wallet-capsule"><span class="lb-wallet-art" role="img" aria-label="${label}">${key==='coins'?icon('coin'):giftArt({motif:'diamond',cat:'luxury',variant:0,name:label},32)}</span><span class="lb-wallet-value"><small>${label}</small><b data-lb-balance="${key}" dir="ltr">${fmt(ctx[key]??ctx.me?.[key])}</b></span><a href="#/shop/packs/${key}" class="lb-wallet-plus" aria-label="فتح باقات ${label}">${plus}</a></div>`).join('')}</section>`;
 }
 export function bottomHTML(page,ctx={}){
   const selected={account:'profile',ranks:'profile',vip:'profile',verification:'profile','rank-rewards':'profile',settings:'profile',family:'profile',auction:'home',missions:'profile',wallet:'profile','social-rooms':'rooms','social-room':'rooms',post:'community',u:'community',friends:'messages',notifications:'messages','notifications-internal':'messages',game:'home',hub:'home',room:'home',join:'home',games:'home',shop:'home',payments:'home',city:'home',lobby:'home',play:'home',offline:'home',daily:'home',challenge:'home',events:'home',tournaments:'home',leaderboard:'home'}[page]||page;

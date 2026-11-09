@@ -1,9 +1,9 @@
 /* R62: مكافأة دعوة صديق — تنصرف بس لما الصديق (المدعو) يربط حسابه بـGoogle ويلعب 3 مباريات مع لاعبين حقيقيين (مب ضد الكمبيوتر).
-   صاحب الدعوة: 2,000 عملة + 20 جوهرة، والمدعو: 1,000 عملة. حد أعلى 20 مكافأة دعوة بالشهر لكل شخص (حماية من الحسابات الوهمية).
+   صاحب الدعوة: 2,400 عملة، والمدعو: 1,000 عملة. حد أعلى 20 مكافأة دعوة بالشهر لكل شخص (حماية من الحسابات الوهمية).
    كل منحة بمفتاح ثابت (invite:<المدعو>:…) فما تتكرر أبدًا. */
 import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 
-export const INVITE_REWARD = Object.freeze({ inviter: { coins: 2000, gems: 20 }, invitee: { coins: 1000 }, games: 3, monthlyCap: 20 });
+export const INVITE_REWARD = Object.freeze({ inviter: { coins: 2400, gems: 0 }, invitee: { coins: 1000 }, games: 3, monthlyCap: 20 });
 type Data = { v: 1; done: Record<string, number>; months: Record<string, { key: string; n: number }> };
 const valid = (v: Record<string, unknown>) => v.v === 1 && isObj(v.done) && Object.values(v.done as object).every((x) => Number.isSafeInteger(x)) && isObj(v.months);
 const monthOf = (t: number) => new Date(t + 4 * 3600_000).toISOString().slice(0, 7);
@@ -32,9 +32,8 @@ export class InviteRewards {
       const k = monthOf(this.now()); this.d.months[x.by] = { key: k, n: this.count(x.by) + 1 }; this.d.done[x.id] = this.now(); this.disk.mustSave();
       const friend = this.deps.name(x.id) || 'صديقك', inviter = this.deps.name(x.by) || 'صديقك';
       this.deps.grant(x.by, 'coins', INVITE_REWARD.inviter.coins, `مكافأة دعوة ${friend}`, `invite:${x.id}:by-c`);
-      this.deps.grant(x.by, 'gems', INVITE_REWARD.inviter.gems, `مكافأة دعوة ${friend}`, `invite:${x.id}:by-g`);
       this.deps.grant(x.id, 'coins', INVITE_REWARD.invitee.coins, `هدية الانضمام عن طريق ${inviter}`, `invite:${x.id}:me-c`);
-      this.deps.notify(x.by, '🎉 مكافأة دعوة صديق', `${friend} ربط حسابه ولعب ${INVITE_REWARD.games} مباريات. أخذت ${INVITE_REWARD.inviter.coins.toLocaleString('en-US')} عملة و${INVITE_REWARD.inviter.gems} جوهرة.`, `invite-by-${x.id.slice(0, 30)}`);
+      this.deps.notify(x.by, '🎉 مكافأة دعوة صديق', `${friend} ربط حسابه ولعب ${INVITE_REWARD.games} مباريات. أخذت ${INVITE_REWARD.inviter.coins.toLocaleString('en-US')} عملة.`, `invite-by-${x.id.slice(0, 30)}`);
       this.deps.notify(x.id, '🎁 هدية الانضمام', `لأنك انضميت عن طريق ${inviter}، أخذت ${INVITE_REWARD.invitee.coins.toLocaleString('en-US')} عملة.`, `invite-me-${x.id.slice(0, 30)}`);
       n++;
     }

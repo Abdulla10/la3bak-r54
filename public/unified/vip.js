@@ -1,8 +1,8 @@
 /* VIP BODY only. No client crediting, balance deduction, fake perks or sample packs.
  * Only server-approved offers can proceed to preview and explicit confirmation. */
 import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r58i';
-import * as R from './rank-vip-shared.js?v=r58p';
-import * as V from './vip-noble-r52.js?v=r62m';
+import * as R from './rank-vip-shared.js?v=r63a';
+import * as V from './vip-noble-r52.js?v=r63b';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 const STATUS_NAMES = Object.freeze({ active: 'عضوية نشطة', inactive: 'عضوية غير مفعّلة', expired: 'انتهت صلاحية العضوية', legacy: 'رتبة VIP سابقة · دون عضوية مؤرخة' });
 const BENEFIT_SYMBOLS = Object.freeze({ frame: 'frame', title: 'crown', badge: 'medal', bg: 'image', background: 'image', effect: 'star', social: 'users' });
@@ -29,7 +29,7 @@ export function validPrice(price) { return obj(price) && ['coins', 'gems'].inclu
 export function availablePackage(pack, data) {
   return data?.enabled === true && data?.purchasesEnabled !== false && obj(pack) && R.identifier(pack.id) && typeof pack.name === 'string' && Boolean(pack.name.trim()) && pack.approved === true && pack.available === true && validPrice(pack.price) && nat(pack.points) && pack.points > 0 && nat(pack.durationDays) && pack.durationDays > 0;
 }
-function priceText(price) { return validPrice(price) ? `${fmt(price.amount)} ${price.cur === 'coins' ? 'عملة' : 'جوهرة'}` : 'السعر غير معتمد'; }
+function priceText(price) { return validPrice(price) ? `${fmt(price.cur === 'gems' ? price.amount * 20 : price.amount)} عملة` : 'السعر غير معتمد'; }
 function progressionOf(state, ctx) { return obj(state.data?.progression) ? state.data.progression : ctx.me?.progression?.vip; }
 function benefitEntries(data) { return list(data?.benefits).filter(row => obj(row) && R.identifier(row.id) && typeof row.name === 'string' && Boolean(row.name.trim()) && nat(row.level) && row.level >= 1 && row.level <= 15); }
 /* ---------- R52: واجهة VIP بتصميم المرجع (بطاقة ثابتة، شبكة امتيازات، شريط شحن سفلي) ---------- */
@@ -99,7 +99,7 @@ function packagesSheet(state, ctx) {
   const body = packages.length ? `<div class="vx-packs">${packages.map((pack) => {
     const allowed = availablePackage(pack, state.data) && R.canWrite(ctx) && !state.busy && !state.loading;
     return `<article class="vx-pack" data-lbv-package="${esc(pack.id)}"><span class="vx-pack-crown">${V.glyph('crown')}</span><div><b>${esc(typeof pack.name === 'string' ? pack.name : 'باقة')}</b><small>${V.num(pack.points)} نقطة خبرة VIP · ${nat(pack.durationDays) && pack.durationDays > 0 ? `${fmt(pack.durationDays)} يوم` : 'المدة غير معتمدة'}</small></div><button class="vn-gold-btn sm" type="button" data-lbv-action="preview" data-lbv-id="${esc(pack.id)}" ${allowed ? '' : 'disabled aria-disabled="true"'}>${state.busy === pack.id ? '…' : allowed ? esc(priceText(pack.price)) : 'غير متاح'}</button></article>`;
-  }).join('')}</div><p class="vn-note">السعر يُدفع من محفظتك (عملات أو جواهر) ويتأكد منه الخادم قبل الحفظ. نقاط خبرة VIP ليست عملات.</p>`
+  }).join('')}</div><p class="vn-note">السعر يُدفع من محفظتك (بالعملات) ويتأكد منه الخادم قبل الحفظ. نقاط خبرة VIP ليست عملات.</p>`
     : `<p class="vn-empty">${state.data?.enabled === false ? 'شراء عضوية VIP غير مفعّل حالياً.' : 'ما فيه باقات VIP معتمدة حالياً.'} تقدر تجمع خبرة VIP من المباريات والهدايا، أو تشحن رصيدك من الباقات.</p><a class="vn-gold-btn" href="#/shop/packs/gems">باقات الشحن</a>`;
   return { title: 'اشحن VIP', body: body + (state.error ? `<p class="vn-error" role="alert">${esc(state.error)}</p>` : '') };
 }

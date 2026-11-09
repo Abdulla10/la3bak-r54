@@ -2,9 +2,9 @@
  * The versioned import deliberately shares the host's canonical SHOP singleton.
  * No catalogue, balances, cash prices, exchange rate or account is invented here.
  */
-import * as SHOP from '../shop.js?v=r62m';
+import * as SHOP from '../shop.js?v=r63b';
 import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
-import * as BACKGROUNDS from './backgrounds.js?v=r62m';
+import * as BACKGROUNDS from './backgrounds.js?v=r63b';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -107,7 +107,7 @@ function withoutBalanceProjections(content) {
   const purchase = content.querySelector('[data-act="shop-buy"]')?.closest('[role="dialog"]');
   if (purchase) {
     const item = d?.items?.find(entry => entry.id === SHOP.SH.confirm);
-    replaceParagraph(purchase, item ? `${item.name} · ${nf(item.price)} ${item.currency === 'gems' ? 'جوهرة' : 'عملة'}. السعر من الخادم؛ الرصيد المحدّث يظهر عقب تأكيد الحفظ.` : 'راجع سعر العنصر اللي اخترته. الخادم يتحقق من السعر والرصيد قبل حفظ الشراء.');
+    replaceParagraph(purchase, item ? `${item.name} · ${nf(item.price)} عملة. السعر من الخادم؛ الرصيد المحدّث يظهر عقب تأكيد الحفظ.` : 'راجع سعر العنصر اللي اخترته. الخادم يتحقق من السعر والرصيد قبل حفظ الشراء.');
   }
   const gemDialog = content.querySelector('[data-act="shop-gem-buy"]')?.closest('[role="dialog"]');
   if (gemDialog) {
@@ -144,7 +144,7 @@ function transformHTML(source) {
     // The same canonical balances are already shown by the common shell.
     const hint = head.querySelector('.hint');
     if (hint) {
-      hint.textContent = 'المظاهر شكلية بس. الأسعار وشروط الاستحقاق من الخادم، والعملات والجواهر افتراضية وما تتحول لفلوس. باقات الشحن لها صفحة مستقلة داخل المتجر؛ التوفر والأسعار ووضع الاختبار يتأكدون من الخادم.';
+      hint.textContent = 'المظاهر شكلية بس. الأسعار وشروط الاستحقاق من الخادم، والعملات افتراضية وما تتحول لفلوس. باقات الشحن لها صفحة مستقلة داخل المتجر؛ التوفر والأسعار ووضع الاختبار يتأكدون من الخادم.';
       head.replaceChildren(hint);
       head.className = 'panel lb-store-policy';
     } else head.remove();
@@ -197,7 +197,7 @@ export function render(ctx = {}) {
   else if (typeof ctx.req === 'function') body = stateHTML('loading', 'يالس نحمّل المظاهر والأسعار والمقتنيات من حسابك.');
   else body = stateHTML('unsupported', 'محتوى المتجر الحالي أو اتصال الطلبات مب متوفر. ما بنعرض منتجات أو رصيد تجريبي.');
   const connection = ctx.connected === false ? '<p class="lb-store-connection" role="status">الاتصال بالخادم مقطوع الحين. المعروض قد يكون آخر بيانات محفوظة؛ انتظر الاتصال قبل أي عملية.</p>' : '';
-  return `<div data-lb-page="store" class="lb-store" dir="rtl">${hero()}<a class="btn gold-btn lb-pack-entry" href="#/shop/packs">باقات العملات والجواهر · AED</a>${connection}${body}</div>`;
+  return `<div data-lb-page="store" class="lb-store" dir="rtl">${hero()}<a class="btn gold-btn lb-pack-entry" href="#/shop/packs">باقات العملات · AED</a>${connection}${body}</div>`;
 }
 
 export function mount(root, ctx = {}) {

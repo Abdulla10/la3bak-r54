@@ -24,7 +24,7 @@ export function rocketPanel(r) {
   return `<section class="rk58-panel"><div class="rk58-hero">${planet(target.stage, 'is-target')}${ship('is-hero')}<span>${r.finished ? 'وصل الصاروخ آخر كوكب اليوم 🎉' : `الوجهة: كوكب ${esc(target.name)} (${esc(r.stage)} من 7)`}</span></div>
   <div class="so-cannon-track" role="progressbar" aria-valuemin="0" aria-valuemax="${r.goal}" aria-valuenow="${r.progress}"><i style="transform:scaleX(${pct / 100})"></i></div>
   <p class="rk58-num"><b dir="ltr">⛽ ${nf(r.progress)} / ${nf(r.goal)}</b> <small>بترول الكوكب</small></p>
-  <p class="so-cannon-unit">كل جوهرة في هدايا الغرفة = لتر بترول. لما يكتمل بترول الكوكب يوصل له الصاروخ: أكثر 3 عبّوا بترول اليوم ياخذون جواهر وهدية، وواحد من الحاضرين (قاعد 3 دقايق أو أكثر) ياخذ هدية الحظ. الرحلة ترجع من أول كل يوم الساعة 12 بالليل.</p>
+  <p class="so-cannon-unit">كل 20 عملة في هدايا الغرفة = لتر بترول. لما يكتمل بترول الكوكب يوصل له الصاروخ: أكثر 3 عبّوا بترول اليوم ياخذون جواهر وهدية، وواحد من الحاضرين (قاعد 3 دقايق أو أكثر) ياخذ هدية الحظ. الرحلة ترجع من أول كل يوم الساعة 12 بالليل.</p>
   <button type="button" class="so-button so-primary so-cannon-support" data-so-action="open-panel" data-panel="gifts">أرسل هدية وعبّ بترول</button>
   <h3>أكثر من عبّى بترول اليوم</h3>${top}<h3>الكواكب وجوايزها</h3><ol class="rk58-planets">${planets}</ol></section>`;
 }
@@ -33,7 +33,7 @@ export function rocketLaunch(ev) {
   if (!ev || typeof ev.id !== 'string' || seen.has(ev.id) || document.hidden) return false; seen.add(ev.id);
   const n = document.createElement('section'); n.className = 'rk58-launch'; n.setAttribute('role', 'status');
   const mine = ev.gems > 0 || (Array.isArray(ev.gifts) && ev.gifts.length > 0);
-  const what = [ev.gems > 0 ? `${nf(ev.gems)} 💎` : '', ...(Array.isArray(ev.gifts) ? ev.gifts.map(esc) : [])].filter(Boolean).join(' + ');
+  const what = [ev.gems > 0 ? `${nf(ev.gems * 20)} 🪙` : '', ...(Array.isArray(ev.gifts) ? ev.gifts.map(esc) : [])].filter(Boolean).join(' + ');
   const ws = Array.isArray(ev.winners) ? ev.winners.filter((w) => w?.person?.name).map((w) => `<small>${MEDAL[w.rank - 1] || ''} ${esc(w.person.name)}</small>`).join('') : '';
   n.innerHTML = `<div class="rk58-dest">${planet(ev.stage, 'is-dest')}</div><div class="rk58-fly">${ship('is-fly')}<i class="rk58-flame" aria-hidden="true"></i></div>${Array.from({ length: 12 }, (_, k) => `<i class="rk58-smoke" style="--d:${k * 120}ms;--s:${0.6 + (k % 4) * 0.25}" aria-hidden="true"></i>`).join('')}${Array.from({ length: 18 }, (_, k) => `<i class="rk58-star" style="--x:${(k * 37) % 100}%;--d:${(k % 6) * 90}ms" aria-hidden="true"></i>`).join('')}<div class="rk58-card"><b>${ev.title ? esc(ev.title) : `🚀 وصل الصاروخ كوكب ${esc(ev.planet || '')}!`}</b>${mine ? `<span>${ev.rank > 0 ? `${MEDAL[ev.rank - 1]} مبروك! ` : '🍀 هدية الحظ لك! '}${what}</span>` : ''}${ws}${ev.luck?.name ? `<small>🍀 ${esc(ev.luck.name)}</small>` : ''}</div>`;
   document.body.appendChild(n);

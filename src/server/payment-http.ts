@@ -40,6 +40,7 @@ export function wirePaymentRoutes(httpRoutes: FunctionalHttp, payments: Payments
   httpRoutes.add('POST', '/api/payments/claims', wrap(async ctx => {
     fields(ctx, ['packId', 'key']);
     if (Object.keys(ctx.body).length !== 2 || !bounded(ctx.body.packId, 80) || !bounded(ctx.body.key, 80)) throw new FunctionalHttpError(400, 'معرّف الباقة ومفتاح العملية مطلوبين.');
+    if (process.env.SINGLE_CURRENCY !== '0' && String(ctx.body.packId).startsWith('gems-')) throw new FunctionalHttpError(410, 'باقات الجواهر انشالت — الموقع صار بالعملات بس.');
     const result = await payments.claim(ctx.user.id, ctx.body.packId as string, ctx.body.key as string);
     try { changed(ctx.user.id); } catch { /* The canonical wallet claim is committed; broadcast failure is not grant failure. */ }
     return result;
@@ -52,6 +53,7 @@ export function wirePaymentRoutes(httpRoutes: FunctionalHttp, payments: Payments
   httpRoutes.add('POST', '/api/payments/orders', wrap(ctx => {
     fields(ctx, ['packId', 'key', 'name', 'email']);
     if (!bounded(ctx.body.packId, 80) || !bounded(ctx.body.key, 80) || !bounded(ctx.body.name, 160) || !bounded(ctx.body.email, 254)) throw new FunctionalHttpError(400, 'راجع اسم صاحب الطلب والبريد ومفتاح العملية.');
+    if (process.env.SINGLE_CURRENCY !== '0' && String(ctx.body.packId).startsWith('gems-')) throw new FunctionalHttpError(410, 'باقات الجواهر انشالت — الموقع صار بالعملات بس.');
     return payments.create(ctx.user.id, ctx.body.packId as string, ctx.body.key as string, { name: ctx.body.name as string, email: ctx.body.email as string });
   }));
   httpRoutes.add('GET', '/api/payments/orders/:id', wrap(ctx => payments.get(ctx.user.id, ctx.params.id)));

@@ -431,6 +431,7 @@ export async function createApp(
   /* R60 (قرار المالك): الضيف (بدون Google) يتصفح بس، ويلعب ضد الكمبيوتر بدون جوايز. القفل هنا بالخادم.
    * يشتغل بس إذا الدخول بـGoogle مفعّل بالخادم (وإلا الضيف ما يقدر يربط حسابه أصلًا). GUEST_READONLY=0 يطفيه. */
   const GUEST_READONLY = process.env.GUEST_READONLY !== '0' && !!cfg.googleClientId;
+  const SINGLE_CUR = process.env.SINGLE_CURRENCY !== '0';
   /* R60b: مهلة للضيوف القدامى — اللي سجّلوا قبل تشغيل القفل ياخذون مهلة (افتراضيًا 14 يوم) يربطون فيها Google وكل شي شغال عندهم مع تنبيه.
      الضيف الجديد (بعد التشغيل) يتقفل على طول. بداية المهلة تنحفظ بملف صغير عشان ما تتجدد مع كل إعادة تشغيل.
      GUEST_LOCK_AT=2026-12-01 يحدد تاريخ القفل بنفسه، GUEST_GRACE_DAYS=0 يلغي المهلة. */
@@ -468,6 +469,8 @@ export async function createApp(
     const pr = progress(id); const got = new Set(wallet.claimed(id)); const owned = new Set(wallet.owned(id));
     const ranks = { level: pr.progression.level.value, vip: pr.progression.vip.enabled && pr.progression.vip.value ? Number(pr.progression.vip.value.slice(1)) : 0, noble: pr.progression.noble.enabled && pr.progression.noble.value ? Number(pr.progression.noble.value.slice(1)) : 0 };
     const allItems = shopcat.all().map((i) => ({ id: i.id, slot: i.slot, name: i.name, icon: i.icon, desc: i.desc, price: i.price, currency: i.currency, permanent: i.permanent, css: i.css, art: i.art, active: i.active, retired: !i.active, status: i.status, minLevel: i.minLevel, minVip: i.minVip, minNoble: i.minNoble, ...(i.offer ? { offer: i.offer } : {}), eligibility: shopEligibility(i, ranks), rarity: i.rarity ?? 'common', set: i.set ?? null, season: i.season ?? null, kids: !!i.kids, ...(i.backgroundCategory ? {backgroundCategory:i.backgroundCategory,priceApproved:i.priceApproved} : {}), ...(i.slot === 'entrance' ? { proposalOnly:i.proposalOnly, priceApproved:i.priceApproved } : {}) }));
+    // R63: عملة وحدة — أسعار الجواهر تنعرض عملات (×20)، والشراء يقبل السعر المعروض
+    if (SINGLE_CUR) for (const x of allItems as any[]) if (x.currency === 'gems') { x.currency = 'coins'; x.price = x.price * 20; if (x.offer) x.offer = { ...x.offer, was: x.offer.was * 20 }; }
     return {
       ok: true, canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), equipped: wallet.equipped(id), equippedView: equippedView(id),
       // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
@@ -523,7 +526,8 @@ export async function createApp(
       if (it.slot === 'entrance') return { ok: false, code: 'unavailable', error: 'هذا القسم غير متاح.' };
       if (achOf(it.id)) return { ok: false, code: 'reserved', error: 'هذا المعرّف مخصص لإنجاز مكتسب، ولا يُشترى.' };
       // السعر دائماً من الخادم. لو العميل أرسل السعر اللي شافه وتغيّر، نرفض ونرجّع المتجر محدّثاً (ما نخصم سعراً ما شافه).
-      if ((m.seen !== undefined && m.seen !== it.price) || (m.seenCur !== undefined && m.seenCur !== it.currency)) return { ...shopView(id), ok: false, error: 'تغيّر سعر العنصر أو نوع عملته. راجع العرض الجديد.', code: 'price' };
+      const shownPrice = SINGLE_CUR && it.currency === 'gems' ? it.price * 20 : it.price, shownCur = SINGLE_CUR && it.currency === 'gems' ? 'coins' : it.currency;
+      if ((m.seen !== undefined && m.seen !== it.price && m.seen !== shownPrice) || (m.seenCur !== undefined && m.seenCur !== it.currency && m.seenCur !== shownCur)) return { ...shopView(id), ok: false, error: 'تغيّر سعر العنصر أو نوع عملته. راجع العرض الجديد.', code: 'price' };
       if (!it.active) return { ok: false, error: wallet.owned(id).includes(it.id) ? 'تملك هذا العنصر من قبل.' : 'هذا العنصر غير متاح للشراء حالياً.', code: 'inactive' };
       if (!eligibleItem(id, it)) return { ok: false, code: 'rank_required', error: 'رتبتك الحالية ما تستوفي شرط فتح العنصر.' };
       // R57: الأيدي المميز: محجوز؟ نرفض. نثبّته قبل الخصم ونرجّعه لو الخصم فشل (كل هذا متزامن بدون انتظار)
@@ -537,7 +541,7 @@ export async function createApp(
       if (it.slot === 'room-id' && wallet.anyOwner(it.id, id)) return { ...shopView(id), ok: false, code: 'taken', error: 'أيدي الغرفة هذا انباع لحساب ثاني.' };
       const r = wallet.buy(id, it, String(m.key ?? ''));
       if (!r.ok && prevSpecial !== undefined) { try { accounts.setSpecialPlayerId(id, prevSpecial); } catch { /* يبقى كما هو؛ ما فيه خصم */ } }
-      if (!r.ok) return { ok: false, error: r.code === 'owned' ? 'تملك هذا العنصر من قبل.' : r.code === 'poor' ? (it.currency === 'gems' ? 'جواهرك ما تكفي.' : 'عملاتك ما تكفي.') : 'طلب غير صالح.', code: r.code };
+      if (!r.ok) return { ok: false, error: r.code === 'owned' ? 'تملك هذا العنصر من قبل.' : r.code === 'poor' ? 'عملاتك ما تكفي.' : 'طلب غير صالح.', code: r.code };
       if (!r.dup && it.currency === 'gems') { try { treasure.shopSpend(id, Number(it.price) || 0); } catch { /* وقود القبيلة بس */ } }
       return { ...shopView(id), bought: it.id, dup: r.dup };
     }
@@ -604,11 +608,11 @@ export async function createApp(
     const g=giftcat.get(m.gift);if(!g?.active)return{ok:false,error:'هذي الهدية غير متاحة.'};
     if(m.seen!==g.price||m.seenPolicy!==GIFT_REWARD_POLICY.id)return{ok:false,error:'تغيّر عرض الهدية. راجع السعر والجواهر قبل الإرسال.',code:'price'};
     const quote=quoteGiftBatch(g.price,m.qty,m.to.length);if(!quote)return{ok:false,error:'قيمة الهدايا تتجاوز الحد الآمن.',code:'bad'};
-    if(quote.total>=GIFT_CONFIRM_AT&&m.confirm!==true)return{ok:false,error:`مجموع ${quote.total.toLocaleString('en-US')} جوهرة لجميع المستلمين يحتاج تأكيد.`,code:'confirm',total:quote.total};
+    if(quote.total>=GIFT_CONFIRM_AT&&m.confirm!==true)return{ok:false,error:`مجموع ${(quote.total*20).toLocaleString('en-US')} عملة لجميع المستلمين يحتاج تأكيد.`,code:'confirm',total:quote.total};
     if(m.to.some((to:string)=>!accounts.has(to)||!wallet.has(to)||platform.isBanned(to)))return{ok:false,error:'أحد المستلمين غير متاح. لم تُرسل أي هدية.',code:'noto'};
     const fromName=accounts.nameOf(user.id)||user.name,toNames=Object.fromEntries(m.to.map((to:string)=>[to,accounts.nameOf(to)||'لاعب']));
     const r=wallet.sendGiftBatch(user.id,m.to,g,m.qty,m.key,scope,fromName,toNames);
-    if(!r.ok)return{ok:false,error:r.code==='poor'?'جواهرك لا تكفي للمجموع. لم تُرسل أي هدية.':r.code==='self'?'ما تقدر ترسل هدية لنفسك.':'طلب الهدايا مب صالح. لم تُرسل أي هدية.',code:r.code};
+    if(!r.ok)return{ok:false,error:r.code==='poor'?'عملاتك ما تكفي للمجموع. ما انرسلت أي هدية.':r.code==='self'?'ما تقدر ترسل هدية لنفسك.':'طلب الهدايا مب صالح. لم تُرسل أي هدية.',code:r.code};
     if(!r.dup){for(const child of r.receipts)cpGift(user.id,child.to,child.rec);sendToUser(user.id,{t:'wallet',coins:r.coins,gems:r.gems,won:0});for(const child of r.receipts){sendToUser(child.to,{t:'wallet',coins:child.toCoins,gems:child.toGems,won:0});const incoming={...child.rec,dir:'in' as const};sendToUser(child.to,{t:'gift',gift:giftPub(incoming),ev:giftEvent(child.rec,true)});}}
     return{ok:true,dup:r.dup,batchId:r.batchId,coins:r.coins,gems:r.gems,gifts:r.receipts.map(c=>giftPub(c.rec)),evs:r.receipts.map(c=>giftEvent(c.rec,true)),aggregate:r.quote};
   };
@@ -641,13 +645,13 @@ export async function createApp(
     // An old unresolved client is never silently charged gems under a quote it did not see.
     if(m.seenPolicy!==GIFT_REWARD_POLICY.id)return{ok:false,error:'تغيّرت حسبة الهدية. حدّث الهدايا وراجع تكلفة الجواهر والعائد قبل الإرسال.',code:'price'};
     const quote=quoteGiftRewards(g.price,qty);if(!quote||quote.total>1_000_000)return{ok:false,error:'قيمة الهدية تتجاوز الحد الآمن.',code:'bad'};
-    if(quote.total>=GIFT_CONFIRM_AT&&m.confirm!==true)return{ok:false,error:`هدية بقيمة ${quote.total.toLocaleString('en-US')} جوهرة تحتاج تأكيد.`,code:'confirm',total:quote.total};
+    if(quote.total>=GIFT_CONFIRM_AT&&m.confirm!==true)return{ok:false,error:`هدية بقيمة ${(quote.total*20).toLocaleString('en-US')} عملة تحتاج تأكيد.`,code:'confirm',total:quote.total};
     let room:{code:string;players:{id:string;name:string}[]}|null=null;
     if(!trustedSocial&&m.code!==undefined){room=await service.humansFor(user,m.code);if(!room)return{ok:false,error:'لازم تكون عضوًا بالغرفة عشان ترسل منها.'};if(!room.players.some(p=>p.id===to))return{ok:false,error:'المستلم مو موجود بالغرفة الحين.',code:'noto'};}
     if(!accounts.has(to)||!wallet.has(to)||platform.isBanned(to))return{ok:false,error:'هذا اللاعب غير متاح لاستلام الهدايا.',code:'noto'};
     const fromName=accounts.nameOf(id)||user.name,toName=room?.players.find(p=>p.id===to)?.name||accounts.nameOf(to)||'لاعب';
     const r=wallet.sendGift(id,to,g,String(m.key??''),fromName,toName,{qty,room:trustedSocial?.room??room?.code});
-    if(!r.ok)return{ok:false,error:r.code==='poor'?'جواهرك ما تكفي لهذي الهدية.':r.code==='self'?'ما تقدر ترسل هدية لنفسك.':r.code==='noto'?'هذا اللاعب غير متاح لاستلام الهدايا.':'طلب غير صالح.',code:r.code};
+    if(!r.ok)return{ok:false,error:r.code==='poor'?'عملاتك ما تكفي لهذي الهدية.':r.code==='self'?'ما تقدر ترسل هدية لنفسك.':r.code==='noto'?'هذا اللاعب غير متاح لاستلام الهدايا.':'طلب غير صالح.',code:r.code};
     const ev=giftEvent(r.rec,!!trustedSocial);
     if(!r.dup){
       cpGift(id,to,r.rec);
@@ -708,7 +712,7 @@ export async function createApp(
       { id: 'daily-mic-15', title: 'اقعد على المايك 15 دقيقة', scope: 'daily', metric: 'micMinutes', goal: 15, active: true, rewards: { coins: 300 } },
       { id: 'daily-gifts-3', title: 'أرسل 3 هدايا', scope: 'daily', metric: 'giftsSent', goal: 3, active: true, rewards: { coins: 200 } },
       { id: 'daily-games-2', title: 'العب جولتين', scope: 'daily', metric: 'gamesPlayed', goal: 2, active: true, rewards: { coins: 200 } },
-      { id: 'weekly-mic-120', title: 'ساعتين على المايك هالأسبوع', scope: 'weekly', metric: 'micMinutes', goal: 120, active: true, rewards: { gems: 30 } },
+      { id: 'weekly-mic-120', title: 'ساعتين على المايك هالأسبوع', scope: 'weekly', metric: 'micMinutes', goal: 120, active: true, rewards: { coins: 600 } },
       { id: 'weekly-games-15', title: 'العب 15 جولة هالأسبوع', scope: 'weekly', metric: 'gamesPlayed', goal: 15, active: true, rewards: { coins: 2000 } },
     ]);
   } catch (e) { log('missions_seed_failed', { error: String((e as Error).message).slice(0, 100) }); }
@@ -993,6 +997,16 @@ export async function createApp(
   /* R61: نسخة احتياطية يومية (داخل مجلد البيانات/backups) — BACKUP_ENABLED=0 يطفيها، BACKUP_KEEP عدد النسخ، BACKUP_MEDIA=1 يضيف الصور */
   const backups = cfg.walletFile && process.env.BACKUP_ENABLED !== '0' ? new Backups({ dir: path.dirname(cfg.walletFile), keep: Number(process.env.BACKUP_KEEP) || 14, media: process.env.BACKUP_MEDIA === '1', log, extraFiles: () => [cfg.walletFile, boardFile, accFile, platFile, economyFile, progressionFile, shopFile, idFile, giftFile, cityFile, comFile, accountToolsFile, socialFile, socialRoomsFile, profileSocialFile, missionsFile, rankRewardsFile, supportFile, outboxFile, sessionsFile, paymentsFile, vipMembershipFile, cpFile].filter((v): v is string => !!v) }) : null;
   backups?.start(Number(process.env.BACKUP_FIRST_DELAY_MS) || 120_000);
+  /* R63: عملة وحدة — الجواهر تتحول لعملات (جوهرة = 20 عملة). أول مرة: نسخة احتياطية قبل التحويل. وبعدها كل دقيقة أي جواهر جديدة (جوايز قديمة) تتحول. */
+  const SINGLE = process.env.SINGLE_CURRENCY !== '0';
+  const sweepAll = (reason: string) => { if (!SINGLE) return 0; let n = 0, g = 0; for (const id of wallet.withGems()) { try { const x = wallet.sweepGems(id); if (x) { n++; g += x; sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }); } } catch (e) { log('gems_sweep_failed', { error: String((e as Error).message).slice(0, 80) }); } } if (n) log('gems_swept', { reason, players: n, gems: g }); return n; };
+  if (SINGLE) {
+    const mark = cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'single-currency.json') : '';
+    let first = true; try { if (mark) first = !JSON.parse(readFileSync(mark, 'utf8')).migratedAt; } catch { first = true; }
+    if (first && wallet.withGems().length) { try { backups?.run('before-gems-to-coins'); } catch (e) { log('gems_backup_failed', { error: String((e as Error).message).slice(0, 80) }); } }
+    const n = sweepAll('migration'); if (mark && first) { try { writeFileSync(mark, JSON.stringify({ migratedAt: Date.now(), players: n, rate: 20 })); } catch { /* */ } }
+  }
+  const gemsTimer = setInterval(() => sweepAll('periodic'), 60_000); gemsTimer.unref?.();
   /* R61: حالة الموقع للوحة التحكم — كل فحص يرجع ok/warn/bad مع شرح بالعربي */
   const bootAt = Date.now();
   async function healthReport() {
@@ -1728,6 +1742,7 @@ export async function createApp(
     clearInterval(micTimer);
     clearInterval(warTimer);
     clearInterval(seasonTimer);
+    clearInterval(gemsTimer);
     clearInterval(inviteTimer);
     devices.stop();
     admin.stop();

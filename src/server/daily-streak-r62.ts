@@ -4,7 +4,7 @@ import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 
 export const STREAK_LADDER = Object.freeze([
   { day: 1, coins: 0, gems: 0 }, { day: 2, coins: 100, gems: 0 }, { day: 3, coins: 200, gems: 0 }, { day: 4, coins: 300, gems: 0 },
-  { day: 5, coins: 500, gems: 0 }, { day: 6, coins: 800, gems: 0 }, { day: 7, coins: 1300, gems: 50 },
+  { day: 5, coins: 500, gems: 0 }, { day: 6, coins: 800, gems: 0 }, { day: 7, coins: 2300, gems: 0 },
 ]);
 export const BASE_DAILY = 200;
 type Rec = { last: string; n: number; best: number };

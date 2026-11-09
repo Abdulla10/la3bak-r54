@@ -1,12 +1,12 @@
 /* R62: موسم الترتيب الشهري — بنهاية كل شهر (توقيت الخليج) أوائل ترتيب الشهر ياخذون إطار حصري (ما ينباع) وجواهر.
-   الأول: «إطار بطل الموسم» + 500 جوهرة، الثاني: «إطار وصيف الموسم» + 300، الثالث: «إطار ثالث الموسم» + 200، من الرابع للعاشر: 100 جوهرة.
+   الأول: «إطار بطل الموسم» + 10,000 عملة، الثاني: «إطار وصيف الموسم» + 6,000، الثالث: «إطار ثالث الموسم» + 4,000، من الرابع للعاشر: 2,000 عملة.
    المنح تمر بـ grantCampaignBatch بمعرّف ثابت لكل شهر ومركز (ما تتكرر حتى لو انعاد التشغيل). */
 import { createHash } from 'node:crypto';
 import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 
 export const SEASON_PRIZES = Object.freeze([
-  { rank: 1, gems: 500, itemId: 'art-f3-42' }, { rank: 2, gems: 300, itemId: 'art-f3-39' }, { rank: 3, gems: 200, itemId: 'art-f3-40' },
-  ...[4, 5, 6, 7, 8, 9, 10].map((rank) => ({ rank, gems: 100, itemId: '' })),
+  { rank: 1, coins: 10000, itemId: 'art-f3-42' }, { rank: 2, coins: 6000, itemId: 'art-f3-39' }, { rank: 3, coins: 4000, itemId: 'art-f3-40' },
+  ...[4, 5, 6, 7, 8, 9, 10].map((rank) => ({ rank, coins: 2000, itemId: '' })),
 ]);
 type Rec = { at: number; winners: { id: string; name: string; rank: number; points: number }[] };
 type Data = { v: 1; months: Record<string, Rec>; since?: number };
@@ -42,12 +42,12 @@ export class MonthlySeason {
     for (const w of rec.winners) {
       const p = SEASON_PRIZES[w.rank - 1]; if (!p) continue;
       const itemIds = p.itemId && this.deps.itemOk(p.itemId) ? [p.itemId] : [];
-      const campaignId = asUuid(hash(['season-r62', key, w.rank, w.id])), reward = { coins: 0, gems: p.gems, itemIds };
+      const campaignId = asUuid(hash(['season-r62', key, w.rank, w.id])), reward = { coins: p.coins, gems: 0, itemIds };
       const reason = `جايزة موسم ${monthLabel(key)} — المركز ${w.rank}`;
       try {
         const res = this.deps.grant(campaignId, hash(['season-r62', key, w.rank, w.id, reward, reason]), [w.id], reward, reason);
         if (res[0]?.status === 'failed') this.deps.log?.('season_grant_failed', { key, rank: w.rank });
-        this.deps.notify(w.id, `🏆 مبروك! المركز ${w.rank} بموسم ${monthLabel(key)}`, `أخذت ${p.gems} جوهرة${itemIds.length ? ` و«${w.rank === 1 ? 'إطار بطل الموسم' : w.rank === 2 ? 'إطار وصيف الموسم' : 'إطار ثالث الموسم'}» الحصري` : ''}. تلقاها بمحفظتك وأغراضك.`, `season-${key}-${w.rank}`);
+        this.deps.notify(w.id, `🏆 مبروك! المركز ${w.rank} بموسم ${monthLabel(key)}`, `أخذت ${p.coins.toLocaleString('en-US')} عملة${itemIds.length ? ` و«${w.rank === 1 ? 'إطار بطل الموسم' : w.rank === 2 ? 'إطار وصيف الموسم' : 'إطار ثالث الموسم'}» الحصري` : ''}. تلقاها بمحفظتك وأغراضك.`, `season-${key}-${w.rank}`);
       } catch (e) { this.deps.log?.('season_grant_error', { key, rank: w.rank, error: String((e as Error).message).slice(0, 100) }); }
     }
     return rec;

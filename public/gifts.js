@@ -1,5 +1,5 @@
 import { mini } from './avatars.js?v=r59d';
-import { safeGiftArt as giftArt, giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon } from './gift-reward-ui.js?v=r57';
+import { safeGiftArt as giftArt, giftRewardQuote, giftRewardEventQuote, giftRewardCard, giftCurrencyName, giftCurrencyIcon, ONE_CUR, GEM_RATE, shownAmt } from './gift-reward-ui.js?v=r63a';
 /* الهدايا: نافذة اختيار بأقسام وبحث وفرز وعدد، داخل الغرفة (طبقة ثابتة فوق اللعب، ما تقفل الغرفة) أو من المتجر.
    الأسعار وعروض مكافآت العملات والتحقق والخصم من الخادم؛ لا يحسب العميل المكافآت ولا يضيف أرصدة،
    وما يعرض الحركة أو رسالة المحادثة إلا بعد ما يوصل حدث مؤكد من الخادم. */
@@ -21,7 +21,7 @@ const fixedDraft = () => G.busy || !!pendingSend || !!G.key;
 export function giftAffordability(giftId = G.sel) {
   if (pendingSend) return {allowed:true,pending:true,quote:pendingSend.quote};
   const gift = G.list?.find(g => g.id === giftId), quote = giftRewardQuote(gift,G.qty);
-  const balance = quote ? G[quote.cur] : null;
+  const balance = quote ? (quote.cur === 'gems' && ONE_CUR ? (Number.isFinite(G.gems) || Number.isFinite(G.coins) ? (G.gems || 0) + Math.floor((G.coins || 0) / GEM_RATE) : null) : G[quote.cur]) : null;
   return {allowed:!!quote && Number.isFinite(balance) && balance >= quote.total,quote,balance};
 }
 export const TRIAL = 'تحت التجربة';
@@ -73,7 +73,7 @@ export async function send(req, giftId, confirmed = false) {
   if (!g && !pendingSend) return null;
   const quote = pendingSend ? pendingSend.quote : G.key ? null : giftRewardQuote(g,G.qty);
   if (!pendingSend && !G.key && !quote) return {ok:false,error:'عرض مكافآت الخادم غير صالح لهذه الكمية؛ حدّث الهدايا.'};
-  if (!pendingSend && !G.key && !giftAffordability(giftId).allowed) return {ok:false,error:'رصيد الجواهر غير متاح أو لا يكفي لهذه الهدية.'};
+  if (!pendingSend && !G.key && !giftAffordability(giftId).allowed) return {ok:false,error:'رصيدك من العملات ما يكفي لهذه الهدية.'};
   const total = pendingSend ? pendingSend.body.seen * pendingSend.body.qty : quote?.total ?? g.price * G.qty;
   if (!pendingSend && !G.key && total >= G.confirmAt && !confirmed) { G.confirm = { id: g.id, total }; return { ok: false, pending: true }; }
   // نفس المفتاح لنفس (المستلم، الهدية، العدد، الغرفة) لين النجاح أو الرفض القاطع: إعادة المحاولة بعد انقطاع ما تخصم مرتين
@@ -101,8 +101,8 @@ export async function send(req, giftId, confirmed = false) {
 const RCLS = ['r0', 'r1', 'r2', 'r3', 'r4', 'r5'];
 function cardHTML(g) {
   const on = G.sel === g.id, allowed = giftAffordability(g.id).allowed, cur = g.cur || G.cur;
-  return `<li><button type="button" class="gs-card ${RCLS[g.rarity]}${on ? ' on' : ''}${!allowed ? ' poor' : ''}" data-act="gs-pick" data-id="${esc(g.id)}" aria-pressed="${on}" aria-label="${esc(g.name)} ${nf(g.price)} ${giftCurrencyName(cur)}، ${esc(G.rarity[g.rarity] || '')}" ${fixedDraft() ? 'disabled' : ''}>
-    <span class="gs-rare">${esc(G.rarity[g.rarity] || '')}</span>${giftArt(g, 58)}<b>${esc(g.name)}</b><span class="gs-price">${giftCurrencyIcon(cur)} ${nf(g.price)}</span>
+  return `<li><button type="button" class="gs-card ${RCLS[g.rarity]}${on ? ' on' : ''}${!allowed ? ' poor' : ''}" data-act="gs-pick" data-id="${esc(g.id)}" aria-pressed="${on}" aria-label="${esc(g.name)} ${nf(shownAmt(g.price, cur))} ${giftCurrencyName(cur)}، ${esc(G.rarity[g.rarity] || '')}" ${fixedDraft() ? 'disabled' : ''}>
+    <span class="gs-rare">${esc(G.rarity[g.rarity] || '')}</span>${giftArt(g, 58)}<b>${esc(g.name)}</b><span class="gs-price">${giftCurrencyIcon(cur)} ${nf(shownAmt(g.price, cur))}</span>
     ${on && !fixedDraft() ? `<span class="gs-send" ${allowed ? `data-act="gs-send" data-id="${esc(g.id)}" role="button" tabindex="0"` : ''} aria-disabled="${!allowed}">${allowed ? 'إرسال' : 'رصيد أو عرض غير متاح'}</span>` : ''}</button></li>`;
 }
 function recipientsHTML() {

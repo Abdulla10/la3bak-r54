@@ -1,9 +1,9 @@
 /* R52: أدوات عرض مشتركة لصفحتي VIP ونوبل بتصميم المرجع (داكن، شبكة امتيازات، أوراق سفلية).
  * عرض فقط: كل رقم ومستوى وامتياز يأتي من بيانات الخادم الموجودة (التقدم، عضوية VIP، مكافآت الرتب، شروط عناصر المتجر)،
  * ولا يُخترع امتياز أو رقم. */
-import * as R from './rank-vip-shared.js?v=r58p';
+import * as R from './rank-vip-shared.js?v=r63a';
 // استيراد كمساحة أسماء: لو المتصفح عنده نسخة أقدم من shop.js بالكاش (بدون itemThumb) ما تنكسر الصفحة
-import * as SHOP from '../shop.js?v=r62m';
+import * as SHOP from '../shop.js?v=r63b';
 import { PERK_ITEMS } from '../rank-perks-r56.js?v=r58i';
 const { esc, obj, list, nat } = R;
 
@@ -93,7 +93,7 @@ export function rewardPolicies(raw, system) {
 }
 export function rewardRows(policy, items) {
   return list(policy?.rewards).map((r) => {
-    if (obj(r) && r.type === 'currency' && ['coins', 'gems'].includes(r.cur) && nat(r.amount)) return { kind: 'currency', name: `${num(r.amount)} ${r.cur === 'coins' ? 'عملة' : 'جوهرة'}`, sub: 'مكافأة الرتبة', art: hex(r.cur === 'coins' ? 'coin' : 'gem') };
+    if (obj(r) && r.type === 'currency' && ['coins', 'gems'].includes(r.cur) && nat(r.amount)) return { kind: 'currency', name: `${num(r.cur === 'gems' ? r.amount * 20 : r.amount)} عملة`, sub: 'مكافأة الرتبة', art: hex(r.cur === 'coins' ? 'coin' : 'gem') };
     if (obj(r) && r.type === 'item' && typeof r.itemId === 'string') {
       // R56: مقتنيات سلّم الرتب ما تنباع (ما تطلع بقائمة المتجر)، فنعرض صورتها من تعريفها المشترك
       const perk = PERK_ITEMS[r.itemId];

@@ -387,6 +387,38 @@ export class Wallet {
     this.disk = new Persister('wallet', file, () => this.d, now, mon);
     this.settleExpiredLuckyBags();
   }
+  /** R63: «عملة وحدة» — الجواهر انشالت من الموقع والكل يشوف عملات بس (جوهرة = 20 عملة).
+   * أي خصم بالجواهر (شراء، هدية، مزاد، حقيبة، مكافأة غرفة، باقة VIP) يحوّل قبله من العملات بالضبط اللي ناقص (بنفس النسبة)، بعملية محفوظة لحالها.
+   * التحويل محايد القيمة (الرصيد المعروض = عملات + جواهر × 20 ما يتغيّر)، فلو العملية بعده فشلت ما أحد يخسر شي. SINGLE_CURRENCY=0 يطفيه. */
+  static readonly COINS_PER_GEM = 20;
+  coverGems(id: string, need: number): boolean {
+    if (process.env.SINGLE_CURRENCY === '0' || !nat(need) || need <= 0 || !this.has(id)) return false;
+    const a = this.a(id), have = a.gems ?? 0; if (have >= need) return true;
+    const deficit = need - have, cost = deficit * Wallet.COINS_PER_GEM;
+    if (!nat(cost) || a.coins < cost || !this.auctionCanBalanceR47(id, 'coins', a.coins - cost) || !nat(have + deficit)) return false;
+    const sn = this.snap([id]);
+    a.coins -= cost; a.gems = have + deficit;
+    this.rec(id, 'coins', 'transfer', -cost, a.coins, 'تحويل تلقائي (عملة وحدة)', 'single-currency');
+    this.rec(id, 'gems', 'transfer', deficit, a.gems, 'تحويل تلقائي (عملة وحدة)', 'single-currency');
+    try { this.disk.mustSave(); } catch (e) { this.restore(sn); throw e; }
+    return true;
+  }
+  /** R63: يحوّل كل جواهر اللاعب لعملات (×20) — يُستخدم للتحويل الأول وبعد أي جوايز قديمة تنصرف بالجواهر. يرجع عدد الجواهر اللي انحولت. */
+  sweepGems(id: string): number {
+    if (process.env.SINGLE_CURRENCY === '0' || !this.has(id)) return 0;
+    const a = this.a(id), g = a.gems ?? 0; if (g <= 0) return 0;
+    const add = g * Wallet.COINS_PER_GEM; if (!nat(add) || !nat(a.coins + add) || !this.auctionCanBalanceR47(id, 'coins', a.coins + add)) return 0;
+    const sn = this.snap([id]);
+    a.gems = 0; a.coins += add;
+    this.rec(id, 'gems', 'transfer', -g, 0, 'تحويل الجواهر إلى عملات (جوهرة = 20 عملة)', 'single-currency');
+    this.rec(id, 'coins', 'transfer', add, a.coins, 'تحويل الجواهر إلى عملات (جوهرة = 20 عملة)', 'single-currency');
+    try { this.disk.mustSave(); } catch (e) { this.restore(sn); throw e; }
+    return g;
+  }
+  /** R63: اللاعبين اللي عندهم جواهر (للتحويل الدوري) */
+  withGems(): string[] { return Object.entries(this.d.acc).filter(([, a]) => (a.gems ?? 0) > 0).map(([id]) => id); }
+  /** R63: الرصيد الموحّد اللي ينعرض للاعب (عملات + جواهر × 20) */
+  unified(id: string): number { const a = this.d.acc[id]; return a ? a.coins + (a.gems ?? 0) * Wallet.COINS_PER_GEM : 0; }
   private snap(ids: string[]): Map<string, Acc> { return new Map(ids.map((id) => [id, structuredClone(this.a(id))])); }
   private restore(m: Map<string, Acc>) { for (const [id, a] of m) this.d.acc[id] = a; }
   private rec(id: string, cur: Cur, kind: LedgerEntry['kind'], delta: number, after: number, reason: string, ref = '', giftTx?: string, ts = this.now()) {
@@ -593,6 +625,7 @@ export class Wallet {
     if ((a.owned ?? []).includes(lot.item.id)) return { ok: false, code: 'owned' };
     if (amount < (lot.highest ? lot.highest.amount + 1 : Math.max(1, lot.item.price))) return { ok: false, code: 'low' };
     if (!this.auctionCapacityR47()) return { ok: false, code: 'capacity' };
+    { const held0 = lot.highest?.actor === actor ? lot.escrow : 0; if (cur === 'gems' && amount > held0) this.coverGems(actor, amount - held0); }
     const have = a[cur] ?? 0, ownHeld = lot.highest?.actor === actor ? lot.escrow : 0;
     if (have + ownHeld < amount) return { ok: false, code: 'poor' };
     const previous = lot.highest, receiptId = randomUUID();
@@ -726,6 +759,7 @@ export class Wallet {
     const ts = this.now(), opensAt = ts + delay * 1000, expiresAt = opensAt + 600_000;
     if (!nat(ts) || !nat(opensAt) || !nat(expiresAt)) return { ok: false, code: 'bad' };
     const total = bagUnit(offer) * count, cur = bagCur(offer), a = this.d.acc[from];
+    if (cur === 'gems') this.coverGems(from, total);
     const have = cur === 'coins' ? a.coins : a.gems ?? 0;
     if (have < total) return { ok: false, code: 'poor' };
     const bagId = randomUUID();
@@ -877,6 +911,7 @@ export class Wallet {
     if (!this.has(from) || !this.has(to)) return { ok: false, code: 'noto' };
     const ts = this.now(); if (!nat(ts)) return { ok: false, code: 'bad' };
     const a = this.d.acc[from], b = this.d.acc[to];
+    this.coverGems(from, amount);
     if ((a.gems ?? 0) < amount) return { ok: false, code: 'poor' };
     if (!nat((b.gems ?? 0) + amount)) return { ok: false, code: 'overflow' };
     const rewardId = randomUUID(), ref = `roomReward:${rewardId}`;
@@ -940,6 +975,7 @@ export class Wallet {
     const k = this.opKey(id, key);
     const a = this.a(id);
     if (item.permanent && (a.owned ?? []).includes(item.id)) return { ok: false, code: 'owned' };
+    if (item.currency === 'gems') this.coverGems(id, item.price);
     const bal = item.currency === 'coins' ? a.coins : (a.gems ?? 0);
     if (bal < item.price) return { ok: false, code: 'poor' };
     const sn = this.snap([id]); const opsBefore = this.d.buyOps;
@@ -990,6 +1026,7 @@ export class Wallet {
     const quote = quoteGiftRewards(gift.price, qty);
     if (!quote || gift.price > GIFT_GEMS_MAX || quote.total > GIFT_GEMS_MAX) return { ok: false, code: 'bad' };
     if (!this.has(from) || !this.has(to)) return { ok: false, code: 'noto' };
+    this.coverGems(from, quote.total);
     const a = this.d.acc[from], b = this.d.acc[to], { total, recv, house, senderBonus } = quote;
     if ((a.gems ?? 0) < total) return { ok: false, code: 'poor' };
     const ts = this.now(); if (!nat(ts)) return { ok: false, code: 'bad' };
@@ -1057,6 +1094,7 @@ export class Wallet {
     const quote = quoteGiftBatch(gift.price, qty, canonical.length); if (!quote) return { ok: false, code: 'bad' };
     if (!this.has(from) || !canonical.every(id => this.has(id))) return { ok: false, code: 'noto' };
     const a = this.d.acc[from], count = canonical.length, per = quote.perRecipient;
+    this.coverGems(from, quote.total);
     if ((a.gems ?? 0) < quote.total) return { ok: false, code: 'poor' };
     const ts = this.now(); if (!nat(ts)) return { ok: false, code: 'bad' };
     const sent = a.gSent ?? (a.gifts ?? []).filter(g => g.dir === 'out').length;
@@ -1215,6 +1253,7 @@ export class Wallet {
     const a = this.a(id);
     const prev = opKey ? this.d.admOps?.[opKey] : undefined;
     if (prev) return prev.id === id && prev.cur === cur && prev.delta === delta ? { ok: true, coins: a.coins, gems: a.gems ?? 0, before: prev.before, after: prev.after, dup: true } : { ok: false, code: 'bad' };
+    if (cur === 'gems' && delta < 0) this.coverGems(id, -delta);
     const have = cur === 'coins' ? a.coins : (a.gems ?? 0);
     if (have + delta < 0) return { ok: false, code: 'poor' };
     if (!this.auctionCanBalanceR47(id, cur, have + delta)) return { ok: false, code: 'bad' };

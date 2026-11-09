@@ -178,7 +178,7 @@ function rewardContent(ctx, entry) {
       const key = `currency:${reward.cur}`;
       if (seen.has(key)) valid = false;
       seen.add(key);
-      return `<li><b dir="ltr">${fmt(reward.amount)}</b> ${reward.cur === 'coins' ? 'عملة' : 'جوهرة'}</li>`;
+      return `<li><b dir="ltr">${fmt(reward.cur === 'gems' ? reward.amount * 20 : reward.amount)}</b> عملة</li>`;
     }
     if (reward.type === 'item' && typeof reward.itemId === 'string' && reward.itemId && reward.mode === 'grant') {
       const key = `item:${reward.itemId}`;

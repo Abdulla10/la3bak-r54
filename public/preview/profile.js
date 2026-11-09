@@ -6,12 +6,12 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=r62m';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r63b';
 import { avatarArt } from '../avatars.js?v=r59d';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r62m';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r63b';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r59d';
-import { rankSummary, renderRankOverview } from './rank-overview.js?v=r58c';
+import { rankSummary, renderRankOverview } from './rank-overview.js?v=r63a';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const arr = v => Array.isArray(v) ? v : [];
@@ -325,7 +325,7 @@ function profileMenu(ctx,s) {
  /* R54: قسم واحد «أصدقائي وتقدّمي» يجمع الأصدقاء والعائلة والهدايا والمظهر والدعوات والمستوى والمكافآت والمهام — صف واحد يفتح ويسكّر */
  const hubRows=`<p class="pvp-hub-sub">الأصدقاء والهدايا</p>${routeRow('friends','users','الأصدقاء','قائمة الأصدقاء وطلبات الصداقة',true)}${routeRow('family','users','العائلة والارتباط الافتراضي','دعوات اختيارية وموافقة وخصوصية',true)}${giftRow('incoming','الهدايا المستلمة')}${giftRow('outgoing','الهدايا المرسلة')}${invite}<p class="pvp-hub-sub">المظهر والتقدّم</p>${canEdit?actionRow('edit-appearance','frame','المظهر والمقتنيات','','الصورة والإطار والخلفية المملوكة'):''}${actionRow('tab','medal','الشارات والألقاب والإنجازات','data-tab="achievements"')}${actionRow('rank-system','chart','المستوى والخبرة','data-system="level"')}${routeRow('rank-rewards','trophy','مكافآت الرتب')}${routeRow('missions','file','المهام')}`;
  const hubSection=`<div class="pvp-menu-group pvp-hub${s.hubOpen?' is-open':''}" role="group" aria-label="أصدقائي وتقدّمي">${button('hub-toggle',`${badge('users')}<span class="pvp-menu-label">أصدقائي وتقدّمي<small class="pvp-hub-note">الأصدقاء، العائلة، الهدايا، المظهر، المستوى، المكافآت والمهام</small></span>${icon('back')}`,`aria-expanded="${s.hubOpen?'true':'false'}" aria-controls="pvp-hub-rows" data-pvp-hub-toggle`,'pvp-menu-row pvp-hub-toggle')}<div class="pvp-hub-rows" id="pvp-hub-rows"${s.hubOpen?'':' hidden'}>${hubRows}</div></div>`;
- return `<nav class="pvp-profile-menu pvp-menu-r53" aria-label="أقسام ملفي"><div class="pvp-profile-list" data-pvp-profile-list>${group(`${visitors}${selfPosts}`,'نشاطي')}${group(`${routeRow('wallet','coin','محفظتي','العملات والجواهر وشراء الباقات وسجل المعاملات')}${ctx.user?actionRow('tab','crown','حقيبتي','data-tab="inventory" data-pvp-bag','المقتنيات والتذكارات وجوايز الصاروخ'):''}${routeRow('shop/packs','coin','مركز العروض','الباقات المتاحة من الخادم')}${withValue(routeRow('vip','crown','VIP','عضويتك ومزاياها الحالية'),rankValue('vip'),' data-pvp-rank-value="vip" dir="ltr"')}${routeRow('leaderboard','ranking','ترتيب الرتبة')}${withValue(routeRow('ranks','medal','نوبل','رتب NOBLE المعتمدة'),rankValue('noble'),' data-pvp-rank-value="noble" dir="ltr"')}${routeRow('shop','shop','المركز التجاري','المتجر والمقتنيات الحالية')}`,'الحساب والمتجر')}${hubSection}${group(`${routeRow('settings','settings','الإعدادات','توثيق الحساب، المساعدة والدعم، الخصوصية، الشروط، وتسجيل الخروج')}`,'الإعدادات')}</div></nav>`;
+ return `<nav class="pvp-profile-menu pvp-menu-r53" aria-label="أقسام ملفي"><div class="pvp-profile-list" data-pvp-profile-list>${group(`${visitors}${selfPosts}`,'نشاطي')}${group(`${routeRow('wallet','coin','محفظتي','العملات وشراء الباقات وسجل المعاملات')}${ctx.user?actionRow('tab','crown','حقيبتي','data-tab="inventory" data-pvp-bag','المقتنيات والتذكارات وجوايز الصاروخ'):''}${routeRow('shop/packs','coin','مركز العروض','الباقات المتاحة من الخادم')}${withValue(routeRow('vip','crown','VIP','عضويتك ومزاياها الحالية'),rankValue('vip'),' data-pvp-rank-value="vip" dir="ltr"')}${routeRow('leaderboard','ranking','ترتيب الرتبة')}${withValue(routeRow('ranks','medal','نوبل','رتب NOBLE المعتمدة'),rankValue('noble'),' data-pvp-rank-value="noble" dir="ltr"')}${routeRow('shop','shop','المركز التجاري','المتجر والمقتنيات الحالية')}`,'الحساب والمتجر')}${hubSection}${group(`${routeRow('settings','settings','الإعدادات','توثيق الحساب، المساعدة والدعم، الخصوصية، الشروط، وتسجيل الخروج')}`,'الإعدادات')}</div></nav>`;
 }
 
 function profileDetails(ctx) {

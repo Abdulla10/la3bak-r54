@@ -98,7 +98,7 @@ function heroHTML(ctx) {
 }
 function shortcutsHTML() {
   const shortcuts = [
-    ['coins', 'العملات', 'coin'], ['gems', 'الجواهر', 'star'], ['bg', 'الخلفيات', 'image'], ['avatar', 'الأفتارات', 'person'],
+    ['coins', 'العملات', 'coin'], ['bg', 'الخلفيات', 'image'], ['avatar', 'الأفتارات', 'person'],
     ['frame', 'الإطارات', 'frame'], ['badge', 'الشارات', 'shield'], ['ach', 'الإنجازات', 'medal'], ['events', 'الفعاليات', 'calendar'],
   ];
   return `<nav class="pv-shortcuts" data-home-section="service-shortcuts" aria-label="اختصارات المتجر والمقتنيات">${shortcuts.map(([id, title, glyph]) => {

@@ -1,7 +1,7 @@
 /* Supplied backgrounds UI integrated into the existing shop singleton and RPC protocol.
  * All balances, ownership, prices and equipped items are authoritative server data.
  */
-import * as SHOP from '../shop.js?v=r62m';
+import * as SHOP from '../shop.js?v=r63b';
 import {backgroundVisual,isSuppliedBackground} from '../background-art.js?v=r58p';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -15,7 +15,7 @@ const data=()=>SHOP.SH.data;
 const itemOf=id=>data()?.items?.find(x=>x.id===id&&x.slot==='bg');
 const owned=id=>data()?.owned?.includes(id)===true;
 const equipped=id=>data()?.equipped?.bg===id;
-const currency=item=>item.currency==='gems'?'جوهرة':'عملة';
+const currency=()=>'عملة';
 const enabled=item=>item.active===true&&item.eligibility?.eligible!==false&&(!isSuppliedBackground(item.id)||item.priceApproved===true);
 function price(item){return `${number(item.price)} ${currency(item)}${isSuppliedBackground(item.id)&&!item.priceApproved?' — مقترح، مب معتمد':''}`;}
 function visual(ctx,item){if(isSuppliedBackground(item.id))return backgroundVisual(item,'lb-bg-preview-art');return typeof ctx.bgHTML==='function'?ctx.bgHTML(item):'<span class="lb-bg-old-art">'+icon('image')+'</span>';}

@@ -24,12 +24,12 @@ export function cannon3Panel(m, view, help = false) {
   const top = now && m.top?.length ? `<ol class="c59-top">${m.top.map((t, i) => `<li><i>${i < 3 ? MEDAL[i] : i + 1}</i><span class="c59-face">${face(t.person)}</span><b>${esc(t.person.name)}</b><small dir="ltr">⚡ ${nf(t.pts)}</small></li>`).join('')}</ol>` : '';
   return `<section class="c59-panel c59-c${esc(L.color)}" data-c59-level="${lv}">
   <header class="c59-head"><button type="button" class="c59-help" data-so-action="c59-help" aria-expanded="${help ? 'true' : 'false'}" aria-label="طريقة المدفع">؟</button><span class="c59-lv">LV${lv}</span><span></span></header>
-  ${help ? '<p class="c59-helptext">كل جوهرة بهدايا الغرفة = طاقة وحدة للمدفع. لما تكتمل طاقة المستوى ينفجر المدفع، وأكثر 3 ساهموا فيه ياخذون نفس الجوايز بالضبط، والأول ياخذ فوقها قطعة «للأول بس». بعدها ينتقل المدفع للمستوى اللي بعده، وبعد الثالث تبدأ جولة جديدة من الأول.</p>' : ''}
+  ${help ? '<p class="c59-helptext">كل 20 عملة بهدايا الغرفة = طاقة وحدة للمدفع. لما تكتمل طاقة المستوى ينفجر المدفع، وأكثر 3 ساهموا فيه ياخذون نفس الجوايز بالضبط، والأول ياخذ فوقها قطعة «للأول بس». بعدها ينتقل المدفع للمستوى اللي بعده، وبعد الثالث تبدأ جولة جديدة من الأول.</p>' : ''}
   <div class="c59-stage">${side(lv - 1, 'prev')}<div class="c59-main">${art(lv, 'is-hero')}<i class="c59-ring" aria-hidden="true"></i>${done ? '<em class="c59-badge-done">انفجر ✓</em>' : !now ? '<em class="c59-badge-lock">🔒 بعدين</em>' : ''}</div>${side(lv + 1, 'next')}</div>
   <nav class="c59-dots" aria-label="المستويات">${[1, 2, 3].map((n) => `<button type="button" data-so-action="c59-level" data-level="${n}" aria-current="${n === lv ? 'true' : 'false'}" aria-label="المستوى ${n}"></button>`).join('')}</nav>
   <p class="c59-need"><span>يحتاج</span><b dir="ltr">⚡ ${nf(now ? m.goal - m.pts : L.goal)}</b></p>
   <div class="c59-track" role="progressbar" aria-valuemin="0" aria-valuemax="${L.goal}" aria-valuenow="${now ? m.pts : done ? L.goal : 0}"><i style="transform:scaleX(${pct / 100})"></i></div>
-  <p class="c59-meta"><span>مساهمتك <b dir="ltr">⚡ ${nf(now ? m.mine : 0)}</b></span><span dir="ltr">1 💎 = 1 ⚡</span></p>
+  <p class="c59-meta"><span>مساهمتك <b dir="ltr">⚡ ${nf(now ? m.mine : 0)}</b></span><span dir="ltr">20 🪙 = 1 ⚡</span></p>
   <button type="button" class="c59-send" data-so-action="open-panel" data-panel="gifts"><b>إرسال هدية</b><small>أكثر 3 يساهمون يفجّرون المدفع وياخذون الجوايز</small></button>
   ${winners}${top ? `<h4 class="c59-h">أكثر المساهمين الحين</h4>${top}` : ''}
   <h4 class="c59-h">حوض الجوائز</h4>
