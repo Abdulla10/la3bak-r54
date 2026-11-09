@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "لعبك",
+    "slug": "la3bak",
+    "scheme": "la3bak",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0D0614",
+    "primaryColor": "#A63DFF",
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#0D0614"
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.la3bak.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "لعبك يحتاج المايك عشان تتكلم في غرف الصوت.",
+        "UIBackgroundModes": ["audio"],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.la3bak.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D0614"
+      },
+      "permissions": ["RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS"]
+    },
+    "extra": {
+      "siteUrl": "https://la3bak.com",
+      "allowedHosts": ["la3bak.com", "www.la3bak.com"]
+    }
+  }
+}
