@@ -15,7 +15,7 @@ export const SITE_FLAGS_DEFAULT: SiteFlags = Object.freeze({ cinema: true, broad
 export const SITE_FLAG_LIMITS = Object.freeze({ firstTopupPercent: [-1, 200], bigGiftMin: [1000, 10_000_000], profileBgVip: [1, 15] } as const);
 export type SiteEvent = { id: string; kind: 'daily2x' | 'slotSale'; slot?: string; percent?: number; title: string; startsAt: number; endsAt: number; by: string; at: number; ended?: boolean };
 export const EVENT_SLOTS = Object.freeze(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'souvenir', 'title', 'badge', 'room-bg', 'special-id', 'room-id'] as const);
-type Data = { v: 1; flags: Partial<SiteFlags>; at: number; by: string; words?: string[]; wordsAt?: number; wordsBy?: string; events?: SiteEvent[]; tuning?: Record<string, unknown>; tuningAt?: number; tuningBy?: string };
+type Data = { v: 1; flags: Partial<SiteFlags>; at: number; by: string; words?: string[]; wordsAt?: number; wordsBy?: string; events?: SiteEvent[]; tuning?: Record<string, unknown>; tuningAt?: number; tuningBy?: string; migrations?: string[] };
 const validEvent = (e: unknown) => isObj(e) && typeof e.id === 'string' && (e.kind === 'daily2x' || e.kind === 'slotSale') && typeof e.title === 'string' && Number.isSafeInteger(e.startsAt) && Number.isSafeInteger(e.endsAt) && (e.endsAt as number) > (e.startsAt as number) && typeof e.by === 'string' && (e.kind !== 'slotSale' || (typeof e.slot === 'string' && Number.isSafeInteger(e.percent) && (e.percent as number) >= 5 && (e.percent as number) <= 90));
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
 const inRange = (k: keyof typeof SITE_FLAG_LIMITS, v: unknown) => Number.isSafeInteger(v) && (v as number) >= SITE_FLAG_LIMITS[k][0] && (v as number) <= SITE_FLAG_LIMITS[k][1];
@@ -69,6 +69,8 @@ export class SiteFlagsStore {
   tuning(): Record<string, unknown> | null { return this.d.tuning ? structuredClone(this.d.tuning) : null; }
   tuningMeta() { return { at: this.d.tuningAt ?? 0, by: this.d.tuningBy ?? '' }; }
   setTuning(t: Record<string, unknown> | null, by: string): void { const prev = this.d; this.d = { ...this.d, tuningAt: this.now(), tuningBy: by }; if (t) this.d.tuning = structuredClone(t); else delete this.d.tuning; try { this.disk.mustSave(); } catch (e) { this.d = prev; throw e; } }
+  migrated(name: string): boolean { return (this.d.migrations ?? []).includes(name); }
+  markMigrated(name: string): void { const prev = this.d; this.d = { ...this.d, migrations: [...(this.d.migrations ?? []), name].slice(-50) }; try { this.disk.mustSave(); } catch (e) { this.d = prev; throw e; } }
   words(): string[] { return [...(this.d.words ?? [])]; }
   wordsMeta() { return { at: this.d.wordsAt ?? 0, by: this.d.wordsBy ?? '' }; }
   /** كلمات ممنوعة: إضافة/حذف — ترجع القائمة الجديدة */

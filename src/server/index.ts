@@ -342,6 +342,8 @@ export async function createApp(
   /* R67ae: إعدادات التشغيل من لوحة التحكم */
   const siteFlags = new SiteFlagsStore(functionalFile(undefined, 'site-flags'), Date.now, storage);
   setExtraBannedWords(siteFlags.words());
+  // R67ae: تفعيل نوبل N6–N9 بطلب المالك (مرة وحدة؛ لو المالك رجّعها خمس بعدين ما تنعاد)
+  if (!siteFlags.migrated('noble-nine')) { try { const art = (n: number) => `/preview/assets/profile/ranks/r65/noble-n${n}.webp`; if (progression.ensureNineNoble([{ name: 'الدوق', color: '#c58bff', rarity: 'epic', artwork: art(6) }, { name: 'الأمير', color: '#ff7ac8', rarity: 'epic', artwork: art(7) }, { name: 'الملك', color: '#ffd66b', rarity: 'legendary', artwork: art(8) }, { name: 'الإمبراطور', color: '#ff9d2e', rarity: 'legendary', artwork: art(9) }])) log('noble_nine_enabled', {}); siteFlags.markMigrated('noble-nine'); } catch (e) { log('noble_nine_failed', { error: String((e as Error).message).slice(0, 120) }); } }
   const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
   { const t = siteFlags.tuning(); if (t) try { applyTuning(validateTuning(t, TUNING_DEFAULT)); } catch (e) { log('tuning_invalid', { error: String((e as Error).message).slice(0, 120) }); } }
   /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
