@@ -1,36 +1,36 @@
 /* R62: الوضع الداكن — نفس الألوان الملكية (بنفسجي وذهبي) على خلفية ليلية. يشتغل على متغيرات الثيم الزمردي، وبعدها تصحيحات للأماكن اللي ألوانها ثابتة. */
-html[data-theme=emerald].lb-dark{--em-bg:#17111f!important;--em-jade:#2a1f3d!important;--em-panel:#211a2e!important;--em-raised:#2a2139!important;--em-primary:#a77be0!important;--em-hover:#c39cf2!important;--em-gold:#d8b25a!important;--em-gold-text:#e3c06d!important;--em-ink:#efe8fa!important;--em-muted:#b3a6c8!important;--em-on:#1a1324!important;--em-line:#e3c06d33!important;--em-shadow:0 8px 24px #0006!important;--em-hero:radial-gradient(ellipse at 86% 12%,#e3c06d14,transparent 58%),linear-gradient(125deg,#2a1f3d,#211a2e 62%,#1d1628)!important;color-scheme:dark!important}
-html[data-theme=emerald].lb-dark,html[data-theme=emerald].lb-dark :is(.lb-unified,.lb-content,.ad,.ad-royal-login){--w:239 232 250!important;--ch:33 26 46!important;--grad:linear-gradient(135deg,#7a46b8,#4a2380)!important}
-html.lb-dark body{background:#17111f!important;color:#efe8fa;}
+html[data-theme=emerald].lb-dark{--em-bg:#0D0614!important;--em-jade:#2A0E45!important;--em-panel:#1C0A30!important;--em-raised:#2A0E45!important;--em-primary:#A63DFF!important;--em-hover:#C77DFF!important;--em-gold:#E0A526!important;--em-gold-text:#FFD66B!important;--em-ink:#F5E9FF!important;--em-muted:#CDB8E6!important;--em-on:#0D0614!important;--em-line:#FFD66B33!important;--em-shadow:0 8px 24px #0006!important;--em-hero:radial-gradient(ellipse at 86% 12%,#FFD66B14,transparent 58%),linear-gradient(125deg,#2A0E45,#1C0A30 62%,#140822)!important;color-scheme:dark!important}
+html[data-theme=emerald].lb-dark,html[data-theme=emerald].lb-dark :is(.lb-unified,.lb-content,.ad,.ad-royal-login){--w:239 232 250!important;--ch:33 26 46!important;--grad:linear-gradient(135deg,#8A2BE2,#4B1478)!important}
+html.lb-dark body{background:#0D0614!important;color:#F5E9FF;}
 html.lb-dark :is(.lb-unified,.lb-content,.view,main){background-color:transparent;}
 /* البطاقات والقوائم اللي لونها أبيض ثابت */
-html.lb-dark :is(.card,.panel,.lb-card,.s60-group,.s60-card,.ps-row,.hq60 a,.hq60-card,.rk-card,.lpu-card,.pvp-card,.pf-card,.shop-card,.st-card,.ad-card,.ad-stat,.so-room-card,.lb-route-back,.lb-games-search,.g60-card,.tr58-card,.cp58-card,.ms-card,.mission,.lb-section){background:#211a2e!important;border-color:#e3c06d26!important;color:#efe8fa;}
-html.lb-dark :is(.lb-top,.lb-topbar,.top,.lb-header,header.lb-head){background:#1b1426f0!important;border-color:#e3c06d22!important;}
-html.lb-dark :is(.lb-bottom,.lb-bottom-nav,nav.lb-nav){background:#1b1426!important;border-color:#e3c06d22!important;}
-html.lb-dark :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]){background:#2a2139!important;color:#efe8fa!important;border-color:#e3c06d33!important;}
-html.lb-dark ::placeholder{color:#8f84a3!important;}
+html.lb-dark :is(.card,.panel,.lb-card,.s60-group,.s60-card,.ps-row,.hq60 a,.hq60-card,.rk-card,.lpu-card,.pvp-card,.pf-card,.shop-card,.st-card,.ad-card,.ad-stat,.so-room-card,.lb-route-back,.lb-games-search,.g60-card,.tr58-card,.cp58-card,.ms-card,.mission,.lb-section){background:#1C0A30!important;border-color:#FFD66B26!important;color:#F5E9FF;}
+html.lb-dark :is(.lb-top,.lb-topbar,.top,.lb-header,header.lb-head){background:#120720f0!important;border-color:#FFD66B22!important;}
+html.lb-dark :is(.lb-bottom,.lb-bottom-nav,nav.lb-nav){background:#120720!important;border-color:#FFD66B22!important;}
+html.lb-dark :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]){background:#2A0E45!important;color:#F5E9FF!important;border-color:#FFD66B33!important;}
+html.lb-dark ::placeholder{color:#8E78A8!important;}
 html.lb-dark :is(h1,h2,h3,h4,b,strong,.lb-title){color:inherit;}
-html.lb-dark :is(small,.muted,.so-note,.ad-muted){color:#b3a6c8;}
-html.lb-dark .lb-unified .hero{background-image:linear-gradient(#17111fcc,#17111fee),url("/preview/assets/profile/royal-landscape-r46.webp")!important;}
+html.lb-dark :is(small,.muted,.so-note,.ad-muted){color:#CDB8E6;}
+html.lb-dark .lb-unified .hero{background-image:linear-gradient(#0D0614cc,#0D0614ee),url("/preview/assets/profile/royal-landscape-r46.webp")!important;}
 html.lb-dark img:not([src*=".svg"]){filter:none;}
 /* تصحيحات بعد الفحص (الأماكن اللي خلفيتها فاتحة ثابتة) */
-html.lb-dark :is(.s60-list,.s60-plist,.s60-row,.pvp-family-card,.pvp-rooms-card,.cx-filters,.list-row,.lb-notification-row,.drawer-user,.lb-drawer-link,.lb-drawer-unavailable,.lb-drawer,.so-directory-r30,.so-room-row,.so-dir-row,.so-room-directory-r30 li){background:#211a2e!important;color:#efe8fa!important;border-color:#e3c06d22!important;}
-html.lb-dark :is(.lb-social-directory-r30,.so-directory-r30){background:#17111f!important;}
-html.lb-dark .so-dir-tab.is-active{background:#3a2a55!important;color:#fff!important;}
-html.lb-dark :is(.subtitle,p.subtitle,div.subtitle){background:transparent!important;color:#b3a6c8!important;}
-html.lb-dark .lb-notification-new{background:#2c2142!important;}
-html.lb-dark .avatar.lb-drawer-avatar{background:#3a2a55!important;color:#fff!important;}
-html.lb-dark .s60-row :is(.s60-label,b){color:#efe8fa!important;}
-html.lb-dark .s60-row small{color:#b3a6c8!important;}
+html.lb-dark :is(.s60-list,.s60-plist,.s60-row,.pvp-family-card,.pvp-rooms-card,.cx-filters,.list-row,.lb-notification-row,.drawer-user,.lb-drawer-link,.lb-drawer-unavailable,.lb-drawer,.so-directory-r30,.so-room-row,.so-dir-row,.so-room-directory-r30 li){background:#1C0A30!important;color:#F5E9FF!important;border-color:#FFD66B22!important;}
+html.lb-dark :is(.lb-social-directory-r30,.so-directory-r30){background:#0D0614!important;}
+html.lb-dark .so-dir-tab.is-active{background:#3A1466!important;color:#fff!important;}
+html.lb-dark :is(.subtitle,p.subtitle,div.subtitle){background:transparent!important;color:#CDB8E6!important;}
+html.lb-dark .lb-notification-new{background:#2A0E45!important;}
+html.lb-dark .avatar.lb-drawer-avatar{background:#3A1466!important;color:#fff!important;}
+html.lb-dark .s60-row :is(.s60-label,b){color:#F5E9FF!important;}
+html.lb-dark .s60-row small{color:#CDB8E6!important;}
 /* نصوص كانت ألوانها غامقة ثابتة (ما تنقرى على الخلفية الليلية) */
-html.lb-dark :is(.lb-content,.s60,.so-directory-r30) :is(h1,h2,h3,summary,.s60-head h1,.so-dir-wordmark,.so-dir-room-name,.so-dir-row b){color:#efe8fa!important;}
-html.lb-dark :is(.lb-content,.s60,.so-directory-r30) :is(p,small,label,time,bdi,.lbw-muted,.hint,.s60-soon,.lb-route-connection,.so-dir-footnote,.r23-product-state,.cx-sort):not(.ad-btn):not(button *){color:#b9acd0!important;}
-html.lb-dark .lb-route-connection{color:#b9acd0!important;}
-html.lb-dark :is(.so-dir-tab,.so-dir-chip){color:#d9cdee!important;background:#2a2139!important;}
-html.lb-dark :is(.so-dir-tab,.so-dir-chip).is-active{background:#5a3a8a!important;color:#fff!important;}
-html.lb-dark .so-dir-room-tag{color:#e3c06d!important;background:#2f2440!important;}
-html.lb-dark .s60-soon{background:#2f2440!important;}
-html.lb-dark .ps-times{color:#e3c06d!important;background:#2f2440!important;}
+html.lb-dark :is(.lb-content,.s60,.so-directory-r30) :is(h1,h2,h3,summary,.s60-head h1,.so-dir-wordmark,.so-dir-room-name,.so-dir-row b){color:#F5E9FF!important;}
+html.lb-dark :is(.lb-content,.s60,.so-directory-r30) :is(p,small,label,time,bdi,.lbw-muted,.hint,.s60-soon,.lb-route-connection,.so-dir-footnote,.r23-product-state,.cx-sort):not(.ad-btn):not(button *){color:#CDB8E6!important;}
+html.lb-dark .lb-route-connection{color:#CDB8E6!important;}
+html.lb-dark :is(.so-dir-tab,.so-dir-chip){color:#E6D6FA!important;background:#2A0E45!important;}
+html.lb-dark :is(.so-dir-tab,.so-dir-chip).is-active{background:#6A1FB8!important;color:#fff!important;}
+html.lb-dark .so-dir-room-tag{color:#FFD66B!important;background:#2E1050!important;}
+html.lb-dark .s60-soon{background:#2E1050!important;}
+html.lb-dark .ps-times{color:#FFD66B!important;background:#2E1050!important;}
 html.lb-dark .lb-content a:not([class]){color:#d2b6ff;}
-html.lb-dark .lb-unified :is(small,summary):not(button *){color:#b9acd0!important;}
-html.lb-dark .lb-unified :is([class*="pvp-"],[class*="lpu-"]) :is(h2,h3,summary){color:#efe8fa!important;}
+html.lb-dark .lb-unified :is(small,summary):not(button *){color:#CDB8E6!important;}
+html.lb-dark .lb-unified :is([class*="pvp-"],[class*="lpu-"]) :is(h2,h3,summary){color:#F5E9FF!important;}

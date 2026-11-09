@@ -110,7 +110,7 @@ export function bind(root, host) {
     const pu = e.target.closest?.('[data-s60-push]');
     if (pu && !pu.disabled) { pu.disabled = true; try { await togglePush(root, pu.getAttribute('aria-checked') !== 'true'); } finally { pu.disabled = false; } return; }
     const dk = e.target.closest?.('[data-s60-dark]');
-    if (dk) { const on = !document.documentElement.classList.contains('lb-dark'); const TH = await import('./theme.js?v=r62a'); TH.setDark(on); dk.classList.toggle('is-on', on); dk.setAttribute('aria-checked', String(on)); return; }
+    if (dk) { const on = !document.documentElement.classList.contains('lb-dark'); const TH = await import('./theme.js?v=r64a'); TH.setDark(on); dk.classList.toggle('is-on', on); dk.setAttribute('aria-checked', String(on)); return; }
     const t = e.target.closest?.('[data-s60-toggle]');
     if (t && !t.disabled) {
       const key = t.dataset.s60Toggle; const p = PRIV.find((x) => x.key === key); const nowOn = t.getAttribute('aria-checked') !== 'true';

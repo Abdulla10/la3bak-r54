@@ -11,7 +11,7 @@ import { avatarArt } from '../avatars.js?v=r59d';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
 import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r63b';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r59d';
-import { rankSummary, renderRankOverview } from './rank-overview.js?v=r63a';
+import { rankSummary, renderRankOverview } from './rank-overview.js?v=r64a';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const arr = v => Array.isArray(v) ? v : [];

@@ -2,8 +2,8 @@
  * GETs never grant points. Every entitlement and claim remains server-authoritative. */
 import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r58i';
 import { mini } from '../avatars.js?v=r59d';
-import * as R from './rank-vip-shared.js?v=r63a';
-import * as V from './vip-noble-r52.js?v=r63b';
+import * as R from './rank-vip-shared.js?v=r64a';
+import * as V from './vip-noble-r52.js?v=r64a';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 
 export function catalogueOf(data) {

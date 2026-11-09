@@ -1,0 +1,210 @@
+{
+ "source": "user-supplied badge sheet (2026-11-09)",
+ "method": "Crop per grid cell; dark background removed by brightness-based alpha; trimmed, centred, 256x256.",
+ "assets": {
+  "noble-n1.png": {
+   "sourceCell": [
+    4,
+    2
+   ],
+   "sourceRect": [
+    1246,
+    512,
+    1523,
+    716
+   ]
+  },
+  "noble-n2.png": {
+   "sourceCell": [
+    3,
+    1
+   ],
+   "sourceRect": [
+    956,
+    282,
+    1228,
+    480
+   ]
+  },
+  "noble-n3.png": {
+   "sourceCell": [
+    0,
+    1
+   ],
+   "sourceRect": [
+    35,
+    271,
+    307,
+    492
+   ]
+  },
+  "noble-n4.png": {
+   "sourceCell": [
+    1,
+    1
+   ],
+   "sourceRect": [
+    337,
+    267,
+    614,
+    497
+   ]
+  },
+  "noble-n5.png": {
+   "sourceCell": [
+    2,
+    0
+   ],
+   "sourceRect": [
+    650,
+    25,
+    921,
+    256
+   ]
+  },
+  "noble-n6.png": {
+   "sourceCell": [
+    0,
+    0
+   ],
+   "sourceRect": [
+    53,
+    13,
+    307,
+    256
+   ]
+  },
+  "noble-n7.png": {
+   "sourceCell": [
+    4,
+    1
+   ],
+   "sourceRect": [
+    1228,
+    269,
+    1536,
+    512
+   ]
+  },
+  "noble-n8.png": {
+   "sourceCell": [
+    4,
+    0
+   ],
+   "sourceRect": [
+    1255,
+    27,
+    1511,
+    256
+   ]
+  },
+  "noble-n9.png": {
+   "sourceCell": [
+    0,
+    3
+   ],
+   "sourceRect": [
+    32,
+    768,
+    307,
+    952
+   ]
+  },
+  "vip-1.png": {
+   "sourceCell": [
+    4,
+    3
+   ],
+   "sourceRect": [
+    1236,
+    768,
+    1525,
+    953
+   ]
+  },
+  "vip-2.png": {
+   "sourceCell": [
+    1,
+    2
+   ],
+   "sourceRect": [
+    352,
+    512,
+    614,
+    768
+   ]
+  },
+  "vip-3.png": {
+   "sourceCell": [
+    2,
+    2
+   ],
+   "sourceRect": [
+    643,
+    512,
+    910,
+    702
+   ]
+  },
+  "vip-4.png": {
+   "sourceCell": [
+    1,
+    0
+   ],
+   "sourceRect": [
+    336,
+    0,
+    614,
+    255
+   ]
+  },
+  "vip-5.png": {
+   "sourceCell": [
+    2,
+    3
+   ],
+   "sourceRect": [
+    641,
+    768,
+    912,
+    970
+   ]
+  },
+  "vip-6.png": {
+   "sourceCell": [
+    3,
+    0
+   ],
+   "sourceRect": [
+    936,
+    0,
+    1228,
+    248
+   ]
+  },
+  "vip-7.png": {
+   "sourceCell": [
+    3,
+    3
+   ],
+   "sourceRect": [
+    924,
+    768,
+    1228,
+    1024
+   ]
+  },
+  "vip-8.png": {
+   "sourceCell": [
+    2,
+    1
+   ],
+   "sourceRect": [
+    646,
+    256,
+    921,
+    486
+   ]
+  }
+ }
+}

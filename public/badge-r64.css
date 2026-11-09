@@ -1,0 +1,43 @@
+/* R64: ستايل الشارات — أسود بنفسجي + توهج بنفسجي + ذهبي معدني.
+ * يشتغل فوق الوضع الداكن (html.lb-dark) بس. لون فقط: بدون تغيير مقاسات أو ترتيب أو منطق.
+ * لا يلمس صور المنتجات أو الطاولات أو الألعاب نفسها. */
+html.lb-dark body{
+  background:
+    radial-gradient(ellipse 70% 45% at 90% -5%, #A63DFF33, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 105%, #E0A5261c, transparent 60%),
+    #0D0614 !important;
+  background-attachment: fixed !important;
+}
+
+/* البطاقات: حد ذهبي خفيف + توهج بنفسجي */
+html.lb-dark :is(.card,.panel,.lb-card,.s60-group,.s60-card,.hq60-card,.rk-card,.lpu-card,.pvp-card,.pf-card,.shop-card,.st-card,.so-room-card,.g60-card,.tr58-card,.cp58-card,.ms-card,.mission,.lb-section,.pv-news-card,.pv-shortcut,.pv-category,.pv-home-details,.vx-card){
+  border-color: #E0A52640 !important;
+  box-shadow: 0 0 0 1px #E0A5261f, 0 10px 30px -14px #A63DFF8c !important;
+}
+
+/* الشريط العلوي والسفلي: خط ذهبي */
+html.lb-dark :is(.lb-top,.lb-topbar,.top,.lb-header,header.lb-head){border-bottom-color:#E0A52659 !important;}
+html.lb-dark :is(.lb-bottom,.lb-bottom-nav,nav.lb-nav){border-top-color:#E0A52673 !important;box-shadow:0 -10px 30px -18px #A63DFF99 !important;}
+
+/* العناوين الرئيسية بالذهبي */
+html.lb-dark .lb-unified :is(.pv-section-heading h2,.panel-title,.section-title,.hero h1){color:#FFD66B !important;}
+
+/* الأزرار الذهبية (الأساسية) بلمعة معدنية */
+html.lb-dark :is(.lbrv-button.is-gold,.ad-btn.is-gold,.btn-gold,.is-primary.is-gold){
+  background: linear-gradient(180deg,#FFE9A8,#E0A526 58%,#B8861A) !important;
+  color: #2A1600 !important;
+  border-color: #8A5A12 !important;
+  box-shadow: 0 0 18px -4px #E0A52699 !important;
+}
+
+/* العملات بالمحفظة: ذهبي */
+html.lb-dark .lb-unified .lb-wallet-value b{color:#FFD66B !important;}
+
+/* شارات النوبل والـVIP: توهج حول الصورة */
+html.lb-dark :is(.vx-badge,.vn-rank-art,.pvp-rank-milestone img,.lbrv-art img){
+  filter: drop-shadow(0 0 10px #A63DFF66);
+}
+html.lb-dark .pvp-rank-milestone.is-symbolic img{filter:grayscale(.6) brightness(.7);}
+
+/* صور الشارات الجديدة شفافة أصلاً: نلغي الدمج والقناع اللي كانت للصور القديمة ذات الخلفية الغامقة */
+img[src*="/profile/ranks/r64/"]{mix-blend-mode:normal !important;-webkit-mask-image:none !important;mask-image:none !important;object-fit:contain;}
