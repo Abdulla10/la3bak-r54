@@ -1,6 +1,6 @@
 /* Presentation only. Prices, points, entitlement and expiry are server authority.
  * No account storage, wallet projection, reference backgrounds or seeded data. */
-import { rankBadgeArt, rankTheme } from '../preview/rank-overview.js?v=r65a';
+import { rankBadgeArt, rankTheme } from '../preview/rank-overview.js?v=r66b';
 import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 
 export const CAPS = Object.freeze({ level: 100, vip: 15, noble: 9 });

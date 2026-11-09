@@ -58,7 +58,6 @@ function rankState(ctx, system) {
   if (entry.value === null) return { state: 'unranked', rank: null, text: 'ما عندك رتبة مكتسبة بعد', entry };
   const rank = rankNumber(system, entry.value);
   if (rank === null) return { state: 'invalid', rank: null, text: 'بيانات الرتبة مب صالحة، حدّث الملف', entry };
-  if (system === 'noble' && rank > 5) return { state: 'unavailable', rank: null, text: 'هذه الخانة غير متاحة — لم تعتمد', entry };
   return { state: 'earned', rank, text: `${LABELS[system]} ${rankLabel(system, rank)}`, entry };
 }
 
@@ -142,9 +141,9 @@ function catalogueHTML(ctx, system, view) {
     const rank = i + 1;
     const earned = view.state === 'earned' && rank <= view.rank;
     const current = earned && rank === view.rank;
-    const configured = !(system === 'noble' && rank > 5) && nat(thresholds?.[i]);
+    const configured = nat(thresholds?.[i]);
     const threshold = configured ? ` · شرط الرتبة: ${fmt(thresholds[i])} نقطة` : '';
-    const status = current ? 'رتبتك الحالية' : earned ? 'وصلتها' : system === 'noble' && rank > 5 ? 'غير متاحة — لم تعتمد' : 'مب مكتسبة';
+    const status = current ? 'رتبتك الحالية' : earned ? 'وصلتها' : 'مب مكتسبة';
     return `<li class="pvp-rank-step${earned ? ' is-earned' : ''}${current ? ' is-current' : ''}" data-rank-number="${rank}" data-rank-theme="${rankTheme(system,rank)}" ${current ? 'aria-current="step"' : ''} aria-label="${LABELS[system]} ${rankLabel(system,rank)} · ${status}${threshold}" title="${LABELS[system]} ${rankLabel(system,rank)} · ${status}${threshold}"><span dir="ltr">${rankLabel(system,rank)}</span>${configured ? `<small>${fmt(thresholds[i])}</small>` : ''}</li>`;
   }).join('')}</ol>${system !== 'level' && !thresholds ? '<p class="pvp-rank-note">الكتالوج رمزي؛ شروط النقاط ما تحددت هنا بدون إعدادات صحيحة من الإدارة.</p>' : ''}</section>`;
 }
