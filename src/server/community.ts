@@ -82,6 +82,8 @@ export interface CommunityDeps {
   moderate?(text: string): string | null;
   /** R67ae: حساب إداري رسمي (نجمة ذهبية) */
   official?(id: string): boolean;
+  /** R67ae: حساب مجدول للحذف أو محذوف */
+  hidden?(id: string): boolean;
   log(event: string, data?: Record<string, unknown>): void;
   /** R66: صاحب الحساب مخفي منشوراته عن الكل (إعداد «إخفاء منشوراتي») */
   postsHidden?(id: string): boolean;
@@ -203,7 +205,7 @@ export class Community {
     return { followersCount: Object.entries(this.d.follows).filter(([, l]) => l.includes(id)).length, followingCount: Array.isArray(following) ? following.length : 0 };
   }
   profile(me: string | null, pub: unknown, before?: unknown) {
-    const id = this.idOfPub(pub); if (!id || this.dep.isBanned(id)) throw new CommunityError(404, 'الحساب غير موجود.');
+    const id = this.idOfPub(pub); if (!id || this.dep.isBanned(id) || this.dep.hidden?.(id)) throw new CommunityError(404, 'الحساب غير موجود.');
     if (me && this.d.blocks?.[id]?.includes(me)) throw new CommunityError(404, 'الحساب غير موجود.'); // حظرك: كأنه غير موجود
     const iBlocked = !!me && !!this.d.blocks?.[me]?.includes(id); const iMuted = !!me && !!this.d.mutes?.[me]?.includes(id);
     const counts = this.followCounts(id);
@@ -217,7 +219,7 @@ export class Community {
     return { user: { ...this.who(id), stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: me === id, posts: allPosts.length, blocked: false, muted: iMuted, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: page.slice(0, PAGE).map((p) => this.postView(p, me)), more: page.length > PAGE };
   }
   followList(pub: unknown, which: 'followers' | 'following', me: string | null = null) {
-    const id = this.idOfPub(pub); if (!id || this.dep.isBanned(id)) throw new CommunityError(404, 'الحساب غير موجود.');
+    const id = this.idOfPub(pub); if (!id || this.dep.isBanned(id) || this.dep.hidden?.(id)) throw new CommunityError(404, 'الحساب غير موجود.');
     if (me && this.d.blocks?.[id]?.includes(me)) throw new CommunityError(404, 'الحساب غير موجود.');
     if (me && this.blocked(me, id)) return { list: [] };
     const ids = which === 'following' ? (this.d.follows[id] ?? []) : Object.entries(this.d.follows).filter(([, l]) => l.includes(id)).map(([k]) => k);
@@ -455,6 +457,18 @@ export class Community {
   adminDeletePost(id: unknown): { author: string } {
     const p = this.post(id); const media = p.media;
     this.tx(() => this.purgePost(p)); this.dropMediaFile(media); return { author: p.by };
+  }
+  /** R67ae: حذف الحساب — يمسح منشورات اللاعب وتعليقاته ومتابعاته */
+  purgeUser(id: string): number {
+    const mine = this.d.posts.filter((p) => p.by === id); const media = mine.map((p) => p.media).filter(Boolean) as string[];
+    this.tx(() => {
+      for (const p of mine) this.purgePost(p);
+      for (const c of this.d.comments.filter((x) => x.by === id)) if (this.d.comments.includes(c)) this.purgeComment(c);
+      delete this.d.follows[id]; for (const k of Object.keys(this.d.follows)) this.d.follows[k] = this.d.follows[k].filter((x) => x !== id);
+      this.d.notifs = this.d.notifs.filter((n) => n.to !== id && n.from !== id);
+    });
+    for (const m of media) this.dropMediaFile(m);
+    return mine.length;
   }
   /** R67ae: عدد البلاغات على محتوى لاعب */
   reportsAgainst(id: string) { const l = this.d.reports.filter((r) => r.snap.author === id); return { total: l.length, open: l.filter((r) => r.status === 'open').length, removed: l.filter((r) => r.status === 'removed').length }; }

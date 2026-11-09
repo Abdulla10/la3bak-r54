@@ -34,6 +34,8 @@ export class Identities {
     this.disk = new Persister('identities', file, () => this.d, now, mon);
   }
   linked(id: string) { return this.byId.has(id); }
+  /** R67ae: حذف الحساب — يفك ربط Google عشان نفس الإيميل يقدر يسوي حساب جديد */
+  unlink(id: string): boolean { const sub = this.byId.get(id); if (!sub) return false; const prev = this.d.bySub[sub]; delete this.d.bySub[sub]; this.byId.delete(id); try { this.disk.mustSave(); } catch (e) { this.d.bySub[sub] = prev; this.byId.set(id, sub); throw e; } return true; }
   /**
    * يحدد حساب اللعب لهذا الدخول:
    *  - sub مربوط من قبل → نفس الحساب (يشتغل من أي جهاز)

@@ -12,6 +12,7 @@ export function mountSiteAdmin(root, { call }) {
     try { const f = await call('site-flags'); S.flags = f.flags; S.meta = f.meta; S.envTopup = f.envFirstTopup; } catch (e) { S.err = e.message; }
     try { const s = await call('social'); S.rooms = s.rooms || []; } catch (e) { S.rooms = []; }
     try { S.bcs = (await call('broadcasts')).list; } catch { S.bcs = []; }
+    try { S.dels = (await call('account-deletions')).list; } catch { S.dels = []; }
     await loadPosts();
   };
   const loadPosts = async () => { try { const p = await call('posts?q=' + encodeURIComponent(S.q)); S.posts = p.posts; S.counts = p.counts; } catch (e) { S.err = e.message; } paint(); };
@@ -35,6 +36,8 @@ export function mountSiteAdmin(root, { call }) {
         <button class="ad-btn" type="submit">حفظ الإعدادات</button></form></section>
       <section class="ad-card"><h2>📢 البرقيات (${nf((S.bcs || []).length)})</h2><p class="ad-muted">أسعارها تتعدل من «أرقام الجوائز والمستويات». الإخفاء يشيلها من شاشات الكل فورًا، والعملات ما ترجع.</p>
         ${(S.bcs || []).length ? S.bcs.slice(0, 40).map((b) => `<div class="sa67-row"><b>${esc(b.name)} · ${b.tier === 'full' ? '🎆 شاشة كاملة' : b.tier === 'gold' ? '👑 ذهبية' : '📢 عادية'} · ${nf(b.price)} عملة</b><small>${dt(b.at)}${b.hidden ? ` · مخفية (${esc(b.hiddenBy || '')})` : ''}</small><div>${esc(b.text)}</div>${b.hidden ? '' : `<div class="sa67-acts"><button class="ad-btn danger" data-sa="bc-hide" data-id="${esc(b.id)}">إخفاء</button></div>`}</div>`).join('') : '<p class="ad-empty">ما فيه برقيات.</p>'}</section>
+      <section class="ad-card"><h2>🗑️ طلبات حذف الحسابات (${nf((S.dels || []).filter((x) => !x.done).length)} جاري)</h2><p class="ad-muted">الحساب يختفي فورًا وينحذف بعد 30 يوم. اللاعب يقدر يتراجع بنفسه قبلها.</p>
+        ${(S.dels || []).length ? S.dels.slice(0, 30).map((x) => `<div class="sa67-row"><b>${esc(x.name)}</b><small>${x.done ? `انحذف ${dt(x.done)}` : `طلب ${dt(x.at)} · ينحذف ${dt(x.executeAt)}`}</small></div>`).join('') : '<p class="ad-empty">ما فيه طلبات.</p>'}</section>
       <section class="ad-card"><h2>🏠 الغرف (${nf(rooms.length)})</h2><p class="ad-muted">مستوى كل غرفة وخلفيتها والفيديو الشغال فيها. إغلاق الغرفة ونقل الملكية في قسم «الغرف الاجتماعية والمجالس».</p>
         ${rooms.length ? rooms.map((r) => `<div class="sa67-row"><b>${esc(r.name)}</b><small>المالك: ${esc(r.owner?.name ?? '')} · ${nf(r.members)} عضو · Lv ${nf(r.level ?? 1)} · دعم ${nf(r.support ?? 0)}</small><small>الخلفية: ${esc(THEME[r.theme] ?? r.theme ?? '')}${r.video ? ` · 🎬 فيديو ${r.video.playing ? 'شغال' : 'موقف'} (${esc(r.video.vid)})` : ''}</small>
           <div class="sa67-acts">${r.video ? `<button class="ad-btn ghost" data-sa="video-off" data-id="${esc(r.id)}">إيقاف الفيديو</button>` : ''}${r.theme && r.theme !== 'royal' ? `<button class="ad-btn ghost" data-sa="theme-reset" data-id="${esc(r.id)}">رجّع الخلفية الافتراضية</button>` : ''}</div></div>`).join('') : '<p class="ad-empty">ما فيه غرف.</p>'}</section>

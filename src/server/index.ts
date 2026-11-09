@@ -23,6 +23,7 @@ import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
 import { CpPoints, cpKey, cpLevelOf, CP_TASKS, CP_LEVELS, CP_LEVEL_NAMES } from './cp-r58.js';
 import { ROCKET_PLANETS } from './room-rocket-r58.js';
 import { SiteFlagsStore } from './site-flags-r67.js';
+import { AccountDeletion, DELETION_GRACE_MS } from './account-deletion-r67.js';
 import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
@@ -344,6 +345,8 @@ export async function createApp(
   setExtraBannedWords(siteFlags.words());
   // R67ae: تفعيل نوبل N6–N9 بطلب المالك (مرة وحدة؛ لو المالك رجّعها خمس بعدين ما تنعاد)
   if (!siteFlags.migrated('noble-nine')) { try { const art = (n: number) => `/preview/assets/profile/ranks/r65/noble-n${n}.webp`; if (progression.ensureNineNoble([{ name: 'الدوق', color: '#c58bff', rarity: 'epic', artwork: art(6) }, { name: 'الأمير', color: '#ff7ac8', rarity: 'epic', artwork: art(7) }, { name: 'الملك', color: '#ffd66b', rarity: 'legendary', artwork: art(8) }, { name: 'الإمبراطور', color: '#ff9d2e', rarity: 'legendary', artwork: art(9) }])) log('noble_nine_enabled', {}); siteFlags.markMigrated('noble-nine'); } catch (e) { log('noble_nine_failed', { error: String((e as Error).message).slice(0, 120) }); } }
+  const deletion = new AccountDeletion(functionalFile(undefined, 'account-deletion'), Date.now, storage);
+  accounts.hiddenFilter = (id) => deletion.hidden(id);
   const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
   { const t = siteFlags.tuning(); if (t) try { applyTuning(validateTuning(t, TUNING_DEFAULT)); } catch (e) { log('tuning_invalid', { error: String((e as Error).message).slice(0, 120) }); } }
   /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
@@ -916,7 +919,7 @@ export async function createApp(
 
   /* المجتمع: نفس الجلسة والحسابات والحظر القائمة. معرّفات الحسابات ما تطلع للعميل (معرّف عام بالـHMAC) */
   const community = new Community(comFile, comMedia, {
-    secret: cfg.cookieSecret, moderate: (t) => profanityOnly(t), official: (id) => verificationView(id).verificationKind === 'administration', nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
+    secret: cfg.cookieSecret, moderate: (t) => profanityOnly(t), official: (id) => verificationView(id).verificationKind === 'administration', hidden: (id) => deletion.hidden(id), nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
     hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
     push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
     profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg') return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
@@ -1297,6 +1300,34 @@ export async function createApp(
       const auditOk = admin.audit(actor!, 'broadcast.hide', b.by, `${b.text} — ${reason}`);
       return { ok: true, auditOk };
     }, 'owner');
+    // R67ae: حذف الحساب (مهلة 30 يوم)
+    functionalHttp.add('POST', '/api/account/delete', async ({ user, body }) => {
+      adminNeed(accounts.has(user.id), 'الحساب غير موجود.'); adminNeed(String(body.confirm ?? '').trim() === 'حذف', 'اكتب كلمة «حذف» للتأكيد.');
+      adminNeed(!platform.roleOf(user.id), 'حسابات الإدارة ما تنحذف من هنا. شيل الدور الإداري أول من لوحة التحكم.');
+      const r = deletion.request(user.id);
+      try { const rid = socialRooms.roomIdOf(user.id); if (rid) await socialRooms.command(user.id, 'room:leave', { roomId: rid, key: randomUUID() }); } catch { /* */ }
+      try { sessions.revokeHashes(user.id, null); } catch { /* */ }
+      setTimeout(() => { for (const ws of sockets.get(user.id) ?? []) { try { ws.close(4401, 'account deletion'); } catch { /* */ } } }, 500);
+      log('account_deletion_requested', {});
+      return { ok: true, executeAt: r.executeAt };
+    });
+    functionalHttp.add('POST', '/api/account/delete-cancel', ({ user }) => { const ok = deletion.cancel(user.id); return { ok: true, cancelled: ok }; });
+    functionalHttp.add('GET', '/api/admin/account-deletions', () => ({ ok: true, graceDays: DELETION_GRACE_MS / 86_400_000, list: deletion.list().slice(0, 100).map((x) => ({ ...x, name: x.done ? 'حساب محذوف' : nm(x.id) })) }), 'owner');
+    const executeDeletion = async (id: string) => {
+      try { const rid = socialRooms.roomIdOf(id); if (rid) await socialRooms.command(id, 'room:leave', { roomId: rid, key: randomUUID() }); } catch { /* */ }
+      for (const r of socialRooms.ownedRoomsOf(id)) { try { await socialRooms.admin('token', 'room:close', { roomId: r.id, key: randomUUID(), reason: 'account-deleted' }); } catch { /* */ } }
+      try { const t = tribes.of(id); if (t) { const ids = t.members.map((m) => m.id); if (t.leader === id) tribes.disband(id); else tribes.leave(id); tribePush(ids); } } catch { /* */ }
+      try { const c = social.coupleOf(id); if (c) { social.adminBreakCouple(c.id); cpPoints.reset(cpKey(c.id, id, c.partner)); } } catch { /* */ }
+      try { community.purgeUser(id); } catch { /* */ }
+      try { avatars.del(id); } catch { /* */ }
+      try { accounts.anonymize(id); } catch { /* */ }
+      try { identities.unlink(id); } catch { /* */ }
+      try { sessions.revokeHashes(id, null); } catch { /* */ }
+      deletion.markDone(id); log('account_deleted', {});
+    };
+    const deletionSweep = async () => { for (const id of deletion.due()) { try { await executeDeletion(id); } catch (e) { log('account_deletion_failed', { error: String((e as Error).message).slice(0, 100) }); } } };
+    const deletionTimer = setInterval(() => { void deletionSweep(); }, 60 * 60_000); deletionTimer.unref?.();
+    setTimeout(() => { void deletionSweep(); }, 30_000).unref?.();
     functionalHttp.add('GET', '/api/admin/admin-logins', () => ({ ok: true, list: admin.loginLog() }), 'owner');
     functionalHttp.add('GET', '/api/admin/gifts', ({ url }) => { const days = Math.max(1, Math.min(90, Number(url.searchParams.get('days')) || 7)); return { ok: true, days, ...wallet.adminGifts({ q: url.searchParams.get('q') ?? '', since: Date.now() - days * 86_400_000, limit: 200 }) }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/economy-daily', ({ url }) => { const days = Math.max(7, Math.min(60, Number(url.searchParams.get('days')) || 14)); const e = wallet.adminEconomy(days); return { ok: true, ...e, topSpenders: e.topSpenders.map((x) => ({ name: nm(x.id), spent: x.spent })) }; }, 'owner');
@@ -1635,7 +1666,7 @@ export async function createApp(
         if (b?.test) void webPush.send(user.id, { title: 'لعبك 🎮', body: 'تمام! الإشعارات شغالة على هالجهاز.', url: '#/', tag: 'push-test' });
         return json(res, 200, { ok: true, devices: webPush.count(user.id) });
       }
-      if (url.pathname === '/api/me' && req.method === 'GET') return json(res, 200, { user, google: !!user && identities.linked(user.id), guestReadOnly: !!user && isGuest(user.id), ...(user && unlinkedGuest(user.id) && inGrace(user.id) ? { guestLockAt } : {}) });
+      if (url.pathname === '/api/me' && req.method === 'GET') return json(res, 200, { deletion: user ? deletion.pending(user.id) : null, user, google: !!user && identities.linked(user.id), guestReadOnly: !!user && isGuest(user.id), ...(user && unlinkedGuest(user.id) && inGrace(user.id) ? { guestLockAt } : {}) });
       if (url.pathname === '/api/auth/config' && req.method === 'GET') return json(res, 200, { google: cfg.googleClientId || null });
       if (url.pathname === '/api/auth/google' && req.method === 'POST') {
         if (!cfg.googleClientId) return json(res, 404, { error: 'الدخول بـ Google غير مفعّل.' });

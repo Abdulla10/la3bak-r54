@@ -504,6 +504,7 @@ export class SocialRooms {
   seatedNow(): string[] { const out: string[] = []; for (const r of this.state.rooms) for (const m of r.members) if (m.councilId !== null && this.mediaAccess(m.id)?.roomId === r.id) out.push(m.id); return out; }
   presenceSince(userId: string, roomId: string): number | null { const r = this.state.rooms.find((x) => x.id === roomId); const m = r?.members.find((x) => x.id === userId); return m && this.mediaAccess(userId)?.roomId === roomId ? m.joinedAt : null; }
   /** R67ae: للإدارة — غرف لاعب والغرف النشطة */
+  roomIdOf(userId: string): string | null { return this.member(this.state, userId)?.room.id ?? null; }
   ownedRoomsOf(userId: string) { return this.state.rooms.filter((r) => r.ownerId === userId).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length })); }
   liveRooms() { return this.state.rooms.filter((r) => r.members.length > 0).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length, owner: this.opts.profile(r.ownerId)?.name ?? '', video: !!r.video })).sort((a, b) => b.members - a.members); }
   ownerMaxRoomLevel(userId: string): number { let lv = 0; for (const r of this.state.rooms) if (r.ownerId === userId) lv = Math.max(lv, roomLevelOf(r.support ?? 0).level); return lv; }

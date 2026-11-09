@@ -336,9 +336,11 @@ export class Accounts {
   socialAge(id: string): number | null { const p = this.d.profiles[id]; return p ? ageOf(p.birthDate, this.now()) : null; }
   /** اسم الحساب المحفوظ، أو '' لو الحساب غير موجود */
   /** بحث بالاسم لاختيار مستلم هدية: أسماء ومستويات فقط (لا بيانات خاصة)، بدون صاحب الطلب */
+  /** R67ae: حسابات مجدولة للحذف أو محذوفة ما تطلع بالبحث */
+  hiddenFilter?: (id: string) => boolean;
   findByName(q: string, exclude: string, n = 8): { id: string; name: string; level: number }[] {
     const t = q.trim().toLowerCase(); if (t.length < 2) return [];
-    return Object.values(this.d.profiles).filter((p) => p.id !== exclude && p.name !== 'لاعب' && p.name.toLowerCase().includes(t))
+    return Object.values(this.d.profiles).filter((p) => p.id !== exclude && p.name !== 'لاعب' && p.name.toLowerCase().includes(t) && !this.hiddenFilter?.(p.id))
       .sort((x, y) => Number(y.name.toLowerCase() === t) - Number(x.name.toLowerCase() === t) || x.name.localeCompare(y.name)).slice(0, n)
       .map((p) => ({ id: p.id, name: p.name, level: levelOf(this.displayXp(p)) }));
   }
@@ -388,6 +390,12 @@ export class Accounts {
   }
 
   /** Observed authenticated activity only; never called by balance/grant mirrors. At most one write per five minutes. */
+  /** R67ae: حذف الحساب — يمسح البيانات الشخصية ويخلي اسم «حساب محذوف» (الإحصائيات تبقى بدون هوية) */
+  anonymize(id: string): void {
+    const p = this.d.profiles[id]; if (!p) return; const prev = structuredClone(p);
+    p.name = 'حساب محذوف'; p.bio = ''; p.favoriteGames = []; delete p.country; delete p.gender; delete p.birthDate; delete p.specialPlayerId;
+    try { this.disk.mustSave(); } catch (e) { this.d.profiles[id] = prev; throw e; }
+  }
   noteActivity(id: string) {
     const p = this.d.profiles[id] as ActivityProf | undefined;
     if (!p) return;
