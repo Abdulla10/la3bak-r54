@@ -5,7 +5,7 @@ import {mountPaymentAdmin} from './payment-admin.js?v=r58p';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r58p';
 import {mountSocialAdmin} from './social-admin.js?v=r58p';
 import { pricingHTML, progressionHTML } from './economy-admin.js?v=emerald-r44';
-import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r59d';
+import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r62m';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -150,6 +150,13 @@ export function mountAdmin(root) {
     },
     shop(d) {
       const s = d.shop; if (!s) return empty('جاري التحميل…');
+      // R62: عروض محدودة الوقت (المالك)
+      const OFST = { live: '🟢 شغال', upcoming: '🕒 قادم', ended: '⚪ انتهى' };
+      const offersCard = S.me?.role !== 'owner' || !d.offers ? '' : `<section class="ad-card"><h2>🔥 عروض لفترة محدودة</h2><p class="ad-muted">اختر قطعة من المتجر، وحط خصم (0 = بدون خصم) ومدة العرض. خلال العرض السعر يطلع مخفّض مع عداد تنازلي، والشراء يمشي بالسعر المخفّض. «حصري» = القطعة ما تنباع إلا خلال العرض.</p>
+        <form data-adf="offeradd" class="ad-form col"><label>معرّف القطعة<input class="ad-in" name="itemId" list="of62-items" required placeholder="مثال: art-f3-12" dir="ltr"></label><datalist id="of62-items">${(s.items || s.list || []).slice(0, 600).map((i) => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('')}</datalist>
+        <div class="ad-form"><label>الخصم %<input class="ad-in" name="discount" type="number" min="0" max="90" value="30"></label><label>المدة (ساعات)<input class="ad-in" name="hours" type="number" min="1" max="720" value="48"></label><label>يبدأ<input class="ad-in" name="startsAt" type="datetime-local"></label><label class="ad-check"><input type="checkbox" name="exclusive"> حصري</label></div>
+        <button class="ad-btn" type="submit">إضافة العرض</button></form>
+        ${d.offers.list.length ? `<div class="ad-list">${d.offers.list.slice(0, 40).map((o) => `<div class="ad-line"><span><b>${esc(o.itemName)}</b><small>${OFST[o.state] || ''} · خصم ${nf(o.discount)}%${o.exclusive ? ' · حصري' : ''} · ${dt(o.startsAt)} ← ${dt(o.endsAt)}</small></span>${o.state !== 'ended' ? `<button class="ad-btn ghost" data-ad="offer-end" data-id="${esc(o.id)}" data-arm="1">إنهاء</button>` : ''}</div>`).join('')}</div>` : empty('ما فيه عروض للحين.')}</section>`;
       const mg = can('shop.manage'); const SL = { frame: 'إطار', bg: 'خلفية', title: 'لقب', badge: 'شارة' }; const cur = (c) => (c === 'gems' ? '💎' : '🪙');
       const optsOf = (arr) => arr.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
       const addForm = mg ? `<section class="ad-card"><h2>إضافة منتج</h2><p class="ad-muted">المنتج الجديد تجميلي فقط. الإطار والخلفية تختار مظهرهما من القائمة المتوفرة بالواجهة؛ اللقب والشارة نص قصير. المعرّف ما يتغيّر بعد الإنشاء والمنتج ما يُحذف (فقط يُعطَّل).</p>
@@ -166,7 +173,7 @@ export function mountAdmin(root) {
         ${mg ? `<form data-adf="shopedit" data-id="${esc(i.id)}" class="ad-form col"><input class="ad-in" name="name" value="${esc(i.name)}" required maxlength="40"><input class="ad-in" name="icon" value="${esc(i.icon)}" required maxlength="8"><input class="ad-in" name="desc" value="${esc(i.desc)}" maxlength="120" placeholder="الوصف">
         <div class="ad-row2"><input class="ad-in" name="price" type="number" min="1" step="1" value="${i.price}" required inputmode="numeric"><select class="ad-in" name="currency"><option value="coins"${i.currency === 'coins' ? ' selected' : ''}>🪙 عملات</option><option value="gems"${i.currency === 'gems' ? ' selected' : ''}>💎 جواهر</option></select></div>
         ${shopFields(i)}<div class="ad-acts"><button class="ad-btn" type="submit" name="op" value="save">حفظ التعديل</button><button class="ad-btn ghost" type="submit" name="op" value="${i.active ? 'off' : 'on'}">${i.active ? 'إيقاف البيع' : 'تفعيل البيع'}</button></div></form>` : ''}</article>`;
-      return `<div class="ad-note">${esc(s.note)}</div>${s.persistent ? '' : '<div class="ad-note warn">تنبيه: لا يوجد WALLET_FILE فالتعديلات بالذاكرة وتضيع عند إعادة التشغيل.</div>'}<div class="ad-grid">${stat('إجمالي المقتنيات المشتراة', nf(s.purchases))}${stat('عدد المنتجات', nf(s.items.length))}${stat('معروضة للبيع', nf(s.items.filter((x) => x.active).length))}</div>${addForm}
+      return offersCard + `<div class="ad-note">${esc(s.note)}</div>${s.persistent ? '' : '<div class="ad-note warn">تنبيه: لا يوجد WALLET_FILE فالتعديلات بالذاكرة وتضيع عند إعادة التشغيل.</div>'}<div class="ad-grid">${stat('إجمالي المقتنيات المشتراة', nf(s.purchases))}${stat('عدد المنتجات', nf(s.items.length))}${stat('معروضة للبيع', nf(s.items.filter((x) => x.active).length))}</div>${addForm}
         <section class="ad-card"><h2>المنتجات والأسعار</h2></section><div class="ad-list">${s.items.map(card).join('')}</div>`;
     },
     gifts(d) {
@@ -262,7 +269,7 @@ export function mountAdmin(root) {
     verification: () => [['verification','verifications?'+new URLSearchParams({status:S.vstatus||'pending',offset:S.voff||0,limit:25})]],
     overview: () => [['overview', 'overview?period='+S.period], ...(can('community.moderate') ? [['homeReports','reports?status=open']] : []), ...(can('audit.view') ? [['homeAudit','audit?limit=5']] : [])], players: () => [['players', 'players?' + new URLSearchParams({ q: S.q, sort: S.sort, offset: S.off, limit: 25 })], ['suspects', 'suspects'], ['netsig', 'net-signals']],
     economy: () => [['overview', 'overview'], ...(can('wallet.adjust') || can('wallet.approve') ? [['adj', 'adjustments']] : []), ...(can('audit.view') ? [['auditEco', 'audit?limit=200', (j) => j.list.filter((a) => a.action === 'wallet.adjust').slice(0, 20)]] : [])],
-    shop: () => [['shop', 'shop']], rooms: () => [['rooms', 'rooms']], reports: () => [['reports', 'reports?status=' + (S.rstatus || 'open')]], gifts: () => [['gifts', 'gifts?' + new URLSearchParams({ q: S.gq || '', cat: S.gcat || '', off: S.goff || 0 })], ...(can('wallet.view') ? [['house', 'gift-house']] : [])], achievements: () => [['achievements', 'achievements']], notices: () => [['notices', 'notices']],
+    shop: () => [['shop', 'shop'], ...(S.me?.role === 'owner' ? [['offers', 'offers']] : [])], rooms: () => [['rooms', 'rooms']], reports: () => [['reports', 'reports?status=' + (S.rstatus || 'open')]], gifts: () => [['gifts', 'gifts?' + new URLSearchParams({ q: S.gq || '', cat: S.gcat || '', off: S.goff || 0 })], ...(can('wallet.view') ? [['house', 'gift-house']] : [])], achievements: () => [['achievements', 'achievements']], notices: () => [['notices', 'notices']],
     staff: () => [['staff', 'staff']], audit: () => [['audit', 'audit?limit=100'], ['bans', 'bans']], settings: () => [['settings', 'settings']], maintenance: () => [['maintenance', 'maintenance']], system: () => [['system', 'system']], health: () => [['health', 'health'], ...(S.me?.role === 'owner' ? [['backups', 'backups']] : [])],
   };
   let seq = 0; // رد قديم يتأخر ما يكتب فوق رد أحدث (مثلاً بحث تبعه بحث)
@@ -328,6 +335,7 @@ export function mountAdmin(root) {
     const a = ds(el).ad;
     if (a === 'tab') {S.navId=ds(el).navid||ds(el).t;return go(ds(el).t);}
     if (a === 'refresh') return go();
+    if (a === 'offer-end') { await run(() => call('offers/' + encodeURIComponent(ds(el).id) + '/end', { method: 'POST', body: {} }), 'انتهى العرض.'); return go(); }
     if (a === 'backup-now') { await run(() => call('backups', { method: 'POST' }), 'انسوت نسخة احتياطية جديدة.'); return go(); }
     if (a === 'backup-dl') {
       const name = ds(el).name; const h = {}; const tok = getTok(); if (tok) h.Authorization = 'Bearer ' + tok;
@@ -408,6 +416,7 @@ export function mountAdmin(root) {
     const num = (n) => (v(n) === '' ? NaN : Number(v(n)));
     const sub = e.submitter;
     const ts = (n) => { const x = v(n); return x ? new Date(x).getTime() : 0; };
+    if (k === 'offeradd') { await run(() => call('offers', { method: 'POST', body: { itemId: v('itemId'), discount: num('discount'), hours: num('hours'), ...(ts('startsAt') ? { startsAt: ts('startsAt') } : {}), exclusive: fd.get('exclusive') === 'on' } }), 'انضاف العرض.'); return go(); }
     if (k === 'pricing') {
       await run(async () => {
         if (!fd.has('ack')) throw new Error('لازم تعتمد القيم قبل الحفظ.');

@@ -484,6 +484,8 @@ export class Accounts {
   all() { return Object.values(this.d.profiles).map((p) => ({ id: p.id, name: p.name, since: p.since, xp: this.displayXp(p), level: levelOf(this.displayXp(p)), points: p.points, wins: p.wins, played: p.played })); }
   has(id: string) { return !!this.d.profiles[id]; }
   /** R53: وقت إنشاء الحساب (null لو غير معروف بدقة) — لربط دعوة الأصدقاء بالحسابات الجديدة فقط */
+  /** R62: عدد المباريات اللي لعبها مع لاعبين حقيقيين (بدون الكمبيوتر) — لشرط مكافأة الدعوة */
+  rankedPlayed(id: string): number { const p = this.d.profiles[id]; return p ? Object.values(p.games).reduce((n, g) => n + ((g as { ranked?: number }).ranked ?? 0), 0) : 0; }
   sinceOf(id: string): number | null { const p = this.d.profiles[id] as ActivityProf | undefined; return p && !p.sinceInferred && Number.isSafeInteger(p.since) ? p.since : null; }
   /** ملخص عام لصفحة اللاعب بالمجتمع (قراءة فقط ولا ينشئ حساباً): المستوى والألعاب والفوز وأكثر لعبة لعبها. بدون عملات ولا سجلات */
   publicStats(id: string): { level: number; played: number; wins: number; fav: string | null } | null {

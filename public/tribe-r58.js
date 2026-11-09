@@ -17,6 +17,16 @@ function detail(t) {
 
 /* R59: صفحة القبيلة الرئيسية (مثل الفيديو) وصفحة «كنز القبيلة» (الصاروخ، المهام، المكافأة، المتجر). كل الأرقام من الخادم. */
 function short(n) { return !Number.isSafeInteger(n) ? '—' : n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'm' : n >= 1e3 ? (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k' : String(n); }
+/* R62: حرب القبائل الأسبوعية */
+function warCard(w, myName) {
+  if (!w) return '';
+  const last = w.last ? `<p class="wr62-last">${w.last.draw ? '🤝 الأسبوع اللي طاف: تعادل' : w.last.won ? '🏆 الأسبوع اللي طاف: فزتوا' : '😔 الأسبوع اللي طاف: خسرتوا'} ضد «${esc(w.last.opponentName || '؟')}» (<b dir="ltr">${short(w.last.mine)}</b> ضد <b dir="ltr">${short(w.last.theirs)}</b>)</p>` : '';
+  if (w.opponent === null) return `<h3 class="tr59-h">⚔️ حرب القبائل</h3><div class="wr62"><p class="wr62-none">ما فيه خصم لقبيلتكم هالأسبوع. الحرب تبدأ كل سبت، وتحتاج القبيلة ${esc(w.prize?.minMembers ?? 2)} أعضاء أو أكثر.</p>${last}</div>`;
+  const total = Math.max(1, w.mine + w.theirs), pct = Math.round(w.mine / total * 100), lead = w.mine === w.theirs ? 'متعادلين' : w.mine > w.theirs ? 'متقدمين 🔥' : 'متأخرين — شدّوا حيلكم!';
+  return `<h3 class="tr59-h">⚔️ حرب القبائل هالأسبوع</h3><div class="wr62"><div class="wr62-vs"><div><b>${esc(myName)}</b><span dir="ltr">🏆 ${short(w.mine)}</span></div><i>VS</i><div><b>${esc(w.opponentName || '؟')}</b><span dir="ltr">🏆 ${short(w.theirs)}</span></div></div>
+    <div class="wr62-bar"><i style="width:${pct}%"></i></div><p class="wr62-lead">${lead}</p>
+    <p class="wr62-rule">النتيجة = هيبة القبيلة هالأسبوع (من هدايا الأعضاء). القبيلة الفايزة كل عضو فيها ياخذ <b dir="ltr">${esc(w.prize?.win ?? 0)}</b> وقود، والتعادل <b dir="ltr">${esc(w.prize?.draw ?? 0)}</b>. تنتهي ليلة الجمعة.</p>${last}</div>`;
+}
 function home(t) {
   const tr = S.tr?.ok ? S.tr : null, info = tr?.tribe;
   const need = t.next ? Math.max(0, t.next - t.pts) : 0, pct = t.next ? Math.min(100, Math.floor((t.pts - t.floor) / (t.next - t.floor) * 100)) : 100;
@@ -28,7 +38,7 @@ function home(t) {
   <div class="tr59-card"><h2>${esc(t.name)}</h2><div class="tr59-pres"><div><small>الهيبة اليومية</small><b dir="ltr">🏆 ${short(info?.dayPts ?? 0)}</b></div><div><small>الهيبة الأسبوعية</small><b dir="ltr">🏆 ${short(info?.weekPts ?? 0)}</b></div></div>
   <div class="tr58-bar"><i style="width:${pct}%"></i></div><p class="tr59-up">${t.next ? `باقي <b dir="ltr">${nf(need)}</b> نقطة للترقية إلى مستوى ${t.level + 1}` : 'أعلى مستوى للقبيلة 👑'}</p></div></div>
   <div class="tr59-actions"><button type="button" class="tr59-act is-group" disabled title="قريبًا"><span>💬</span><b>مجموعة القبيلة</b><small>قريبًا</small></button><button type="button" class="tr59-act is-task" data-tr="treasure">${ship('is-mini')}<b>المهمة والمكافأة</b></button></div>
-  ${room}<h3 class="tr59-h">إشعارات القبيلة</h3><p class="tr58-note">${t.isLeader && t.requests?.length ? `عندك ${t.requests.length} طلب انضمام جديد` : 'لا يوجد إشعار'}</p>${reqs}${members}${act}</section>`;
+  ${warCard(tr?.war, t.name)}${room}<h3 class="tr59-h">إشعارات القبيلة</h3><p class="tr58-note">${t.isLeader && t.requests?.length ? `عندك ${t.requests.length} طلب انضمام جديد` : 'لا يوجد إشعار'}</p>${reqs}${members}${act}</section>`;
 }
 function treasure() {
   const r = S.tr; if (!r) return '<p class="tr58-note">جاري التحميل…</p>'; if (!r.ok) return `<p class="tr58-note">${esc(r.error || 'تعذّر تحميل كنز القبيلة.')}</p>`;

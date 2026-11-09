@@ -20,11 +20,12 @@ export function settingsHTML(ctx) {
     ${row('اللغة', '<small>العربية</small>')}
     ${btn('إعادة تعيين كلمة المرور', 'password', google ? 'من حساب Google' : '')}
     ${link('ربط الحساب', '#/account-info', google ? '<b class="s60-ok">محمي ✓</b>' : '<b class="s60-warn">غير محمي ⓘ</b>')}
-    ${soonRow('الأجهزة اللي سجّلت الدخول منها')}
-    ${soonRow('الوضع الداكن')}
+    ${link('الأجهزة اللي سجّلت الدخول منها', '#/devices')}
+    ${row('الوضع الداكن', `<button type="button" class="s60-switch${document.documentElement.classList.contains('lb-dark') ? ' is-on' : ''}" role="switch" aria-checked="${document.documentElement.classList.contains('lb-dark')}" data-s60-dark><i></i></button>`)}
   </ul>
   <ul class="s60-list">
     ${link('معلومات الحساب', '#/account-info')}
+    ${row('إشعارات الجوال', `<small data-s60-push-note></small><button type="button" class="s60-switch" role="switch" aria-checked="false" data-s60-push><i></i></button>`)}
     ${link('إعدادات الإشعارات', '#/notifications')}
     ${link('إعدادات الخصوصية', '#/privacy-settings')}
     ${link('القائمة السوداء', '#/friends')}
@@ -71,6 +72,17 @@ export function privacyHTML(d, m = '', bad = false) {
 const countries = (() => { try { return new Intl.DisplayNames(['ar'], { type: 'region' }); } catch { return null; } })();
 const country = (c) => c === 'AE' ? 'الإمارات' : c ? (countries?.of(c) || c) : 'غير محدد';
 /** صفحة «معلومات الحساب» */
+/* R62: الأجهزة */
+const ago = (t) => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 2 ? 'الحين' : m < 60 ? `قبل ${m} دقيقة` : m < 1440 ? `قبل ${Math.round(m / 60)} ساعة` : `قبل ${Math.round(m / 1440)} يوم`; };
+export function devicesHTML(d, m = '', bad = false) {
+  if (!d) return `<section class="s60" dir="rtl">${head('الأجهزة', '#/settings')}<p class="s60-msg">جاري التحميل…</p></section>`;
+  const list = (d.list || []).map((x) => `<li class="s60-row dv62"><span class="s60-label"><b>${x.label.includes('iPhone') || x.label.includes('Android') || x.label.includes('iPad') ? '📱' : '💻'} ${esc(x.label)}${x.current ? ' <em class="dv62-cur">هذا الجهاز</em>' : ''}</b><small>أول دخول: ${esc(new Date(x.at).toLocaleDateString('ar-EG-u-nu-latn'))} · آخر استخدام: ${esc(ago(x.seen))}</small></span><span class="s60-right">${x.current ? '' : `<button type="button" class="dv62-out" data-s60="dev-out" data-id="${esc(x.id)}">مب أنا · طلّعه</button>`}</span></li>`).join('');
+  const others = (d.list || []).filter((x) => !x.current).length;
+  return `<section class="s60" dir="rtl">${head('الأجهزة', '#/settings')}${msg(m, bad)}
+  <p class="s60-note">هذي الأجهزة اللي حسابك مفتوح عليها الحين. لو شفت جهاز ما تعرفه اضغط «مب أنا · طلّعه»، أو طلّع كل الأجهزة الثانية مرة وحدة. وإذا حسابك مربوط بـGoogle، غيّر كلمة سر Google بعد.</p>
+  <ul class="s60-list">${list || '<li class="s60-row"><span class="s60-label">ما فيه أجهزة مسجلة للحين.</span></li>'}</ul>
+  ${others ? `<button type="button" class="s60-danger" data-s60="dev-out-all">طلّع كل الأجهزة الثانية (${others})</button>` : ''}</section>`;
+}
 export function accountInfoHTML(ctx) {
   const m = ctx.me || {}; const id = m.displayPlayerId || m.specialPlayerId || m.playerId || '';
   const since = Number(m.since) > 0 ? new Date(Number(m.since)).toISOString().slice(0, 10) : 'غير متوفر';
@@ -95,6 +107,10 @@ export function accountInfoHTML(ctx) {
 /** الأحداث (يركبها المضيف مرة) */
 export function bind(root, host) {
   root.addEventListener('click', async (e) => {
+    const pu = e.target.closest?.('[data-s60-push]');
+    if (pu && !pu.disabled) { pu.disabled = true; try { await togglePush(root, pu.getAttribute('aria-checked') !== 'true'); } finally { pu.disabled = false; } return; }
+    const dk = e.target.closest?.('[data-s60-dark]');
+    if (dk) { const on = !document.documentElement.classList.contains('lb-dark'); const TH = await import('./theme.js?v=r62a'); TH.setDark(on); dk.classList.toggle('is-on', on); dk.setAttribute('aria-checked', String(on)); return; }
     const t = e.target.closest?.('[data-s60-toggle]');
     if (t && !t.disabled) {
       const key = t.dataset.s60Toggle; const p = PRIV.find((x) => x.key === key); const nowOn = t.getAttribute('aria-checked') !== 'true';
@@ -103,6 +119,11 @@ export function bind(root, host) {
       host.after?.(r && r.ok !== false && !r.error ? '' : (r.error || 'تعذّر الحفظ.'), !(r && r.ok !== false && !r.error)); return;
     }
     const b = e.target.closest?.('[data-s60]'); if (!b) return; const a = b.dataset.s60;
+    if (a === 'dev-out' || a === 'dev-out-all') {
+      b.disabled = true;
+      const r = await api(a === 'dev-out' ? '/api/devices/revoke' : '/api/devices/revoke-others', 'POST', a === 'dev-out' ? { id: b.dataset.id } : {});
+      host.after?.(r?.ok ? (r.revoked ? `طلّعنا الحساب من ${r.revoked === 1 ? 'جهاز واحد' : r.revoked + ' أجهزة'}.` : 'ما فيه أجهزة ثانية.') : (r?.error || 'ما قدرنا نطلّعه.'), !r?.ok); return;
+    }
     if (a === 'password') { if (host.google) window.open('https://myaccount.google.com/security', '_blank', 'noopener'); else host.nav('#/account-info'); }
     else if (a === 'cache' || a === 'repair') {
       try { if (globalThis.caches) for (const k of await caches.keys()) await caches.delete(k); } catch {}
@@ -115,3 +136,31 @@ export function bind(root, host) {
     else if (a === 'google') { host.nav('#/profile'); setTimeout(() => { const d = document.querySelector('.lpu-google-details'); if (d) { d.open = true; d.scrollIntoView({ block: 'center' }); } }, 700); }
   });
 }
+
+/* R62: إشعارات الجوال (Web Push) */
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r62e'); }
+function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
+export async function pushState(root) {
+  if (!root.querySelector('[data-s60-push]')) return;
+  if (!pushSupported()) return pushPaint(root, false, isIOS() && !standalone() ? 'أضف الموقع للشاشة الرئيسية أول' : 'متصفحك ما يدعمها');
+  if (Notification.permission === 'denied') return pushPaint(root, false, 'مقفولة من إعدادات المتصفح');
+  try { const r = await navigator.serviceWorker.getRegistration(); const s = await r?.pushManager.getSubscription(); pushPaint(root, !!s && Notification.permission === 'granted', ''); } catch { pushPaint(root, false, ''); }
+}
+async function togglePush(root, on) {
+  if (!pushSupported()) { alertBox(root, isIOS() && !standalone() ? 'على الآيفون: افتح الموقع في Safari ← زر المشاركة ← «إضافة إلى الشاشة الرئيسية»، وافتح لعبك من الأيقونة، وبعدها فعّل الإشعارات من هنا.' : 'هالمتصفح ما يدعم إشعارات الجوال.'); return; }
+  try {
+    if (!on) { const r = await navigator.serviceWorker.getRegistration(); const s = await r?.pushManager.getSubscription(); if (s) { await fetch('/api/push/unsubscribe', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: s.endpoint }) }).catch(() => {}); await s.unsubscribe().catch(() => {}); } return pushPaint(root, false, ''); }
+    const perm = await Notification.requestPermission(); if (perm !== 'granted') return pushPaint(root, false, perm === 'denied' ? 'مقفولة من إعدادات المتصفح' : '');
+    const k = await fetch('/api/push/key', { credentials: 'same-origin' }).then((r) => r.json()); if (!k.ok) throw new Error('الإشعارات مب متاحة على الخادم حاليًا.');
+    const reg = await pushReg(); await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(k.key) });
+    const r = await fetch('/api/push/subscribe', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON(), test: true }) }).then((x) => x.json());
+    if (!r.ok) throw new Error(r.error || 'ما قدرنا نفعّلها.');
+    pushPaint(root, true, 'وصلك إشعار تجربة');
+  } catch (err) { pushPaint(root, false, ''); alertBox(root, err?.message || 'ما قدرنا نفعّل الإشعارات.'); }
+}
+function alertBox(root, text) { let m = root.querySelector('.s60-msg'); if (!m) { m = document.createElement('p'); m.className = 's60-msg'; root.querySelector('.s60')?.prepend(m); } m.textContent = text; m.classList.add('is-bad'); }

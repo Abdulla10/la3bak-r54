@@ -89,6 +89,7 @@ export interface AdminDeps {
   now?: () => number;
   /** R61 */
   backups?: import('./backup-r61.js').Backups;
+  offers?: import('./shop-offers-r62.js').ShopOffers;
   health?(): Promise<unknown>;
 }
 
@@ -263,7 +264,7 @@ export function createAdmin(d: AdminDeps) {
 
   function shop() {
   const owned = d.wallet.countOwned();
-    const items = d.shopcat.all().map(({ css, ...i }) => ({ ...i, css, owners: owned[i.id] ?? 0 }));
+    const items = d.shopcat.all().map(({ css, ...i }) => ({ ...i, ...(i.offer ? { price: i.offer.was, offerPrice: i.price } : {}), css, owners: owned[i.id] ?? 0 })); // R62: الإدارة تشوف السعر الأصلي (مب سعر العرض) عشان التعديل ما يحفظ السعر المخفّض
     return {
       items, purchases: Object.values(owned).reduce((a, b) => a + b, 0), editable: true, persistent: d.shopcat.persistent,
       presets: PRESETS, priceMax: PRICE_MAX,
@@ -684,6 +685,16 @@ export function createAdmin(d: AdminDeps) {
       }
       if (a === 'audit' && req.method === 'GET') { need(actor, 'audit.view'); const lim = Math.max(1, Math.min(200, Number(url.searchParams.get('limit')) || 100)); const before = Number(url.searchParams.get('before')) || Infinity; return out({ list: P.auditList(lim, before), total: P.auditCount() }), true; }
       if (a === 'system' && req.method === 'GET') { need(actor, 'system.view'); return out(system()), true; }
+      // R62: عروض المتجر محدودة الوقت (المالك بس)
+      if (a === 'offers') {
+        if (actor.role !== 'owner') throw new HttpErr(403, 'عروض المتجر للمالك فقط.');
+        if (!d.offers) throw new HttpErr(503, 'غير متاح.');
+        if (!id && req.method === 'GET') return out({ list: d.offers.list().map((o) => ({ ...o, itemName: d.shopcat.get(o.itemId)?.name ?? o.itemId })) }), true;
+        try {
+          if (!id && req.method === 'POST') { const b = await body(); const o = d.offers.add(b, actor.name, (iid) => !!d.shopcat.get(iid) && d.shopcat.get(iid)!.status !== 'hidden'); safeAudit(actor, 'offer.add', o.itemId, `${o.discount}% ${new Date(o.startsAt).toISOString()}→${new Date(o.endsAt).toISOString()}${o.exclusive ? ' حصري' : ''}`); return out({ ok: true, offer: o }), true; }
+          if (id && act === 'end' && req.method === 'POST') { const o = d.offers.end(id); safeAudit(actor, 'offer.end', o.itemId, o.id); return out({ ok: true, offer: o }), true; }
+        } catch (e) { if (e instanceof Error && 'code' in e && typeof (e as any).code === 'number') throw new HttpErr((e as any).code, e.message); throw e; }
+      }
       // R61: حالة الموقع + النسخ الاحتياطية
       if (a === 'health' && req.method === 'GET') { need(actor, 'system.view'); if (!d.health) throw new HttpErr(503, 'غير متاح.'); return out(await d.health()), true; }
       if (a === 'backups') {

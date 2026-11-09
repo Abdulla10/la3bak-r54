@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r59d';
-import * as UNIFIED from '../unified/shell.js?v=r60c';
+import * as PR from './profile.js?v=r62m';
+import * as UNIFIED from '../unified/shell.js?v=r62n';
 import * as REF from '../unified/home.js?v=r60b';
-import * as SOCIAL from '../unified/social.js?v=r59d';
+import * as SOCIAL from '../unified/social.js?v=r62m';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r59v';
@@ -23,7 +23,7 @@ import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
 import * as PF from '../profile.js?v=r59d';
-import * as SHOP from '../shop.js?v=r59d';
+import * as SHOP from '../shop.js?v=r62m';
 import * as GIFT from '../gifts.js?v=r59d';
 import * as GFX from '../giftfx.js?v=r57';
 import * as AVR from '../avatars.js?v=r59d';
@@ -34,8 +34,8 @@ import * as MNV from '../minaboli-r47.js?v=r57';
 import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r59d';
 import { isCommunityRestricted } from '../community-access-r37.js';
-import * as THEME from '../theme.js?v=r58p';
-import * as PWA from '../pwa.js?v=r60e';
+import * as THEME from '../theme.js?v=r62a';
+import * as PWA from '../pwa.js?v=r62e';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r59d';
@@ -326,12 +326,12 @@ function parseRoute() {
   return { name, a: dec(parts[1]), b: dec(parts[2]), c: dec(parts[3]) };
 }
 
-const NAV_OF = { lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
+const NAV_OF = { lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
 /* R51: الأب المنطقي يُستخدم فقط لو فُتحت الصفحة مباشرة (ما فيه صفحة سابقة داخل الموقع)؛ غير كذا زر الرجوع يرجع للصفحة السابقة الفعلية.
    صفحات قائمة «ملفي» (VIP، نوبل، المحفظة…) أبوها الملف الشخصي، مو الرئيسية. */
 const PROFILE_CHILDREN = new Set(['vip','ranks','rank-rewards','missions','wallet','settings','family','visitors','invite']);
 /* R53b: توثيق الحساب والمساعدة والخصوصية والشروط صارت داخل الإعدادات */
-const SETTINGS_CHILDREN = new Set(['verification','support','privacy','terms','privacy-settings','account-info','about']);
+const SETTINGS_CHILDREN = new Set(['verification','support','privacy','terms','privacy-settings','account-info','devices','about']);
 const BACK_OF = (r) => (r.name === 'social-room' ? '#/social-rooms' : ['game','hub','city'].includes(r.name) ? '#/games' : r.name === 'room' ? '#/rooms' : PROFILE_CHILDREN.has(r.name) ? '#/profile' : SETTINGS_CHILDREN.has(r.name) ? '#/settings' : '#/');
 
 function needUser(nextHash) {
@@ -352,7 +352,7 @@ function loadFunctionalModule(name) {
       : key === 'family' ? import('../family-r47.js?v=build-all-r47')
       : key === 'private' ? import('../social-private.js?v=r57')
       : key === 'missions' ? import('../missions-server.js?v=r57')
-      : key === 'profile-social' ? import('../profile-social-r53.js?v=r60b')
+      : key === 'profile-social' ? import('../profile-social-r53.js?v=r62k')
       : import('../functional-pages.js?v=r57');
     functionalModules.set(key, promise);
     promise.catch(() => { if (functionalModules.get(key) === promise) functionalModules.delete(key); });
@@ -384,18 +384,19 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r60b');
+  const M = await import('../settings-r60.js?v=r62n');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
-    const html = name === 'privacy-settings' ? M.privacyHTML(st.priv, st.msg, st.bad) : name === 'account-info' ? M.accountInfoHTML({ me: ACCT.me, user: S.user, google: S.google }) : M.settingsHTML({ google: S.google, settings: st.settings, msg: st.msg, bad: st.bad });
-    const root = view.querySelector('[data-s60-root]'); if (root) root.innerHTML = html;
+    const html = name === 'devices' ? M.devicesHTML(st.dev, st.msg, st.bad) : name === 'privacy-settings' ? M.privacyHTML(st.priv, st.msg, st.bad) : name === 'account-info' ? M.accountInfoHTML({ me: ACCT.me, user: S.user, google: S.google }) : M.settingsHTML({ google: S.google, settings: st.settings, msg: st.msg, bad: st.bad });
+    const root = view.querySelector('[data-s60-root]'); if (root) { root.innerHTML = html; if (name === 'settings') M.pushState?.(root); }
   };
   unifiedPage(view, 'settings', '<div data-s60-root></div>', true);
   const root = view.querySelector('[data-s60-root]');
   M.bind(root, { google: S.google, nav: (h) => { (globalThis.__LA3BAK_NAV__ || location).hash = h; }, logout: () => previewLogout(), after: async (m, bad) => { st.msg = m; st.bad = bad; await load(); paint(); } });
   async function load() {
-    if (name === 'privacy-settings') st.priv = await fetch('/api/privacy', { credentials: 'same-origin' }).then((r) => r.json()).catch(() => ({ ok: false }));
+    if (name === 'devices') st.dev = await fetch('/api/devices', { credentials: 'same-origin', cache: 'no-store' }).then((r) => r.json()).catch(() => ({ ok: false, list: [] }));
+    else if (name === 'privacy-settings') st.priv = await fetch('/api/privacy', { credentials: 'same-origin' }).then((r) => r.json()).catch(() => ({ ok: false }));
     else if (name === 'settings') st.settings = await fetch('/api/account-tools/settings', { credentials: 'same-origin' }).then((r) => r.ok ? r.json() : null).catch(() => null);
     else if (!ACCT.me) await loadAcct(false);
   }
@@ -408,6 +409,16 @@ function guestGraceNotice(lockAt) {
   const left = Math.max(1, Math.ceil((lockAt - Date.now()) / 86400000));
   const date = new Date(lockAt).toLocaleDateString('ar', { day: 'numeric', month: 'long' });
   setTimeout(() => guestPrompt(`حسابك حاليًا حساب ضيف. اربطه بـGoogle قبل ${date} (باقي ${left} ${left === 1 ? 'يوم' : left === 2 ? 'يومين' : left <= 10 ? 'أيام' : 'يوم'}) عشان تقدر تكمل تلعب أونلاين وترسل هدايا وتشتري وتاخذ مقعد بالغرف.`, { title: 'اربط حسابك بـGoogle', sub: 'بعد هالتاريخ حساب الضيف يقدر يتصفح ويلعب ضد الكمبيوتر بس. رصيدك ومشترياتك ما تنحذف، وتنتقل معك لما تربط.', ic: '⏳', later: 'ذكّرني بكرة' }), 1800);
+}
+/* R62: عرض الشحن الأول — شريط بصفحة الشحن والمحفظة لو اللاعب ما شحن قبل */
+async function firstTopupBanner(view) {
+  try {
+    const r = await fetch('/api/first-topup', { credentials: 'same-origin', cache: 'no-store' }).then((x) => x.json());
+    if (!r?.eligible || !(r.percent > 0)) return; const host = view.querySelector('[data-lb-page]'); if (!host || host.querySelector('.ft62')) return;
+    const el = document.createElement('a'); el.className = 'ft62'; el.href = '#/payments';
+    el.innerHTML = `<span aria-hidden="true">🎁</span><span><b>${r.percent >= 100 ? 'أول شحن لك = ضعف الكمية!' : `أول شحن لك عليه ${r.percent}% زيادة!`}</b><small>أول عملية شحن ناجحة تاخذ ${r.percent >= 100 ? 'نفس الكمية' : `${r.percent}% منها`} هدية فوقها — مرة وحدة بس.</small></span>`;
+    host.prepend(el);
+  } catch { /* بدون الشريط */ }
 }
 /* R60: الضيف يتصفح بس — أي ميزة مقفولة (الخادم يرجع code: 'guest') تطلع نافذة تسجيل الدخول بـGoogle */
 let guestPromptAt = 0;
@@ -543,6 +554,7 @@ async function render() {
         if (S.user && S.helloDone && !SHOP.SH.loading) SHOP.load(req).then(() => { if (parseRoute().name === 'home') render(); });
       }
       unifiedPage(view,'home');
+      if (S.user) import('../daily-streak-r62.js?v=r62o').then((M) => { if (parseRoute().name === 'home') M.mountDailyBanner(view, { req, after: (r) => { S.coins = r.coins; S.canClaim = false; if (SHOP.SH.data) { SHOP.SH.data.coins = r.coins; SHOP.SH.data.canDaily = false; } ACCT.me = null; SHOP.invalidateLedger?.(); } }); }).catch(() => {});
       if(openRoyalMenuOnHome){openRoyalMenuOnHome=false;view.querySelector('[data-lb-shell=menu]')?.click();}
       break;
     case 'events':
@@ -615,13 +627,14 @@ async function render() {
     case 'settings':
     case 'privacy-settings':
     case 'account-info':
+    case 'devices':
       if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       S.pf.sec = 'settings';
       void settingsR60(view, r.name);
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r61a').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r62m').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -677,11 +690,11 @@ async function render() {
       break;
     case 'payments':
       if (needUser((globalThis.__LA3BAK_NAV__ || location).hash)) return;
-      unifiedPage(view,'payments');
+      unifiedPage(view,'payments'); firstTopupBanner(view);
       break;
     case 'wallet':
       if (changed && S.user) void loadAcct();
-      unifiedPage(view,'wallet');
+      unifiedPage(view,'wallet'); firstTopupBanner(view);
       break;
     case 'profile':
     case 'account':

@@ -67,6 +67,16 @@ import { OwnerPlayerTools } from './owner-player-tools.js';
 import { SocialRooms, validSocialRooms } from './social-rooms.js';
 import { SocialVoice } from './social-voice.js';
 import { Backups } from './backup-r61.js';
+import { WebPush } from './webpush-r62.js';
+import { DailyStreak } from './daily-streak-r62.js';
+import { TribeWar, WAR_FUEL } from './tribe-war-r62.js';
+import { MonthlySeason, SEASON_PRIZES, monthLabel } from './season-r62.js';
+import { InviteRewards } from './invite-rewards-r62.js';
+import { FirstTopup } from './first-topup-r62.js';
+import { ShopOffers } from './shop-offers-r62.js';
+import { Devices } from './devices-r62.js';
+import { monthStartOf, nextMonthStartOf } from './leaderboard.js';
+import { weekKeyOf } from './room-supporters-r58.js';
 import { BulkGrants } from './bulk-grants.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -314,11 +324,22 @@ export async function createApp(
   const missions = new MissionsServer(missionsFile, wallet, Date.now, storage, shopcat);
   const rankRewards = new RankRewards(rankRewardsFile, wallet, progression, { hasAccount: (id) => accounts.has(id), itemExists: (id) => !!shopcat.get(id), mon: storage });
   const support = new SupportNotifications(supportFile, Date.now, storage);
+  /* R62: إشعارات الجوال — تنرسل بس للي مب فاتح الموقع الحين (اللي فاتحه يشوف التنبيه داخل الموقع) */
+  const webPush = process.env.WEB_PUSH === '0' || !cfg.walletFile && cfg.production ? null : (() => { try { return new WebPush(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'web-push.json') : '', cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'vapid.json') : '', { subject: process.env.VAPID_SUBJECT || 'https://la3bak.com', mon: storage, log: (e, d) => log(e, d) }); } catch (e) { log('web_push_disabled', { error: String((e as Error).message).slice(0, 120) }); return null; } })();
+  let onlineNow: (id: string) => boolean = () => false;
+  let inviteRewardsView: (me: string) => unknown = () => null;
+  const pushTo = (ids: string[], msg: { title: string; body: string; url?: string; tag?: string }) => { if (!webPush) return; for (const id of ids.slice(0, 5000)) if (!onlineNow(id) && webPush.count(id)) void webPush.send(id, msg).catch(() => {}); };
+  { const orig = support.announce.bind(support); (support as any).announce = (r: string[], t: unknown, b: unknown, a: unknown, ref: string) => { const out = orig(r, t, b, a, ref); try { if (out && !(out as any).error && !(out as any).duplicate && typeof t === 'string') pushTo(r, { title: t, body: typeof b === 'string' ? b : '', url: '#/notifications', tag: ref.slice(0, 40) }); } catch { /* */ } return out; }; }
   const outbox = new FunctionalOutbox(outboxFile, Date.now, storage);
   const vipMembership = new VipMembership(vipMembershipFile,{wallet,progression,hasAccount:id=>accounts.has(id),mon:storage,catalogItem:id=>shopcat.get(id),notify:notice=>{support.announce([notice.userId],notice.title,notice.body,'VIP',notice.ref);}});
   const paymentSettings = cfg.payments;
   const provider = opts.paymentProvider ?? (!cfg.complimentaryPurchases && paymentSettings && paymentSettings.mode !== 'disabled' && paymentSettings.provider === 'tap' && paymentSettings.secretKey && paymentSettings.merchantId ? new TapPaymentProvider({mode:paymentSettings.mode,secretKey:paymentSettings.secretKey,merchantId:paymentSettings.merchantId}) : null);
-  const payments = new Payments({file:paymentsFile,wallet,economy,provider,complimentaryPurchases:cfg.complimentaryPurchases,mode:paymentSettings?.mode ?? 'disabled',liveApproved:paymentSettings?.liveApproved ?? false,licenseApproved:paymentSettings?.licenseApproved ?? false,merchantApproved:paymentSettings?.merchantApproved ?? false,publicBaseUrl:paymentSettings?.publicBaseUrl ?? '',production:cfg.production,mon:storage,notify:(id,orderId,text)=>{support.announce([id],'تأكيد عملية الباقة',text,'payments-server','payment:'+orderId+':'+(text.includes('استرجاع')?'refund':'paid'));sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id)});}});
+  /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
+  const firstTopup = new FirstTopup(functionalFile(undefined, 'first-topup'), {
+    grant: (id, cur, amt, why, key) => wallet.grant(id, cur, amt, why, key),
+    debit: (id, cur, amt, why, key) => { const r = wallet.adminAdjust(id, cur, -amt, why, key); return r.ok; }, log,
+  }, storage);
+  const payments = new Payments({file:paymentsFile,wallet,economy,provider,complimentaryPurchases:cfg.complimentaryPurchases,mode:paymentSettings?.mode ?? 'disabled',liveApproved:paymentSettings?.liveApproved ?? false,licenseApproved:paymentSettings?.licenseApproved ?? false,merchantApproved:paymentSettings?.merchantApproved ?? false,publicBaseUrl:paymentSettings?.publicBaseUrl ?? '',production:cfg.production,mon:storage,notify:(id,orderId,text)=>{support.announce([id],'تأكيد عملية الباقة',text,'payments-server','payment:'+orderId+':'+(text.includes('استرجاع')?'refund':'paid'));try{const o=payments.get(id,orderId);if(text.includes('استرجاع'))firstTopup.onRefunded(id,orderId);else{const b=firstTopup.onPaid(id,o);if(b)support.announce([id],'🎁 هدية أول شحن',`لأنها أول عملية شحن لك، أضفنا ${b.toLocaleString('en-US')} ${o.cur==='gems'?'جوهرة':'عملة'} هدية فوق الباقة.`,'payments-server','firstbonus:'+id.slice(0,40));}}catch(e){log('first_topup_failed',{error:String((e as Error).message).slice(0,100)});}sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id)});}});
   const paidGamesDisabled = paymentSettings?.mode !== undefined && paymentSettings.mode !== 'disabled';
   const availableStakes = paidGamesDisabled ? [0] : STAKES;
   const canonicalProfile = (id: string, coins: number) => {
@@ -425,7 +446,7 @@ export async function createApp(
   const GUEST_MSG = 'سجّل دخولك بحساب Google عشان تقدر تستخدم هالميزة. الضيف يقدر يتصفح ويلعب ضد الكمبيوتر بس.';
   const GUEST_WS_BLOCK = new Set(['room:join', 'room:chat', 'room:react', 'room:voice', 'room:rematch', 'mm:join', 'mm:fill', 'gift:send', 'shop:buy', 'shop:checkout', 'shop:convert', 'shop:gems', 'shop:claim', 'shop:equip', 'wallet:daily', 'city:claim', 'city:roll', 'city:up']);
   /** مسارات الكتابة المسموحة للضيف: الدخول/الخروج والربط بـGoogle، والإعدادات الشخصية، وتعليم الإشعارات مقروءة */
-  const guestHttpAllowed = (p: string) => /^\/api\/(auth\/|logout$|account-tools\/settings$|profile\/visitors\/seen$|notifications)/.test(p);
+  const guestHttpAllowed = (p: string) => /^\/api\/(auth\/|logout$|account-tools\/settings$|profile\/visitors\/seen$|profile\/invites\/claim$|notifications|push\/|devices\/)/.test(p);
   const googleKeys = opts.googleKeys ?? googleKeyFetcher();
   const authLimiter = new KeyedLimiter(30, 30 / 60);
   // زر Google يحتاج هذي المصادر بالضبط (حسب توثيق Google)؛ ما نفتحها إلا إذا الدخول بـ Google مفعّل
@@ -440,10 +461,13 @@ export async function createApp(
   const achInput = (id: string): AchInput => { const st = accounts.achStats(id); const gc = wallet.giftCounts(id); return { ...st, giftsSent: gc.sent, giftsRecv: gc.recv, owned: wallet.owned(id).length }; };
   /** R57: هل الرقم مستخدم من حساب ثاني (أيدي عادي أو مميز)؟ */
   const specialTaken = (id: string, value: string) => { const owner = accounts.findByDisplayPlayerId(value); return owner !== null && owner !== id; };
+  /* R62: عروض المتجر محدودة الوقت */
+  const offers = new ShopOffers(functionalFile(undefined, 'shop-offers'), storage);
+  shopcat.offerHook = (id) => offers.forItem(id);
   const shopView = (id: string) => {
     const pr = progress(id); const got = new Set(wallet.claimed(id)); const owned = new Set(wallet.owned(id));
     const ranks = { level: pr.progression.level.value, vip: pr.progression.vip.enabled && pr.progression.vip.value ? Number(pr.progression.vip.value.slice(1)) : 0, noble: pr.progression.noble.enabled && pr.progression.noble.value ? Number(pr.progression.noble.value.slice(1)) : 0 };
-    const allItems = shopcat.all().map((i) => ({ id: i.id, slot: i.slot, name: i.name, icon: i.icon, desc: i.desc, price: i.price, currency: i.currency, permanent: i.permanent, css: i.css, art: i.art, active: i.active, retired: !i.active, status: i.status, minLevel: i.minLevel, minVip: i.minVip, minNoble: i.minNoble, eligibility: shopEligibility(i, ranks), rarity: i.rarity ?? 'common', set: i.set ?? null, season: i.season ?? null, kids: !!i.kids, ...(i.backgroundCategory ? {backgroundCategory:i.backgroundCategory,priceApproved:i.priceApproved} : {}), ...(i.slot === 'entrance' ? { proposalOnly:i.proposalOnly, priceApproved:i.priceApproved } : {}) }));
+    const allItems = shopcat.all().map((i) => ({ id: i.id, slot: i.slot, name: i.name, icon: i.icon, desc: i.desc, price: i.price, currency: i.currency, permanent: i.permanent, css: i.css, art: i.art, active: i.active, retired: !i.active, status: i.status, minLevel: i.minLevel, minVip: i.minVip, minNoble: i.minNoble, ...(i.offer ? { offer: i.offer } : {}), eligibility: shopEligibility(i, ranks), rarity: i.rarity ?? 'common', set: i.set ?? null, season: i.season ?? null, kids: !!i.kids, ...(i.backgroundCategory ? {backgroundCategory:i.backgroundCategory,priceApproved:i.priceApproved} : {}), ...(i.slot === 'entrance' ? { proposalOnly:i.proposalOnly, priceApproved:i.priceApproved } : {}) }));
     return {
       ok: true, canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), equipped: wallet.equipped(id), equippedView: equippedView(id),
       // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
@@ -672,6 +696,30 @@ export async function createApp(
     if (!pendingWrites.has('financial-reconcile')) void reconcileFinished();
   };
   const sockets = new Map<string, Set<WebSocket>>();
+  onlineNow = (id) => (sockets.get(id)?.size ?? 0) > 0;
+  /* R62: دقايق المايك للمهام — عينة كل دقيقة، وتنحفظ دفعة كل 5 دقايق */
+  const micBatch = new Map<string, number>(); let micTicks = 0;
+  const micTimer = setInterval(() => {
+    try { for (const id of socialRooms.seatedNow()) if (!isGuest(id)) micBatch.set(id, (micBatch.get(id) ?? 0) + 1); } catch { /* */ }
+    if (++micTicks % 5 === 0 && micBatch.size) { const b = new Map(micBatch); micBatch.clear(); try { missions.micMinutes(b); } catch (e) { log('mic_minutes_failed', { error: String((e as Error).message).slice(0, 100) }); } }
+  }, 60_000); micTimer.unref?.();
+  try {
+    missions.seedDefaults([
+      { id: 'daily-mic-15', title: 'اقعد على المايك 15 دقيقة', scope: 'daily', metric: 'micMinutes', goal: 15, active: true, rewards: { coins: 300 } },
+      { id: 'daily-gifts-3', title: 'أرسل 3 هدايا', scope: 'daily', metric: 'giftsSent', goal: 3, active: true, rewards: { coins: 200 } },
+      { id: 'daily-games-2', title: 'العب جولتين', scope: 'daily', metric: 'gamesPlayed', goal: 2, active: true, rewards: { coins: 200 } },
+      { id: 'weekly-mic-120', title: 'ساعتين على المايك هالأسبوع', scope: 'weekly', metric: 'micMinutes', goal: 120, active: true, rewards: { gems: 30 } },
+      { id: 'weekly-games-15', title: 'العب 15 جولة هالأسبوع', scope: 'weekly', metric: 'gamesPlayed', goal: 15, active: true, rewards: { coins: 2000 } },
+    ]);
+  } catch (e) { log('missions_seed_failed', { error: String((e as Error).message).slice(0, 100) }); }
+  /* R62: الأجهزة + تنبيه الدخول من جهاز جديد */
+  const devices = new Devices(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'devices.json') : '', (uid, label, hash) => {
+    const body = `انفتح حسابك من جهاز جديد: ${label}. لو مب أنت، افتح الإعدادات ← «الأجهزة اللي سجّلت الدخول منها» واضغط «مب أنا» عشان نطلّعه.`;
+    support.announce([uid], '🔐 دخول جديد لحسابك', body, 'الأمان', `newdev-${hash.slice(0, 24)}`);
+    if (webPush?.count(uid)) void webPush.send(uid, { title: '🔐 دخول جديد لحسابك', body, url: '#/devices', tag: 'newdev' }).catch(() => {});
+  }, storage);
+  const kickRevoked = (uid: string) => sockets.get(uid)?.forEach((ws) => { const b = socketSessions.get(ws); try { if (!b || sessions.cookieUser(b.cookie)?.id !== uid) ws.close(4401, 'session ended'); } catch { /* */ } });
+  const streak = new DailyStreak(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'daily-streak.json') : '', Date.now, storage);
   const socketSessions = new WeakMap<WebSocket,{cookie:string;hash:string}>();
   const closeSessionSockets = (cookie: string | undefined) => {
     const hash = sessionTokenHash(cookie);
@@ -698,7 +746,7 @@ export async function createApp(
       if (privacyOn(userId, 'showPresence')) return;
       const now = Date.now(), last = friendNoticeAt.get(key) ?? 0; if (now - last < gap) return; friendNoticeAt.set(key, now);
       if (friendNoticeAt.size > 20000) for (const [k, t] of friendNoticeAt) if (now - t > 3600_000) friendNoticeAt.delete(k);
-      for (const f of social.friendInternalIds(userId)) { if (!sockets.has(f)) continue; const msg = build(f); if (msg) sendToUser(f, msg); }
+      for (const f of social.friendInternalIds(userId)) { if (!sockets.has(f)) { if (webPush?.count(f)) { const msg = build(f) as { t?: string; name?: string; room?: { id?: string; name?: string } } | null; if (msg?.t === 'friend:room' && msg.room?.id) pushTo([f], { title: `صاحبك ${msg.name || ''} دخل غرفة`, body: `«${msg.room.name || ''}» — تعال سولف وياه`, url: `#/social-room/${msg.room.id}`, tag: 'friend-room-' + userId.slice(0, 8) }); } continue; } const msg = build(f); if (msg) sendToUser(f, msg); }
     } catch { /* التنبيه شكلي، ما يوقف شي */ }
   };
   const service: RoomService = new RoomService(store, registry, cfg, {
@@ -861,6 +909,8 @@ export async function createApp(
     isBlocked: (a, b) => community.pairBlocked(a, b), isMuted: (a, b) => community.isMuted(a, b),
     pub: (id) => community.pub(id), nameOf: (id) => accounts.nameOf(id),
   });
+  /* R62: رسالة خاصة جديدة → إشعار جوال للمستلم لو مب فاتح الموقع */
+  { const orig = social.send.bind(social); (social as any).send = (me: string, other: string, input: { body?: unknown; ref?: unknown }) => { const out = orig(me, other, input) as any; try { if (out && !out.error && !out.duplicate && typeof input?.body === 'string') pushTo([other], { title: `رسالة من ${accounts.nameOf(me) || 'صديق'}`, body: input.body.slice(0, 90), url: '#/messages', tag: 'dm-' + me.slice(0, 8) }); } catch { /* */ } return out; }; }
   const cpPoints = new CpPoints(cpFile, Date.now, storage);
   const tribes = new Tribes(process.env.TRIBES_FILE ?? besideSocial('tribes.json'), Date.now, storage);
   const treasure = new TribeTreasure(process.env.TRIBE_TREASURE_FILE ?? besideSocial('tribe-treasure.json'), Date.now, storage);
@@ -870,7 +920,7 @@ export async function createApp(
   const profileSocial = new ProfileSocial(profileSocialFile, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
     hidesActivity: (id) => accountTools.settings(id).showActivity === false, sinceOf: (id) => accounts.sinceOf(id),
-    viewerVip: (id) => tierOf(id).vip, needVip: VISITORS_VIP, stealthVisit: (id) => privacyOn(id, 'hideVisits'),
+    viewerVip: (id) => tierOf(id).vip, needVip: VISITORS_VIP, stealthVisit: (id) => privacyOn(id, 'hideVisits'), inviteRewards: (me) => inviteRewardsView(me),
     resolvePublicId: (pub) => community.resolvePublicId(pub),
     who: (id) => { const photo = avatars.version(id); const lv = accounts.publicStats(id)?.level; return { publicId: community.pub(id), name: accounts.nameOf(id) || 'لاعب', avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), level: typeof lv === 'number' ? lv : null }; },
     log,
@@ -911,6 +961,15 @@ export async function createApp(
     disconnectMedia:id=>socialVoice?.disconnectUser(id)??Promise.resolve(),
     audit:(actorId,action,targetId,reason)=>{platform.audit({actorId,actor:actorId==='token'?'رمز الإدارة':accounts.nameOf(actorId)||'إدارة المنصة',role:actorId==='token'?'owner':platform.roleOf(actorId)||'social-host',action:'social.'+action,target:targetId,detail:reason});},
   });
+  /* R62: مكافأة دعوة صديق — تنفحص كل 10 دقايق */
+  const inviteRewards = new InviteRewards(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'invite-rewards.json') : '', {
+    invites: () => profileSocial.allInvites(), linked: (id) => identities.linked(id), games: (id) => accounts.rankedPlayed(id), usable: (id) => accounts.has(id) && !platform.isBanned(id),
+    grant: (id, cur, amt, why, key) => { const ok = wallet.grant(id, cur, amt, why, key); if (ok) sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }); return ok; },
+    notify: (id, t, b, ref) => support.announce([id], t, b, 'دعوة صديق', ref), name: (id) => accounts.nameOf(id),
+  }, storage);
+  inviteRewardsView = (me) => inviteRewards.view(me);
+  const inviteTimer = setInterval(() => { try { inviteRewards.run(); } catch (e) { log('invite_rewards_failed', { error: String((e as Error).message).slice(0, 100) }); } }, 10 * 60_000); inviteTimer.unref?.();
+  setTimeout(() => { try { inviteRewards.run(); } catch { /* */ } }, 40_000).unref?.();
   socialVoice=new SocialVoice({...cfg.socialVoice,enabled:cfg.socialVoice?.enabled??false,upstream:cfg.socialVoice?.upstream??'',apiKey:cfg.socialVoice?.apiKey??'',apiSecret:cfg.socialVoice?.apiSecret??'',cookieSecret:cfg.cookieSecret,
     access:id=>{const access=socialEligible(id)?socialRooms.mediaAccess(id):null;return access?{...access,id:community.pub(id)}:null;},
     authenticate:req=>{const user=sessions.cookieUser(req.headers.cookie);return user&&!admin.maintenanceBlock(user)&&!admin.banBlock(user)&&socialEligible(user.id)?user:null;},originAllowed:sameOrigin,
@@ -953,12 +1012,14 @@ export async function createApp(
     checks.push({ key: 'google', label: 'الدخول بـ Google', state: cfg.googleClientId ? 'ok' : 'warn', detail: cfg.googleClientId ? 'مضبوط' : 'مب مضبوط — الضيوف ما يقدرون يربطون حساباتهم' });
     const pm = cfg.payments?.mode ?? 'disabled';
     checks.push({ key: 'payments', label: 'الدفع', state: pm === 'live' ? 'ok' : 'warn', detail: pm === 'live' ? 'شغال (حقيقي)' : pm === 'test' ? 'وضع التجربة — ما فيه دفع حقيقي' : 'مطفي' });
+    const wp = webPush?.status();
+    checks.push({ key: 'push', label: 'إشعارات الجوال', state: !wp ? 'warn' : wp.lastError && wp.sent === 0 && wp.failed > 0 ? 'bad' : 'ok', detail: !wp ? 'مطفية' : `${wp.devices} جهاز مشترك · انرسل ${wp.sent}${wp.failed ? ` · فشل ${wp.failed} (${wp.lastError ?? ''})` : ''}` });
     const m = process.memoryUsage(), rss = Math.round(m.rss / 1048576);
     checks.push({ key: 'memory', label: 'ذاكرة الخادم', state: rss > 1200 ? 'bad' : rss > 700 ? 'warn' : 'ok', detail: `${rss} MB` });
     const players = sockets.size;
     return { ok: true, at: Date.now(), uptimeSec: Math.floor((Date.now() - bootAt) / 1000), players, rooms: (({ rooms, councils, members }) => ({ rooms, councils, members }))(socialRooms.health() as any), guests: { readOnly: GUEST_READONLY, lockAt: guestLockAt }, backups: b ?? null, checks, overall: checks.some((c) => c.state === 'bad') ? 'bad' : checks.some((c) => c.state === 'warn') ? 'warn' : 'ok' };
   }
-  const admin = createAdmin({ community, giftcat, economy, payments, backups: backups ?? undefined, health: healthReport,
+  const admin = createAdmin({ community, giftcat, economy, payments, offers, backups: backups ?? undefined, health: healthReport,
     platform, shopcat, wallet, accounts, board, progression, accountTools, service, bulkGrants, store, storage, cfg, registry, sockets, log, json, readBody: appReadBody, sameOrigin, ipOf,
     kick: (id, why) => sockets.get(id)?.forEach((ws) => ws.close(why === 'banned' ? 4403 : 4503, why)),
     walletChanged: id => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }),
@@ -1011,13 +1072,40 @@ export async function createApp(
       for (const m of t.members) { const k = l.winners.indexOf(m.id); sendToUser(m.id, { t: 'tribe:rocket', event: { ...ev, mine: k >= 0 ? { rank: k + 1, gems: p.prizes[k], gifts: p.gifts[k].map((x) => x.name) } : l.luck === m.id ? { rank: 0, gems: 0, gifts: [p.luck.name] } : null } }); sendToUser(m.id, { t: 'tribe:update' }); }
     }
   }
+  /* R62: حرب القبائل الأسبوعية — تقسيم وتحديث نتائج كل 5 دقايق، والتسوية أول ما يبدأ أسبوع جديد */
+  const war = new TribeWar(besideSocial('tribe-war.json'), storage);
+  const warTick = () => {
+    try {
+      const wk = weekKeyOf(Date.now());
+      for (const done of war.settle(wk)) for (const r of done.results) {
+        const A = tribes.get(r.a), Bt = tribes.get(r.b); if (!A || !Bt) continue;
+        const award = (t: Tribe, each: number, title: string, body: string) => { const ids = t.members.map((m) => m.id); treasure.addFuel(ids, each); support.announce(ids, title, body, 'حرب القبائل', `war-${done.week}-${t.id}`); tribePush(ids); };
+        if (r.winner === null) { for (const t of [A, Bt]) award(t, WAR_FUEL.draw, 'حرب القبائل: تعادل!', `تعادلتوا مع قبيلة «${(t === A ? Bt : A).name}». كل عضو أخذ ${WAR_FUEL.draw} وقود.`); }
+        else { const w = r.winner === A.id ? A : Bt, l = w === A ? Bt : A; award(w, WAR_FUEL.win, 'فزتوا بحرب القبائل! 🏆', `قبيلتكم غلبت «${l.name}» (${Math.max(r.sa, r.sb).toLocaleString('en-US')} ضد ${Math.min(r.sa, r.sb).toLocaleString('en-US')}). كل عضو أخذ ${WAR_FUEL.win} وقود.`); }
+      }
+      war.ensure(wk, tribes.top(500).filter((t) => t.members.length >= WAR_FUEL.minMembers).map((t) => t.id));
+      war.update(wk, (id) => treasure.weekPts(id));
+    } catch (e) { log('tribe_war_failed', { error: String((e as Error).message).slice(0, 120) }); }
+  };
+  setTimeout(warTick, 20_000).unref?.(); const warTimer = setInterval(warTick, 5 * 60_000); warTimer.unref?.();
+  /* R62: موسم الترتيب الشهري */
+  const season = new MonthlySeason(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'season.json') : '', {
+    rows: (start) => board.monthRows(start, 10), grant: (c, fp, ids, r, why) => wallet.grantCampaignBatch(c, fp, ids, r, why),
+    itemOk: (id) => !!shopcat.get(id), notify: (id, t, b, ref) => { support.announce([id], t, b, 'موسم الترتيب', ref); sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }); }, log,
+  }, storage);
+  const monthKey = (start: number) => new Date(start + 4 * 3600_000).toISOString().slice(0, 7);
+  const seasonTick = () => { try { const cur = monthStartOf(Date.now()); const prev = monthStartOf(cur - 1); if (cur > season.since) season.settle(monthKey(prev), prev); } catch (e) { log('season_failed', { error: String((e as Error).message).slice(0, 120) }); } };
+  setTimeout(seasonTick, 30_000).unref?.(); const seasonTimer = setInterval(seasonTick, 30 * 60_000); seasonTimer.unref?.();
+  const seasonView = () => { const now = Date.now(), start = monthStartOf(now); return { ok: true, label: monthLabel(monthKey(start)), endsAt: nextMonthStartOf(now), prizes: SEASON_PRIZES.map((p) => ({ ...p, item: p.itemId ? (({ id, name }) => ({ id, name }))(shopcat.get(p.itemId) ?? { id: p.itemId, name: '' }) : null })), last: season.last() }; };
+  const warView = (t: Tribe) => { const v = war.view(weekKeyOf(Date.now()), t.id); const name = (id: number | null) => (id !== null ? tribes.get(id)?.name : null) ?? null;
+    return { ...v, mine: Math.max(v.mine, treasure.weekPts(t.id)), theirs: v.opponent !== null ? Math.max(v.theirs, treasure.weekPts(v.opponent)) : 0, opponentName: name(v.opponent), last: v.last ? { ...v.last, opponentName: name(v.last.opponent) } : null, prize: WAR_FUEL }; };
   const treasureRun = (fn: () => unknown) => { try { return fn(); } catch (e) { if (e instanceof TreasureError) return { ok: false, code: e.code, error: TREASURE_ERR[e.code] ?? 'تعذّر تنفيذ الطلب.' }; throw e; } };
   const myTribe = (id: string) => { const t = tribes.of(id); if (!t) throw new TreasureError('no_tribe'); return t; };
   const treasureView = (t: Tribe, viewer: string) => { const v = treasure.view(t.id, viewer); const room = socialRooms.ownerTopRoom(t.leader);
     return { ok: true, tribe: { ...tribeCard(t), createdDays: Math.max(1, Math.ceil((Date.now() - t.at) / 86_400_000)), room, dayPts: v.dayPts, weekPts: v.weekPts, wealth: v.wealth },
       rocket: { count: v.rockets, toNext: v.toNext, per: v.per, nextPlanet: v.nextPlanet, launches: v.launches.map((l) => ({ ...l, winners: l.winners.map((id, k) => ({ rank: k + 1, ...cpPerson(id) })), luck: l.luck ? cpPerson(l.luck) : null })) },
       tasks: TRIBE_TASKS.map((x) => ({ ...x, done: v.me.done.includes(x.id) })), boxes: TRIBE_BOXES.map((b) => ({ ...b, open: v.weekPts >= b.need, claimed: v.me.boxes.includes(b.level) })),
-      shop: TRIBE_SHOP, me: { fuel: v.me.fuel, dayPts: v.me.dayPts, weekPts: v.me.weekPts, bag: v.me.bag, coinsWeek: v.me.coinsWeek, coins: wallet.balance(viewer) } };
+      war: warView(t), shop: TRIBE_SHOP, me: { fuel: v.me.fuel, dayPts: v.me.dayPts, weekPts: v.me.weekPts, bag: v.me.bag, coinsWeek: v.me.coinsWeek, coins: wallet.balance(viewer) } };
   };
   functionalHttp.add('GET', '/api/tribes/treasure', ({ user }) => treasureRun(() => treasureView(myTribe(user.id), user.id)));
   functionalHttp.add('POST', '/api/tribes/treasure/task', ({ user, body }) => treasureRun(() => { const t = myTribe(user.id); const id = String((body as any)?.id ?? '');
@@ -1100,6 +1188,7 @@ export async function createApp(
       if (await socialVoice!.handleHttp(req,res)) return;
       const session = sessions.cookieUser(req.headers.cookie);
       const user = session ? { ...session, name: accounts.nameOf(session.id) || session.name } : null;
+      if (user) { try { const h = sessions.tokenHash(req.headers.cookie); if (h) devices.touch(user.id, h, String(req.headers['user-agent'] ?? '').slice(0, 300), (x) => sessions.activeHashes(user.id).includes(x)); } catch { /* الأجهزة ثانوية */ } }
 
       if (url.pathname === '/healthz') {
         // liveness: الرمز مثل قبل (يتأثر بمخزن الغرف فقط)، ونضيف حقل storage للمراقبة
@@ -1319,6 +1408,31 @@ export async function createApp(
         }
         return json(res, 200, { questions });
       }
+      // R62: الأجهزة
+      if (url.pathname === '/api/devices' && req.method === 'GET') { if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); const cur = sessions.tokenHash(req.headers.cookie); const act = new Set(sessions.activeHashes(user.id)); return json(res, 200, { ok: true, list: devices.list(user.id, cur, (h) => act.has(h)) }); }
+      if ((url.pathname === '/api/devices/revoke' || url.pathname === '/api/devices/revoke-others') && req.method === 'POST') {
+        if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); if (!sameOrigin(req)) return json(res, 403, { error: 'طلب مرفوض.' });
+        let b: any = {}; try { b = JSON.parse((await appReadBody(req)) || '{}'); } catch { return json(res, 400, { error: 'بيانات غير صالحة.' }); }
+        const cur = sessions.tokenHash(req.headers.cookie); let n = 0;
+        if (url.pathname.endsWith('/revoke-others')) n = sessions.revokeHashes(user.id, cur);
+        else { const h = typeof b?.id === 'string' ? devices.resolve(user.id, b.id) : null; if (!h || h === cur) return json(res, 400, { error: 'هذا الجهاز مب موجود (أو هو جهازك الحالي — استخدم «تسجيل الخروج»).' }); n = sessions.revokeHashes(user.id, cur, h); }
+        kickRevoked(user.id); log('devices_revoked', { n });
+        return json(res, 200, { ok: true, revoked: n });
+      }
+      if (url.pathname === '/api/first-topup' && req.method === 'GET') return json(res, 200, { ok: true, eligible: !!user && firstTopup.eligible(user.id) && (paymentSettings?.mode === 'live' || (paymentSettings?.mode === 'test' && firstTopup.allowTest)), percent: firstTopup.percent });
+      if (url.pathname === '/api/season' && req.method === 'GET') return json(res, 200, seasonView());
+      // R62: هدية الدخول اليومي المتصاعدة
+      if (url.pathname === '/api/daily-streak' && req.method === 'GET') { if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); return json(res, 200, streak.view(user.id, wallet.canClaim(user.id))); }
+      // R62: إشعارات الجوال
+      if (url.pathname === '/api/push/key' && req.method === 'GET') return json(res, 200, webPush ? { ok: true, key: webPush.publicKey, devices: user ? webPush.count(user.id) : 0 } : { ok: false });
+      if ((url.pathname === '/api/push/subscribe' || url.pathname === '/api/push/unsubscribe') && req.method === 'POST') {
+        if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); if (!sameOrigin(req)) return json(res, 403, { error: 'طلب مرفوض.' }); if (!webPush) return json(res, 503, { error: 'الإشعارات غير متاحة.' });
+        let b: any; try { b = JSON.parse(await appReadBody(req)); } catch { return json(res, 400, { error: 'بيانات غير صالحة.' }); }
+        if (url.pathname.endsWith('/unsubscribe')) { if (typeof b?.endpoint === 'string') webPush.unsubscribe(user.id, b.endpoint); return json(res, 200, { ok: true, devices: webPush.count(user.id) }); }
+        if (!webPush.subscribe(user.id, b?.subscription, String(req.headers['user-agent'] ?? ''))) return json(res, 400, { error: 'هالمتصفح ما يدعم الإشعارات أو الاشتراك غير صالح.' });
+        if (b?.test) void webPush.send(user.id, { title: 'لعبك 🎮', body: 'تمام! الإشعارات شغالة على هالجهاز.', url: '#/', tag: 'push-test' });
+        return json(res, 200, { ok: true, devices: webPush.count(user.id) });
+      }
       if (url.pathname === '/api/me' && req.method === 'GET') return json(res, 200, { user, google: !!user && identities.linked(user.id), guestReadOnly: !!user && isGuest(user.id), ...(user && unlinkedGuest(user.id) && inGrace(user.id) ? { guestLockAt } : {}) });
       if (url.pathname === '/api/auth/config' && req.method === 'GET') return json(res, 200, { google: cfg.googleClientId || null });
       if (url.pathname === '/api/auth/google' && req.method === 'POST') {
@@ -1519,7 +1633,11 @@ export async function createApp(
           if (e instanceof StorageError) return { ok: false, error: STORAGE_MSG, storage: true };
           throw e;
         }
-        return n ? { ok: true, got: n, coins: wallet.balance(user.id) } : { ok: false, error: 'استلمت مكافأة اليوم. تعال بكرة.' };
+        if (!n) return { ok: false, error: 'استلمت مكافأة اليوم. تعال بكرة.' };
+        // R62: هدية السلسلة فوق المكافأة اليومية (مفتاح ثابت لكل يوم — ما تتكرر)
+        let extra = 0, gemsGot = 0, day = 1;
+        try { const st = streak.claim(user.id); day = st.day; if (st.bonus.coins > 0 && wallet.grant(user.id, 'coins', st.bonus.coins, `هدية الدخول اليومي — اليوم ${st.day}`, `streak:${st.today}:c`)) extra = st.bonus.coins; if (st.bonus.gems > 0 && wallet.grant(user.id, 'gems', st.bonus.gems, `هدية اليوم السابع`, `streak:${st.today}:g`)) gemsGot = st.bonus.gems; } catch (e) { log('streak_failed', { error: String((e as Error).message).slice(0, 100) }); }
+        return { ok: true, got: n + extra, base: n, bonus: extra, gems: gemsGot, streakDay: day, coins: wallet.balance(user.id), gemBalance: wallet.gems(user.id) };
       }
       case 'mm:leave':
         return { ok: true, left: mm.leave(user.id) };
@@ -1607,6 +1725,11 @@ export async function createApp(
     clearInterval(tickTimer);
     clearInterval(cleanTimer);
     clearInterval(storageTimer);
+    clearInterval(micTimer);
+    clearInterval(warTimer);
+    clearInterval(seasonTimer);
+    clearInterval(inviteTimer);
+    devices.stop();
     admin.stop();
     backups?.stop();
     bulkGrants.close();

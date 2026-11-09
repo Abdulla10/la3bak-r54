@@ -713,3 +713,90 @@ img.cx-frame[src*="frames3/f07."],img.cx-frame[src*="frames3/f08."],img.cx-frame
   html body :is(.sup58-shortcut,.c59-shortcut,.so-cannon-shortcut) *{animation-duration:4s!important;}
 }
 @media (prefers-reduced-motion:reduce){html body *{animation-iteration-count:1!important;}}
+
+/* R62: هدية الدخول اليومي */
+.ds62-banner{display:flex;align-items:center;gap:12px;width:calc(100% - 4px);margin:0 auto 12px;padding:12px 14px;border:1px solid #c49a3a66;border-radius:16px;background:linear-gradient(135deg,#5a2a8c,#3d1a6e);color:#fff;font-family:inherit;text-align:start;cursor:pointer;box-shadow:0 6px 18px #3d1a6e33;}
+.ds62-banner>span:first-child{font-size:28px;}
+.ds62-banner span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:2px;}
+.ds62-banner b{font-size:14.5px;font-weight:900;color:#fff!important;}
+.ds62-banner small{font-size:12px;color:#ead9ff!important;}
+.ds62-banner i{font-style:normal;font-size:22px;color:#e3c06d;}
+.ds62-sheet{position:fixed;inset:0;z-index:2147483100;display:grid;place-items:end center;background:rgba(20,10,40,.55);}
+.ds62-card{position:relative;width:min(440px,100%);padding:20px 16px calc(18px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:#fffaf3;color:#2c1a4a;text-align:center;}
+.ds62-card h2{margin:0 0 6px;font-size:19px;font-weight:900;}
+.ds62-card>p{margin:0 0 10px;font-size:13px;line-height:1.7;color:#6a5a80;}
+.ds62-x{position:absolute;top:10px;inset-inline-end:12px;width:34px;height:34px;border:0;border-radius:50%;background:#efe7f8;color:#5a2a8c;font-size:20px;line-height:1;}
+.ds62-grid{list-style:none;margin:6px 0 12px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.ds62-day{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:14px;background:#f3ecfa;border:1px solid #e3d6f2;}
+.ds62-day small{font-size:11px;color:#7b6a92;}
+.ds62-ic{font-size:22px;line-height:1.2;}
+.ds62-day b{font-size:13px;font-weight:900;}
+.ds62-day em{font-style:normal;font-size:11px;color:#8a641f;font-weight:800;}
+.ds62-day.is-done{background:#e5f6ec;border-color:#9fd9b5;}
+.ds62-day.is-done .ds62-ic{color:#1f8a4c;font-weight:900;}
+.ds62-day.is-now{background:#fff3d6;border:2px solid #c49a3a;transform:scale(1.04);}
+.ds62-day.is-big{grid-column:span 2;background:linear-gradient(135deg,#fff3d6,#f3e2b8);border-color:#c49a3a;}
+.ds62-go{width:100%;padding:13px;border:0;border-radius:14px;background:linear-gradient(180deg,#6a34a8,#3d1a6e);color:#fff;font-weight:900;font-size:15px;font-family:inherit;}
+.ds62-msg{margin:0 0 10px;font-weight:800;color:#1f8a4c;}
+.ds62-warn{color:#b0451f!important;font-weight:800;}
+.ds62-done{margin:0;padding:12px;border-radius:14px;background:#e5f6ec;color:#1f6b3e;font-weight:800;}
+html.lb-dark .ds62-card{background:#211a2e;color:#efe8fa;}
+html.lb-dark .ds62-day{background:#2a2139;border-color:#3d3052;}
+html.lb-dark .ds62-day.is-now,html.lb-dark .ds62-day.is-big{background:#3a2d1c;border-color:#d8b25a;}
+html.lb-dark .ds62-day.is-done{background:#1d3a2a;border-color:#2f6b47;}
+html.lb-dark .ds62-card>p,html.lb-dark .ds62-day small{color:#b9acd0;}
+/* R62: ترتيب الغرف الأسبوعي */
+.wk62{display:inline-flex;align-items:center;gap:2px;margin-inline-start:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:900;white-space:nowrap;background:linear-gradient(135deg,#fff3d6,#f1d9a0);color:#7a5414;border:1px solid #c49a3a88;vertical-align:middle;}
+.wk62-1{background:linear-gradient(135deg,#ffe9a8,#e8c15a);}
+html.lb-dark .wk62{background:#3a2d1c;color:#e3c06d;border-color:#d8b25a66;}
+/* R62: حرب القبائل */
+.wr62{margin:0 0 12px;padding:14px;border-radius:16px;background:linear-gradient(135deg,#2a1747,#4a2380);color:#fff;}
+.wr62-vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;text-align:center;}
+.wr62-vs b{display:block;font-size:14px;font-weight:900;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wr62-vs span{display:block;margin-top:3px;font-size:13px;color:#f1d58a;font-weight:800;}
+.wr62-vs i{font-style:normal;font-weight:900;font-size:18px;color:#e3c06d;}
+.wr62-bar{height:9px;margin:10px 0 6px;border-radius:9px;background:#ffffff26;overflow:hidden;}
+.wr62-bar i{display:block;height:100%;background:linear-gradient(90deg,#e3c06d,#ffd978);border-radius:9px;}
+.wr62-lead{margin:0;text-align:center;font-weight:900;font-size:13px;}
+.wr62-rule,.wr62-none,.wr62-last{margin:8px 0 0;font-size:12px;line-height:1.7;color:#e6dbf7;}
+.wr62-last{padding-top:8px;border-top:1px solid #ffffff22;}
+/* R62: موسم الترتيب الشهري */
+.ss62{margin:0 0 12px;padding:14px;border-radius:18px;background:linear-gradient(135deg,#2a1747,#4a2380);color:#fff;text-align:center;}
+.ss62 h3{margin:0 0 4px;font-size:16px;font-weight:900;color:#f1d58a;}
+.ss62>p{margin:0 0 10px;font-size:12.5px;line-height:1.7;color:#e6dbf7;}
+.ss62-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ss62-p{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:14px;background:#ffffff14;}
+.ss62-p img{width:72px;height:72px;object-fit:contain;}
+.ss62-p b{font-size:11.5px;font-weight:900;line-height:1.4;color:#fff;}
+.ss62-p small{font-size:11px;color:#f1d58a!important;font-weight:800;}
+.ss62-1{background:#e3c06d26;outline:1px solid #e3c06d88;}
+.ss62-last{margin:10px 0 0!important;padding-top:8px;border-top:1px solid #ffffff22;font-size:12px!important;}
+/* R62: مكافأة الدعوة */
+.iv62{margin-top:12px;padding:14px;border-radius:16px;background:linear-gradient(135deg,#fff7e6,#f6e8c8);border:1px solid #c49a3a66;color:#3d2a12;}
+.iv62 h3{margin:0 0 6px;font-size:15px;font-weight:900;}
+.iv62 h4{margin:10px 0 4px;font-size:13px;}
+.iv62 p{margin:0 0 6px;font-size:12.5px;line-height:1.75;}
+.iv62-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;}
+.iv62-row{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:10px;background:#ffffffa6;font-size:12px;}
+.iv62-me{padding:8px 10px;border-radius:10px;background:#ffffffa6;font-weight:800;}
+html.lb-dark .iv62{background:#2f2440;color:#efe8fa;border-color:#d8b25a55;}
+html.lb-dark :is(.iv62-row,.iv62-me){background:#211a2e;}
+/* R62: عرض الشحن الأول */
+.ft62{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,#c49a3a,#8a641f);color:#fff;text-decoration:none;box-shadow:0 6px 18px #8a641f40;}
+.ft62>span:first-child{font-size:28px;}
+.ft62 span:nth-child(2){display:flex;flex-direction:column;gap:2px;}
+.ft62 b{font-size:15px;font-weight:900;color:#fff!important;}
+.ft62 small{font-size:12px;color:#fff6dc!important;}
+/* R62: عروض المتجر محدودة الوقت */
+.of62{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.of62-tag{padding:1px 7px;border-radius:999px;background:linear-gradient(135deg,#e2483d,#b8231b);color:#fff;font-size:10.5px;font-weight:900;white-space:nowrap;}
+.of62-tag time{font-variant-numeric:tabular-nums;}
+.of62 s{font-size:11px;color:#9b8fae;}
+/* R62: الأجهزة */
+.dv62 .s60-label{display:flex;flex-direction:column;gap:3px;}
+.dv62 small{font-size:11.5px;color:#7b6a92;}
+.dv62-cur{font-style:normal;margin-inline-start:6px;padding:1px 7px;border-radius:999px;background:#e5f6ec;color:#1f6b3e;font-size:10.5px;font-weight:900;}
+.dv62-out{padding:7px 10px;border:1px solid #e8b4b4;border-radius:10px;background:#fff1f1;color:#b0261b;font-weight:800;font-size:12px;font-family:inherit;white-space:nowrap;}
+.s60-danger{width:100%;margin-top:12px;padding:13px;border:0;border-radius:14px;background:#b0261b;color:#fff;font-weight:900;font-size:14px;font-family:inherit;}
+html.lb-dark .dv62-out{background:#3a1f22;color:#ff9a9a;border-color:#6a2a2a;}
+html.lb-dark .dv62-cur{background:#1d3a2a;color:#9fe0b5;}

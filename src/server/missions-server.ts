@@ -4,7 +4,7 @@ import { itemOf } from './catalog.js';
 import type { Wallet, BulkReward, BulkGrantResult } from './wallet.js';
 import type { Role } from './platform.js';
 
-export const MISSION_METRICS = ['gamesPlayed', 'gamesWon', 'giftsSent', 'giftsReceived'] as const;
+export const MISSION_METRICS = ['gamesPlayed', 'gamesWon', 'giftsSent', 'giftsReceived', 'micMinutes'] as const;
 export type MissionMetric = typeof MISSION_METRICS[number];
 export type MissionScope = 'daily' | 'weekly';
 export interface MissionRewards { coins?: number; gems?: number; items?: string[] }
@@ -52,7 +52,7 @@ const userId = (v: unknown): v is string => text(v, 160);
 const scope = (v: unknown): v is MissionScope => v === 'daily' || v === 'weekly';
 const hash = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const own = <T>(r: Record<string, T>, k: string): T | undefined => Object.hasOwn(r, k) ? r[k] : undefined;
-const zero = (): Counts => ({ gamesPlayed: 0, gamesWon: 0, giftsSent: 0, giftsReceived: 0 });
+const zero = (): Counts => ({ gamesPlayed: 0, gamesWon: 0, giftsSent: 0, giftsReceived: 0, micMinutes: 0 });
 const keysOnly = (v: Record<string, unknown>, keys: string[]) => Object.keys(v).every((k) => keys.includes(k));
 function validRewards(v: unknown): v is MissionRewards {
   return isObj(v) && keysOnly(v, ['coins', 'gems', 'items'])
@@ -68,7 +68,7 @@ function validDefinition(v: unknown): v is MissionDefinition {
     && validRewards(v.rewards) && (!v.active || hasRewards(v.rewards));
 }
 const validBucket = (v: unknown) => isObj(v) && typeof v.key === 'string' && isObj(v.counts)
-  && MISSION_METRICS.every((m) => nat((v.counts as Record<string, unknown>)[m]));
+  && MISSION_METRICS.every((m) => m === 'micMinutes' ? (v.counts as Record<string, unknown>)[m] === undefined || nat((v.counts as Record<string, unknown>)[m]) : nat((v.counts as Record<string, unknown>)[m]));
 const validBulkReward = (v: unknown) => isObj(v) && (v.type === 'currency'
   ? (v.cur === 'coins' || v.cur === 'gems') && pos(v.amount)
   : v.type === 'item' && text(v.itemId, 100) && v.mode === 'grant' && v.price === undefined && v.currency === undefined);
@@ -180,7 +180,7 @@ export class MissionsServer {
           // إعادة تسليم قديمة لا تعيد تصفير نافذة أحدث ولا تزيد تقدمها.
           // نافذة يوم منتهية تُهمل، لكن نفس أسبوع الحدث يمكن استكماله.
           if (windows[s].key !== current[s].key || progress[s].key !== windows[s].key) continue;
-          const count = progress[s].counts[change.metric] + 1;
+          const count = (progress[s].counts[change.metric] ?? 0) + 1;
           if (!nat(count)) throw new MissionInputError('تجاوز عداد المهمة المجال الآمن.');
           progress[s].counts[change.metric] = count;
           counted = true;
@@ -206,6 +206,26 @@ export class MissionsServer {
     if (!userId(from) || !userId(to) || from === to) throw new MissionInputError('أطراف الهدية غير صالحة.');
     return this.event('gift', ref, { from, to }, [{ id: from, metric: 'giftsSent' }, { id: to, metric: 'giftsReceived' }], occurredAt);
   }
+  /** R62: دقايق المايك — الخادم يعدّها بنفسه (عينة كل دقيقة للي قاعدين على مقعد بالغرفة ومتصلين بالصوت) ويحفظها دفعة كل كم دقيقة. ما فيه سجل حدث لكل دقيقة. */
+  micMinutes(batch: Map<string, number>) {
+    if (!batch.size) return 0;
+    const now = this.now(), windows = missionWindows(now);
+    return this.commit(() => {
+      let n = 0;
+      for (const [id, mins] of batch) {
+        if (!userId(id) || !pos(mins) || mins > 24 * 60) continue;
+        const progress = this.progress(id, windows);
+        for (const s of ['daily', 'weekly'] as const) { if (progress[s].key !== windows[s].key) continue; const v = (progress[s].counts.micMinutes ?? 0) + mins; if (nat(v)) progress[s].counts.micMinutes = v; }
+        n++;
+      }
+      return n;
+    });
+  }
+  /** R62: مهام افتراضية لو المالك ما ضبط أي مهام للحين (يقدر يعدّلها أو يطفيها من لوحة التحكم). */
+  seedDefaults(defs: MissionDefinition[]): boolean {
+    if (this.d.definitions.length || this.d.configured || !defs.every(validDefinition)) return false;
+    return this.commit(() => { this.d.definitions = structuredClone(defs); this.d.configured = { by: 'system:r62-defaults', at: this.now() }; return true; });
+  }
   /** قراءة فقط للاعب الموثّق؛ لا تستقبل أرقام تقدم من العميل ولا تنشئ حساب محفظة. */
   view(id: string): MissionsView {
     if (!userId(id)) throw new MissionInputError('هوية اللاعب غير صالحة.');
@@ -215,7 +235,7 @@ export class MissionsServer {
       const claim = own(this.d.claims, claimOperationId(id, def.id, def.scope, windows[def.scope].key));
       if (!def.active && claim?.state !== 'pending') return [];
       const bucket = progress?.[def.scope];
-      const value = bucket?.key === windows[def.scope].key ? bucket.counts[def.metric] : 0;
+      const value = bucket?.key === windows[def.scope].key ? (bucket.counts[def.metric] ?? 0) : 0;
       const done = value >= def.goal, claimed = claim?.state === 'claimed', pending = claim?.state === 'pending';
       return [{ ...structuredClone(def), progress: value, value: Math.min(value, def.goal), done, claimed, pending,
         claimable: pending || (def.active && done && !claimed && claim?.state !== 'failed') }];
@@ -233,7 +253,7 @@ export class MissionsServer {
       if (previous) return this.finish(previous, true);
       if (!def.active) return { ok: false, code: 'inactive' };
       const bucket = own(this.d.users, JSON.stringify(id))?.[def.scope];
-      if (!bucket || bucket.key !== period || bucket.counts[def.metric] < def.goal) return { ok: false, code: 'ineligible' };
+      if (!bucket || bucket.key !== period || (bucket.counts[def.metric] ?? 0) < def.goal) return { ok: false, code: 'ineligible' };
       // العناصر المملوكة بالفعل متحققة، لا شراء ولا خصم ولا تكرار ملكية.
       const owned = new Set(this.wallet.owned(id));
       const rewards: BulkReward[] = [];

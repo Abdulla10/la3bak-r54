@@ -102,13 +102,23 @@ function stateHTML(state, ctx) {
   }
   return '';
 }
+/* R62: موسم الترتيب الشهري — الجوايز وأبطال الموسم اللي طاف */
+const SEASON_ART = { 'art-f3-42': '/assets/art58/frames3/f42.webp?v=r59c', 'art-f3-39': '/assets/art58/frames3/f39.webp?v=r59c', 'art-f3-40': '/assets/art58/frames3/f40.webp?v=r59c' };
+function seasonHTML(se) {
+  if (!se?.prizes) return '';
+  const days = Math.max(0, Math.ceil((se.endsAt - Date.now()) / 86400000));
+  const top = se.prizes.slice(0, 3).map((p) => `<li class="ss62-p ss62-${p.rank}">${SEASON_ART[p.itemId] ? `<img src="${SEASON_ART[p.itemId]}" alt="" loading="lazy" decoding="async">` : ''}<b>${['🥇', '🥈', '🥉'][p.rank - 1]} ${esc(p.item?.name || '')}</b><small dir="ltr">+${esc(p.gems)} 💎</small></li>`).join('');
+  const last = se.last?.winners?.length ? `<p class="ss62-last">أبطال ${esc(se.last.label)}: ${se.last.winners.slice(0, 3).map((w) => `${['🥇', '🥈', '🥉'][w.rank - 1]} ${esc(w.name)}`).join(' · ')}</p>` : '';
+  return `<section class="ss62"><h3>🏆 موسم ${esc(se.label)}</h3><p>أول 3 بترتيب الشهر ياخذون إطار حصري ما ينباع بالمتجر، ومن الرابع للعاشر ياخذون ${esc(se.prizes[3]?.gems ?? 100)} جوهرة. باقي <b>${days}</b> ${days === 1 ? 'يوم' : days === 2 ? 'يومين' : days <= 10 ? 'أيام' : 'يوم'}.</p><ol class="ss62-list">${top}</ol>${last}</section>`;
+}
 function periodHTML(data, scope) {
   if (scope === 'weekly') return `<p class="lb-rank-period">بداية الأسبوع: ${esc(df.format(data.weekStart))}<br>التصفير الجاي: ${esc(df.format(data.resetsAt))}، الساعة 12 بالليل بتوقيت الإمارات.</p>`;
   if (scope !== 'monthly') return '<p class="lb-rank-period">هالترتيب تراكمي لكل الفترات، مب ترتيب أسبوعي ولا شهري.</p>';
   const dates = `<p class="lb-rank-period">بداية الشهر: ${esc(df.format(data.monthStart))}<br>التصفير الجاي: ${esc(df.format(data.resetsAt))}، الساعة 12 بالليل بتوقيت الإمارات.</p>`;
-  if (data.coverage.complete) return `${dates}<p class="lb-rank-note">التتبع يغطي هالشهر من بدايته، والنقاط تتحدث مع المباريات المنتهية.</p>`;
+  const sz = seasonHTML(data.season);
+  if (data.coverage.complete) return `${sz}${dates}<p class="lb-rank-note">التتبع يغطي هالشهر من بدايته، والنقاط تتحدث مع المباريات المنتهية.</p>`;
   const from = data.coverage.from;
-  return `${dates}<p class="lb-rank-coverage" role="status"><b>بيانات هالشهر غير مكتملة</b><br>${from == null ? 'ما فيه تغطية مسجلة لهالشهر.' : `النقاط المعروضة من ${esc(coverageDf.format(from))} بتوقيت الإمارات فقط.`} نتائج ما قبل بداية التتبع مب داخلة؛ البيانات الأسبوعية القديمة ما تكفي لحساب شهر دقيق.</p>`;
+  return `${sz}${dates}<p class="lb-rank-coverage" role="status"><b>بيانات هالشهر غير مكتملة</b><br>${from == null ? 'ما فيه تغطية مسجلة لهالشهر.' : `النقاط المعروضة من ${esc(coverageDf.format(from))} بتوقيت الإمارات فقط.`} نتائج ما قبل بداية التتبع مب داخلة؛ البيانات الأسبوعية القديمة ما تكفي لحساب شهر دقيق.</p>`;
 }
 function standings(state, ctx) {
   const status = stateHTML(state, ctx);
@@ -163,7 +173,7 @@ export function mount(root, ctx = {}) {
         throw error;
       }
       if (!validData(data, scope)) { state.error = 'invalid'; }
-      else { state.data = data; }
+      else { state.data = data; if (scope === 'monthly') { try { const se = await ctx.api('/api/season', 'GET'); if (se?.ok) state.data = { ...data, season: se }; } catch { /* بدون الموسم */ } } }
     } catch (error) {
       if (destroyed || revision !== state.revision) return;
       const status = Number(error?.status ?? error?.statusCode ?? error?.response?.status);

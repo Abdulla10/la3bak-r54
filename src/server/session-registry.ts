@@ -117,6 +117,15 @@ export class SessionRegistry {
     }
   }
 
+  /** R62: الجلسات الشغالة للاعب (بصمات بس — ما فيه توكنات) */
+  activeHashes(userId: string): string[] { const now = this.now(); return Object.entries(this.data.tokens).filter(([, r]) => r.userId === userId && r.revokedAt === undefined && r.expiresAt > now).map(([h]) => h); }
+  /** R62: يطلّع الحساب من كل الأجهزة إلا الجهاز الحالي (أو جهاز واحد محدد لو only) */
+  revokeHashes(userId: string, keep: string | null, only: string | null = null): number {
+    const now = this.now(); const targets = Object.entries(this.data.tokens).filter(([h, r]) => r.userId === userId && r.revokedAt === undefined && r.expiresAt > now && h !== keep && (only === null || h === only)).map(([h]) => h);
+    if (!targets.length) return 0;
+    this.transaction(() => { for (const h of targets) this.data.tokens[h] = { ...this.data.tokens[h], revokedAt: now }; });
+    return targets.length;
+  }
   retry(): void { this.disk.retry(); }
   unsaved(): boolean { return this.disk.unsaved; }
 

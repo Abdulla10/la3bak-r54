@@ -50,6 +50,14 @@ export function visitorsView(root, { api }) {
 }
 
 /** ادعُ الأصدقاء — code: رمز دعوة من الرابط (#/invite/<رمز>) إن وجد */
+/* R62: مكافأة دعوة صديق */
+function rewardsHTML(r) {
+  if (!r) return '';
+  const rows = (r.pending || []).map((p) => `<li class="iv62-row"><b>${esc(p.who || 'صديق')}</b><span>${p.linked ? '✓ ربط Google' : '✗ ما ربط Google'} · ${esc(p.games)}/${esc(r.games)} مباريات</span></li>`).join('');
+  return `<div class="iv62"><h3>🎁 مكافأة الدعوة</h3><p>كل صديق يسوي حساب عن طريق رابطك، ويربطه بـGoogle، ويلعب ${esc(r.games)} مباريات مع لاعبين (مب ضد الكمبيوتر): تاخذ <b>${nf(r.inviter.coins)} عملة + ${nf(r.inviter.gems)} جوهرة</b>، وهو ياخذ ${nf(r.invitee.coins)} عملة. (حد أعلى ${esc(r.monthlyCap)} مكافأة بالشهر)</p>
+    <p class="iv62-sum">استلمت مكافأة <b>${nf(r.earned)}</b> دعوة${r.thisMonth ? ` · هالشهر ${nf(r.thisMonth)}` : ''}</p>${rows ? `<h4>بانتظار الشروط</h4><ul class="iv62-list">${rows}</ul>` : ''}
+    ${r.mine && !r.mine.done ? `<p class="iv62-me">هديتك أنت: ${r.mine.linked ? '✓ ربطت Google' : '✗ اربط حسابك بـGoogle'} · ${esc(r.mine.games)}/${esc(r.games)} مباريات</p>` : ''}</div>`;
+}
 export function inviteView(root, { api, code = '' }) {
   let alive = true;
   if (PUB.test(code)) store.set(code);
@@ -61,14 +69,14 @@ export function inviteView(root, { api, code = '' }) {
       const pending = store.get();
       const link = `${location.origin}/#/invite/${encodeURIComponent(d.code)}`;
       const claim = pending && pending !== d.code && d.canClaim && !d.invitedBy
-        ? `<section class="card ps-card ps-claim"><h2>عندك دعوة</h2><p>تبي تربط حسابك الجديد بدعوة صديقك؟ هذا يظهر له أنك انضميت عن طريقه، وما فيه أي مكافأة مالية.</p><button class="btn" type="button" data-ps-claim>تأكيد الانضمام عبر الدعوة</button><button class="btn ghost" type="button" data-ps-skip>تجاهل</button></section>` : '';
+        ? `<section class="card ps-card ps-claim"><h2>عندك دعوة</h2><p>تبي تربط حسابك الجديد بدعوة صديقك؟ هذا يظهر له أنك انضميت عن طريقه. لما تربط حسابك بـGoogle وتلعب 3 مباريات أونلاين تاخذ 1,000 عملة هدية، وهو ياخذ مكافأة بعد.</p><button class="btn" type="button" data-ps-claim>تأكيد الانضمام عبر الدعوة</button><button class="btn ghost" type="button" data-ps-skip>تجاهل</button></section>` : '';
       const joined = (Array.isArray(d.joined) ? d.joined : []).map((u) => userRow(u, `<time>${esc(ago(u.at))}</time>`)).join('');
       root.innerHTML = `${claim}<section class="card ps-card"><h2>رابط دعوتك</h2><p class="hint ps-hint">أرسل الرابط لأصدقائك. اللي يسوي حساب جديد ويفتح الرابط خلال أول 72 ساعة يقدر يأكد إنه انضم عن طريقك.</p>
         <div class="ps-link"><input type="text" readonly dir="ltr" value="${esc(link)}" aria-label="رابط الدعوة" data-ps-link><button class="btn" type="button" data-ps-copy>نسخ</button></div>
         <div class="ps-actions"><button class="btn" type="button" data-ps-share>مشاركة الرابط</button><a class="btn ghost" href="https://wa.me/?text=${encodeURIComponent('تعال العب معي في لعبك LA3BAK ' + link)}" target="_blank" rel="noopener noreferrer">واتساب</a></div>
         <p data-ps-status role="status"></p></section>
         <section class="card ps-card"><h2>انضموا عن طريقك <small>(${nf(d.joinedCount)})</small></h2>${joined ? `<ul class="ps-list">${joined}</ul>` : '<p class="ps-empty">ما انضم أحد عن طريق رابطك بعد.</p>'}
-        ${d.invitedBy ? `<p class="hint ps-hint">أنت انضميت عن طريق دعوة <a href="#/u/${esc(d.invitedBy.publicId)}">${esc(d.invitedBy.name)}</a>.</p>` : ''}<p class="hint ps-hint">الدعوات للتعارف فقط وما تعطي عملات أو جواهر.</p></section>`;
+        ${d.invitedBy ? `<p class="hint ps-hint">أنت انضميت عن طريق دعوة <a href="#/u/${esc(d.invitedBy.publicId)}">${esc(d.invitedBy.name)}</a>.</p>` : ''}${rewardsHTML(d.rewards)}</section>`;
       root.querySelector('[data-ps-copy]')?.addEventListener('click', async () => {
         const input = root.querySelector('[data-ps-link]');
         try { await navigator.clipboard.writeText(link); status(root, 'تم نسخ الرابط.'); } catch { input?.select(); status(root, 'حدّد الرابط وانسخه يدوياً.'); }

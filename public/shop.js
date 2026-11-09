@@ -96,8 +96,13 @@ const canBuyItem = (i, d) => approvedPrice(i) && itemStatus(i) === 'available' &
 function priceHTML(i) {
   if (i.earned) return '<span class="r23-price-note">مكتسب</span>';
   if (!approvedPrice(i)) return '<span class="r23-price-note">بانتظار اعتماد السعر</span>';
+  if (i.offer?.live) return `<span class="of62"><span class="of62-tag">🔥${i.offer.discount > 0 ? ` -${nf(i.offer.discount)}%` : ' عرض'} · <time data-of62-end="${esc(i.offer.endsAt)}">${offerLeft(i.offer.endsAt)}</time></span>${i.offer.discount > 0 ? `<s>${nf(i.offer.was)}</s>` : ''}<span class="r23-price-value">${CUR[i.currency]}<b>${nf(i.price)}</b></span></span>`;
+  if (i.offer?.exclusive && !i.offer.live && i.offer.startsAt > Date.now()) return `<span class="r23-price-note">حصري — يبدأ بعد <time data-of62-end="${esc(i.offer.startsAt)}">${offerLeft(i.offer.startsAt)}</time></span>`;
   return `<span class="r23-price-value">${CUR[i.currency]}<b>${nf(i.price)}</b></span>`;
 }
+/* R62: عداد عروض المتجر محدودة الوقت */
+function offerLeft(end) { const ms = Math.max(0, Number(end) - Date.now()); const d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000), m = Math.floor(ms % 3600000 / 60000), sec = Math.floor(ms % 60000 / 1000); const p2 = (n) => String(n).padStart(2, '0'); return d ? `${d}ي ${p2(h)}:${p2(m)}` : `${p2(h)}:${p2(m)}:${p2(sec)}`; }
+if (!globalThis.__of62) { globalThis.__of62 = setInterval(() => { const els = document.querySelectorAll('[data-of62-end]'); for (const el of els) el.textContent = offerLeft(el.dataset.of62End); }, 1000); }
 function itemActionHTML(i, d) {
   const on = d.equipped[i.slot] === i.id;
   if (ownsItem(i, d) && i.slot === 'souvenir') return `<a class="btn ghost" href="#/profile" data-pvp-open-souv>في مقتنياتك ✓</a>`;

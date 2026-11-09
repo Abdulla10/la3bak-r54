@@ -34,7 +34,7 @@ export function shopEligibility(item: ShopRequirements, ranks: ShopRanks): ShopE
  */
 export interface Override extends ShopRequirements { name?: string; icon?: string; desc?: string; price?: number; currency?: Cur; active?: boolean; status?: ShopStatus; at: number; by: string }
 export interface CustomItem extends ShopItem, ShopRequirements { active: boolean; status?: ShopStatus; at: number; by: string }
-export interface EffItem extends ShopItem, ShopRequirements { active: boolean; status: ShopStatus; custom: boolean; baseId: boolean; defaults?: { price: number; currency: Cur } }
+export interface EffItem extends ShopItem, ShopRequirements { active: boolean; status: ShopStatus; custom: boolean; baseId: boolean; defaults?: { price: number; currency: Cur }; offer?: { discount: number; startsAt: number; endsAt: number; live: boolean; was: number; exclusive: boolean } }
 interface SData { v: 1; overrides: Record<string, Override>; custom: Record<string, CustomItem> }
 
 /** Read-only enforcement: never rewrite historical admin files or wallet receipts on load.
@@ -97,7 +97,17 @@ export class ShopCatalog {
   retry() { this.disk.retry(); }
   unsaved() { return this.disk.unsaved; }
 
-  private eff(base: ShopItem | undefined, c: CustomItem | undefined): EffItem | undefined {
+  /** R62: عروض محدودة الوقت (تنضبط من خارج — ShopOffers) */
+  offerHook: ((id: string) => { discount: number; startsAt: number; endsAt: number; exclusive: boolean; live: boolean } | null) | null = null;
+  private withOffer(it: EffItem | undefined): EffItem | undefined {
+    if (!it || !this.offerHook || it.status === 'hidden') return it;
+    const o = this.offerHook(it.id); if (!o) return it;
+    if (o.live) { const price = o.discount > 0 ? Math.max(1, Math.floor(it.price * (100 - o.discount) / 100)) : it.price; return { ...it, price, offer: { discount: o.discount, startsAt: o.startsAt, endsAt: o.endsAt, live: true, was: it.price, exclusive: o.exclusive } }; }
+    if (o.exclusive && it.status === 'available') { const status: ShopStatus = Date.now() < o.startsAt ? 'coming-soon' : 'unavailable'; return { ...it, status, active: false, offer: { discount: o.discount, startsAt: o.startsAt, endsAt: o.endsAt, live: false, was: it.price, exclusive: true } }; }
+    return it;
+  }
+  private eff(base: ShopItem | undefined, c: CustomItem | undefined): EffItem | undefined { return this.withOffer(this.effRaw(base, c)); }
+  private effRaw(base: ShopItem | undefined, c: CustomItem | undefined): EffItem | undefined {
     if (c) { const status = shopStatus(c); return effectiveFrameItem({ ...c, custom: true, baseId: false, status, active: status === 'available' }); }
     if (!base) return undefined;
     const o = this.d.overrides[base.id];
@@ -106,7 +116,7 @@ export class ShopCatalog {
     // R57: «جليدي» صورته الأصلية مقصوصة نصها (تطلع مثل حرف C)، فتنخفي من البيع افتراضيًا. اللي يملكها تبقى له، والإدارة تقدر ترجّعها
     // R58h: إطارات lux-f المرسومة بالكود انستبدلت بإطارات المالك؛ تنخفي من البيع (اللي يملكها تبقى له)
     // R58o: إطارات art-f الأولى انستبدلت بمجموعة المالك الجديدة art-f2؛ القديمة تنخفي من البيع وتبقى لمن يملكها
-    const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-') || /^art-f-\d\d$/.test(base.id) || /^ref-p-frame-(07|09|10|12|13)$/.test(base.id) || /^art-mf-(1[4-9]|2\d|3[0-6])$/.test(base.id); // R59c: إطارات المايك 14–36 كانت بخلفية مربعة؛ انستبدلت بإطارات شفافة 41–76، واللي يملكها تبقى له // R59b: صورها الأصلية مقصوصة؛ تنخفي من البيع وتبقى لمن يملكها
+    const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-') || /^art-f-\d\d$/.test(base.id) || /^ref-p-frame-(07|09|10|12|13)$/.test(base.id) || /^art-mf-(1[4-9]|2\d|3[0-6])$/.test(base.id) || /^art-f3-(39|40|42)$/.test(base.id); // R62: إطارات الموسم الحصرية (جايزة ترتيب الشهر) ما تنباع // R59c: إطارات المايك 14–36 كانت بخلفية مربعة؛ انستبدلت بإطارات شفافة 41–76، واللي يملكها تبقى له // R59b: صورها الأصلية مقصوصة؛ تنخفي من البيع وتبقى لمن يملكها
     const requestedStatus = o?.status === undefined && o?.active === undefined && (base.rankPerk || brokenArt) ? 'hidden' : shopStatus(o ?? {});
     // Missing/partial/invalid approval can never activate a proposal, including price zero.
     const status = approved === false && (!o?.status || requestedStatus === 'available') ? 'coming-soon' : requestedStatus;

@@ -32,6 +32,8 @@ export interface ProfileSocialDeps {
   viewerVip?(id: string): number;
   needVip?: number;
   stealthVisit?(id: string): boolean;
+  /** R62: مكافأة الدعوة (الشروط وحالة كل مدعو) */
+  inviteRewards?(me: string): unknown;
   sinceOf(id: string): number | null;
   resolvePublicId(pub: unknown): string | null;
   who(id: string): { publicId: string; name: string; avatar: string | null; level: number | null };
@@ -89,8 +91,10 @@ export class ProfileSocial {
     return { ok: true as const, code: myPublicId, joinedCount: joined.length,
       joined: joined.slice(0, 100).map(([id, x]) => ({ ...this.dep.who(id), at: x.at })),
       invitedBy: mine && this.visible(me, mine.by) ? { ...this.dep.who(mine.by), at: mine.at } : null,
-      canClaim: !mine && since !== null && this.now() - since <= INVITE_WINDOW_MS, rewards: null };
+      canClaim: !mine && since !== null && this.now() - since <= INVITE_WINDOW_MS, rewards: this.dep.inviteRewards?.(me) ?? null };
   }
+  /** R62: كل الدعوات (المدعو، صاحب الدعوة، الوقت) — لمكافأة الدعوة */
+  allInvites(): { id: string; by: string; at: number }[] { return Object.entries(this.d.invites).map(([id, x]) => ({ id, by: x.by, at: x.at })); }
   claim(me: string, code: unknown) {
     if (this.d.invites[me]) return { ok: true as const, already: true };
     const by = this.dep.resolvePublicId(code);

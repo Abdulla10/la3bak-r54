@@ -129,6 +129,10 @@ export class TribeTreasure {
     const each = Math.floor(it.fuel! / ids.length);
     this.tx(() => { m.bag[bagId] -= 1; if (!m.bag[bagId]) delete m.bag[bagId]; for (const id of ids) this.M(id).fuel += each; }); return { each, ids };
   }
+  /** R62: هيبة القبيلة بالأسبوع الحالي (قراءة بس) — لحرب القبائل */
+  weekPts(tribeId: number): number { const t = this.d.tribes[String(tribeId)]; return t && t.week.key === weekKeyOf(this.now()) ? t.week.pts : 0; }
+  /** R62: وقود لأعضاء (جايزة حرب القبائل) */
+  addFuel(ids: string[], each: number): void { const list = [...new Set(ids.filter(uuid))]; if (!list.length || !nat(each) || each <= 0) return; this.tx(() => { for (const id of list) this.M(id).fuel += each; }); }
   pendingLaunches(tribeId: number): { week: string; l: Launch }[] { const t = this.d.tribes[String(tribeId)]; return t ? t.week.launches.filter((l) => l.status === 'pending').map((l) => ({ week: t.week.key, l })) : []; }
   markDone(tribeId: number, n: number): void { const t = this.d.tribes[String(tribeId)]; const l = t?.week.launches.find((x) => x.n === n); if (l && l.status === 'pending') this.tx(() => { l.status = 'done'; }); }
   view(tribeId: number, user: string) {

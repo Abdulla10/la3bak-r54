@@ -483,6 +483,8 @@ export class SocialRooms {
     return best ? { id: best.id, name: best.name, level: roomLevelOf(best.support ?? 0).level, members: best.members.length, code: this.roomCode(best) } : null;
   }
   /** R59: من متى الحساب حاضر بالغرفة (للمهمة «ابقَ 5 دقايق») */
+  /** R62: اللي قاعدين على مقعد (مايك) ومتصلين بصوت الغرفة الحين — لعدّ دقايق المايك بالمهام */
+  seatedNow(): string[] { const out: string[] = []; for (const r of this.state.rooms) for (const m of r.members) if (m.councilId !== null && this.mediaAccess(m.id)?.roomId === r.id) out.push(m.id); return out; }
   presenceSince(userId: string, roomId: string): number | null { const r = this.state.rooms.find((x) => x.id === roomId); const m = r?.members.find((x) => x.id === userId); return m && this.mediaAccess(userId)?.roomId === roomId ? m.joinedAt : null; }
   ownerMaxRoomLevel(userId: string): number { let lv = 0; for (const r of this.state.rooms) if (r.ownerId === userId) lv = Math.max(lv, roomLevelOf(r.support ?? 0).level); return lv; }
   /** R58u: يمنح جوائز إطلاقات الصاروخ المعلّقة (معرّف ثابت لكل إطلاق، فإعادة المحاولة ما تكرر). */
@@ -565,7 +567,7 @@ export class SocialRooms {
   }
   /** R58: الرقم الظاهر للغرفة: الأيدي المميز إذا موجود، وإلا رقم 8 خانات الثابت */
   private roomCode(r: Room): string { return r.vanity ?? roomCodeOf(r.id); }
-  private roomExtrasView(r: Room) { const lv = roomLevelOf(r.support ?? 0); return { rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })), }; }
+  private roomExtrasView(r: Room) { const lv = roomLevelOf(r.support ?? 0); return { weekPts: Object.values(currentWeek(r.week, this.clock()).senders).reduce((n, v) => n + v, 0), rank: roomRankView(r.month, this.clock()), code: this.roomCode(r), vanity: !!r.vanity, level: lv.level, support: lv.support, levelFloor: lv.floor, levelNext: lv.next, ads: (r.ads ?? []).map((a) => ({ id: a.id, text: a.text })), }; }
   /** R55: فحص جوائز المدفع بدون رمي خطأ. لو عنصر جائزة صار مقفول برتبة أو موقوف بالمتجر، الغرف والدردشة والهدايا تكمل عادي والمدفع ما ينفعّل لين ترجع الجوائز صالحة. */
   private cannonCatalogReady(): boolean {
     if (!this.opts.cannon) return false;

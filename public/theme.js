@@ -39,3 +39,12 @@ export function pickerHTML() {
 }
 
 apply(current());
+
+/* R62: الوضع الداكن (تفضيل لكل جهاز) */
+export function isDark() { return document.documentElement.classList.contains('lb-dark'); }
+export function setDark(on) {
+  document.documentElement.classList.toggle('lb-dark', !!on);
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', on ? '#17111f' : '#f4eee6');
+  try { localStorage.setItem('la3bak.dark', on ? '1' : '0'); } catch { /* للجلسة بس */ }
+  return !!on;
+}
