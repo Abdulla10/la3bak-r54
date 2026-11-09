@@ -8,8 +8,23 @@ export const ROOM_BACKGROUND_PRESETS = Object.freeze([
   Object.freeze({ id: 'img3', name: 'صالة الجيمر', gradient: 'url(/assets/art58/roombg/r3.jpg)' }),
   Object.freeze({ id: 'img4', name: 'خيمة الصحراء', gradient: 'url(/assets/art58/roombg/r4.jpg)' }),
   Object.freeze({ id: 'img5', name: 'قاعة الفلك', gradient: 'url(/assets/art58/roombg/r5.jpg)' }),
+  Object.freeze({ id: 'img6', name: 'الأزرق الملكي', gradient: 'url(/assets/art67/roombg/royal-blue.jpg)' }),
+  Object.freeze({ id: 'img7', name: 'القاعة الزمردية', gradient: 'url(/assets/art67/roombg/emerald.jpg)' }),
+  Object.freeze({ id: 'img8', name: 'قصر الجليد', gradient: 'url(/assets/art67/roombg/ice.jpg)' }),
+  Object.freeze({ id: 'img9', name: 'حديقة الورود', gradient: 'url(/assets/art67/roombg/roses.jpg)' }),
+  Object.freeze({ id: 'img10', name: 'قاعة المجرة', gradient: 'url(/assets/art67/roombg/galaxy-hall.jpg)' }),
+  Object.freeze({ id: 'img11', name: 'القصر الكوني', gradient: 'url(/assets/art67/roombg/cosmic-palace.jpg)' }),
+  Object.freeze({ id: 'img12', name: 'الممر الأزرق', gradient: 'url(/assets/art67/roombg/blue-carpet.jpg)' }),
+  Object.freeze({ id: 'img13', name: 'عرش الياقوت', gradient: 'url(/assets/art67/roombg/ruby-throne.jpg)' }),
+  Object.freeze({ id: 'img14', name: 'قاعة التنانين', gradient: 'url(/assets/art67/roombg/dragon-hall.jpg)' }),
+  Object.freeze({ id: 'img15', name: 'عرين الحمم', gradient: 'url(/assets/art67/roombg/lava-dragon.jpg)' }),
+  Object.freeze({ id: 'img16', name: 'كنز التنين الذهبي', gradient: 'url(/assets/art67/roombg/gold-dragon.jpg)' }),
+  Object.freeze({ id: 'img17', name: 'عرش الأسود', gradient: 'url(/assets/art67/roombg/lion-throne.jpg)' }),
   Object.freeze({ id: 'dusk', name: 'الغسق', gradient: 'linear-gradient(145deg, #463257 0%, #61466a 65%, #675645 100%)' }),
 ] as const);
+/** R67: خلفيات تنفتح بليفل الغرفة، وخلفيات تنشرى من المتجر (العنصر عند اللي يغيّر الخلفية أو مالك الغرفة) */
+export const ROOM_BG_LEVEL: Readonly<Record<string, number>> = Object.freeze({ img10: 3, img11: 5, img12: 6, img13: 8 });
+export const ROOM_BG_STORE: Readonly<Record<string, string>> = Object.freeze({ img14: 'rbg-dragon-hall', img15: 'rbg-lava-dragon', img16: 'rbg-gold-dragon', img17: 'rbg-lion-throne' });
 export type RoomTheme = typeof ROOM_BACKGROUND_PRESETS[number]['id'];
 export const validRoomTheme = (x: unknown): x is RoomTheme => typeof x === 'string' && ROOM_BACKGROUND_PRESETS.some(p => p.id === x);
 export const validSeatIndex = (x: unknown, seats: number): x is number => Number.isSafeInteger(x) && (x as number) >= 0 && (x as number) < seats;

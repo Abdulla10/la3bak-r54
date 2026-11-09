@@ -20,7 +20,7 @@ import type { GameVoiceContext } from './rooms.js';
 import type { GiftRec } from './gifts.js';
 import { CHALLENGE_RECEIPT_CAP, SUPPORT_RECEIPT_CAP, SUPPORT_EVENT_TTL_MS, challengeTotals, finishChallenge, supportGiftValue, validChallenge, validGiftSupportContext, validSupportEvent, validSupportReceipt, type Challenge, type GiftSupportContext, type SupportEvent, type SupportReceipt } from './social-challenge.js';
 import { CANNON_VERSION_V1, CANNON_RECEIPT_CAP, cannonAwardFingerprint, cannonGiftValue, cannonHash, cannonReason, createCannon, validCannonGiftContext, validCannonState, validateCannonCatalog, type CannonBackend, type CannonGiftContext, type CannonState } from './social-cannon-r27.js';
-import { councilSeatLayout, validLockedSeats, validRoomTheme, validSeatIndex, type RoomTheme } from './social-room-controls-r27.js';
+import { councilSeatLayout, validLockedSeats, validRoomTheme, validSeatIndex, ROOM_BG_LEVEL, ROOM_BG_STORE, type RoomTheme } from './social-room-controls-r27.js';
 export { ROOM_BACKGROUND_PRESETS, type RoomTheme } from './social-room-controls-r27.js';
 import { DIRECTORY_LIMIT_R30, UNSUPPORTED_ROOM_MODES_R30, directoryCapabilitiesR30, validDirectoryMode, validDirectoryTag, validDirectoryCountry, validRoomPasswordR30, validPasswordInputR30, makeRoomPasswordR30, verifyRoomPasswordR30, passwordFingerprintR30, type DirectoryRoomMode, type DirectoryRoomTag, type DirectoryCountry, type RoomPasswordR30 } from './social-directory-r30.js';
 
@@ -54,6 +54,7 @@ export interface SocialRoomsOptions {
   giftValue?: (sender: string, recipient: string, ref: string, roomId: string) => number | null;
   /** R58: أيدي غرفة مميز يملكه اللاعب (يرجّع الرقم) */
   roomIdItem?: (userId: string, itemId: string) => string | null;
+  ownsItem?: (userId: string, itemId: string) => boolean;
   /** R58: مراجعة تلقائية للنصوص */
   moderate?: (text: string, kind: 'room-name' | 'room-ad') => { ok: true } | { ok: false; code: string };
   /** Trusted existing outbox + canonical Wallet check; synchronous, never another queue. */
@@ -1252,7 +1253,7 @@ export class SocialRooms {
         const patch=b.settings,before=this.settings(r);
         if(Object.hasOwn(patch,'moderatorPermissions')&&r.ownerId!==id)fail('owner_required',403);
         if(Object.hasOwn(patch,'luckyBag')&&r.ownerId!==id)fail('owner_required',403);
-        if(Object.hasOwn(patch,'theme')) { this.requireMod(r,id,undefined,'identity'); if(this.gameBound(d,r))fail('game_room_controls_unavailable',403); }
+        if(Object.hasOwn(patch,'theme')) { this.requireMod(r,id,undefined,'identity'); if(this.gameBound(d,r))fail('game_room_controls_unavailable',403); const th=String(patch.theme); if(th!==before.theme){ const need=ROOM_BG_LEVEL[th]; if(need&&roomLevelOf(r.support??0).level<need)fail('room_bg_level_locked',403); const item=ROOM_BG_STORE[th]; if(item&&!(this.opts.ownsItem?.(id,item)||this.opts.ownsItem?.(r.ownerId,item)))fail('room_bg_not_owned',403); } }
         if(['highQuality','micRequests','speak'].some(k=>Object.hasOwn(patch,k)))this.requireMod(r,id,undefined,'audio');
         if(Object.hasOwn(patch,'chat'))this.requireMod(r,id,undefined,'chat');
         r.settings={...r.settings,...patch,...(patch.moderatorPermissions?{moderatorPermissions:{...r.settings?.moderatorPermissions,...patch.moderatorPermissions}}:{})};

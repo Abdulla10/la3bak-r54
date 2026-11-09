@@ -108,6 +108,16 @@ export const LUX_ITEMS: ShopItem[] = [
   X('art-bd-18', 'board', 'لوحة جناح الكريستال', '🪧', 1000, 'gems', 'epic', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art18'),
   X('art-bd-19', 'board', 'لوحة الأسدين', '🪧', 1000, 'gems', 'ultra', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art19'),
   X('art-bd-20', 'board', 'لوحة زهر الفراشة', '🪧', 1000, 'gems', 'epic', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art20'),
+  X('art-bd-21', 'board', 'لوحة التنين الذهبي', '🪧', 3000, 'gems', 'legendary', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art21'),
+  X('art-bd-22', 'board', 'لوحة التاج البنفسجي', '🪧', 1500, 'gems', 'epic', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art22'),
+  X('art-bd-23', 'board', 'لوحة الهلال والفانوس', '🪧', 1200, 'gems', 'rare', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art23'),
+  X('art-bd-24', 'board', 'لوحة الأجنحة البنفسجية', '🪧', 1500, 'gems', 'epic', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art24'),
+  X('art-bd-25', 'board', 'لوحة تنين البنفسج', '🪧', 2500, 'gems', 'legendary', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art25'),
+  X('art-bd-26', 'board', 'لوحة الكريستال', '🪧', 1200, 'gems', 'rare', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art26'),
+  X('art-bd-27', 'board', 'لوحة أعماق البحر', '🪧', 1200, 'gems', 'rare', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art27'),
+  X('art-bd-28', 'board', 'لوحة النمر الأبيض', '🪧', 2500, 'gems', 'legendary', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art28'),
+  X('art-bd-29', 'board', 'لوحة الساعة الكونية', '🪧', 1500, 'gems', 'epic', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art29'),
+  X('art-bd-30', 'board', 'لوحة العنقاء', '🪧', 3000, 'gems', 'legendary', 'لوحة اسم من تصميم لعبك تحت اسمك في الغرف.', 'art30'),
   X('art-pb-01', 'bg', 'خلفية قاعة العرش', '🖼️', 1000, 'gems', 'legendary', 'خلفية فاخرة لصفحة ملفك الشخصي.', 'art-pb-01'),
   X('art-pb-02', 'bg', 'خلفية شرفة الغروب', '🖼️', 1000, 'gems', 'epic', 'خلفية فاخرة لصفحة ملفك الشخصي.', 'art-pb-02'),
   X('art-pb-03', 'bg', 'خلفية كوكب البنفسج', '🖼️', 1000, 'gems', 'epic', 'خلفية فاخرة لصفحة ملفك الشخصي.', 'art-pb-03'),
@@ -252,14 +262,14 @@ export const LUX_ITEMS: ShopItem[] = [
   X('lux-bub-bronze', 'chat-bubble', 'فقاعة البرونز', '💬', 300, 'gems', 'premium', 'فقاعة برونزية دافئة.', 'nb-bronze'),
   X('lux-bub-purple', 'chat-bubble', 'فقاعة البنفسج', '💬', 800, 'gems', 'rare', 'فقاعة بنفسجية بحواف لامعة.', 'vip-purple'),
   X('lux-bub-gold', 'chat-bubble', 'فقاعة الذهب', '💬', 2000, 'gems', 'epic', 'فقاعة ذهبية فخمة.', 'vip-gold'),
-  X('lux-bub-legend', 'chat-bubble', 'فقاعة اللهب الأسطورية', '💬', 6000, 'gems', 'legendary', 'فقاعة نارية متدرجة.', 'vip-legend'),
+  X('lux-bub-legend', 'chat-bubble', 'فقاعة التنين الناري', '💬', 6000, 'gems', 'legendary', 'فقاعة نارية بتنين ذهبي.', 'vip-legend'),
   X('lux-bub-imperial', 'chat-bubble', 'فقاعة التاج الإمبراطورية', '💬', 15000, 'gems', 'ultra', 'فقاعة إمبراطورية بتاج فوقها.', 'nb-imperial'),
   // لوحات الأسماء (تظهر تحت اسمك بمقعد الغرفة وبملفك)
-  X('lux-board-silver', 'board', 'لوحة الفضة', '🪧', 300, 'gems', 'premium', 'لوحة اسم فضية تحت اسمك.', 'silver'),
-  X('lux-board-sapphire', 'board', 'لوحة الياقوت', '🪧', 800, 'gems', 'rare', 'لوحة زرقاء ياقوتية.', 'sapphire'),
-  X('lux-board-amethyst', 'board', 'لوحة الجمشت', '🪧', 2000, 'gems', 'epic', 'لوحة بنفسجية بحواف ذهبية.', 'amethyst'),
-  X('lux-board-gold', 'board', 'لوحة الذهب الملكي', '🪧', 6000, 'gems', 'legendary', 'لوحة ذهبية بتاج صغير.', 'gold'),
-  X('lux-board-inferno', 'board', 'لوحة اللهب', '🪧', 15000, 'gems', 'ultra', 'لوحة نارية متحركة.', 'inferno'),
+  X('lux-board-silver', 'board', 'لوحة الجليد الفضي', '🪧', 300, 'gems', 'premium', 'لوحة جليدية فضية بأجنحة.', 'silver'),
+  X('lux-board-sapphire', 'board', 'لوحة الوردة الملكية', '🪧', 800, 'gems', 'rare', 'لوحة وردية بورود وزمرد.', 'sapphire'),
+  X('lux-board-amethyst', 'board', 'لوحة المجرة البنفسجية', '🪧', 2000, 'gems', 'epic', 'لوحة مجرة بنفسجية بكريستال.', 'amethyst'),
+  X('lux-board-gold', 'board', 'لوحة التاج الأحمر', '🪧', 6000, 'gems', 'legendary', 'لوحة حمراء بتاج ذهبي.', 'gold'),
+  X('lux-board-inferno', 'board', 'لوحة اللهب', '🪧', 15000, 'gems', 'ultra', 'لوحة نارية بأحجار حمراء.', 'inferno'),
 ];
 
 /** R57: أيديات حساب مميزة. كل رقم ينباع مرة وحدة لحساب واحد، ويصير هو رقمك الظاهر (displayPlayerId).
@@ -342,3 +352,12 @@ export const SOUVENIR_ITEMS: ShopItem[] = [
   S('souv-28', 'البوابة السحرية', 'legendary'),
 ];
 
+
+/** R67: خلفيات غرف فخمة تنشرى من المتجر — بعد الشراء تختارها من «خلفية البث» بإعدادات غرفتك */
+const RBG = (k: string, name: string, price: number, rarity: Rarity, desc: string): ShopItem => ({ id: `rbg-${k}`, slot: 'room-bg', name, icon: '🏰', price, currency: 'gems', desc, css: k, art: `/assets/art67/roombg/${k}.jpg`, permanent: true, rarity, set: 'lux' });
+export const ROOM_BG_ITEMS: ShopItem[] = [
+  RBG('dragon-hall', 'خلفية قاعة التنانين', 3000, 'legendary', 'خلفية غرفة: قاعة سوداء بتنانين ذهبية ونار.'),
+  RBG('lava-dragon', 'خلفية عرين الحمم', 3000, 'legendary', 'خلفية غرفة: تنين فوق شلالات الحمم.'),
+  RBG('gold-dragon', 'خلفية كنز التنين الذهبي', 5000, 'ultra', 'خلفية غرفة: تنين ذهبي فوق كنز من الذهب والجواهر.'),
+  RBG('lion-throne', 'خلفية عرش الأسود', 5000, 'ultra', 'خلفية غرفة: عرش أحمر بين أسدين ذهبيين.'),
+];

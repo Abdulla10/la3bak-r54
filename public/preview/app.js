@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r67t';
-import * as UNIFIED from '../unified/shell.js?v=r67t';
+import * as PR from './profile.js?v=r67w';
+import * as UNIFIED from '../unified/shell.js?v=r67w';
 import * as REF from '../unified/home.js?v=r63a';
-import * as SOCIAL from '../unified/social.js?v=r67t';
+import * as SOCIAL from '../unified/social.js?v=r67w';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r63a';
@@ -22,8 +22,8 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r67t';
-import * as SHOP from '../shop.js?v=r63b';
+import * as PF from '../profile.js?v=r67w';
+import * as SHOP from '../shop.js?v=r67w';
 import * as GIFT from '../gifts.js?v=r63a';
 import * as GFX from '../giftfx.js?v=r57';
 import * as AVR from '../avatars.js?v=r59d';
@@ -38,7 +38,7 @@ import * as THEME from '../theme.js?v=r64a';
 import * as PWA from '../pwa.js?v=r62e';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r67t';
+import * as MIS from '../missions.js?v=r67w';
 import * as CHAT from '../chat.js?v=r63a';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -636,7 +636,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r67p').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r67w').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':

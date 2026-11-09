@@ -939,6 +939,7 @@ export async function createApp(
     reconcileGift:(from,to,ref)=>{if(wallet.hasGiftSource(from,to,ref))deliverIntent('gift:'+ref);},
     // R58: ليفل الغرفة من قيمة الهدايا الملتزمة بالمحفظة (جواهر داخل نفس الغرفة)
     giftValue:(from,to,ref,roomId)=>{const rec=wallet.committedGiftReceipt(from,to,ref);if(!rec||rec.cur!=='gems'||rec.status!=='done'||typeof rec.room!=='string'||!rec.room.startsWith(`social:${roomId}:`))return null;const v=rec.total??rec.price*(rec.qty??1);return Number.isSafeInteger(v)&&v>0?v:null;},
+    ownsItem:(userId,itemId)=>wallet.owned(userId).includes(itemId),
     roomIdItem:(userId,itemId)=>{const it=shopcat.get(itemId);return it&&it.slot==='room-id'&&wallet.owned(userId).includes(it.id)&&typeof it.css==='string'?it.css:null;},
     moderate:(text,kind)=>{const m=moderateText(text,kind);return m.ok?{ok:true}:{ok:false,code:m.code};},
     verifyGiftSupport:(context,rec)=>{
