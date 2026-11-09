@@ -47,6 +47,8 @@ export class OwnerPlayerTools {
     if (action === 'special-id') {
       need(b.value === null || (typeof b.value === 'string' && /^[1-9][0-9]{0,7}$/.test(b.value)), 'الـ ID المميز من رقم إلى 8 أرقام، ولا يبدأ بصفر.');
       if (typeof b.value === 'string') { const holder = d.accounts.findByDisplayPlayerId(b.value); need(!holder || holder === id, 'هالـ ID مستخدم لحساب ثاني.', 409); }
+      // R67ae: الأرقام من خانة لين ثلاث خانات للإدارة بس
+      if (typeof b.value === 'string' && b.value.length <= 3) need(d.platform.roleOf(id), 'الأيدي من خانة لين ثلاث خانات للحسابات الإدارية بس. عيّن دور الإدارة للحساب أول.', 409);
       return { value: b.value };
     }
     if (action === 'verification') {

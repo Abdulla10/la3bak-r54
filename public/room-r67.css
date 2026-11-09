@@ -446,3 +446,6 @@ html.pf67-full body .pv-profile .lpu-cover{display:none!important}
 html.pf67-full body .pv-profile .hero :is(h1,.id,strong,b,small,span),html.pf67-full body .cm-prof :is(h1,h2,h3,p,b,small,span){text-shadow:0 2px 8px #000c}
 html.pf67-full body :is(.idc67,.kd67,.cp58-card,.tr58-me>*,.pvp-profile-menu .pvp-menu-group,.pvp-hub,.pvp-profile-details details,.pv-profile section.card,.cm-page section.card:not(.cm-prof),.cm-page .cm-post){background:rgba(16,7,28,.72)!important;backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,214,107,.28)!important;border-radius:20px!important;box-shadow:0 8px 24px #0006!important}
 html.pf67-full body .pvp-menu-row{background:transparent!important}
+
+/* R67ae: أيدي رسمي للحسابات الإدارية (خانة لين ثلاث خانات) */
+html body .lpu-special-id-label.is-official{background:linear-gradient(90deg,#f6c444,#c7860f)!important;color:#2a1300!important;border-color:#ffe7a0!important;font-weight:800}

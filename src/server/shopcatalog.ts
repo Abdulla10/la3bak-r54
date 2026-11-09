@@ -180,7 +180,7 @@ export class ShopCatalog {
     if (slot === 'room-bg') throw new ShopInputError('خلفيات الغرف تحتاج صورة جديدة؛ تنضاف من رسومات الكتالوج المعتمدة.');
     if (slot === 'special-id' || slot === 'room-id') {
       const c = String(raw ?? '').trim();
-      if (!/^[1-9][0-9]{2,9}$/.test(c)) throw new ShopInputError('الأيدي المميز أرقام فقط (3 إلى 10 أرقام) وما يبدأ بصفر.');
+      if (!/^[1-9][0-9]{2,9}$/.test(c) || (slot === 'special-id' && c.length <= 3)) throw new ShopInputError(slot === 'special-id' ? 'الأيدي المميز بالمتجر من 4 إلى 10 أرقام (الأقصر للإدارة بس) وما يبدأ بصفر.' : 'أيدي الغرفة أرقام فقط (3 إلى 10 أرقام) وما يبدأ بصفر.');
       if (CATALOG.some((i) => i.slot === slot && i.css === c) || Object.values(this.d.custom).some((i) => i.slot === slot && i.css === c)) throw new ShopInputError('هذا الأيدي موجود بالمتجر من قبل.', 409);
       return c;
     }

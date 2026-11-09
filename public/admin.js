@@ -1,10 +1,10 @@
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r67an';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r67aq';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=admin-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=r67an';
+import {mountPaymentAdmin} from './payment-admin.js?v=r67aq';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
-import {mountSocialAdmin} from './social-admin.js?v=r67an';
-import { pricingHTML, progressionHTML } from './economy-admin.js?v=r67an';
+import {mountSocialAdmin} from './social-admin.js?v=r67aq';
+import { pricingHTML, progressionHTML } from './economy-admin.js?v=r67aq';
 import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r67ac';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
@@ -178,7 +178,7 @@ export function mountAdmin(root) {
         <label>مظهر الخلفية (إن كانت الخانة خلفية)<select class="ad-in" name="cssBg">${optsOf(s.presets.bg)}</select></label>
         <label>شكل الفقاعة (إن كانت فقاعة دردشة)<select class="ad-in" name="cssBubble">${optsOf(s.presets['chat-bubble'] || [])}</select></label>
         <label>شكل اللوحة (إن كانت لوحة اسم)<select class="ad-in" name="cssBoard">${optsOf(s.presets.board || [])}</select></label>
-        <label>رقم الأيدي (إن كان أيدي مميز أو أيدي غرفة)<input class="ad-in" name="cssId" inputmode="numeric" dir="ltr" maxlength="10" pattern="[1-9][0-9]{2,9}"></label>
+        <label>رقم الأيدي (أيدي مميز من 4 أرقام وفوق — الأقصر للإدارة من «تمييز الحسابات»؛ أيدي غرفة من 3)<input class="ad-in" name="cssId" inputmode="numeric" dir="ltr" maxlength="10" pattern="[1-9][0-9]{2,9}"></label>
         <p class="ad-muted">إطار المايك وخلفية الغرفة والتذكار يحتاجون رسومات جديدة، فتنضاف من الكتالوج مو من هنا.</p>
         <label>نص اللقب أو رمز الشارة (إن كانت الخانة لقب/شارة)<input class="ad-in" name="cssText" maxlength="24"></label>
         ${shopFields()}<button class="ad-btn" type="submit">إضافة المنتج</button></form></section>` : '';
@@ -334,7 +334,7 @@ export function mountAdmin(root) {
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=r67an').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r67aq').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {

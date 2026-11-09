@@ -488,7 +488,7 @@ export async function createApp(
     return {
       ok: true, canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), equipped: wallet.equipped(id), equippedView: equippedView(id),
       // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
-      items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && specialTaken(id, String(i.css ?? ''))) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
+      items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && (specialTaken(id, String(i.css ?? '')) || String(i.css ?? '').length <= 3)) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
       collectionItems: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && i.set && (i.status !== 'hidden' || owned.has(i.id))),
       sets: SETS, rarities: RARITIES, achievements: achView(achInput(id)),
       economy: economy.view(), gemPacks: [],
@@ -539,6 +539,7 @@ export async function createApp(
       // R58e: السيارات انشالت من الموقع بطلب المالك (الملكية القديمة محفوظة بالبيانات)
       if (it.slot === 'entrance') return { ok: false, code: 'unavailable', error: 'هذا القسم غير متاح.' };
       if (achOf(it.id)) return { ok: false, code: 'reserved', error: 'هذا المعرّف مخصص لإنجاز مكتسب، ولا يُشترى.' };
+      if (it.slot === 'special-id' && String(it.css ?? '').length <= 3) return { ok: false, code: 'reserved', error: 'الأيدي من خانة لين ثلاث خانات محجوز للإدارة.' };
       // السعر دائماً من الخادم. لو العميل أرسل السعر اللي شافه وتغيّر، نرفض ونرجّع المتجر محدّثاً (ما نخصم سعراً ما شافه).
       const shownPrice = SINGLE_CUR && it.currency === 'gems' ? it.price * 20 : it.price, shownCur = SINGLE_CUR && it.currency === 'gems' ? 'coins' : it.currency;
       if ((m.seen !== undefined && m.seen !== it.price && m.seen !== shownPrice) || (m.seenCur !== undefined && m.seenCur !== it.currency && m.seenCur !== shownCur)) return { ...shopView(id), ok: false, error: 'تغيّر سعر العنصر أو نوع عملته. راجع العرض الجديد.', code: 'price' };
@@ -915,7 +916,7 @@ export async function createApp(
 
   /* المجتمع: نفس الجلسة والحسابات والحظر القائمة. معرّفات الحسابات ما تطلع للعميل (معرّف عام بالـHMAC) */
   const community = new Community(comFile, comMedia, {
-    secret: cfg.cookieSecret, moderate: (t) => profanityOnly(t), nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
+    secret: cfg.cookieSecret, moderate: (t) => profanityOnly(t), official: (id) => verificationView(id).verificationKind === 'administration', nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
     hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
     push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
     profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg') return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
@@ -976,7 +977,7 @@ export async function createApp(
       // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
       const eq=wallet.equipped(id),cosm=(slot:string)=>{const it=eq[slot]?shopcat.get(eq[slot]):undefined;return it&&it.slot===slot&&typeof it.css==='string'?it.css:null;};
       const bubble=cosm('chat-bubble'),board=cosm('board'),micFrame=cosm('mic-frame');
-      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),ranks:{...(accountTools.settings(id).hideNameColor===true?{nameOff:true}:{}),level:p.level.enabled?p.level.value:null,vip:p.vip.enabled?vip:null,noble:p.noble.enabled?noble:null},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
+      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),ranks:{...(accountTools.settings(id).hideNameColor===true?{nameOff:true}:{}),...(verificationView(id).verificationKind==='administration'?{official:true}:{}),level:p.level.enabled?p.level.value:null,vip:p.vip.enabled?vip:null,noble:p.noble.enabled?noble:null},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
     },
     blocked:(a,b)=>community.pairBlocked(a,b),eligible:socialEligible,trustedAdmin:id=>id==='token',
     emit:(ids,event)=>{for(const id of ids)sendToUser(id,event);},
