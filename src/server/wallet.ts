@@ -466,6 +466,17 @@ export class Wallet {
     this.onTx?.(id, 'daily', DAILY_COINS, a.coins, '');
     return DAILY_COINS;
   }
+  /** R67ae: خصم خدمة (مثل البرقية العالمية) — مرة وحدة لكل مرجع؛ نفس المرجع يرجع نفس النتيجة بدون خصم ثاني */
+  spendService(id: string, amount: number, reason: string, ref: string): { ok: true; coins: number; dup: boolean } | { ok: false; code: 'poor' | 'bad' } {
+    if (!nat(amount) || amount <= 0 || !ref) return { ok: false, code: 'bad' };
+    const acc = this.a(id);
+    if ((acc.ledger ?? []).some((l) => l.ref === ref && l.kind === 'purchase')) return { ok: true, coins: acc.coins, dup: true };
+    if (acc.coins < amount) return { ok: false, code: 'poor' };
+    const sn = this.snap([id]); acc.coins -= amount; this.rec(id, 'coins', 'purchase', -amount, acc.coins, reason, ref);
+    try { this.disk.mustSave(); } catch (e) { this.restore(sn); throw e; }
+    this.onTx?.(id, 'purchase', -amount, acc.coins, ref);
+    return { ok: true, coins: acc.coins, dup: false };
+  }
   /** يخصم من الكل أو ما يخصم أبداً. يرجّع أرقام الفاشلين (رصيدهم ما يكفي). لو الحفظ فشل يتراجع الخصم ويرمي StorageError. */
   charge(ids: string[], amount: number, ref = ''): string[] {
     if (!nat(amount)) throw new RangeError('wallet_invalid_amount');

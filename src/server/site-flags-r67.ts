@@ -4,13 +4,14 @@ import { loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 
 export type SiteFlags = {
   cinema: boolean;            // وضع اليوتيوب بالغرف
+  broadcast: boolean;         // البرقية العالمية
   streak: boolean;            // هدية الدخول اليومي المتتالي
   invite: boolean;            // مكافآت الدعوات
   firstTopupPercent: number;  // نسبة هدية أول شحن (0 = مطفية)، -1 = حسب إعداد الخادم
   bigGiftMin: number;         // أقل قيمة هدية (عملات) تطلع بالشاشة الكاملة
   profileBgVip: number;       // من أي VIP تطلع خلفية الملف كاملة
 };
-export const SITE_FLAGS_DEFAULT: SiteFlags = Object.freeze({ cinema: true, streak: true, invite: true, firstTopupPercent: -1, bigGiftMin: 9000, profileBgVip: 6 });
+export const SITE_FLAGS_DEFAULT: SiteFlags = Object.freeze({ cinema: true, broadcast: true, streak: true, invite: true, firstTopupPercent: -1, bigGiftMin: 9000, profileBgVip: 6 });
 export const SITE_FLAG_LIMITS = Object.freeze({ firstTopupPercent: [-1, 200], bigGiftMin: [1000, 10_000_000], profileBgVip: [1, 15] } as const);
 export type SiteEvent = { id: string; kind: 'daily2x' | 'slotSale'; slot?: string; percent?: number; title: string; startsAt: number; endsAt: number; by: string; at: number; ended?: boolean };
 export const EVENT_SLOTS = Object.freeze(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'souvenir', 'title', 'badge', 'room-bg', 'special-id', 'room-id'] as const);
@@ -24,7 +25,7 @@ function validFlags(x: unknown): boolean {
   if (x.events !== undefined && (!Array.isArray(x.events) || x.events.length > 200 || !x.events.every(validEvent))) return false;
   if (x.words !== undefined && (!Array.isArray(x.words) || x.words.length > 500 || x.words.some((w) => typeof w !== 'string' || w.length < 2 || w.length > 40))) return false;
   for (const [k, v] of Object.entries(x.flags)) {
-    if (k === 'cinema' || k === 'streak' || k === 'invite') { if (typeof v !== 'boolean') return false; }
+    if (k === 'cinema' || k === 'broadcast' || k === 'streak' || k === 'invite') { if (typeof v !== 'boolean') return false; }
     else if (k in SITE_FLAG_LIMITS) { if (!inRange(k as keyof typeof SITE_FLAG_LIMITS, v)) return false; }
     else return false;
   }
@@ -86,7 +87,7 @@ export class SiteFlagsStore {
     if (!isObj(input)) throw new Error('بيانات غير صالحة.');
     const next: Partial<SiteFlags> = { ...this.d.flags };
     for (const [k, v] of Object.entries(input)) {
-      if (k === 'cinema' || k === 'streak' || k === 'invite') { if (typeof v !== 'boolean') throw new Error('قيمة تشغيل/إطفاء غير صالحة.'); next[k] = v; }
+      if (k === 'cinema' || k === 'broadcast' || k === 'streak' || k === 'invite') { if (typeof v !== 'boolean') throw new Error('قيمة تشغيل/إطفاء غير صالحة.'); next[k] = v; }
       else if (k in SITE_FLAG_LIMITS) { const key = k as keyof typeof SITE_FLAG_LIMITS; if (!inRange(key, v)) throw new Error(`القيمة لازم تكون بين ${SITE_FLAG_LIMITS[key][0]} و ${SITE_FLAG_LIMITS[key][1]}.`); next[key] = v as number; }
       else throw new Error('إعداد غير معروف.');
     }

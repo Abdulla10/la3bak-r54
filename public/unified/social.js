@@ -33,6 +33,7 @@ PATHS.info='M12 11v6M12 7h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0';
 PATHS.share='M12 15V3m-4 4 4-4 4 4M5 12v8h14v-8';
 PATHS.back='M5 12h14m-6-6 6 6-6 6';
 PATHS.invite='M9 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10M1 22v-2a7 7 0 0 1 14 0v2M19 8v8M15 12h8';
+PATHS.bell='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0';
 PATHS.smile='M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M8 9h.01M16 9h.01M7 14a5 5 0 0 0 10 0';
 PATHS.send='m3 3 18 9-18 9 4-9-4-9ZM7 12h14';
 PATHS.menu='M4 6h16M4 12h16M4 18h16';
@@ -405,6 +406,7 @@ function roomMenuGridHTML(c,ui,council){
     joined&&can('identity')&&!c.ctx.gameRoom?tile('room-background','palette','الخلفية'):'',
     joined&&!c.ctx.gameRoom&&can('identity')?tile('cinema-open','play','فيديو يوتيوب'):'',
     tile('share','share','مشاركة'),
+    tile('broadcast-open','bell','برقية للكل','data-bc67-open'),
     canInvite(c)?tile('invite','invite','دعوة صديق'):'',
     tile('room-heart','heart',roomFollowed(c)?'محفوظة ❤':'حفظ بالقلب'),
     panelTile('members','users','الأعضاء'),
@@ -1091,6 +1093,7 @@ export function mount(root,ctx={}) {
       if(action==='rank-view'){ui.rankView=Math.max(0,Math.min(4,Number(id)||0));paint();return;}
       if(action==='rank-tab'){ui.rankTab=id==='monthly'?'monthly':'perks';paint();return;}
       if(action==='room-dm'){closeDialog(false);import('./room-dm-r67.js?v=r67a').then(m=>m.openRoomDM({peer:target.dataset.peer||''})).catch(reportError);return;}
+      if(action==='broadcast-open'){ui.panel='';paint();return;}
       if(action==='cinema-open'){ui.panel='';ui.cinemaOpen=true;paint();return;}
       if(action==='cinema-close'){ui.cinemaOpen=false;paint();return;}
       if(action==='cinema-add'){openDialog('إضافة فيديو يوتيوب',field('yt','الصق رابط الفيديو من يوتيوب','text','',300)+'<p class="so-note">افتح يوتيوب، اختر الفيديو، واضغط «مشاركة» ثم «نسخ الرابط» والصقه هنا. الفيديو يشتغل عند كل اللي بالغرفة بنفس اللحظة.</p>',async f=>{const vid=parseYouTube(f.elements.yt.value);if(!vid)throw Error('الرابط مب رابط فيديو يوتيوب صحيح.');await command(c,'video:set',{roomId:c.routeRoom,vid});ui.cinemaOpen=false;},'شغّل الفيديو');return;}

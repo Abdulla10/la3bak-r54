@@ -319,7 +319,7 @@ function profileMenu(ctx,s) {
  const rankValue=key=>{const v=rankSummary(ctx,key);return v.state==='earned'&&Number.isSafeInteger(v.rank)?(key==='vip'?`VIP ${v.rank}`:`N${v.rank}`):'';};
  const withValue=(html,value,attr='')=>value?html.replace('<span class="pvp-menu-label">',`<span class="pvp-menu-label">`).replace(/(<\/span>)(<svg|<span class="pvp-icon)/,`$1<small class="pvp-menu-value"${attr}>${esc(value)}</small>$2`):html;
  const fresh=Number.isSafeInteger(s.visitorsFresh)&&s.visitorsFresh>0?`${s.visitorsFresh>99?'99+':s.visitorsFresh} جديد`:'';
- const visitors=ctx.user&&!ctx.noCommunity?withValue(routeRow('visitors','eye','من الذي رآني','اللاعبون اللي فتحوا ملفك العام'),fresh,' data-pvp-visitors-value'):'';
+ const visitors=(ctx.user&&!ctx.noCommunity?withValue(routeRow('visitors','eye','من الذي رآني','اللاعبون اللي فتحوا ملفك العام'),fresh,' data-pvp-visitors-value'):'')+(ctx.user?`<button type="button" class="pvp-menu-row bc67-row" data-bc67-open title="رسالة تطلع لكل الموقع">${badge('bell')}<span class="pvp-menu-label">📢 أرسل برقية</span>${icon('back')}</button>`:'');
  const invite=ctx.user&&!ctx.noCommunity?routeRow('invite','share','ادعُ الأصدقاء','رابط دعوة برقمك العام بدون مكافآت مالية'):'';
  const group=(rows,label)=>rows.replace(/\s/g,'')?`<div class="pvp-menu-group" role="group" aria-label="${label}">${rows}</div>`:'';
  /* R54: قسم واحد «أصدقائي وتقدّمي» يجمع الأصدقاء والعائلة والهدايا والمظهر والدعوات والمستوى والمكافآت والمهام — صف واحد يفتح ويسكّر */

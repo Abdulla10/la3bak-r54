@@ -23,6 +23,7 @@ import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
 import { CpPoints, cpKey, cpLevelOf, CP_TASKS, CP_LEVELS, CP_LEVEL_NAMES } from './cp-r58.js';
 import { ROCKET_PLANETS } from './room-rocket-r58.js';
 import { SiteFlagsStore } from './site-flags-r67.js';
+import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
 import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, TRIBE_LEVELS, tribeLevelOf, type Tribe } from './tribes-r58.js';
@@ -341,6 +342,7 @@ export async function createApp(
   /* R67ae: إعدادات التشغيل من لوحة التحكم */
   const siteFlags = new SiteFlagsStore(functionalFile(undefined, 'site-flags'), Date.now, storage);
   setExtraBannedWords(siteFlags.words());
+  const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
   { const t = siteFlags.tuning(); if (t) try { applyTuning(validateTuning(t, TUNING_DEFAULT)); } catch (e) { log('tuning_invalid', { error: String((e as Error).message).slice(0, 120) }); } }
   /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
   const firstTopup = new FirstTopup(functionalFile(undefined, 'first-topup'), {
@@ -1267,6 +1269,30 @@ export async function createApp(
       const changed = (Object.keys(next) as (keyof typeof next)[]).filter((k) => JSON.stringify(next[k]) !== JSON.stringify(before[k]));
       const auditOk = admin.audit(actor!, 'tuning.update', 'tuning', `${body.reset === true ? 'ترجيع الأصلي' : changed.join('، ') || 'بدون تغيير'} — ${reason}`);
       return { ok: true, current: currentTuning(), changed, auditOk };
+    }, 'owner');
+    const sendAll = (msg: unknown) => { const raw = JSON.stringify(msg); for (const peers of sockets.values()) for (const ws of peers) { try { if (ws.readyState === 1) ws.send(raw); } catch { /* */ } } };
+    functionalHttp.add('GET', '/api/broadcast/info', () => ({ ok: true, enabled: siteFlags.get().broadcast, prices: { ...BROADCAST_PRICES }, max: BROADCAST_TEXT_MAX, recent: broadcasts.recent().map(publicBroadcast) }));
+    functionalHttp.add('POST', '/api/broadcast', ({ user, body }) => {
+      if (!siteFlags.get().broadcast) throw new FunctionalHttpError(403, 'البرقية موقفة حاليًا من الإدارة.');
+      adminNeed(accounts.has(user.id) && !platform.isBanned(user.id), 'حسابك ما يقدر يرسل برقية.');
+      const key = String(body.key ?? ''); adminNeed(/^[A-Za-z0-9_-]{8,64}$/.test(key), 'معرّف الطلب غير صالح.');
+      let c; try { c = broadcasts.check(user.id, String(body.text ?? ''), body.tier); } catch (e) { if (e instanceof BroadcastError) throw new FunctionalHttpError(400, e.message); throw e; }
+      const m = moderateText(c.text, 'room-ad'); if (!m.ok) throw new FunctionalHttpError(422, m.message);
+      const id = 'bc-' + createHash('sha256').update(user.id + ':' + key).digest('hex').slice(0, 24);
+      const pay = wallet.spendService(user.id, c.price, `برقية عالمية (${c.tier === 'full' ? 'شاشة كاملة' : c.tier === 'gold' ? 'ذهبية' : 'عادية'})`, 'broadcast:' + id);
+      if (!pay.ok) throw new FunctionalHttpError(pay.code === 'poor' ? 402 : 400, pay.code === 'poor' ? `رصيدك ما يكفي. البرقية بـ ${c.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
+      const b = broadcasts.add(user.id, accounts.nameOf(user.id) || 'لاعب', c.text, c.tier, c.price, id);
+      if (!pay.dup) sendAll({ t: 'broadcast', b: publicBroadcast(b) });
+      sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
+      return { ok: true, id: b.id, coins: pay.coins };
+    });
+    functionalHttp.add('GET', '/api/admin/broadcasts', () => ({ ok: true, list: broadcasts.list(100) }), 'owner');
+    functionalHttp.add('POST', '/api/admin/broadcasts/hide', ({ actor, body }) => {
+      const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(reason.length >= 3, 'اكتب السبب.');
+      let b; try { b = broadcasts.hide(String(body.id ?? ''), actor!.name); } catch (e) { if (e instanceof BroadcastError) throw new FunctionalHttpError(404, e.message); throw e; }
+      sendAll({ t: 'broadcast:hide', id: b.id });
+      const auditOk = admin.audit(actor!, 'broadcast.hide', b.by, `${b.text} — ${reason}`);
+      return { ok: true, auditOk };
     }, 'owner');
     functionalHttp.add('GET', '/api/admin/admin-logins', () => ({ ok: true, list: admin.loginLog() }), 'owner');
     functionalHttp.add('GET', '/api/admin/gifts', ({ url }) => { const days = Math.max(1, Math.min(90, Number(url.searchParams.get('days')) || 7)); return { ok: true, days, ...wallet.adminGifts({ q: url.searchParams.get('q') ?? '', since: Date.now() - days * 86_400_000, limit: 200 }) }; }, 'owner');
