@@ -24,3 +24,15 @@ html body nav.nav68 [data-lb-locked]{opacity:.5}
 html body nav.nav68 .n68-item:active{transform:scale(.96)}
 html body nav.lb-bottom.nav68{grid-template-columns:1.3fr 1.05fr 1.1fr 1fr 1.05fr!important}
 html body nav.nav68 .is-profile small{font-size:11.5px!important}
+/* R68p: 6 أزرار أصغر، وزر الألعاب أصغر */
+html body nav.lb-bottom.nav68{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:2px!important;padding:6px 4px 5px!important;border-radius:24px!important}
+html body nav.nav68 .n68-item{height:52px!important;padding:4px 1px 4px!important;gap:2px!important;border-radius:18px!important}
+html body nav.nav68 .n68-ic{width:26px;height:24px}
+html body nav.nav68 .n68-ic svg{width:24px;height:24px}
+html body nav.nav68 small{font-size:10.5px!important}
+html body nav.nav68 .is-profile small{font-size:10px!important}
+html body nav.nav68 .n68-item.is-games{height:52px!important}
+html body nav.nav68 .n68-dome{width:56px;height:42px;bottom:18px;border-radius:28px 28px 14px 14px}
+html body nav.nav68 .n68-dome>svg:not(.n68-crown){width:32px;height:23px;margin-top:5px}
+html body nav.nav68 .n68-crown{width:24px;height:16px;top:-12px}
+html body nav.nav68 .n68-item.is-games small{font-size:11px!important}
