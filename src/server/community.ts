@@ -454,6 +454,8 @@ export class Community {
     const p = this.post(id); const media = p.media;
     this.tx(() => this.purgePost(p)); this.dropMediaFile(media); return { author: p.by };
   }
+  /** R67ae: عدد البلاغات على محتوى لاعب */
+  reportsAgainst(id: string) { const l = this.d.reports.filter((r) => r.snap.author === id); return { total: l.length, open: l.filter((r) => r.status === 'open').length, removed: l.filter((r) => r.status === 'removed').length }; }
   openReports() { return this.d.reports.filter((r) => r.status === 'open').length; }
   counts() { return { posts: this.d.posts.length, comments: this.d.comments.length, reports: this.openReports() }; }
 }

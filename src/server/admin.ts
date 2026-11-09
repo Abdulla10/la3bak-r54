@@ -80,6 +80,7 @@ export interface AdminDeps {
   kick(id: string, why: 'banned' | 'maintenance'): void;
   walletChanged?(id: string): void;
   errors(): { ts: string; event: string; data: Record<string, unknown> }[];
+  onAdminLogin?(e: { at: number; actor: string; role: string; token: boolean; net: string; device: string }, owners: string[]): void;
   json(res: http.ServerResponse, code: number, body: unknown): void;
   readBody(req: http.IncomingMessage, limit?: number): Promise<string>;
   sameOrigin(req: http.IncomingMessage): boolean;
@@ -112,12 +113,25 @@ export function createAdmin(d: AdminDeps) {
   const lagTimer = setInterval(() => { const t = now(); lag = Math.max(0, t - last - 1000); last = t; }, 1000);
   lagTimer.unref?.();
 
+  /* R67ae: تنبيه دخول الإدارة — أول طلب من جهاز/شبكة جديدة خلال 12 ساعة ينسجل ويوصل تنبيه للمالك */
+  const loginSeen = new Map<string, number>(); const loginLog: { at: number; actor: string; role: string; token: boolean; net: string; device: string }[] = [];
+  const deviceOf = (ua: string) => { const os = /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'جهاز'; const br = /Edg\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : 'متصفح'; return `${os} · ${br}`; };
+  const netOf = (ip: string) => { const v4 = ip.replace(/^::ffff:/, ''); if (/^\d+\.\d+\.\d+\.\d+$/.test(v4)) return v4.split('.').slice(0, 2).join('.') + '.*.*'; return ip.split(':').slice(0, 3).join(':') + ':…'; };
+  function seenLogin(req: http.IncomingMessage, a: Actor): Actor {
+    try {
+      const ua = String(req.headers['user-agent'] ?? '').slice(0, 300), net = netOf(d.ipOf(req)), device = deviceOf(ua), k = a.id + '|' + net + '|' + device, now = Date.now();
+      const last = loginSeen.get(k); loginSeen.set(k, now);
+      if (loginSeen.size > 2000) for (const [kk, t] of loginSeen) if (now - t > 12 * 3_600_000) loginSeen.delete(kk);
+      if (last === undefined || now - last > 12 * 3_600_000) { const e = { at: now, actor: a.name, role: a.role, token: a.token, net, device }; loginLog.push(e); if (loginLog.length > 100) loginLog.shift(); d.onAdminLogin?.(e, P.staff().filter((s) => s.role === 'owner').map((s) => s.id)); }
+    } catch { /* التنبيه ما يوقف الدخول */ }
+    return a;
+  }
   function actorOf(req: http.IncomingMessage, user: { id: string; name: string } | null): Actor | null {
     const tok = d.token();
     const bearer = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
-    if (bearer) return tok && safeEq(bearer, tok) ? { id: 'token', name: 'رمز الإدارة', role: 'owner', token: true } : null;
+    if (bearer) return tok && safeEq(bearer, tok) ? seenLogin(req, { id: 'token', name: 'رمز الإدارة', role: 'owner', token: true }) : null;
     const role = user ? P.roleOf(user.id) : null;
-    return user && role ? { id: user.id, name: user.name, role, token: false } : null;
+    return user && role ? seenLogin(req, { id: user.id, name: user.name, role, token: false }) : null;
   }
   const need = (a: Actor, perm: Perm) => { if (!can(a.role, perm)) throw new HttpErr(403, 'ما عندك صلاحية لهذا الإجراء.'); };
   const needBulk = (a: Actor) => { if (a.role !== 'owner' && !P.bulkGrantAllowed(a.id)) throw new HttpErr(403, 'المنح الجماعي للمالك أو المفوّض صراحة فقط.'); };
@@ -727,5 +741,5 @@ export function createAdmin(d: AdminDeps) {
   }
 
   const publicStatus = (user: { id: string } | null) => { const m = P.maintenance(); const ban = user ? P.banOf(user.id) : null; return { maintenance: { on: m.on, message: m.message, since: m.since }, staff: !!(user && P.roleOf(user.id)), ban: ban ? { reason: ban.reason } : null, notices: P.activeNotices() }; };
-  return { handle, actorOf, audit: safeAudit, maintenanceBlock, banBlock, publicStatus, resumeApprovals, retryBulk: () => { bulkStore.retry(); d.bulkGrants?.runBatch(); }, stop: () => clearInterval(lagTimer) };
+  return { handle, actorOf, audit: safeAudit, loginLog: () => [...loginLog].reverse(), maintenanceBlock, banBlock, publicStatus, resumeApprovals, retryBulk: () => { bulkStore.retry(); d.bulkGrants?.runBatch(); }, stop: () => clearInterval(lagTimer) };
 }

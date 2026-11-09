@@ -471,7 +471,8 @@ export async function createApp(
   const specialTaken = (id: string, value: string) => { const owner = accounts.findByDisplayPlayerId(value); return owner !== null && owner !== id; };
   /* R62: عروض المتجر محدودة الوقت */
   const offers = new ShopOffers(functionalFile(undefined, 'shop-offers'), storage);
-  shopcat.offerHook = (id) => offers.forItem(id);
+  // R67ae: خصم على قسم كامل (فعالية من اللوحة) لو القطعة ما عليها عرض خاص
+  shopcat.offerHook = (id, slot, price) => { const own = offers.forItem(id); if (own) return own; if (!slot || !price) return null; const ev = siteFlags.saleFor(slot); return ev ? { discount: ev.percent ?? 0, startsAt: ev.startsAt, endsAt: ev.endsAt, exclusive: false, live: true } : null; };
   const shopView = (id: string) => {
     const pr = progress(id); const got = new Set(wallet.claimed(id)); const owned = new Set(wallet.owned(id));
     const ranks = { level: pr.progression.level.value, vip: pr.progression.vip.enabled && pr.progression.vip.value ? Number(pr.progression.vip.value.slice(1)) : 0, noble: pr.progression.noble.enabled && pr.progression.noble.value ? Number(pr.progression.noble.value.slice(1)) : 0 };
@@ -1049,6 +1050,7 @@ export async function createApp(
     kick: (id, why) => sockets.get(id)?.forEach((ws) => ws.close(why === 'banned' ? 4403 : 4503, why)),
     walletChanged: id => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }),
     errors: () => errRing, token: () => process.env.ADMIN_TOKEN ?? '',
+    onAdminLogin: (e, owners) => { const to = owners.filter((id) => accounts.has(id)); if (!to.length) return; try { const t = new Date(e.at + 4 * 3_600_000).toISOString().slice(11, 16); support.announce(to, '🔐 دخول للوحة التحكم', `${e.actor} دخل لوحة التحكم الساعة ${t} من ${e.device} (شبكة ${e.net}). لو مو أنت أو مو من فريقك، غيّر رمز الإدارة فورًا.`, 'الأمان', `admlogin-${e.at}-${createHash('sha256').update(e.actor + e.net + e.device).digest('hex').slice(0, 16)}`); } catch { /* */ } },
   });
   bulkGrants.start();
   // موافقات عالقة (approving) من توقف سابق: تُستكمل الآن بتعديل idempotent، فلا تضيع الموافقة ولا يتكرر التعديل
@@ -1222,6 +1224,39 @@ export async function createApp(
       if (out.changed.includes('cinema') && !out.after.cinema) { /* الفيديوهات الشغالة تكمل لين يطفونها؛ ما نقدر نوقف الكل بأمر واحد بأمان */ }
       return { ok: true, flags: out.after, changed: out.changed, auditOk };
     }, 'owner');
+    functionalHttp.add('GET', '/api/admin/live', () => { let online = 0; for (const set of sockets.values()) if (set.size) online++; const rooms = socialRooms.liveRooms(); return { ok: true, online, inRooms: rooms.reduce((n, r) => n + r.members, 0), rooms: rooms.slice(0, 50) }; }, 'owner');
+    functionalHttp.add('GET', '/api/admin/player-360', ({ url }) => {
+      const q = String(url.searchParams.get('q') ?? '').trim(); adminNeed(q.length >= 2, 'اكتب اسم أو رقم لاعب (حرفين على الأقل).');
+      const byDisplay = /^\d{3,12}$/.test(q) ? accounts.findByDisplayPlayerId(q) : null; const ql = q.toLowerCase();
+      const ids = byDisplay ? [byDisplay] : accounts.has(q) ? [q] : accounts.all().filter((a) => (a.name ?? '').toLowerCase().includes(ql)).slice(0, 5).map((a) => a.id);
+      const card = (id: string) => {
+        const pr = progress(id).progression; const t = tribes.of(id); const c = social.coupleOf(id); const gs = wallet.giftsOf(id, 'out', 500), gr = wallet.giftsOf(id, 'in', 500); const gv = (l: typeof gs) => l.reduce((n, g) => n + (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1), 0);
+        const ban = platform.banOf(id); const acc = accounts.all().find((a) => a.id === id);
+        return { id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', since: acc?.since ?? null, level: pr.level.value, vip: pr.vip.enabled ? pr.vip.value : null, noble: pr.noble.enabled ? pr.noble.value : null,
+          coins: wallet.balance(id), gems: wallet.gems(id), online: (sockets.get(id)?.size ?? 0) > 0, played: acc?.played ?? 0, wins: acc?.wins ?? 0,
+          giftsSent: { count: gs.length, value: gv(gs) }, giftsRecv: { count: gr.length, value: gv(gr) },
+          tribe: t ? { name: t.name, leader: t.leader === id } : null, cp: c ? { partner: nm(c.partner), pts: cpPoints.get(cpKey(c.id, id, c.partner)) } : null,
+          rooms: socialRooms.ownedRoomsOf(id), reports: community.reportsAgainst(id), ban: ban ? { reason: (ban as { reason?: string }).reason ?? '', at: (ban as { at?: number }).at ?? null } : null,
+          owned: wallet.owned(id).length, staff: null as string | null };
+      };
+      return { ok: true, players: ids.map(card) };
+    }, 'owner');
+    functionalHttp.add('POST', '/api/admin/message', ({ actor, body }) => {
+      const id = String(body.id ?? ''), title = String(body.title ?? '').trim(), text = String(body.body ?? '').trim();
+      adminNeed(accounts.has(id), 'اللاعب غير موجود.'); adminNeed(title.length >= 3 && title.length <= 100, 'العنوان من 3 إلى 100 حرف.'); adminNeed(text.length >= 3 && text.length <= 2000, 'الرسالة من 3 إلى 2000 حرف.');
+      const ref = 'admmsg-' + createHash('sha256').update(id + title + text + String(body.key ?? '')).digest('hex').slice(0, 24);
+      let out; try { out = support.announce([id], title, text, 'الإدارة', ref); } catch (e) { throw new FunctionalHttpError(400, (e as Error).message || 'تعذّر الإرسال.'); }
+      const auditOk = admin.audit(actor!, 'message.send', id, `${title}`);
+      return { ok: true, duplicate: !!(out as { duplicate?: boolean }).duplicate, auditOk };
+    }, 'owner');
+    functionalHttp.add('GET', '/api/admin/events', () => ({ ok: true, now: Date.now(), events: siteFlags.events().reverse() }), 'owner');
+    functionalHttp.add('POST', '/api/admin/events', ({ actor, body }) => {
+      const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(reason.length >= 3, 'اكتب سبب الفعالية.');
+      let ev; try { ev = body.op === 'end' ? siteFlags.endEvent(String(body.id ?? '')) : siteFlags.addEvent(body as Record<string, unknown>, actor!.name); } catch (e) { throw new FunctionalHttpError(400, (e as Error).message || 'تعذّر الحفظ.'); }
+      const auditOk = admin.audit(actor!, body.op === 'end' ? 'event.end' : 'event.add', ev.id, `${ev.title}${ev.slot ? ' · ' + ev.slot : ''} — ${reason}`);
+      return { ok: true, event: ev, auditOk };
+    }, 'owner');
+    functionalHttp.add('GET', '/api/admin/admin-logins', () => ({ ok: true, list: admin.loginLog() }), 'owner');
     functionalHttp.add('GET', '/api/admin/gifts', ({ url }) => { const days = Math.max(1, Math.min(90, Number(url.searchParams.get('days')) || 7)); return { ok: true, days, ...wallet.adminGifts({ q: url.searchParams.get('q') ?? '', since: Date.now() - days * 86_400_000, limit: 200 }) }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/economy-daily', ({ url }) => { const days = Math.max(7, Math.min(60, Number(url.searchParams.get('days')) || 14)); const e = wallet.adminEconomy(days); return { ok: true, ...e, topSpenders: e.topSpenders.map((x) => ({ name: nm(x.id), spent: x.spent })) }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/banned-words', () => ({ ok: true, words: siteFlags.words(), meta: siteFlags.wordsMeta(), max: BANNED_WORDS_MAX }), 'owner');
@@ -1763,6 +1798,8 @@ export async function createApp(
         // R62: هدية السلسلة فوق المكافأة اليومية (مفتاح ثابت لكل يوم — ما تتكرر)
         let extra = 0, gemsGot = 0, day = 1;
         if (siteFlags.get().streak) try { const st = streak.claim(user.id); day = st.day; if (st.bonus.coins > 0 && wallet.grant(user.id, 'coins', st.bonus.coins, `هدية الدخول اليومي — اليوم ${st.day}`, `streak:${st.today}:c`)) extra = st.bonus.coins; if (st.bonus.gems > 0 && wallet.grant(user.id, 'gems', st.bonus.gems, `هدية اليوم السابع`, `streak:${st.today}:g`)) gemsGot = st.bonus.gems; } catch (e) { log('streak_failed', { error: String((e as Error).message).slice(0, 100) }); }
+        // R67ae: فعالية «ضعف اليومية» من اللوحة (مفتاح ثابت لليوم — ما تتكرر)
+        { const ev = siteFlags.activeEvents().find((e) => e.kind === 'daily2x'); if (ev) { const dk = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10); try { if (wallet.grant(user.id, 'coins', n, 'فعالية: ضعف المكافأة اليومية 🎉', `daily2x:${ev.id}:${dk}`)) extra += n; } catch { /* المكافأة الأساسية انصرفت */ } } }
         return { ok: true, got: n + extra, base: n, bonus: extra, gems: gemsGot, streakDay: day, coins: wallet.balance(user.id), gemBalance: wallet.gems(user.id) };
       }
       case 'mm:leave':

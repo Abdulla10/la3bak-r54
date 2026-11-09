@@ -12,11 +12,15 @@ export type SiteFlags = {
 };
 export const SITE_FLAGS_DEFAULT: SiteFlags = Object.freeze({ cinema: true, streak: true, invite: true, firstTopupPercent: -1, bigGiftMin: 9000, profileBgVip: 6 });
 export const SITE_FLAG_LIMITS = Object.freeze({ firstTopupPercent: [-1, 200], bigGiftMin: [1000, 10_000_000], profileBgVip: [1, 15] } as const);
-type Data = { v: 1; flags: Partial<SiteFlags>; at: number; by: string; words?: string[]; wordsAt?: number; wordsBy?: string };
+export type SiteEvent = { id: string; kind: 'daily2x' | 'slotSale'; slot?: string; percent?: number; title: string; startsAt: number; endsAt: number; by: string; at: number; ended?: boolean };
+export const EVENT_SLOTS = Object.freeze(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'souvenir', 'title', 'badge', 'room-bg', 'special-id', 'room-id'] as const);
+type Data = { v: 1; flags: Partial<SiteFlags>; at: number; by: string; words?: string[]; wordsAt?: number; wordsBy?: string; events?: SiteEvent[] };
+const validEvent = (e: unknown) => isObj(e) && typeof e.id === 'string' && (e.kind === 'daily2x' || e.kind === 'slotSale') && typeof e.title === 'string' && Number.isSafeInteger(e.startsAt) && Number.isSafeInteger(e.endsAt) && (e.endsAt as number) > (e.startsAt as number) && typeof e.by === 'string' && (e.kind !== 'slotSale' || (typeof e.slot === 'string' && Number.isSafeInteger(e.percent) && (e.percent as number) >= 5 && (e.percent as number) <= 90));
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
 const inRange = (k: keyof typeof SITE_FLAG_LIMITS, v: unknown) => Number.isSafeInteger(v) && (v as number) >= SITE_FLAG_LIMITS[k][0] && (v as number) <= SITE_FLAG_LIMITS[k][1];
 function validFlags(x: unknown): boolean {
   if (!isObj(x) || !isObj(x.flags)) return false;
+  if (x.events !== undefined && (!Array.isArray(x.events) || x.events.length > 200 || !x.events.every(validEvent))) return false;
   if (x.words !== undefined && (!Array.isArray(x.words) || x.words.length > 500 || x.words.some((w) => typeof w !== 'string' || w.length < 2 || w.length > 40))) return false;
   for (const [k, v] of Object.entries(x.flags)) {
     if (k === 'cinema' || k === 'streak' || k === 'invite') { if (typeof v !== 'boolean') return false; }
@@ -34,6 +38,32 @@ export class SiteFlagsStore {
   }
   get(): SiteFlags { return { ...SITE_FLAGS_DEFAULT, ...this.d.flags }; }
   meta() { return { at: this.d.at, by: this.d.by }; }
+  events(): SiteEvent[] { return structuredClone(this.d.events ?? []); }
+  activeEvents(now = this.now()): SiteEvent[] { return (this.d.events ?? []).filter((e) => !e.ended && e.startsAt <= now && now < e.endsAt); }
+  saleFor(slot: string, now = this.now()): SiteEvent | null { let best: SiteEvent | null = null; for (const e of this.activeEvents(now)) if (e.kind === 'slotSale' && e.slot === slot && (!best || (e.percent ?? 0) > (best.percent ?? 0))) best = e; return best; }
+  addEvent(input: Record<string, unknown>, by: string): SiteEvent {
+    const kind = input.kind === 'slotSale' ? 'slotSale' : input.kind === 'daily2x' ? 'daily2x' : null; if (!kind) throw new Error('نوع الفعالية غير معروف.');
+    const startsAt = Number(input.startsAt), hours = Number(input.hours);
+    if (!Number.isSafeInteger(startsAt) || startsAt < this.now() - 3_600_000) throw new Error('وقت البداية غير صالح.');
+    if (!Number.isSafeInteger(hours) || hours < 1 || hours > 24 * 14) throw new Error('المدة من ساعة إلى 14 يوم.');
+    const ev: SiteEvent = { id: 'ev-' + this.now().toString(36) + Math.random().toString(36).slice(2, 6), kind, title: '', startsAt, endsAt: startsAt + hours * 3_600_000, by, at: this.now() };
+    if (kind === 'slotSale') {
+      const slot = String(input.slot ?? ''), percent = Number(input.percent);
+      if (!(EVENT_SLOTS as readonly string[]).includes(slot)) throw new Error('اختر قسم من المتجر.');
+      if (!Number.isSafeInteger(percent) || percent < 5 || percent > 90) throw new Error('الخصم من 5% إلى 90%.');
+      Object.assign(ev, { slot, percent, title: `خصم ${percent}%` });
+    } else ev.title = 'ضعف المكافأة اليومية';
+    const list = [...(this.d.events ?? []).filter((e) => e.endsAt > this.now() - 30 * 86_400_000).slice(-150), ev];
+    const prev = this.d; this.d = { ...this.d, events: list };
+    try { this.disk.mustSave(); } catch (e) { this.d = prev; throw e; }
+    return structuredClone(ev);
+  }
+  endEvent(id: string): SiteEvent {
+    const ev = (this.d.events ?? []).find((e) => e.id === id); if (!ev) throw new Error('الفعالية غير موجودة.'); if (ev.ended || ev.endsAt <= this.now()) throw new Error('الفعالية خلصت من قبل.');
+    const prev = structuredClone(this.d); ev.ended = true; ev.endsAt = Math.max(ev.startsAt + 1, this.now());
+    try { this.disk.mustSave(); } catch (e) { this.d = prev; throw e; }
+    return structuredClone(ev);
+  }
   words(): string[] { return [...(this.d.words ?? [])]; }
   wordsMeta() { return { at: this.d.wordsAt ?? 0, by: this.d.wordsBy ?? '' }; }
   /** كلمات ممنوعة: إضافة/حذف — ترجع القائمة الجديدة */

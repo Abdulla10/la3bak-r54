@@ -101,10 +101,10 @@ export class ShopCatalog {
   unsaved() { return this.disk.unsaved; }
 
   /** R62: عروض محدودة الوقت (تنضبط من خارج — ShopOffers) */
-  offerHook: ((id: string) => { discount: number; startsAt: number; endsAt: number; exclusive: boolean; live: boolean } | null) | null = null;
+  offerHook: ((id: string, slot?: string, price?: number) => { discount: number; startsAt: number; endsAt: number; exclusive: boolean; live: boolean } | null) | null = null;
   private withOffer(it: EffItem | undefined): EffItem | undefined {
     if (!it || !this.offerHook || it.status === 'hidden') return it;
-    const o = this.offerHook(it.id); if (!o) return it;
+    const o = this.offerHook(it.id, it.slot, it.price); if (!o) return it;
     if (o.live) { const price = o.discount > 0 ? Math.max(1, Math.floor(it.price * (100 - o.discount) / 100)) : it.price; return { ...it, price, offer: { discount: o.discount, startsAt: o.startsAt, endsAt: o.endsAt, live: true, was: it.price, exclusive: o.exclusive } }; }
     if (o.exclusive && it.status === 'available') { const status: ShopStatus = Date.now() < o.startsAt ? 'coming-soon' : 'unavailable'; return { ...it, status, active: false, offer: { discount: o.discount, startsAt: o.startsAt, endsAt: o.endsAt, live: false, was: it.price, exclusive: true } }; }
     return it;
