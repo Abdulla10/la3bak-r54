@@ -58,6 +58,9 @@ export class ShopInputError extends Error {
 }
 /** أنماط الإطار/الخلفية المتاحة = اللي في الكتالوج الأساسي (لها CSS فعلي بالواجهة) */
 export const PRESETS = {
+    // R67ae: الفقاعات واللوحات من الرسومات الموجودة
+    'chat-bubble': [...new Set(CATALOG.filter((i) => i.slot === 'chat-bubble').map((i) => i.css ?? '').filter(Boolean))],
+    board: [...new Set(CATALOG.filter((i) => i.slot === 'board').map((i) => i.css ?? '').filter(Boolean))],
     frame: [...new Set(CATALOG.filter((i) => i.slot === 'frame').map((i) => i.css ?? ''))],
     bg: [...new Set(CATALOG.filter((i) => i.slot === 'bg' && !i.proposalOnly).map((i) => i.css ?? ''))],
 };
@@ -94,7 +97,26 @@ export class ShopCatalog {
     }
     retry() { this.disk.retry(); }
     unsaved() { return this.disk.unsaved; }
-    eff(base, c) {
+    /** R62: عروض محدودة الوقت (تنضبط من خارج — ShopOffers) */
+    offerHook = null;
+    withOffer(it) {
+        if (!it || !this.offerHook || it.status === 'hidden')
+            return it;
+        const o = this.offerHook(it.id, it.slot, it.price);
+        if (!o)
+            return it;
+        if (o.live) {
+            const price = o.discount > 0 ? Math.max(1, Math.floor(it.price * (100 - o.discount) / 100)) : it.price;
+            return { ...it, price, offer: { discount: o.discount, startsAt: o.startsAt, endsAt: o.endsAt, live: true, was: it.price, exclusive: o.exclusive } };
+        }
+        if (o.exclusive && it.status === 'available') {
+            const status = Date.now() < o.startsAt ? 'coming-soon' : 'unavailable';
+            return { ...it, status, active: false, offer: { discount: o.discount, startsAt: o.startsAt, endsAt: o.endsAt, live: false, was: it.price, exclusive: true } };
+        }
+        return it;
+    }
+    eff(base, c) { return this.withOffer(this.effRaw(base, c)); }
+    effRaw(base, c) {
         if (c) {
             const status = shopStatus(c);
             return effectiveFrameItem({ ...c, custom: true, baseId: false, status, active: status === 'available' });
@@ -107,7 +129,7 @@ export class ShopCatalog {
         // R57: «جليدي» صورته الأصلية مقصوصة نصها (تطلع مثل حرف C)، فتنخفي من البيع افتراضيًا. اللي يملكها تبقى له، والإدارة تقدر ترجّعها
         // R58h: إطارات lux-f المرسومة بالكود انستبدلت بإطارات المالك؛ تنخفي من البيع (اللي يملكها تبقى له)
         // R58o: إطارات art-f الأولى انستبدلت بمجموعة المالك الجديدة art-f2؛ القديمة تنخفي من البيع وتبقى لمن يملكها
-        const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-') || /^art-f-\d\d$/.test(base.id);
+        const brokenArt = base.id === 'ref-p-frame-11' || base.id.startsWith('lux-f-') || /^art-f-\d\d$/.test(base.id) || /^ref-p-frame-(07|09|10|12|13)$/.test(base.id) || /^art-mf-(1[4-9]|2\d|3[0-6])$/.test(base.id) || /^art-f3-(39|40|42)$/.test(base.id); // R62: إطارات الموسم الحصرية (جايزة ترتيب الشهر) ما تنباع // R59c: إطارات المايك 14–36 كانت بخلفية مربعة؛ انستبدلت بإطارات شفافة 41–76، واللي يملكها تبقى له // R59b: صورها الأصلية مقصوصة؛ تنخفي من البيع وتبقى لمن يملكها
         const requestedStatus = o?.status === undefined && o?.active === undefined && (base.rankPerk || brokenArt) ? 'hidden' : shopStatus(o ?? {});
         // Missing/partial/invalid approval can never activate a proposal, including price zero.
         const status = approved === false && (!o?.status || requestedStatus === 'available') ? 'coming-soon' : requestedStatus;
@@ -191,7 +213,17 @@ export class ShopCatalog {
             throw new ShopInputError('إطارات المايك من رسومات الكتالوج المعتمدة فقط.');
         if (slot === 'souvenir')
             throw new ShopInputError('التذكارات متاحة من رسومات الكتالوج المعتمدة فقط.');
-        if (slot === 'frame' || slot === 'bg') {
+        if (slot === 'room-bg')
+            throw new ShopInputError('خلفيات الغرف تحتاج صورة جديدة؛ تنضاف من رسومات الكتالوج المعتمدة.');
+        if (slot === 'special-id' || slot === 'room-id') {
+            const c = String(raw ?? '').trim();
+            if (!/^[1-9][0-9]{2,9}$/.test(c) || (slot === 'special-id' && c.length <= 3))
+                throw new ShopInputError(slot === 'special-id' ? 'الأيدي المميز بالمتجر من 4 إلى 10 أرقام (الأقصر للإدارة بس) وما يبدأ بصفر.' : 'أيدي الغرفة أرقام فقط (3 إلى 10 أرقام) وما يبدأ بصفر.');
+            if (CATALOG.some((i) => i.slot === slot && i.css === c) || Object.values(this.d.custom).some((i) => i.slot === slot && i.css === c))
+                throw new ShopInputError('هذا الأيدي موجود بالمتجر من قبل.', 409);
+            return c;
+        }
+        if (slot === 'frame' || slot === 'bg' || slot === 'chat-bubble' || slot === 'board') {
             const c = String(raw ?? '');
             if (!PRESETS[slot].includes(c))
                 throw new ShopInputError('المظهر لازم يكون من القائمة المتاحة.');
@@ -212,7 +244,7 @@ export class ShopCatalog {
             throw new ShopInputError('المعرّف مستخدم من قبل.', 409);
         const slot = input.slot;
         if (!SLOTS.includes(slot))
-            throw new ShopInputError('الخانة: إطار أو خلفية أو لقب أو شارة.');
+            throw new ShopInputError('نوع المنتج غير صالح.');
         if (Object.keys(this.d.custom).length >= CUSTOM_CAP)
             throw new ShopInputError('وصلت الحد الأقصى للمنتجات المضافة.', 409);
         const f = this.fields(input, { slot, currency: slot === 'frame' ? 'gems' : 'coins' }, false);

@@ -5,10 +5,10 @@ import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
  * - نقاط القبيلة = قيمة الهدايا (بالجواهر) اللي يرسلها أعضاؤها، من إيصال المحفظة. والمستوى والشعار والسعة من النقاط الكلية، والترتيب بنقاط الشهر. */
 export const TRIBE_ROOM_LEVEL = 10;
 export const TRIBE_LEVELS = Object.freeze([
-    Object.freeze({ level: 1, min: 0, cap: 30, name: 'قبيلة ناشئة' }),
-    Object.freeze({ level: 2, min: 1_000_000, cap: 40, name: 'قبيلة صاعدة' }),
-    Object.freeze({ level: 3, min: 5_000_000, cap: 50, name: 'قبيلة عريقة' }),
-    Object.freeze({ level: 4, min: 20_000_000, cap: 60, name: 'قبيلة أسطورية' }),
+    ({ level: 1, min: 0, cap: 30, name: 'قبيلة ناشئة' }),
+    ({ level: 2, min: 1_000_000, cap: 40, name: 'قبيلة صاعدة' }),
+    ({ level: 3, min: 5_000_000, cap: 50, name: 'قبيلة عريقة' }),
+    ({ level: 4, min: 20_000_000, cap: 60, name: 'قبيلة أسطورية' }),
 ]);
 export const TRIBE_REQUESTS_MAX = 50;
 const GULF_OFFSET = 4 * 3600_000;
@@ -150,6 +150,33 @@ export class Tribes {
     disband(leader) { const t = this.of(leader); if (!t)
         throw new TribeError('no_tribe'); if (t.leader !== leader)
         throw new TribeError('not_leader'); this.tx(() => { this.d.tribes = this.d.tribes.filter((x) => x.id !== t.id); }); return t; }
+    /** R67ae: أدوات الإدارة (المالك) */
+    all() { return this.d.tribes; }
+    adminRename(id, rawName) {
+        const t = this.get(id);
+        if (!t)
+            throw new TribeError('not_found');
+        const name = String(rawName ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+        if (name.length < 3 || name.length > 24 || !/^[\p{L}\p{M}\p{N} _-]+$/u.test(name))
+            throw new TribeError('name');
+        if (this.d.tribes.some((x) => x.id !== id && x.name.toLowerCase() === name.toLowerCase()))
+            throw new TribeError('name_taken');
+        this.tx(() => { t.name = name; });
+        return t;
+    }
+    adminKick(id, user) {
+        const t = this.get(id);
+        if (!t)
+            throw new TribeError('not_found');
+        if (t.leader === user)
+            throw new TribeError('leader_leave');
+        if (!t.members.some((m) => m.id === user))
+            throw new TribeError('not_member');
+        this.tx(() => { t.members = t.members.filter((m) => m.id !== user); });
+        return t;
+    }
+    adminDisband(id) { const t = this.get(id); if (!t)
+        throw new TribeError('not_found'); this.tx(() => { this.d.tribes = this.d.tribes.filter((x) => x.id !== id); }); return t; }
     /** هدية مؤكدة بالمحفظة من عضو. ترجع القبيلة إذا تغيّرت. */
     addGift(from, gems) {
         if (!nat(gems) || !gems)

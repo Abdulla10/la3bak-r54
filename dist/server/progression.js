@@ -270,6 +270,18 @@ export class Progression {
         }
         return this.nobleView(id ? this.d.players[id]?.noblePoints ?? 0 : 0).catalog;
     }
+    /** R67ae: تفعيل نوبل N6–N9 بطلب المالك — مرة وحدة. الحدود الجديدة = ضعف اللي قبلها، والأسماء ما تمس اللي حدده المالك */
+    ensureNineNoble(drafts) {
+        const n = this.d.config.noble;
+        if (n.ranks.length === 9)
+            return false;
+        const t = n.thresholds;
+        const thresholds = Array.isArray(t) && t.length === 5 ? [...t, t[4] * 2, t[4] * 4, t[4] * 8, t[4] * 16] : null;
+        const have = n.levels ?? (n.catalog ?? blankCatalog()).map(tierToLevel);
+        const levels = drafts.map((d, i) => ({ rank: i + 6, name: d.name, artwork: d.artwork, color: d.color, rarity: d.rarity })).filter((l) => !have[l.rank - 1]?.name);
+        this.updateConfig({ noble: { ranks: [...RANKS], ...(thresholds && thresholds.every((x) => Number.isSafeInteger(x)) ? { thresholds } : {}), ...(levels.length ? { levels } : {}) } });
+        return true;
+    }
     updateConfig(patch) {
         const next = this.prepareConfig(patch);
         const before = this.d.config;

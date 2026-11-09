@@ -1,9 +1,10 @@
-import { moderateText } from './moderation-r58.js';
+import { moderateText, maskBanned, profanityOnly, setExtraBannedWords, BANNED_WORDS_MAX } from './moderation-r58.js';
 import { Economy, validEconomy, MANUAL_CONVERSION_DISABLED, MANUAL_CONVERSION_CLOSED_MESSAGE } from './economy.js';
 import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
 import { quoteGiftBatch } from './social-gift-batch-r27.js';
 import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 import { timingSafeEqual, createHash, createHmac, randomInt, randomUUID } from 'node:crypto';
@@ -19,8 +20,17 @@ import { MemoryStore } from './store.js';
 import { Leaderboard, validBoard } from './leaderboard.js';
 import { Matchmaker } from './matchmaker.js';
 import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
-import { CpPoints, cpKey, cpLevelOf } from './cp-r58.js';
-import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, tribeLevelOf } from './tribes-r58.js';
+import { CpPoints, cpKey, cpLevelOf, CP_TASKS, CP_LEVELS, CP_LEVEL_NAMES } from './cp-r58.js';
+import { ROCKET_PLANETS } from './room-rocket-r58.js';
+import { SiteFlagsStore } from './site-flags-r67.js';
+import { roomOwnerGift } from './room-extras-r58.js';
+import { AccountDeletion, DELETION_GRACE_MS } from './account-deletion-r67.js';
+import { HomeBanners, HomeBannerError } from './home-banners-r68.js';
+import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
+import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
+import { CANNON3_LEVELS } from './room-cannon-r59.js';
+import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, TRIBE_LEVELS, tribeLevelOf } from './tribes-r58.js';
+import { TribeTreasure, TreasureError, TREASURE_ERR, TRIBE_TASKS, TRIBE_BOXES, TRIBE_SHOP, ROCKET_PRESTIGE, launchGrants, planetOfLaunch } from './tribe-treasure-r59.js';
 import { achOf, achView, earned } from './achievements.js';
 import { City, CityError, validCity } from './city.js';
 import { ShopCatalog, validShop, shopEligibility } from './shopcatalog.js';
@@ -51,7 +61,7 @@ import { FunctionalOutbox, validFunctionalOutbox } from './functional-outbox.js'
 import { validGiftSupportContext } from './social-challenge.js';
 import { DataDirectoryLock } from './data-directory-lock.js';
 import { SessionRegistry, validSessionRegistry, sessionTokenHash } from './session-registry.js';
-import { FunctionalHttp } from './functional-http.js';
+import { FunctionalHttpError, FunctionalHttp } from './functional-http.js';
 import { Payments, validPayments } from './payments.js';
 import { wirePaymentRoutes, paymentWebhookHandler } from './payment-http.js';
 import { TapPaymentProvider } from './tap-payments.js';
@@ -62,6 +72,17 @@ import { ProfileSocial, validProfileSocial, wireProfileSocialRoutes } from './pr
 import { OwnerPlayerTools } from './owner-player-tools.js';
 import { SocialRooms, validSocialRooms } from './social-rooms.js';
 import { SocialVoice } from './social-voice.js';
+import { Backups } from './backup-r61.js';
+import { WebPush } from './webpush-r62.js';
+import { DailyStreak } from './daily-streak-r62.js';
+import { TribeWar, WAR_FUEL } from './tribe-war-r62.js';
+import { MonthlySeason, SEASON_PRIZES, monthLabel } from './season-r62.js';
+import { InviteRewards } from './invite-rewards-r62.js';
+import { FirstTopup } from './first-topup-r62.js';
+import { ShopOffers } from './shop-offers-r62.js';
+import { Devices } from './devices-r62.js';
+import { monthStartOf, nextMonthStartOf } from './leaderboard.js';
+import { weekKeyOf } from './room-supporters-r58.js';
 import { BulkGrants } from './bulk-grants.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -220,8 +241,8 @@ const SECURITY_HEADERS = {
     'X-Frame-Options': 'DENY',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()', // الميكروفون مقفّل افتراضياً؛ يُسمح لنفس الموقع فقط عند تفعيل الصوت.
     'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' blob: ws: wss:; " +
-        "media-src 'self' blob:; " +
+        "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' blob: ws: wss:; " +
+        "frame-src https://www.youtube-nocookie.com; media-src 'self' blob:; " +
         "frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
 };
 /** One configured room store for both embedded createApp and the CLI. Never fall back on DB failure. */
@@ -264,7 +285,10 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
     const functionalFile = (configured, name) => configured || (cfg.walletFile ? path.join(path.dirname(cfg.walletFile), name + '.json') : '');
     const accountToolsFile = functionalFile(cfg.accountToolsFile, 'account-tools');
     const socialFile = functionalFile(cfg.socialPrivateFile, 'social-private');
-    const cpFile = process.env.CP_POINTS_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'cp-points.json') : '');
+    // R61: كانت تعتمد على SOCIAL_PRIVATE_FILE بس — ولو ما كان مضبوط (مثل الإنتاج) نقاط الارتباط والقبائل ما تنحفظ أبدًا. الحين تنحفظ جنب ملف social-private حتى لو مساره محسوب تلقائيًا.
+    const besideSocial = (name) => socialFile ? path.join(path.dirname(socialFile), name) : '';
+    const boardFile = functionalFile(cfg.leaderboardFile, 'leaderboard');
+    const cpFile = process.env.CP_POINTS_FILE ?? besideSocial('cp-points.json');
     const missionsFile = functionalFile(cfg.missionsFile, 'missions');
     const rankRewardsFile = functionalFile(cfg.rankRewardsFile, 'rank-rewards');
     const supportFile = functionalFile(cfg.supportNotificationsFile, 'support-notifications');
@@ -278,7 +302,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         throw new Error('PAYMENT_PROVIDER_INJECTION_TEST_ONLY');
     if (cfg.dataDirectoryLock && cfg.walletFile) {
         const root = path.resolve(path.dirname(cfg.walletFile));
-        const writtenPaths = [cfg.walletFile, cfg.leaderboardFile, accFile, platFile, economyFile, progressionFile, shopFile, idFile, giftFile, cityFile, comFile, accountToolsFile, socialFile, socialRoomsFile, profileSocialFile, missionsFile, rankRewardsFile, supportFile, outboxFile, sessionsFile, paymentsFile, vipMembershipFile, cfg.avatarsDir, cfg.communityMediaDir].filter((v) => !!v);
+        const writtenPaths = [cfg.walletFile, boardFile, accFile, platFile, economyFile, progressionFile, shopFile, idFile, giftFile, cityFile, comFile, accountToolsFile, socialFile, socialRoomsFile, profileSocialFile, missionsFile, rankRewardsFile, supportFile, outboxFile, sessionsFile, paymentsFile, vipMembershipFile, cfg.avatarsDir, cfg.communityMediaDir].filter((v) => !!v);
         if (writtenPaths.some((file) => { const relative = path.relative(root, path.resolve(file)); return relative === '..' || relative.startsWith('../') || path.isAbsolute(relative); }))
             throw new Error('DATA_DIRECTORY_LOCK_REQUIRES_ALL_WRITES_INSIDE_ROOT');
     }
@@ -299,12 +323,12 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             { file: economyFile, validate: validEconomy },
             { file: progressionFile, validate: validProgression },
             { file: platFile, validate: validPlatform }, { file: shopFile, validate: validShop },
-            { file: cfg.walletFile ?? '', validate: validWallet }, { file: cfg.leaderboardFile ?? '', validate: validBoard },
+            { file: cfg.walletFile ?? '', validate: validWallet }, { file: boardFile, validate: validBoard },
             { file: accFile, validate: validAccounts }, { file: idFile, validate: validIdentities }, { file: comFile, validate: validCommunity }, { file: giftFile, validate: validGiftOverrides }, { file: cityFile, validate: validCity },
         ]);
         const storage = new StorageMonitor(log);
         const sessions = new SessionRegistry(sessionsFile, cfg.cookieSecret, Date.now, storage);
-        const board = new Leaderboard(cfg.leaderboardFile ?? '', Date.now, storage);
+        const board = new Leaderboard(boardFile, Date.now, storage);
         const economy = new Economy(economyFile, Date.now, storage);
         const accounts = new Accounts(accFile, Date.now, storage);
         const progression = new Progression(progressionFile, Date.now, storage, (id) => accounts.rawXp(id));
@@ -323,11 +347,80 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         const missions = new MissionsServer(missionsFile, wallet, Date.now, storage, shopcat);
         const rankRewards = new RankRewards(rankRewardsFile, wallet, progression, { hasAccount: (id) => accounts.has(id), itemExists: (id) => !!shopcat.get(id), mon: storage });
         const support = new SupportNotifications(supportFile, Date.now, storage);
+        /* R62: إشعارات الجوال — تنرسل بس للي مب فاتح الموقع الحين (اللي فاتحه يشوف التنبيه داخل الموقع) */
+        const webPush = process.env.WEB_PUSH === '0' || !cfg.walletFile && cfg.production ? null : (() => { try {
+            return new WebPush(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'web-push.json') : '', cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'vapid.json') : '', { subject: process.env.VAPID_SUBJECT || 'https://la3bak.com', mon: storage, log: (e, d) => log(e, d) });
+        }
+        catch (e) {
+            log('web_push_disabled', { error: String(e.message).slice(0, 120) });
+            return null;
+        } })();
+        let onlineNow = () => false;
+        let inviteRewardsView = () => null;
+        const pushTo = (ids, msg) => { if (!webPush)
+            return; for (const id of ids.slice(0, 5000))
+            if (!onlineNow(id) && webPush.count(id))
+                void webPush.send(id, msg).catch(() => { }); };
+        {
+            const orig = support.announce.bind(support);
+            support.announce = (r, t, b, a, ref) => { const out = orig(r, t, b, a, ref); try {
+                if (out && !out.error && !out.duplicate && typeof t === 'string')
+                    pushTo(r, { title: t, body: typeof b === 'string' ? b : '', url: '#/notifications', tag: ref.slice(0, 40) });
+            }
+            catch { /* */ } return out; };
+        }
         const outbox = new FunctionalOutbox(outboxFile, Date.now, storage);
         const vipMembership = new VipMembership(vipMembershipFile, { wallet, progression, hasAccount: id => accounts.has(id), mon: storage, catalogItem: id => shopcat.get(id), notify: notice => { support.announce([notice.userId], notice.title, notice.body, 'VIP', notice.ref); } });
         const paymentSettings = cfg.payments;
         const provider = opts.paymentProvider ?? (!cfg.complimentaryPurchases && paymentSettings && paymentSettings.mode !== 'disabled' && paymentSettings.provider === 'tap' && paymentSettings.secretKey && paymentSettings.merchantId ? new TapPaymentProvider({ mode: paymentSettings.mode, secretKey: paymentSettings.secretKey, merchantId: paymentSettings.merchantId }) : null);
-        const payments = new Payments({ file: paymentsFile, wallet, economy, provider, complimentaryPurchases: cfg.complimentaryPurchases, mode: paymentSettings?.mode ?? 'disabled', liveApproved: paymentSettings?.liveApproved ?? false, licenseApproved: paymentSettings?.licenseApproved ?? false, merchantApproved: paymentSettings?.merchantApproved ?? false, publicBaseUrl: paymentSettings?.publicBaseUrl ?? '', production: cfg.production, mon: storage, notify: (id, orderId, text) => { support.announce([id], 'تأكيد عملية الباقة', text, 'payments-server', 'payment:' + orderId + ':' + (text.includes('استرجاع') ? 'refund' : 'paid')); sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id) }); } });
+        /* R67ae: إعدادات التشغيل من لوحة التحكم */
+        const siteFlags = new SiteFlagsStore(functionalFile(undefined, 'site-flags'), Date.now, storage);
+        setExtraBannedWords(siteFlags.words());
+        // R67ae: تفعيل نوبل N6–N9 بطلب المالك (مرة وحدة؛ لو المالك رجّعها خمس بعدين ما تنعاد)
+        if (!siteFlags.migrated('noble-nine')) {
+            try {
+                const art = (n) => `/preview/assets/profile/ranks/r65/noble-n${n}.webp`;
+                if (progression.ensureNineNoble([{ name: 'الدوق', color: '#c58bff', rarity: 'epic', artwork: art(6) }, { name: 'الأمير', color: '#ff7ac8', rarity: 'epic', artwork: art(7) }, { name: 'الملك', color: '#ffd66b', rarity: 'legendary', artwork: art(8) }, { name: 'الإمبراطور', color: '#ff9d2e', rarity: 'legendary', artwork: art(9) }]))
+                    log('noble_nine_enabled', {});
+                siteFlags.markMigrated('noble-nine');
+            }
+            catch (e) {
+                log('noble_nine_failed', { error: String(e.message).slice(0, 120) });
+            }
+        }
+        const deletion = new AccountDeletion(functionalFile(undefined, 'account-deletion'), Date.now, storage);
+        accounts.hiddenFilter = (id) => deletion.hidden(id);
+        const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
+        const homeBanners = new HomeBanners(functionalFile(undefined, 'home-banners'), Date.now, storage);
+        {
+            const t = siteFlags.tuning();
+            if (t)
+                try {
+                    applyTuning(validateTuning(t, TUNING_DEFAULT));
+                }
+                catch (e) {
+                    log('tuning_invalid', { error: String(e.message).slice(0, 120) });
+                }
+        }
+        /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
+        const firstTopup = new FirstTopup(functionalFile(undefined, 'first-topup'), {
+            percentOverride: () => siteFlags.get().firstTopupPercent,
+            grant: (id, cur, amt, why, key) => wallet.grant(id, cur, amt, why, key),
+            debit: (id, cur, amt, why, key) => { const r = wallet.adminAdjust(id, cur, -amt, why, key); return r.ok; }, log,
+        }, storage);
+        const payments = new Payments({ file: paymentsFile, wallet, economy, provider, complimentaryPurchases: cfg.complimentaryPurchases, mode: paymentSettings?.mode ?? 'disabled', liveApproved: paymentSettings?.liveApproved ?? false, licenseApproved: paymentSettings?.licenseApproved ?? false, merchantApproved: paymentSettings?.merchantApproved ?? false, publicBaseUrl: paymentSettings?.publicBaseUrl ?? '', production: cfg.production, mon: storage, notify: (id, orderId, text) => { support.announce([id], 'تأكيد عملية الباقة', text, 'payments-server', 'payment:' + orderId + ':' + (text.includes('استرجاع') ? 'refund' : 'paid')); try {
+                const o = payments.get(id, orderId);
+                if (text.includes('استرجاع'))
+                    firstTopup.onRefunded(id, orderId);
+                else {
+                    const b = firstTopup.onPaid(id, o);
+                    if (b)
+                        support.announce([id], '🎁 هدية أول شحن', `لأنها أول عملية شحن لك، أضفنا ${b.toLocaleString('en-US')} ${o.cur === 'gems' ? 'جوهرة' : 'عملة'} هدية فوق الباقة.`, 'payments-server', 'firstbonus:' + id.slice(0, 40));
+                }
+            }
+            catch (e) {
+                log('first_topup_failed', { error: String(e.message).slice(0, 100) });
+            } sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id) }); } });
         const paidGamesDisabled = paymentSettings?.mode !== undefined && paymentSettings.mode !== 'disabled';
         const availableStakes = paidGamesDisabled ? [0] : STAKES;
         const canonicalProfile = (id, coins) => {
@@ -448,13 +541,45 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         const avatarLimiter = new KeyedLimiter(6, 6 / 60);
         const roomAvatarLimiter = new KeyedLimiter(120, 2);
         const identities = new Identities(idFile, Date.now, storage);
+        /* R60 (قرار المالك): الضيف (بدون Google) يتصفح بس، ويلعب ضد الكمبيوتر بدون جوايز. القفل هنا بالخادم.
+         * يشتغل بس إذا الدخول بـGoogle مفعّل بالخادم (وإلا الضيف ما يقدر يربط حسابه أصلًا). GUEST_READONLY=0 يطفيه. */
+        const GUEST_READONLY = process.env.GUEST_READONLY !== '0' && !!cfg.googleClientId;
+        const SINGLE_CUR = process.env.SINGLE_CURRENCY !== '0';
+        /* R60b: مهلة للضيوف القدامى — اللي سجّلوا قبل تشغيل القفل ياخذون مهلة (افتراضيًا 14 يوم) يربطون فيها Google وكل شي شغال عندهم مع تنبيه.
+           الضيف الجديد (بعد التشغيل) يتقفل على طول. بداية المهلة تنحفظ بملف صغير عشان ما تتجدد مع كل إعادة تشغيل.
+           GUEST_LOCK_AT=2026-12-01 يحدد تاريخ القفل بنفسه، GUEST_GRACE_DAYS=0 يلغي المهلة. */
+        const graceFile = accFile ? path.join(path.dirname(accFile), 'guest-grace.json') : '';
+        const graceStart = (() => { let t = 0; try {
+            if (graceFile)
+                t = Number(JSON.parse(readFileSync(graceFile, 'utf8')).startedAt) || 0;
+        }
+        catch { /* أول مرة */ } if (!Number.isSafeInteger(t) || t <= 0) {
+            t = Date.now();
+            try {
+                if (graceFile)
+                    writeFileSync(graceFile, JSON.stringify({ startedAt: t }));
+            }
+            catch { /* الذاكرة تكفي */ }
+        } return t; })();
+        const graceDays = Math.max(0, Math.min(90, Number(process.env.GUEST_GRACE_DAYS ?? 14) || 0));
+        const lockAtEnv = Date.parse(process.env.GUEST_LOCK_AT ?? '');
+        const guestLockAt = Number.isFinite(lockAtEnv) ? lockAtEnv : graceStart + graceDays * 86_400_000;
+        /** ضيف قديم (حسابه قبل بداية المهلة) والمهلة ما خلصت */
+        const inGrace = (id) => { if (Date.now() >= guestLockAt)
+            return false; const since = accounts.sinceOf(id); return since === null || since < graceStart; };
+        const unlinkedGuest = (id) => GUEST_READONLY && !identities.linked(id);
+        const isGuest = (id) => unlinkedGuest(id) && !inGrace(id);
+        const GUEST_MSG = 'سجّل دخولك بحساب Google عشان تقدر تستخدم هالميزة. الضيف يقدر يتصفح ويلعب ضد الكمبيوتر بس.';
+        const GUEST_WS_BLOCK = new Set(['room:join', 'room:chat', 'room:react', 'room:voice', 'room:rematch', 'mm:join', 'mm:fill', 'gift:send', 'shop:buy', 'shop:checkout', 'shop:convert', 'shop:gems', 'shop:claim', 'shop:equip', 'wallet:daily', 'city:claim', 'city:roll', 'city:up']);
+        /** مسارات الكتابة المسموحة للضيف: الدخول/الخروج والربط بـGoogle، والإعدادات الشخصية، وتعليم الإشعارات مقروءة */
+        const guestHttpAllowed = (p) => /^\/api\/(auth\/|logout$|account-tools\/settings$|profile\/visitors\/seen$|profile\/invites\/claim$|notifications|push\/|devices\/)/.test(p);
         const googleKeys = opts.googleKeys ?? googleKeyFetcher();
         const authLimiter = new KeyedLimiter(30, 30 / 60);
         // زر Google يحتاج هذي المصادر بالضبط (حسب توثيق Google)؛ ما نفتحها إلا إذا الدخول بـ Google مفعّل
         if (cfg.googleClientId) {
             securityHeaders['Content-Security-Policy'] =
                 "default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; " +
-                    "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' blob: ws: wss: https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; " +
+                    "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' blob: ws: wss: https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/ https://www.youtube-nocookie.com; " +
                     "media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
         }
         /* ---- المتجر: كل التحقق بالخادم. العميل يرسل معرّف العنصر ومفتاح الطلب فقط ---- */
@@ -462,16 +587,33 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         const achInput = (id) => { const st = accounts.achStats(id); const gc = wallet.giftCounts(id); return { ...st, giftsSent: gc.sent, giftsRecv: gc.recv, owned: wallet.owned(id).length }; };
         /** R57: هل الرقم مستخدم من حساب ثاني (أيدي عادي أو مميز)؟ */
         const specialTaken = (id, value) => { const owner = accounts.findByDisplayPlayerId(value); return owner !== null && owner !== id; };
+        /* R62: عروض المتجر محدودة الوقت */
+        const offers = new ShopOffers(functionalFile(undefined, 'shop-offers'), storage);
+        // R67ae: خصم على قسم كامل (فعالية من اللوحة) لو القطعة ما عليها عرض خاص
+        shopcat.offerHook = (id, slot, price) => { const own = offers.forItem(id); if (own)
+            return own; if (!slot || !price)
+            return null; const ev = siteFlags.saleFor(slot); return ev ? { discount: ev.percent ?? 0, startsAt: ev.startsAt, endsAt: ev.endsAt, exclusive: false, live: true } : null; };
+        /** R67au: تذكارات CP الجديدة اللي يرسلها المالك تنضاف هنا (فاضي لين توصل رسوماته) */
+        const SOUVENIR_R67 = new Set();
         const shopView = (id) => {
             const pr = progress(id);
             const got = new Set(wallet.claimed(id));
             const owned = new Set(wallet.owned(id));
             const ranks = { level: pr.progression.level.value, vip: pr.progression.vip.enabled && pr.progression.vip.value ? Number(pr.progression.vip.value.slice(1)) : 0, noble: pr.progression.noble.enabled && pr.progression.noble.value ? Number(pr.progression.noble.value.slice(1)) : 0 };
-            const allItems = shopcat.all().map((i) => ({ id: i.id, slot: i.slot, name: i.name, icon: i.icon, desc: i.desc, price: i.price, currency: i.currency, permanent: i.permanent, css: i.css, art: i.art, active: i.active, retired: !i.active, status: i.status, minLevel: i.minLevel, minVip: i.minVip, minNoble: i.minNoble, eligibility: shopEligibility(i, ranks), rarity: i.rarity ?? 'common', set: i.set ?? null, season: i.season ?? null, kids: !!i.kids, ...(i.backgroundCategory ? { backgroundCategory: i.backgroundCategory, priceApproved: i.priceApproved } : {}), ...(i.slot === 'entrance' ? { proposalOnly: i.proposalOnly, priceApproved: i.priceApproved } : {}) }));
+            const allItems = shopcat.all().map((i) => ({ id: i.id, slot: i.slot, name: i.name, icon: i.icon, desc: i.desc, price: i.price, currency: i.currency, permanent: i.permanent, css: i.css, art: i.art, active: i.active, retired: !i.active, status: i.status, minLevel: i.minLevel, minVip: i.minVip, minNoble: i.minNoble, ...(i.offer ? { offer: i.offer } : {}), eligibility: shopEligibility(i, ranks), rarity: i.rarity ?? 'common', set: i.set ?? null, season: i.season ?? null, kids: !!i.kids, ...(i.backgroundCategory ? { backgroundCategory: i.backgroundCategory, priceApproved: i.priceApproved } : {}), ...(i.slot === 'entrance' ? { proposalOnly: i.proposalOnly, priceApproved: i.priceApproved } : {}) }));
+            // R63: عملة وحدة — أسعار الجواهر تنعرض عملات (×20)، والشراء يقبل السعر المعروض
+            if (SINGLE_CUR)
+                for (const x of allItems)
+                    if (x.currency === 'gems') {
+                        x.currency = 'coins';
+                        x.price = x.price * 20;
+                        if (x.offer)
+                            x.offer = { ...x.offer, was: x.offer.was * 20 };
+                    }
             return {
                 ok: true, canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), equipped: wallet.equipped(id), equippedView: equippedView(id),
                 // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
-                items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && specialTaken(id, String(i.css ?? ''))) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
+                items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && (specialTaken(id, String(i.css ?? '')) || String(i.css ?? '').length <= 3)) && !(i.slot === 'souvenir' && !owned.has(i.id) && !SOUVENIR_R67.has(i.id)) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
                 collectionItems: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && i.set && (i.status !== 'hidden' || owned.has(i.id))),
                 sets: SETS, rarities: RARITIES, achievements: achView(achInput(id)),
                 economy: economy.view(), gemPacks: [],
@@ -479,6 +621,19 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 ledger: wallet.ledgerOf(id, 60), ledgerTotal: wallet.ledgerCount(id), progression: progression.view(id),
             };
         };
+        /* R60: رتبة VIP/النبلاء الفعلية + خيارات الخصوصية المقفولة بالرتبة (قرار المالك) */
+        const tierOf = (id) => { const p = progression.view(id); return { vip: p.vip.enabled && p.vip.value ? Number(p.vip.value.slice(1)) || 0 : 0, noble: p.noble.enabled && p.noble.value ? Number(p.noble.value.slice(1)) || 0 : 0 }; };
+        const PRIVACY_GATES = {
+            showPresence: { on: false, vip: 4, noble: 3, msg: 'إخفاء حالة الاتصال يحتاج VIP 4 أو نبيل 3.' },
+            hideEntrances: { on: true, vip: 6, noble: 8, msg: 'إخفاء الدخولية يحتاج VIP 6 أو نبيل 8.' },
+            hideVisits: { on: true, vip: 14, noble: null, msg: 'التخفي في زيارة الملف يحتاج VIP 14.' },
+        };
+        const VISITORS_VIP = 11;
+        accountTools.gate = (id, key, value) => { const g = PRIVACY_GATES[key]; return g && value === g.on && !privacyAllowed(id, key) ? g.msg : null; };
+        const privacyAllowed = (id, key) => { const g = PRIVACY_GATES[key]; if (!g)
+            return true; const t = tierOf(id); return t.vip >= g.vip || (g.noble !== null && t.noble >= g.noble); };
+        /** الخيار مفعّل فعليًا (اختاره اللاعب + رتبته تسمح الحين) */
+        const privacyOn = (id, key) => { const g = PRIVACY_GATES[key]; const v = accountTools.explicitSetting(id, key); return v === g.on && privacyAllowed(id, key); };
         const eligibleItem = (id, it) => {
             if (!it)
                 return false;
@@ -522,8 +677,14 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                     return { ok: false, code: 'unavailable', error: 'هذا القسم غير متاح.' };
                 if (achOf(it.id))
                     return { ok: false, code: 'reserved', error: 'هذا المعرّف مخصص لإنجاز مكتسب، ولا يُشترى.' };
+                if (it.slot === 'special-id' && String(it.css ?? '').length <= 3)
+                    return { ok: false, code: 'reserved', error: 'الأيدي من خانة لين ثلاث خانات محجوز للإدارة.' };
+                // R67au: التذكارات القديمة انشالت بطلب المالك؛ القسم ينتظر تذكارات CP الجديدة (ساعات، خواتم، شنط، ورد)
+                if (it.slot === 'souvenir' && !SOUVENIR_R67.has(it.id))
+                    return { ok: false, code: 'unavailable', error: 'التذكارات الجديدة قريبًا.' };
                 // السعر دائماً من الخادم. لو العميل أرسل السعر اللي شافه وتغيّر، نرفض ونرجّع المتجر محدّثاً (ما نخصم سعراً ما شافه).
-                if ((m.seen !== undefined && m.seen !== it.price) || (m.seenCur !== undefined && m.seenCur !== it.currency))
+                const shownPrice = SINGLE_CUR && it.currency === 'gems' ? it.price * 20 : it.price, shownCur = SINGLE_CUR && it.currency === 'gems' ? 'coins' : it.currency;
+                if ((m.seen !== undefined && m.seen !== it.price && m.seen !== shownPrice) || (m.seenCur !== undefined && m.seenCur !== it.currency && m.seenCur !== shownCur))
                     return { ...shopView(id), ok: false, error: 'تغيّر سعر العنصر أو نوع عملته. راجع العرض الجديد.', code: 'price' };
                 if (!it.active)
                     return { ok: false, error: wallet.owned(id).includes(it.id) ? 'تملك هذا العنصر من قبل.' : 'هذا العنصر غير متاح للشراء حالياً.', code: 'inactive' };
@@ -553,7 +714,13 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                     catch { /* يبقى كما هو؛ ما فيه خصم */ }
                 }
                 if (!r.ok)
-                    return { ok: false, error: r.code === 'owned' ? 'تملك هذا العنصر من قبل.' : r.code === 'poor' ? (it.currency === 'gems' ? 'جواهرك ما تكفي.' : 'عملاتك ما تكفي.') : 'طلب غير صالح.', code: r.code };
+                    return { ok: false, error: r.code === 'owned' ? 'تملك هذا العنصر من قبل.' : r.code === 'poor' ? 'عملاتك ما تكفي.' : 'طلب غير صالح.', code: r.code };
+                if (!r.dup && it.currency === 'gems') {
+                    try {
+                        treasure.shopSpend(id, Number(it.price) || 0);
+                    }
+                    catch { /* وقود القبيلة بس */ }
+                }
                 return { ...shopView(id), bought: it.id, dup: r.dup };
             }
             if (m.t === 'shop:checkout')
@@ -576,7 +743,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 if (!SLOTS.includes(slot))
                     return { ok: false, error: 'خانة غير صالحة.' };
                 if (slot === 'souvenir')
-                    return { ok: false, code: 'souvenir', error: 'التذكار ما يتجهّز؛ ينعرض تلقائيًا في رف تذكاراتك بالملف.' };
+                    return { ok: false, code: 'souvenir', error: 'التذكار ما يتجهّز؛ ينحفظ تلقائيًا في «المقتنيات» بملفك.' };
                 if (slot === 'special-id') {
                     if (it && !wallet.owned(id).includes(it.id))
                         return { ok: false, error: 'ما تملك هذا العنصر.' };
@@ -650,13 +817,13 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             if (!quote)
                 return { ok: false, error: 'قيمة الهدايا تتجاوز الحد الآمن.', code: 'bad' };
             if (quote.total >= GIFT_CONFIRM_AT && m.confirm !== true)
-                return { ok: false, error: `مجموع ${quote.total.toLocaleString('en-US')} جوهرة لجميع المستلمين يحتاج تأكيد.`, code: 'confirm', total: quote.total };
+                return { ok: false, error: `مجموع ${(quote.total * 20).toLocaleString('en-US')} عملة لجميع المستلمين يحتاج تأكيد.`, code: 'confirm', total: quote.total };
             if (m.to.some((to) => !accounts.has(to) || !wallet.has(to) || platform.isBanned(to)))
                 return { ok: false, error: 'أحد المستلمين غير متاح. لم تُرسل أي هدية.', code: 'noto' };
             const fromName = accounts.nameOf(user.id) || user.name, toNames = Object.fromEntries(m.to.map((to) => [to, accounts.nameOf(to) || 'لاعب']));
             const r = wallet.sendGiftBatch(user.id, m.to, g, m.qty, m.key, scope, fromName, toNames);
             if (!r.ok)
-                return { ok: false, error: r.code === 'poor' ? 'جواهرك لا تكفي للمجموع. لم تُرسل أي هدية.' : r.code === 'self' ? 'ما تقدر ترسل هدية لنفسك.' : 'طلب الهدايا مب صالح. لم تُرسل أي هدية.', code: r.code };
+                return { ok: false, error: r.code === 'poor' ? 'عملاتك ما تكفي للمجموع. ما انرسلت أي هدية.' : r.code === 'self' ? 'ما تقدر ترسل هدية لنفسك.' : 'طلب الهدايا مب صالح. لم تُرسل أي هدية.', code: r.code };
             if (!r.dup) {
                 for (const child of r.receipts)
                     cpGift(user.id, child.to, child.rec);
@@ -723,7 +890,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             if (!quote || quote.total > 1_000_000)
                 return { ok: false, error: 'قيمة الهدية تتجاوز الحد الآمن.', code: 'bad' };
             if (quote.total >= GIFT_CONFIRM_AT && m.confirm !== true)
-                return { ok: false, error: `هدية بقيمة ${quote.total.toLocaleString('en-US')} جوهرة تحتاج تأكيد.`, code: 'confirm', total: quote.total };
+                return { ok: false, error: `هدية بقيمة ${(quote.total * 20).toLocaleString('en-US')} عملة تحتاج تأكيد.`, code: 'confirm', total: quote.total };
             let room = null;
             if (!trustedSocial && m.code !== undefined) {
                 room = await service.humansFor(user, m.code);
@@ -737,7 +904,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             const fromName = accounts.nameOf(id) || user.name, toName = room?.players.find(p => p.id === to)?.name || accounts.nameOf(to) || 'لاعب';
             const r = wallet.sendGift(id, to, g, String(m.key ?? ''), fromName, toName, { qty, room: trustedSocial?.room ?? room?.code });
             if (!r.ok)
-                return { ok: false, error: r.code === 'poor' ? 'جواهرك ما تكفي لهذي الهدية.' : r.code === 'self' ? 'ما تقدر ترسل هدية لنفسك.' : r.code === 'noto' ? 'هذا اللاعب غير متاح لاستلام الهدايا.' : 'طلب غير صالح.', code: r.code };
+                return { ok: false, error: r.code === 'poor' ? 'عملاتك ما تكفي لهذي الهدية.' : r.code === 'self' ? 'ما تقدر ترسل هدية لنفسك.' : r.code === 'noto' ? 'هذا اللاعب غير متاح لاستلام الهدايا.' : 'طلب غير صالح.', code: r.code };
             const ev = giftEvent(r.rec, !!trustedSocial);
             if (!r.dup) {
                 cpGift(id, to, r.rec);
@@ -807,6 +974,54 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 void reconcileFinished();
         };
         const sockets = new Map();
+        onlineNow = (id) => (sockets.get(id)?.size ?? 0) > 0;
+        /* R62: دقايق المايك للمهام — عينة كل دقيقة، وتنحفظ دفعة كل 5 دقايق */
+        const micBatch = new Map();
+        let micTicks = 0;
+        const micTimer = setInterval(() => {
+            try {
+                for (const id of socialRooms.seatedNow())
+                    if (!isGuest(id))
+                        micBatch.set(id, (micBatch.get(id) ?? 0) + 1);
+            }
+            catch { /* */ }
+            if (++micTicks % 5 === 0 && micBatch.size) {
+                const b = new Map(micBatch);
+                micBatch.clear();
+                try {
+                    missions.micMinutes(b);
+                }
+                catch (e) {
+                    log('mic_minutes_failed', { error: String(e.message).slice(0, 100) });
+                }
+            }
+        }, 60_000);
+        micTimer.unref?.();
+        try {
+            missions.seedDefaults([
+                { id: 'daily-mic-15', title: 'اقعد على المايك 15 دقيقة', scope: 'daily', metric: 'micMinutes', goal: 15, active: true, rewards: { coins: 300 } },
+                { id: 'daily-gifts-3', title: 'أرسل 3 هدايا', scope: 'daily', metric: 'giftsSent', goal: 3, active: true, rewards: { coins: 200 } },
+                { id: 'daily-games-2', title: 'العب جولتين', scope: 'daily', metric: 'gamesPlayed', goal: 2, active: true, rewards: { coins: 200 } },
+                { id: 'weekly-mic-120', title: 'ساعتين على المايك هالأسبوع', scope: 'weekly', metric: 'micMinutes', goal: 120, active: true, rewards: { coins: 600 } },
+                { id: 'weekly-games-15', title: 'العب 15 جولة هالأسبوع', scope: 'weekly', metric: 'gamesPlayed', goal: 15, active: true, rewards: { coins: 2000 } },
+            ]);
+        }
+        catch (e) {
+            log('missions_seed_failed', { error: String(e.message).slice(0, 100) });
+        }
+        /* R62: الأجهزة + تنبيه الدخول من جهاز جديد */
+        const devices = new Devices(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'devices.json') : '', (uid, label, hash) => {
+            const body = `انفتح حسابك من جهاز جديد: ${label}. لو مب أنت، افتح الإعدادات ← «الأجهزة اللي سجّلت الدخول منها» واضغط «مب أنا» عشان نطلّعه.`;
+            support.announce([uid], '🔐 دخول جديد لحسابك', body, 'الأمان', `newdev-${hash.slice(0, 24)}`);
+            if (webPush?.count(uid))
+                void webPush.send(uid, { title: '🔐 دخول جديد لحسابك', body, url: '#/devices', tag: 'newdev' }).catch(() => { });
+        }, storage);
+        const kickRevoked = (uid) => sockets.get(uid)?.forEach((ws) => { const b = socketSessions.get(ws); try {
+            if (!b || sessions.cookieUser(b.cookie)?.id !== uid)
+                ws.close(4401, 'session ended');
+        }
+        catch { /* */ } });
+        const streak = new DailyStreak(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'daily-streak.json') : '', Date.now, storage);
         const socketSessions = new WeakMap();
         const closeSessionSockets = (cookie) => {
             const hash = sessionTokenHash(cookie);
@@ -842,7 +1057,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         const friendNoticeAt = new Map();
         const notifyFriends = (userId, build, key, gap) => {
             try {
-                if (accountTools.explicitSetting(userId, 'showPresence') === false)
+                if (privacyOn(userId, 'showPresence'))
                     return;
                 const now = Date.now(), last = friendNoticeAt.get(key) ?? 0;
                 if (now - last < gap)
@@ -853,8 +1068,14 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                         if (now - t > 3600_000)
                             friendNoticeAt.delete(k);
                 for (const f of social.friendInternalIds(userId)) {
-                    if (!sockets.has(f))
+                    if (!sockets.has(f)) {
+                        if (webPush?.count(f)) {
+                            const msg = build(f);
+                            if (msg?.t === 'friend:room' && msg.room?.id)
+                                pushTo([f], { title: `صاحبك ${msg.name || ''} دخل غرفة`, body: `«${msg.room.name || ''}» — تعال سولف وياه`, url: `#/social-room/${msg.room.id}`, tag: 'friend-room-' + userId.slice(0, 8) });
+                        }
                         continue;
+                    }
                     const msg = build(f);
                     if (msg)
                         sendToUser(f, msg);
@@ -866,6 +1087,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             onBeforeGameFinished(room, players, winners, ref, ts) {
                 return reserveGame(ref, players, winners, ts);
             },
+            noRewards: (id) => isGuest(id),
             onGameFinished(room, players, winners, ref) {
                 deliverIntent('game:' + ref);
             },
@@ -985,6 +1207,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...securityHeaders, ...headers });
             res.end(JSON.stringify(body));
         };
+        const staticCache = new Map();
+        let staticCacheBytes = 0;
         async function serveStatic(req, res, pathname) {
             let rel = decodeURIComponent(pathname);
             if (rel.endsWith('/'))
@@ -997,14 +1221,45 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 if (!st.isFile())
                     throw new Error('nf');
                 const ext = path.extname(file);
-                let body = await readFile(file);
-                const gz = /\.(js|css|html|svg|webmanifest|json)$/.test(ext) && body.length > 1024 && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
-                if (gz)
-                    body = gzipSync(body);
+                // R60b (السرعة): ETag من الحجم ووقت التعديل → المتصفح يرجع 304 بدون ما ينزّل الملف من جديد
+                const tag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
+                const noCache = ext === '.html' || ext === '.webmanifest' || path.basename(file) === 'sw.js';
+                // الملف اللي طالب برقم نسخة (?v=) ما يتغير محتواه لنفس الرقم → كاش طويل
+                const versioned = !noCache && /[?&]v=[^&]+/.test(req.url ?? '');
+                const cacheControl = noCache ? 'no-cache' : versioned ? 'public, max-age=2592000, immutable' : 'public, max-age=3600';
+                const wantsGz = st.size > 1024 && /\.(js|css|html|svg|webmanifest|json)$/.test(ext) && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
+                const etag = wantsGz ? tag.slice(0, -1) + '-gz"' : tag;
+                if (String(req.headers['if-none-match'] ?? '').split(/\s*,\s*/).includes(etag)) {
+                    res.writeHead(304, { ETag: etag, 'Cache-Control': cacheControl, ...(wantsGz ? { Vary: 'Accept-Encoding' } : {}), ...securityHeaders });
+                    res.end();
+                    return;
+                }
+                let body;
+                let gz = false;
+                const hit = staticCache.get(file);
+                if (hit && hit.size === st.size && hit.mtime === st.mtimeMs) {
+                    body = wantsGz && hit.gz ? hit.gz : hit.raw;
+                    gz = wantsGz && !!hit.gz;
+                }
+                else {
+                    const raw = await readFile(file);
+                    const z = /\.(js|css|html|svg|webmanifest|json)$/.test(ext) && raw.length > 1024 ? gzipSync(raw) : null;
+                    // نخزن الملفات الصغيرة والمتوسطة بس (حد أعلى للذاكرة)
+                    if (raw.length <= 2_000_000) {
+                        staticCacheBytes += raw.length + (z?.length ?? 0) - (hit ? hit.raw.length + (hit.gz?.length ?? 0) : 0);
+                        staticCache.set(file, { size: st.size, mtime: st.mtimeMs, raw, gz: z });
+                        if (staticCacheBytes > 160_000_000) {
+                            staticCache.clear();
+                            staticCacheBytes = 0;
+                        }
+                    }
+                    body = wantsGz && z ? z : raw;
+                    gz = wantsGz && !!z;
+                }
                 res.writeHead(200, {
-                    ...(gz ? { 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding' } : {}),
+                    ...(gz ? { 'Content-Encoding': 'gzip' } : {}), ...(wantsGz ? { Vary: 'Accept-Encoding' } : {}),
                     'Content-Type': MIME[ext] ?? 'application/octet-stream',
-                    'Cache-Control': ext === '.html' || ext === '.webmanifest' || path.basename(file) === 'sw.js' ? 'no-cache' : 'public, max-age=3600',
+                    'Cache-Control': cacheControl, ETag: gz ? etag : tag,
                     ...securityHeaders,
                 });
                 res.end(req.method === 'HEAD' ? undefined : body);
@@ -1015,9 +1270,11 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         }
         /* المجتمع: نفس الجلسة والحسابات والحظر القائمة. معرّفات الحسابات ما تطلع للعميل (معرّف عام بالـHMAC) */
         const community = new Community(comFile, comMedia, {
-            secret: cfg.cookieSecret, nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
+            secret: cfg.cookieSecret, moderate: (t) => profanityOnly(t), official: (id) => verificationView(id).verificationKind === 'administration', hidden: (id) => deletion.hidden(id), nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
             hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
-            push: (id, msg) => sendToUser(id, msg), log,
+            push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
+            profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg')
+                return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
         }, Date.now, storage, opts.communityLimits);
         const social = new SocialPrivate(socialFile, Date.now, storage, {
             hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id),
@@ -1027,13 +1284,30 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             isBlocked: (a, b) => community.pairBlocked(a, b), isMuted: (a, b) => community.isMuted(a, b),
             pub: (id) => community.pub(id), nameOf: (id) => accounts.nameOf(id),
         });
+        /* R62: رسالة خاصة جديدة → إشعار جوال للمستلم لو مب فاتح الموقع */
+        {
+            const orig = social.send.bind(social);
+            social.send = (me, other, input) => { const out = orig(me, other, input); try {
+                if (out && !out.error && !out.duplicate && typeof input?.body === 'string')
+                    pushTo([other], { title: `رسالة من ${accounts.nameOf(me) || 'صديق'}`, body: input.body.slice(0, 90), url: '#/messages', tag: 'dm-' + me.slice(0, 8) });
+            }
+            catch { /* */ } return out; };
+        }
         const cpPoints = new CpPoints(cpFile, Date.now, storage);
-        const tribes = new Tribes(process.env.TRIBES_FILE ?? (cfg.socialPrivateFile ? path.join(path.dirname(cfg.socialPrivateFile), 'tribes.json') : ''), Date.now, storage);
+        const tribes = new Tribes(process.env.TRIBES_FILE ?? besideSocial('tribes.json'), Date.now, storage);
+        const treasure = new TribeTreasure(process.env.TRIBE_TREASURE_FILE ?? besideSocial('tribe-treasure.json'), Date.now, storage);
         // R58w: هدية بين طرفين بينهم ارتباط افتراضي (R47) ترفع نقاط CP
         const cpGift = (from, to, rec) => { try {
             if (rec.cur === 'gems') {
                 const tv = rec.total ?? rec.price * (rec.qty ?? 1);
                 tribes.addGift(from, tv);
+                const tt = tribes.of(from);
+                if (tt) {
+                    const tr = socialRooms.ownerTopRoom(tt.leader);
+                    const inside = !!tr && typeof rec.room === 'string' && rec.room.startsWith(`social:${tr.id}:`);
+                    if (treasure.gift(tt.id, from, tv, inside).length)
+                        settleTribe(tt.id);
+                }
             }
         }
         catch { /* نقاط القبيلة بس */ } try {
@@ -1043,6 +1317,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             if (!c || c.partner !== to || rec.ts < c.at)
                 return;
             const v = rec.total ?? rec.price * (rec.qty ?? 1);
+            cpPoints.giftToday(cpKey(c.id, from, to), v);
             if (cpPoints.add(cpKey(c.id, from, to), v))
                 for (const id of [from, to])
                     sendToUser(id, { t: 'cp:update', kind: 'points' });
@@ -1052,6 +1327,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         const profileSocial = new ProfileSocial(profileSocialFile, {
             hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
             hidesActivity: (id) => accountTools.settings(id).showActivity === false, sinceOf: (id) => accounts.sinceOf(id),
+            viewerVip: (id) => tierOf(id).vip, needVip: VISITORS_VIP, stealthVisit: (id) => privacyOn(id, 'hideVisits'), inviteRewards: (me) => inviteRewardsView(me),
             resolvePublicId: (pub) => community.resolvePublicId(pub),
             who: (id) => { const photo = avatars.version(id); const lv = accounts.publicStats(id)?.level; return { publicId: community.pub(id), name: accounts.nameOf(id) || 'لاعب', avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), level: typeof lv === 'number' ? lv : null }; },
             log,
@@ -1068,6 +1344,27 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             // R58: ليفل الغرفة من قيمة الهدايا الملتزمة بالمحفظة (جواهر داخل نفس الغرفة)
             giftValue: (from, to, ref, roomId) => { const rec = wallet.committedGiftReceipt(from, to, ref); if (!rec || rec.cur !== 'gems' || rec.status !== 'done' || typeof rec.room !== 'string' || !rec.room.startsWith(`social:${roomId}:`))
                 return null; const v = rec.total ?? rec.price * (rec.qty ?? 1); return Number.isSafeInteger(v) && v > 0 ? v : null; },
+            ownsItem: (userId, itemId) => wallet.owned(userId).includes(itemId),
+            cinemaOff: () => !siteFlags.get().cinema,
+            maskChat: (t) => maskBanned(t),
+            roomLevelUp: (roomId, ownerId, name, from, to, members) => {
+                for (let lv = from + 1; lv <= to && lv <= from + 50; lv++) {
+                    const g = roomOwnerGift(lv);
+                    if (g && accounts.has(ownerId)) {
+                        try {
+                            if (wallet.grant(ownerId, 'coins', g, `هدية ليفل الغرفة ${lv}`, `roomlv:${roomId}:${lv}`))
+                                sendToUser(ownerId, { t: 'wallet', coins: wallet.balance(ownerId), gems: wallet.gems(ownerId), won: 0 });
+                        }
+                        catch { /* */ }
+                    }
+                }
+                try {
+                    support.announce([ownerId], `🎉 غرفتك وصلت Lv ${to}`, `مبروك! «${name}» وصلت Lv ${to}. افتح «ليفل الغرفة» تشوف المميزات الجديدة.`, 'الغرف', `roomlv-${roomId}-${to}`);
+                }
+                catch { /* */ }
+                for (const id of new Set([...members, ownerId]))
+                    sendToUser(id, { t: 'room:levelup', roomId, name, level: to });
+            },
             roomIdItem: (userId, itemId) => { const it = shopcat.get(itemId); return it && it.slot === 'room-id' && wallet.owned(userId).includes(it.id) && typeof it.css === 'string' ? it.css : null; },
             moderate: (text, kind) => { const m = moderateText(text, kind); return m.ok ? { ok: true } : { ok: false, code: m.code }; },
             verifyGiftSupport: (context, rec) => {
@@ -1089,13 +1386,34 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
                 const eq = wallet.equipped(id), cosm = (slot) => { const it = eq[slot] ? shopcat.get(eq[slot]) : undefined; return it && it.slot === slot && typeof it.css === 'string' ? it.css : null; };
                 const bubble = cosm('chat-bubble'), board = cosm('board'), micFrame = cosm('mic-frame');
-                return { id, publicId: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ...(micFrame ? { micFrame } : {}), ranks: { level: p.level.enabled ? p.level.value : null, vip: p.vip.enabled ? vip : null, noble: p.noble.enabled ? noble : null }, ...(entrance ? { entrance } : {}) };
+                return { id, publicId: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ...(micFrame ? { micFrame } : {}), ranks: { ...(accountTools.settings(id).hideNameColor === true ? { nameOff: true } : {}), ...(verificationView(id).verificationKind === 'administration' ? { official: true } : {}), level: p.level.enabled ? p.level.value : null, vip: p.vip.enabled ? vip : null, noble: p.noble.enabled ? noble : null }, ...(entrance && !privacyOn(id, 'hideEntrances') ? { entrance } : {}), ...(privacyOn(id, 'hideEntrances') ? { stealth: true } : {}) };
             },
             blocked: (a, b) => community.pairBlocked(a, b), eligible: socialEligible, trustedAdmin: id => id === 'token',
             emit: (ids, event) => { for (const id of ids)
                 sendToUser(id, event); },
             disconnectMedia: id => socialVoice?.disconnectUser(id) ?? Promise.resolve(),
             audit: (actorId, action, targetId, reason) => { platform.audit({ actorId, actor: actorId === 'token' ? 'رمز الإدارة' : accounts.nameOf(actorId) || 'إدارة المنصة', role: actorId === 'token' ? 'owner' : platform.roleOf(actorId) || 'social-host', action: 'social.' + action, target: targetId, detail: reason }); }, });
+        /* R62: مكافأة دعوة صديق — تنفحص كل 10 دقايق */
+        const inviteRewards = new InviteRewards(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'invite-rewards.json') : '', {
+            invites: () => profileSocial.allInvites(), linked: (id) => identities.linked(id), games: (id) => accounts.rankedPlayed(id), usable: (id) => accounts.has(id) && !platform.isBanned(id),
+            grant: (id, cur, amt, why, key) => { const ok = wallet.grant(id, cur, amt, why, key); if (ok)
+                sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }); return ok; },
+            notify: (id, t, b, ref) => support.announce([id], t, b, 'دعوة صديق', ref), name: (id) => accounts.nameOf(id),
+        }, storage);
+        inviteRewardsView = (me) => inviteRewards.view(me);
+        const inviteTimer = setInterval(() => { if (!siteFlags.get().invite)
+            return; try {
+            inviteRewards.run();
+        }
+        catch (e) {
+            log('invite_rewards_failed', { error: String(e.message).slice(0, 100) });
+        } }, 10 * 60_000);
+        inviteTimer.unref?.();
+        setTimeout(() => { if (!siteFlags.get().invite)
+            return; try {
+            inviteRewards.run();
+        }
+        catch { /* */ } }, 40_000).unref?.();
         socialVoice = new SocialVoice({ ...cfg.socialVoice, enabled: cfg.socialVoice?.enabled ?? false, upstream: cfg.socialVoice?.upstream ?? '', apiKey: cfg.socialVoice?.apiKey ?? '', apiSecret: cfg.socialVoice?.apiSecret ?? '', cookieSecret: cfg.cookieSecret,
             access: id => { const access = socialEligible(id) ? socialRooms.mediaAccess(id) : null; return access ? { ...access, id: community.pub(id) } : null; },
             authenticate: req => { const user = sessions.cookieUser(req.headers.cookie); return user && !admin.maintenanceBlock(user) && !admin.banBlock(user) && socialEligible(user.id) ? user : null; }, originAllowed: sameOrigin,
@@ -1117,11 +1435,98 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             log,
             autoStart: false,
         });
-        const admin = createAdmin({ community, giftcat, economy, payments,
+        /* R61: نسخة احتياطية يومية (داخل مجلد البيانات/backups) — BACKUP_ENABLED=0 يطفيها، BACKUP_KEEP عدد النسخ، BACKUP_MEDIA=1 يضيف الصور */
+        const backups = cfg.walletFile && process.env.BACKUP_ENABLED !== '0' ? new Backups({ dir: path.dirname(cfg.walletFile), keep: Number(process.env.BACKUP_KEEP) || 14, media: process.env.BACKUP_MEDIA === '1', log, extraFiles: () => [cfg.walletFile, boardFile, accFile, platFile, economyFile, progressionFile, shopFile, idFile, giftFile, cityFile, comFile, accountToolsFile, socialFile, socialRoomsFile, profileSocialFile, missionsFile, rankRewardsFile, supportFile, outboxFile, sessionsFile, paymentsFile, vipMembershipFile, cpFile].filter((v) => !!v) }) : null;
+        backups?.start(Number(process.env.BACKUP_FIRST_DELAY_MS) || 120_000);
+        /* R63: عملة وحدة — الجواهر تتحول لعملات (جوهرة = 20 عملة). أول مرة: نسخة احتياطية قبل التحويل. وبعدها كل دقيقة أي جواهر جديدة (جوايز قديمة) تتحول. */
+        const SINGLE = process.env.SINGLE_CURRENCY !== '0';
+        const sweepAll = (reason) => { if (!SINGLE)
+            return 0; let n = 0, g = 0; for (const id of wallet.withGems()) {
+            try {
+                const x = wallet.sweepGems(id);
+                if (x) {
+                    n++;
+                    g += x;
+                    sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 });
+                }
+            }
+            catch (e) {
+                log('gems_sweep_failed', { error: String(e.message).slice(0, 80) });
+            }
+        } if (n)
+            log('gems_swept', { reason, players: n, gems: g }); return n; };
+        if (SINGLE) {
+            const mark = cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'single-currency.json') : '';
+            let first = true;
+            try {
+                if (mark)
+                    first = !JSON.parse(readFileSync(mark, 'utf8')).migratedAt;
+            }
+            catch {
+                first = true;
+            }
+            if (first && wallet.withGems().length) {
+                try {
+                    backups?.run('before-gems-to-coins');
+                }
+                catch (e) {
+                    log('gems_backup_failed', { error: String(e.message).slice(0, 80) });
+                }
+            }
+            const n = sweepAll('migration');
+            if (mark && first) {
+                try {
+                    writeFileSync(mark, JSON.stringify({ migratedAt: Date.now(), players: n, rate: 20 }));
+                }
+                catch { /* */ }
+            }
+        }
+        const gemsTimer = setInterval(() => sweepAll('periodic'), 60_000);
+        gemsTimer.unref?.();
+        /* R61: حالة الموقع للوحة التحكم — كل فحص يرجع ok/warn/bad مع شرح بالعربي */
+        const bootAt = Date.now();
+        async function healthReport() {
+            const checks = [];
+            const st = storage.status().stores;
+            const vol = Object.entries(st).filter(([, v]) => v === 'volatile').map(([k]) => k), bad = Object.entries(st).filter(([, v]) => v !== 'ok' && v !== 'volatile').map(([k, v]) => `${k}: ${v}`);
+            checks.push({ key: 'storage', label: 'حفظ البيانات', state: bad.length ? 'bad' : vol.length ? 'warn' : 'ok', detail: bad.length ? `فشل الحفظ: ${bad.join('، ')}` : vol.length ? `ما تنحفظ بملف (تضيع مع إعادة التشغيل): ${vol.join('، ')}` : `كل البيانات تنحفظ (${Object.keys(st).length} ملف)` });
+            const pend = wallet.pendingCount();
+            checks.push({ key: 'payouts', label: 'عمليات الرصيد المعلقة', state: pend > 20 ? 'bad' : pend > 0 ? 'warn' : 'ok', detail: pend ? `${pend} عملية تنتظر الحفظ` : 'ما فيه شي معلّق' });
+            const b = backups?.status();
+            checks.push({ key: 'backup', label: 'النسخة الاحتياطية', state: !b ? 'bad' : b.lastError ? 'bad' : !b.latest ? 'warn' : (b.ageHours ?? 99) > 30 ? 'bad' : 'ok', detail: !b ? 'مطفية (BACKUP_ENABLED=0 أو ما فيه WALLET_FILE)' : b.lastError ? `آخر محاولة فشلت: ${b.lastError}` : !b.latest ? 'ما انسوت أول نسخة للحين (تنسوي بعد دقيقتين من التشغيل)' : `آخر نسخة قبل ${b.ageHours} ساعة · ${b.count} نسخة محفوظة` });
+            const v = socialVoice?.health();
+            let lk = 'skip';
+            if (v?.enabled && cfg.socialVoice?.upstream) {
+                try {
+                    const r = await fetch(new URL('/', cfg.socialVoice.upstream), { signal: AbortSignal.timeout(2500) });
+                    lk = r.ok ? 'ok' : 'down';
+                }
+                catch {
+                    lk = 'down';
+                }
+            }
+            checks.push({ key: 'voice', label: 'الصوت بالغرف (LiveKit)', state: !v?.enabled ? 'warn' : !v.ready || lk === 'down' ? 'bad' : 'ok', detail: !v?.enabled ? 'الصوت مطفي بإعدادات الخادم (SOCIAL_VOICE_ENABLED)' : !v.ready ? `الصوت ما اشتغل: ${v.reason ?? 'سبب غير معروف'}` : lk === 'down' ? 'خادم LiveKit ما يرد على العنوان المضبوط' : `شغال · ${v.transports} اتصال صوتي الحين` });
+            checks.push({ key: 'google', label: 'الدخول بـ Google', state: cfg.googleClientId ? 'ok' : 'warn', detail: cfg.googleClientId ? 'مضبوط' : 'مب مضبوط — الضيوف ما يقدرون يربطون حساباتهم' });
+            const pm = cfg.payments?.mode ?? 'disabled';
+            checks.push({ key: 'payments', label: 'الدفع', state: pm === 'live' ? 'ok' : 'warn', detail: pm === 'live' ? 'شغال (حقيقي)' : pm === 'test' ? 'وضع التجربة — ما فيه دفع حقيقي' : 'مطفي' });
+            const wp = webPush?.status();
+            checks.push({ key: 'push', label: 'إشعارات الجوال', state: !wp ? 'warn' : wp.lastError && wp.sent === 0 && wp.failed > 0 ? 'bad' : 'ok', detail: !wp ? 'مطفية' : `${wp.devices} جهاز مشترك · انرسل ${wp.sent}${wp.failed ? ` · فشل ${wp.failed} (${wp.lastError ?? ''})` : ''}` });
+            const m = process.memoryUsage(), rss = Math.round(m.rss / 1048576);
+            checks.push({ key: 'memory', label: 'ذاكرة الخادم', state: rss > 1200 ? 'bad' : rss > 700 ? 'warn' : 'ok', detail: `${rss} MB` });
+            const players = sockets.size;
+            return { ok: true, at: Date.now(), uptimeSec: Math.floor((Date.now() - bootAt) / 1000), players, rooms: (({ rooms, councils, members }) => ({ rooms, councils, members }))(socialRooms.health()), guests: { readOnly: GUEST_READONLY, lockAt: guestLockAt }, backups: b ?? null, checks, overall: checks.some((c) => c.state === 'bad') ? 'bad' : checks.some((c) => c.state === 'warn') ? 'warn' : 'ok' };
+        }
+        const admin = createAdmin({ community, giftcat, economy, payments, offers, backups: backups ?? undefined, health: healthReport,
             platform, shopcat, wallet, accounts, board, progression, accountTools, service, bulkGrants, store, storage, cfg, registry, sockets, log, json, readBody: appReadBody, sameOrigin, ipOf,
             kick: (id, why) => sockets.get(id)?.forEach((ws) => ws.close(why === 'banned' ? 4403 : 4503, why)),
             walletChanged: id => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }),
             errors: () => errRing, token: () => process.env.ADMIN_TOKEN ?? '',
+            onAdminLogin: (e, owners) => { const to = owners.filter((id) => accounts.has(id)); if (!to.length)
+                return; try {
+                const t = new Date(e.at + 4 * 3_600_000).toISOString().slice(11, 16);
+                support.announce(to, '🔐 دخول للوحة التحكم', `${e.actor} دخل لوحة التحكم الساعة ${t} من ${e.device} (شبكة ${e.net}). لو مو أنت أو مو من فريقك، غيّر رمز الإدارة فورًا.`, 'الأمان', `admlogin-${e.at}-${createHash('sha256').update(e.actor + e.net + e.device).digest('hex').slice(0, 16)}`);
+            }
+            catch { /* */ } },
         });
         bulkGrants.start();
         // موافقات عالقة (approving) من توقف سابق: تُستكمل الآن بتعديل idempotent، فلا تضيع الموافقة ولا يتكرر التعديل
@@ -1148,6 +1553,51 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             hidden = !snap?.couple || snap.couple.hidden === true;
         }
         catch { /* حد القراءة: نخفي الشريك */ } return { ok: true, adult: age !== null && age >= 18, me: cpPerson(user.id), cp: c ? { partner: hidden ? null : cpPerson(c.partner), hidden, ...cpStats(c, user.id) } : null }; });
+        // R67: مساحة CP — المهام اليومية (المكافأة نقاط CP بس)
+        const cpTaskView = (me) => {
+            const c = social.coupleOf(me);
+            if (!c)
+                return null;
+            const key = cpKey(c.id, me, c.partner), day = cpPoints.day(key);
+            const since = Date.parse(day.d + 'T00:00:00+04:00');
+            const mineRoom = socialRooms.mediaAccess(me)?.roomId ?? null, theirRoom = socialRooms.mediaAccess(c.partner)?.roomId ?? null;
+            const progress = { game: accounts.playedTogetherSince(me, c.partner, since), msg: social.pairMessagesSince(me, c.partner, since), room: mineRoom && mineRoom === theirRoom ? 1 : 0, gift: day.gift > 0 ? 1 : 0 };
+            return { key, list: CP_TASKS.map((t) => ({ id: t.id, name: t.name, need: t.need, reward: t.reward, have: Math.min(t.need, progress[t.id] ?? 0), claimed: day.claimed.includes(t.id) })) };
+        };
+        // R67: بطاقة البيانات الشخصية + بطاقة المملكة بالملف
+        functionalHttp.add('GET', '/api/profile-cards/me', ({ user }) => {
+            const c = social.coupleOf(user.id);
+            let cpName = null;
+            try {
+                const snap = social.familySnapshot(user.id);
+                if (c && snap?.couple && snap.couple.hidden !== true)
+                    cpName = accounts.nameOf(c.partner);
+            }
+            catch { /* مخفي */ }
+            const t = tribes.of(user.id);
+            const pv = progression.view(user.id), vip = pv.vip.value && /^V(?:[1-9]|1[0-5])$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0, noble = pv.noble.value && /^N[1-9]$/.test(pv.noble.value) ? Number(pv.noble.value.slice(1)) : 0;
+            return { ok: true, me: cpPerson(user.id), ranks: { vip, noble }, cp: cpName, tribe: t ? t.name : null, gifts: wallet.giftCounts(user.id), friends: social.friendsCount(user.id), kingdom: socialRooms.kingdomView(user.id, user.id) };
+        });
+        functionalHttp.add('GET', '/api/cp/tasks', ({ user }) => { const v = cpTaskView(user.id); return { ok: true, tasks: v ? v.list : [] }; });
+        functionalHttp.add('POST', '/api/cp/tasks/:id/claim', ({ user, params }) => {
+            const v = cpTaskView(user.id);
+            if (!v)
+                return { ok: false, error: 'ما عندك CP.' };
+            const t = v.list.find((x) => x.id === params.id);
+            if (!t)
+                return { ok: false, error: 'المهمة غير موجودة.' };
+            if (t.claimed)
+                return { ok: false, error: 'استلمتها اليوم.' };
+            if (t.have < t.need)
+                return { ok: false, error: 'المهمة ما خلصت للحين.' };
+            if (!cpPoints.claim(v.key, t.id, t.reward))
+                return { ok: false, error: 'تعذّر الحفظ، جرّب بعد شوي.' };
+            const c = social.coupleOf(user.id);
+            if (c)
+                for (const id of [user.id, c.partner])
+                    sendToUser(id, { t: 'cp:update', kind: 'points' });
+            return { ok: true, tasks: cpTaskView(user.id)?.list ?? [] };
+        });
         functionalHttp.add('GET', '/api/cp/of/:pub', ({ user, params }) => {
             const id = community.resolvePublicId(String(params.pub ?? ''));
             if (!id || !accounts.has(id))
@@ -1172,8 +1622,153 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             list: [...t.members].sort((a, b) => b.pts - a.pts).filter((m) => !community.pairBlocked(viewer, m.id)).map((m) => ({ ...cpPerson(m.id), pts: m.pts, leader: m.id === t.leader })),
             requests: t.leader === viewer ? t.requests.filter((r) => accounts.has(r.id)).map((r) => ({ ...cpPerson(r.id), at: r.at })) : [] });
         const tribeEligible = (id) => { const lv = socialRooms.ownerMaxRoomLevel(id); return { roomLevel: lv, need: TRIBE_ROOM_LEVEL, canCreate: socialEligible(id) && lv >= TRIBE_ROOM_LEVEL && !tribes.of(id) }; };
+        /* R60: صفحة «إعدادات الخصوصية» — القيم + الرتبة + شرط كل خيار (القفل نفسه بالخادم) */
+        functionalHttp.add('GET', '/api/privacy', ({ user }) => {
+            const t = tierOf(user.id), st = accountTools.settings(user.id);
+            return { ok: true, vip: t.vip, noble: t.noble, settings: st, visitorsVip: VISITORS_VIP, visitorsOpen: t.vip >= VISITORS_VIP,
+                gates: Object.fromEntries(Object.entries(PRIVACY_GATES).map(([k, g]) => [k, { vip: g.vip, noble: g.noble, allowed: privacyAllowed(user.id, k) }])) };
+        });
         const tribePush = (ids) => { for (const id of ids)
             sendToUser(id, { t: 'tribe:update' }); };
+        /* R59: كنز القبيلة — صاروخ القبيلة (كل 3 مليون هيبة أسبوعية)، المهام، المكافأة، والمتجر */
+        function settleTribe(tribeId) {
+            if (wallet.unsaved())
+                return;
+            for (const { week, l } of treasure.pendingLaunches(tribeId)) {
+                try {
+                    for (const g of launchGrants(tribeId, week, l)) {
+                        const res = wallet.grantCampaignBatch(g.campaignId, g.fp, g.ids, { coins: g.coins, gems: g.gems, itemIds: g.itemIds }, g.reason);
+                        if (res.some((x) => x.status === 'failed' && x.code !== 'BALANCE_OVERFLOW'))
+                            return;
+                    }
+                }
+                catch {
+                    return;
+                }
+                treasure.markDone(tribeId, l.n);
+                // R66: عملة وحدة — جوايز الصاروخ (المحسوبة بالجواهر) تتحول عملات للفايزين على طول بدل ما تنتظر دورة التحويل كل دقيقة
+                if (process.env.SINGLE_CURRENCY !== '0')
+                    for (const id of l.winners) {
+                        try {
+                            if (wallet.sweepGems(id))
+                                sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 });
+                        }
+                        catch { /* دورة التحويل الدورية تكمّلها */ }
+                    }
+                const t = tribes.get(tribeId);
+                if (!t)
+                    continue;
+                const p = planetOfLaunch(l.n);
+                const ev = { id: `tribe-${tribeId}-${week}-${l.n}`, n: l.n, planet: p.name, stage: ((l.n - 1) % 7) + 1, winners: l.winners.map((id, k) => ({ rank: k + 1, ...cpPerson(id) })), luck: l.luck ? cpPerson(l.luck) : null };
+                for (const m of t.members) {
+                    const k = l.winners.indexOf(m.id);
+                    sendToUser(m.id, { t: 'tribe:rocket', event: { ...ev, mine: k >= 0 ? { rank: k + 1, gems: p.prizes[k], gifts: p.gifts[k].map((x) => x.name) } : l.luck === m.id ? { rank: 0, gems: 0, gifts: [p.luck.name] } : null } });
+                    sendToUser(m.id, { t: 'tribe:update' });
+                }
+            }
+        }
+        /* R62: حرب القبائل الأسبوعية — تقسيم وتحديث نتائج كل 5 دقايق، والتسوية أول ما يبدأ أسبوع جديد */
+        const war = new TribeWar(besideSocial('tribe-war.json'), storage);
+        const warTick = () => {
+            try {
+                const wk = weekKeyOf(Date.now());
+                for (const done of war.settle(wk))
+                    for (const r of done.results) {
+                        const A = tribes.get(r.a), Bt = tribes.get(r.b);
+                        if (!A || !Bt)
+                            continue;
+                        const award = (t, each, title, body) => { const ids = t.members.map((m) => m.id); treasure.addFuel(ids, each); support.announce(ids, title, body, 'حرب القبائل', `war-${done.week}-${t.id}`); tribePush(ids); };
+                        if (r.winner === null) {
+                            for (const t of [A, Bt])
+                                award(t, WAR_FUEL.draw, 'حرب القبائل: تعادل!', `تعادلتوا مع قبيلة «${(t === A ? Bt : A).name}». كل عضو أخذ ${WAR_FUEL.draw} وقود.`);
+                        }
+                        else {
+                            const w = r.winner === A.id ? A : Bt, l = w === A ? Bt : A;
+                            award(w, WAR_FUEL.win, 'فزتوا بحرب القبائل! 🏆', `قبيلتكم غلبت «${l.name}» (${Math.max(r.sa, r.sb).toLocaleString('en-US')} ضد ${Math.min(r.sa, r.sb).toLocaleString('en-US')}). كل عضو أخذ ${WAR_FUEL.win} وقود.`);
+                        }
+                    }
+                war.ensure(wk, tribes.top(500).filter((t) => t.members.length >= WAR_FUEL.minMembers).map((t) => t.id));
+                war.update(wk, (id) => treasure.weekPts(id));
+            }
+            catch (e) {
+                log('tribe_war_failed', { error: String(e.message).slice(0, 120) });
+            }
+        };
+        setTimeout(warTick, 20_000).unref?.();
+        const warTimer = setInterval(warTick, 5 * 60_000);
+        warTimer.unref?.();
+        /* R62: موسم الترتيب الشهري */
+        const season = new MonthlySeason(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'season.json') : '', {
+            rows: (start) => board.monthRows(start, 10), grant: (c, fp, ids, r, why) => wallet.grantCampaignBatch(c, fp, ids, r, why),
+            itemOk: (id) => !!shopcat.get(id), notify: (id, t, b, ref) => { support.announce([id], t, b, 'موسم الترتيب', ref); sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }); }, log,
+        }, storage);
+        const monthKey = (start) => new Date(start + 4 * 3600_000).toISOString().slice(0, 7);
+        const seasonTick = () => { try {
+            const cur = monthStartOf(Date.now());
+            const prev = monthStartOf(cur - 1);
+            if (cur > season.since)
+                season.settle(monthKey(prev), prev);
+        }
+        catch (e) {
+            log('season_failed', { error: String(e.message).slice(0, 120) });
+        } };
+        setTimeout(seasonTick, 30_000).unref?.();
+        const seasonTimer = setInterval(seasonTick, 30 * 60_000);
+        seasonTimer.unref?.();
+        const seasonView = () => { const now = Date.now(), start = monthStartOf(now); return { ok: true, label: monthLabel(monthKey(start)), endsAt: nextMonthStartOf(now), prizes: SEASON_PRIZES.map((p) => ({ ...p, item: p.itemId ? (({ id, name }) => ({ id, name }))(shopcat.get(p.itemId) ?? { id: p.itemId, name: '' }) : null })), last: season.last() }; };
+        const warView = (t) => {
+            const v = war.view(weekKeyOf(Date.now()), t.id);
+            const name = (id) => (id !== null ? tribes.get(id)?.name : null) ?? null;
+            return { ...v, mine: Math.max(v.mine, treasure.weekPts(t.id)), theirs: v.opponent !== null ? Math.max(v.theirs, treasure.weekPts(v.opponent)) : 0, opponentName: name(v.opponent), last: v.last ? { ...v.last, opponentName: name(v.last.opponent) } : null, prize: WAR_FUEL };
+        };
+        const treasureRun = (fn) => { try {
+            return fn();
+        }
+        catch (e) {
+            if (e instanceof TreasureError)
+                return { ok: false, code: e.code, error: TREASURE_ERR[e.code] ?? 'تعذّر تنفيذ الطلب.' };
+            throw e;
+        } };
+        const myTribe = (id) => { const t = tribes.of(id); if (!t)
+            throw new TreasureError('no_tribe'); return t; };
+        const treasureView = (t, viewer) => {
+            const v = treasure.view(t.id, viewer);
+            const room = socialRooms.ownerTopRoom(t.leader);
+            return { ok: true, tribe: { ...tribeCard(t), createdDays: Math.max(1, Math.ceil((Date.now() - t.at) / 86_400_000)), room, dayPts: v.dayPts, weekPts: v.weekPts, wealth: v.wealth },
+                rocket: { count: v.rockets, toNext: v.toNext, per: v.per, nextPlanet: v.nextPlanet, launches: v.launches.map((l) => ({ ...l, winners: l.winners.map((id, k) => ({ rank: k + 1, ...cpPerson(id) })), luck: l.luck ? cpPerson(l.luck) : null })) },
+                tasks: TRIBE_TASKS.map((x) => ({ ...x, done: v.me.done.includes(x.id) })), boxes: TRIBE_BOXES.map((b) => ({ ...b, open: v.weekPts >= b.need, claimed: v.me.boxes.includes(b.level) })),
+                war: warView(t), shop: TRIBE_SHOP, me: { fuel: v.me.fuel, dayPts: v.me.dayPts, weekPts: v.me.weekPts, bag: v.me.bag, coinsWeek: v.me.coinsWeek, coins: wallet.balance(viewer) } };
+        };
+        functionalHttp.add('GET', '/api/tribes/treasure', ({ user }) => treasureRun(() => treasureView(myTribe(user.id), user.id)));
+        functionalHttp.add('POST', '/api/tribes/treasure/task', ({ user, body }) => treasureRun(() => {
+            const t = myTribe(user.id);
+            const id = String(body?.id ?? '');
+            if (id === 'stay') {
+                const room = socialRooms.ownerTopRoom(t.leader);
+                const since = room ? socialRooms.presenceSince(user.id, room.id) : null;
+                if (since === null || Date.now() - since < 5 * 60_000)
+                    throw new TreasureError('stay');
+            }
+            else if (id !== 'checkin')
+                throw new TreasureError('item');
+            if (treasure.task(t.id, user.id, id).length)
+                settleTribe(t.id);
+            return treasureView(t, user.id);
+        }));
+        functionalHttp.add('POST', '/api/tribes/treasure/box', ({ user, body }) => treasureRun(() => { const t = myTribe(user.id); treasure.claimBox(t.id, user.id, Number(body?.level)); return treasureView(t, user.id); }));
+        functionalHttp.add('POST', '/api/tribes/treasure/buy', ({ user, body }) => treasureRun(() => {
+            const t = myTribe(user.id);
+            const r = treasure.buy(t.id, user.id, String(body?.item ?? ''));
+            if (r.grant) {
+                const res = wallet.grantCampaignBatch(r.grant.campaignId, r.grant.fp, r.grant.ids, { coins: r.grant.coins, gems: 0, itemIds: [] }, r.grant.reason);
+                const w = res[0];
+                if (w && w.status !== 'failed')
+                    sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
+            }
+            return treasureView(t, user.id);
+        }));
+        functionalHttp.add('POST', '/api/tribes/treasure/send-bag', ({ user, body }) => treasureRun(() => { const t = myTribe(user.id); const r = treasure.sendBag(user.id, String(body?.bag ?? ''), t.members.map((m) => m.id)); for (const id of r.ids)
+            sendToUser(id, { t: 'tribe:update' }); return { ...treasureView(t, user.id), sent: r.each }; }));
         functionalHttp.add('GET', '/api/tribes/me', ({ user }) => { const t = tribes.of(user.id); return { ok: true, eligible: socialEligible(user.id), create: tribeEligible(user.id), tribe: t ? tribeView(t, user.id) : null, requested: tribes.requestedBy(user.id).map(tribeCard) }; });
         functionalHttp.add('GET', '/api/tribes/top', () => ({ ok: true, list: tribes.top(30).map(tribeCard) }));
         functionalHttp.add('GET', '/api/tribes/:id', ({ user, params }) => { const t = tribes.get(Number(params.id)); return t ? { ok: true, tribe: tribeView(t, user.id) } : { ok: false, error: TRIBE_ERR.not_found }; });
@@ -1196,14 +1791,431 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             throw new TribeError('not_member'); tribes.kick(user.id, Number(params.id), who); tribePush([who]); return { ok: true }; }));
         functionalHttp.add('POST', '/api/tribes/leave', ({ user }) => tribeRun(() => { tribes.leave(user.id); return { ok: true }; }));
         functionalHttp.add('POST', '/api/tribes/disband', ({ user }) => tribeRun(() => { const t = tribes.disband(user.id); tribePush(t.members.map((m) => m.id).filter((x) => x !== user.id)); return { ok: true }; }));
+        // R67ae: لوحة الإدارة — القبائل وCP والصاروخ والمدفع (المالك فقط، وكل تعديل ينسجل بالتدقيق)
+        {
+            const nm = (id) => accounts.nameOf(id) || id.slice(0, 8);
+            const adminNeed = (c, m) => { if (!c)
+                throw new FunctionalHttpError(400, m); };
+            const tribeAdminRun = (fn) => { try {
+                return fn();
+            }
+            catch (e) {
+                if (e instanceof TribeError)
+                    throw new FunctionalHttpError(400, TRIBE_ERR[e.code] ?? 'تعذّر التنفيذ.');
+                throw e;
+            } };
+            functionalHttp.add('GET', '/api/admin/tribes-cp', () => {
+                const wk = weekKeyOf(Date.now());
+                const list = tribes.all().map((t) => ({ id: t.id, name: t.name, leader: nm(t.leader), leaderId: t.leader, at: t.at, members: t.members.map((m) => ({ id: m.id, name: nm(m.id), pts: m.pts, leader: m.id === t.leader })), pts: t.pts, monthPts: tribes.monthPts(t), weekPts: treasure.weekPts(t.id), level: tribeLevelOf(t.pts) }))
+                    .sort((a, b) => b.monthPts - a.monthPts || b.pts - a.pts);
+                const couples = social.allCouples().map((c) => { const pts = cpPoints.get(cpKey(c.id, c.a, c.b)); return { id: c.id, a: nm(c.a), b: nm(c.b), at: c.at, pts, level: cpLevelOf(pts) }; }).sort((x, y) => y.pts - x.pts);
+                return {
+                    ok: true, week: wk, tribes: list, couples,
+                    config: {
+                        tribeLevels: TRIBE_LEVELS, warFuel: WAR_FUEL, rocketPrestige: ROCKET_PRESTIGE,
+                        rocket: ROCKET_PLANETS.map((p) => ({ stage: p.stage, name: p.name, goal: p.goal, prizes: p.prizes, gifts: p.gifts.map((g) => g.map((x) => x.name)), luck: p.luck.name })),
+                        cannon: CANNON3_LEVELS.map((l) => ({ level: l.level, goal: l.goal, coins: l.coins, top1: l.top1.name, items: l.items.map((x) => x.name) })),
+                        cpLevels: CP_LEVELS.map((min, i) => ({ min, name: CP_LEVEL_NAMES[i] })), cpTasks: CP_TASKS,
+                    },
+                };
+            }, 'owner');
+            functionalHttp.add('POST', '/api/admin/tribes-cp/tribe', ({ actor, body }) => {
+                const id = Number(body.id), op = String(body.op ?? ''), reason = String(body.reason ?? '').trim().slice(0, 200);
+                adminNeed(Number.isSafeInteger(id) && id > 0, 'رقم القبيلة غير صالح.');
+                adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+                const before = tribes.get(id);
+                adminNeed(!!before, 'القبيلة غير موجودة.');
+                const ids = before.members.map((m) => m.id);
+                let detail = '';
+                if (op === 'rename') {
+                    const t = tribeAdminRun(() => tribes.adminRename(id, String(body.name ?? '')));
+                    detail = `${before.name} → ${t.name}`;
+                }
+                else if (op === 'kick') {
+                    const u = String(body.user ?? '');
+                    tribeAdminRun(() => tribes.adminKick(id, u));
+                    detail = `طرد ${nm(u)}`;
+                }
+                else if (op === 'disband') {
+                    tribeAdminRun(() => tribes.adminDisband(id));
+                    detail = `حل القبيلة ${before.name}`;
+                }
+                else
+                    throw new FunctionalHttpError(400, 'عملية غير معروفة.');
+                tribePush(ids);
+                const auditOk = admin.audit(actor, 'tribe.' + op, 'tribe:' + id, `${detail} — ${reason}`);
+                return { ok: true, auditOk };
+            }, 'owner');
+            functionalHttp.add('GET', '/api/admin/site-flags', () => ({ ok: true, flags: siteFlags.get(), meta: siteFlags.meta(), envFirstTopup: Number(process.env.FIRST_TOPUP_BONUS ?? 100), firstTopupNow: firstTopup.percent }), 'owner');
+            functionalHttp.add('POST', '/api/admin/site-flags', ({ actor, body }) => {
+                const reason = String(body.reason ?? '').trim().slice(0, 200);
+                adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+                const input = { ...body };
+                delete input.reason;
+                let out;
+                try {
+                    out = siteFlags.update(input, actor.name);
+                }
+                catch (e) {
+                    throw new FunctionalHttpError(400, e.message || 'تعذّر الحفظ.');
+                }
+                const auditOk = out.changed.length ? admin.audit(actor, 'site.flags', 'site-flags', out.changed.map((k) => `${k}: ${String(out.before[k])} → ${String(out.after[k])}`).join('، ') + ` — ${reason}`) : true;
+                if (out.changed.includes('cinema') && !out.after.cinema) { /* الفيديوهات الشغالة تكمل لين يطفونها؛ ما نقدر نوقف الكل بأمر واحد بأمان */ }
+                return { ok: true, flags: out.after, changed: out.changed, auditOk };
+            }, 'owner');
+            functionalHttp.add('GET', '/api/admin/live', () => { let online = 0; for (const set of sockets.values())
+                if (set.size)
+                    online++; const rooms = socialRooms.liveRooms(); return { ok: true, online, inRooms: rooms.reduce((n, r) => n + r.members, 0), rooms: rooms.slice(0, 50) }; }, 'owner');
+            functionalHttp.add('GET', '/api/admin/player-360', ({ url }) => {
+                const q = String(url.searchParams.get('q') ?? '').trim();
+                adminNeed(q.length >= 2, 'اكتب اسم أو رقم لاعب (حرفين على الأقل).');
+                const byDisplay = /^\d{3,12}$/.test(q) ? accounts.findByDisplayPlayerId(q) : null;
+                const ql = q.toLowerCase();
+                const ids = byDisplay ? [byDisplay] : accounts.has(q) ? [q] : accounts.all().filter((a) => (a.name ?? '').toLowerCase().includes(ql)).slice(0, 5).map((a) => a.id);
+                const card = (id) => {
+                    const pr = progress(id).progression;
+                    const t = tribes.of(id);
+                    const c = social.coupleOf(id);
+                    const gs = wallet.giftsOf(id, 'out', 500), gr = wallet.giftsOf(id, 'in', 500);
+                    const gv = (l) => l.reduce((n, g) => n + (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1), 0);
+                    const ban = platform.banOf(id);
+                    const acc = accounts.all().find((a) => a.id === id);
+                    return { id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', since: acc?.since ?? null, level: pr.level.value, vip: pr.vip.enabled ? pr.vip.value : null, noble: pr.noble.enabled ? pr.noble.value : null,
+                        coins: wallet.balance(id), gems: wallet.gems(id), online: (sockets.get(id)?.size ?? 0) > 0, played: acc?.played ?? 0, wins: acc?.wins ?? 0,
+                        giftsSent: { count: gs.length, value: gv(gs) }, giftsRecv: { count: gr.length, value: gv(gr) },
+                        tribe: t ? { name: t.name, leader: t.leader === id } : null, cp: c ? { partner: nm(c.partner), pts: cpPoints.get(cpKey(c.id, id, c.partner)) } : null,
+                        rooms: socialRooms.ownedRoomsOf(id), reports: community.reportsAgainst(id), ban: ban ? { reason: ban.reason ?? '', at: ban.at ?? null } : null,
+                        owned: wallet.owned(id).length, staff: null };
+                };
+                return { ok: true, players: ids.map(card) };
+            }, 'owner');
+            functionalHttp.add('POST', '/api/admin/message', ({ actor, body }) => {
+                const id = String(body.id ?? ''), title = String(body.title ?? '').trim(), text = String(body.body ?? '').trim();
+                adminNeed(accounts.has(id), 'اللاعب غير موجود.');
+                adminNeed(title.length >= 3 && title.length <= 100, 'العنوان من 3 إلى 100 حرف.');
+                adminNeed(text.length >= 3 && text.length <= 2000, 'الرسالة من 3 إلى 2000 حرف.');
+                const ref = 'admmsg-' + createHash('sha256').update(id + title + text + String(body.key ?? '')).digest('hex').slice(0, 24);
+                let out;
+                try {
+                    out = support.announce([id], title, text, 'الإدارة', ref);
+                }
+                catch (e) {
+                    throw new FunctionalHttpError(400, e.message || 'تعذّر الإرسال.');
+                }
+                const auditOk = admin.audit(actor, 'message.send', id, `${title}`);
+                return { ok: true, duplicate: !!out.duplicate, auditOk };
+            }, 'owner');
+            functionalHttp.add('GET', '/api/admin/events', () => ({ ok: true, now: Date.now(), events: siteFlags.events().reverse() }), 'owner');
+            functionalHttp.add('POST', '/api/admin/events', ({ actor, body }) => {
+                const reason = String(body.reason ?? '').trim().slice(0, 200);
+                adminNeed(reason.length >= 3, 'اكتب سبب الفعالية.');
+                let ev;
+                try {
+                    ev = body.op === 'end' ? siteFlags.endEvent(String(body.id ?? '')) : siteFlags.addEvent(body, actor.name);
+                }
+                catch (e) {
+                    throw new FunctionalHttpError(400, e.message || 'تعذّر الحفظ.');
+                }
+                const auditOk = admin.audit(actor, body.op === 'end' ? 'event.end' : 'event.add', ev.id, `${ev.title}${ev.slot ? ' · ' + ev.slot : ''} — ${reason}`);
+                return { ok: true, event: ev, auditOk };
+            }, 'owner');
+            functionalHttp.add('GET', '/api/admin/tuning', () => ({ ok: true, current: currentTuning(), defaults: TUNING_DEFAULT, meta: siteFlags.tuningMeta(), names: { rocket: ROCKET_PLANETS.map((p) => p.name), tribe: TRIBE_LEVELS.map((l) => l.name), cp: CP_LEVEL_NAMES } }), 'owner');
+            functionalHttp.add('POST', '/api/admin/tuning', ({ actor, body }) => {
+                const reason = String(body.reason ?? '').trim().slice(0, 200);
+                adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+                const before = currentTuning();
+                let next;
+                try {
+                    next = body.reset === true ? structuredClone(TUNING_DEFAULT) : validateTuning(body.patch, before);
+                }
+                catch (e) {
+                    if (isTuningError(e))
+                        throw new FunctionalHttpError(400, e.message);
+                    throw e;
+                }
+                siteFlags.setTuning(body.reset === true ? null : next, actor.name);
+                applyTuning(next);
+                const changed = Object.keys(next).filter((k) => JSON.stringify(next[k]) !== JSON.stringify(before[k]));
+                const auditOk = admin.audit(actor, 'tuning.update', 'tuning', `${body.reset === true ? 'ترجيع الأصلي' : changed.join('، ') || 'بدون تغيير'} — ${reason}`);
+                return { ok: true, current: currentTuning(), changed, auditOk };
+            }, 'owner');
+            const sendAll = (msg) => { const raw = JSON.stringify(msg); for (const peers of sockets.values())
+                for (const ws of peers) {
+                    try {
+                        if (ws.readyState === 1)
+                            ws.send(raw);
+                    }
+                    catch { /* */ }
+                } };
+            // R68t: الحزم المميزة بالمتجر — سعر الحزمة أقل من مجموع قطعها، وتنشرى مرة وحدة، واللي تملكه منها ينخصم من السعر
+            const BUNDLES_R68 = [
+                { id: 'starter', name: 'حزمة البداية', sub: 'مجموعة مختارة للمبتدئين', icon: 'gift', price: 12_000, items: ['av2-blob', 'frame2-bronze', 'art-bub-10', 'art-bd-01'] },
+                { id: 'heroes', name: 'حزمة الأبطال', sub: 'إطار + فقاعة + إطار مايك + صورة رمزية', icon: 'lion', price: 249_000, items: ['art-f2-08', 'lux-bub-purple', 'art-mf-70', 'ref-p-av-07'] },
+                { id: 'vip', name: 'حزمة VIP', sub: 'مظاهر أسطورية حصرية', icon: 'vip', price: 3_500_000, items: ['art-f2-11', 'lux-bub-legend', 'art-bd-28', 'art-pb-04'] },
+            ];
+            const coinsOf = (it) => it.currency === 'gems' ? it.price * 20 : it.price;
+            const bundleView = (uid, b) => {
+                const owned = new Set(wallet.owned(uid));
+                const items = b.items.map((id) => shopcat.get(id)).filter((x) => !!x);
+                const worth = items.reduce((n, i) => n + coinsOf(i), 0), missing = items.filter((i) => !owned.has(i.id)), missWorth = missing.reduce((n, i) => n + coinsOf(i), 0);
+                const price = !missing.length ? 0 : missing.length === items.length ? b.price : Math.max(1000, Math.round(b.price * missWorth / Math.max(1, worth) / 1000) * 1000);
+                return { id: b.id, name: b.name, sub: b.sub, icon: b.icon, price, fullPrice: b.price, worth, items: items.map((i) => ({ id: i.id, name: i.name, slot: i.slot, owned: owned.has(i.id) })), done: !missing.length };
+            };
+            functionalHttp.add('GET', '/api/shop/bundles', ({ user }) => ({ ok: true, list: BUNDLES_R68.map((b) => bundleView(user.id, b)) }));
+            functionalHttp.add('POST', '/api/shop/bundles/buy', async ({ user, body }) => {
+                const b = BUNDLES_R68.find((x) => x.id === body.id);
+                if (!b)
+                    throw new FunctionalHttpError(404, 'الحزمة غير موجودة.');
+                const v = bundleView(user.id, b);
+                if (v.done)
+                    throw new FunctionalHttpError(409, 'تملك كل قطع هالحزمة.');
+                if (body.seen !== v.price)
+                    throw new FunctionalHttpError(409, 'تغير سعر الحزمة. حدّث الصفحة.');
+                const missing = v.items.filter((i) => !i.owned).map((i) => i.id);
+                const ref = `bundle:${b.id}:${missing.join(',')}`.slice(0, 120);
+                const pay = wallet.spendService(user.id, v.price, `شراء ${b.name}`, ref);
+                if (!pay.ok)
+                    throw new FunctionalHttpError(pay.code === 'poor' ? 402 : 400, pay.code === 'poor' ? `رصيدك ما يكفي. الحزمة بـ ${v.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
+                const op = ('bnd' + createHash('sha256').update(user.id + ref).digest('hex')).slice(0, 40);
+                try {
+                    const g = await wallet.grantBulk(op, [user.id], missing.map((itemId) => ({ type: 'item', itemId, mode: 'grant' })), `${b.name}`);
+                    if (!missing.every((id) => wallet.owned(user.id).includes(id)) && !pay.dup)
+                        throw new Error('grant_incomplete:' + JSON.stringify(g).slice(0, 80));
+                }
+                catch (e) {
+                    if (!pay.dup)
+                        wallet.grant(user.id, 'coins', v.price, `استرجاع ${b.name}`, 'refund:' + ref);
+                    log('bundle_grant_failed', { bundle: b.id, err: String(e).slice(0, 120) });
+                    throw new FunctionalHttpError(500, 'تعذّر تسليم الحزمة ورجعنا لك عملاتك.');
+                }
+                sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
+                return { ok: true, coins: wallet.balance(user.id), bundle: bundleView(user.id, b) };
+            });
+            functionalHttp.add('GET', '/api/broadcast/info', () => ({ ok: true, enabled: siteFlags.get().broadcast, prices: { ...BROADCAST_PRICES }, max: BROADCAST_TEXT_MAX, recent: broadcasts.recent().map(publicBroadcast) }));
+            functionalHttp.add('POST', '/api/broadcast', ({ user, body }) => {
+                if (!siteFlags.get().broadcast)
+                    throw new FunctionalHttpError(403, 'البرقية موقفة حاليًا من الإدارة.');
+                adminNeed(accounts.has(user.id) && !platform.isBanned(user.id), 'حسابك ما يقدر يرسل برقية.');
+                const key = String(body.key ?? '');
+                adminNeed(/^[A-Za-z0-9_-]{8,64}$/.test(key), 'معرّف الطلب غير صالح.');
+                let c;
+                try {
+                    c = broadcasts.check(user.id, String(body.text ?? ''), body.tier);
+                }
+                catch (e) {
+                    if (e instanceof BroadcastError)
+                        throw new FunctionalHttpError(400, e.message);
+                    throw e;
+                }
+                const m = moderateText(c.text, 'room-ad');
+                if (!m.ok)
+                    throw new FunctionalHttpError(422, m.message);
+                const id = 'bc-' + createHash('sha256').update(user.id + ':' + key).digest('hex').slice(0, 24);
+                const pay = wallet.spendService(user.id, c.price, `برقية عالمية (${c.tier === 'full' ? 'شاشة كاملة' : c.tier === 'gold' ? 'ذهبية' : 'عادية'})`, 'broadcast:' + id);
+                if (!pay.ok)
+                    throw new FunctionalHttpError(pay.code === 'poor' ? 402 : 400, pay.code === 'poor' ? `رصيدك ما يكفي. البرقية بـ ${c.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
+                const b = broadcasts.add(user.id, accounts.nameOf(user.id) || 'لاعب', c.text, c.tier, c.price, id);
+                if (!pay.dup)
+                    sendAll({ t: 'broadcast', b: publicBroadcast(b) });
+                sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
+                return { ok: true, id: b.id, coins: pay.coins };
+            });
+            // R68c: بنرات الصفحة الرئيسية
+            const hbErr = (fn) => { try {
+                return fn();
+            }
+            catch (e) {
+                if (e instanceof HomeBannerError)
+                    throw new FunctionalHttpError(400, e.message);
+                throw e;
+            } };
+            functionalHttp.add('GET', '/api/admin/home-banners', () => ({ ok: true, list: homeBanners.all() }), 'owner');
+            functionalHttp.add('POST', '/api/admin/home-banners/save', ({ actor, body }) => { const b = hbErr(() => homeBanners.upsert(body, actor.name)); admin.audit(actor, 'home-banner:save', b.id, b.title); return { ok: true, banner: b, list: homeBanners.all() }; }, 'owner');
+            functionalHttp.add('POST', '/api/admin/home-banners/remove', ({ actor, body }) => { hbErr(() => homeBanners.remove(String(body.id ?? ''))); admin.audit(actor, 'home-banner:remove', String(body.id ?? ''), ''); return { ok: true, list: homeBanners.all() }; }, 'owner');
+            functionalHttp.add('POST', '/api/admin/home-banners/move', ({ body }) => { hbErr(() => homeBanners.move(String(body.id ?? ''), Number(body.dir))); return { ok: true, list: homeBanners.all() }; }, 'owner');
+            functionalHttp.add('POST', '/api/admin/home-banners/image', async ({ actor, body }) => { try {
+                const url = await homeBanners.putImage(body.data);
+                admin.audit(actor, 'home-banner:image', url, '');
+                return { ok: true, url };
+            }
+            catch (e) {
+                if (e instanceof HomeBannerError)
+                    throw new FunctionalHttpError(400, e.message);
+                throw e;
+            } }, 'owner', 3_600_000);
+            functionalHttp.add('GET', '/api/admin/broadcasts', () => ({ ok: true, list: broadcasts.list(100) }), 'owner');
+            functionalHttp.add('POST', '/api/admin/broadcasts/hide', ({ actor, body }) => {
+                const reason = String(body.reason ?? '').trim().slice(0, 200);
+                adminNeed(reason.length >= 3, 'اكتب السبب.');
+                let b;
+                try {
+                    b = broadcasts.hide(String(body.id ?? ''), actor.name);
+                }
+                catch (e) {
+                    if (e instanceof BroadcastError)
+                        throw new FunctionalHttpError(404, e.message);
+                    throw e;
+                }
+                sendAll({ t: 'broadcast:hide', id: b.id });
+                const auditOk = admin.audit(actor, 'broadcast.hide', b.by, `${b.text} — ${reason}`);
+                return { ok: true, auditOk };
+            }, 'owner');
+            // R67ae: حذف الحساب (مهلة 30 يوم)
+            functionalHttp.add('POST', '/api/account-deletion/request', async ({ user, body }) => {
+                adminNeed(accounts.has(user.id), 'الحساب غير موجود.');
+                adminNeed(String(body.confirm ?? '').trim() === 'حذف', 'اكتب كلمة «حذف» للتأكيد.');
+                adminNeed(!platform.roleOf(user.id), 'حسابات الإدارة ما تنحذف من هنا. شيل الدور الإداري أول من لوحة التحكم.');
+                const r = deletion.request(user.id);
+                try {
+                    const rid = socialRooms.roomIdOf(user.id);
+                    if (rid)
+                        await socialRooms.command(user.id, 'room:leave', { roomId: rid, key: randomUUID() });
+                }
+                catch { /* */ }
+                try {
+                    sessions.revokeHashes(user.id, null);
+                }
+                catch { /* */ }
+                setTimeout(() => { for (const ws of sockets.get(user.id) ?? []) {
+                    try {
+                        ws.close(4401, 'account deletion');
+                    }
+                    catch { /* */ }
+                } }, 500);
+                log('account_deletion_requested', {});
+                return { ok: true, executeAt: r.executeAt };
+            });
+            functionalHttp.add('POST', '/api/account-deletion/cancel', ({ user }) => { const ok = deletion.cancel(user.id); return { ok: true, cancelled: ok }; });
+            functionalHttp.add('GET', '/api/admin/account-deletions', () => ({ ok: true, graceDays: DELETION_GRACE_MS / 86_400_000, list: deletion.list().slice(0, 100).map((x) => ({ ...x, name: x.done ? 'حساب محذوف' : nm(x.id) })) }), 'owner');
+            const executeDeletion = async (id) => {
+                try {
+                    const rid = socialRooms.roomIdOf(id);
+                    if (rid)
+                        await socialRooms.command(id, 'room:leave', { roomId: rid, key: randomUUID() });
+                }
+                catch { /* */ }
+                for (const r of socialRooms.ownedRoomsOf(id)) {
+                    try {
+                        await socialRooms.admin('token', 'room:close', { roomId: r.id, key: randomUUID(), reason: 'account-deleted' });
+                    }
+                    catch { /* */ }
+                }
+                try {
+                    const t = tribes.of(id);
+                    if (t) {
+                        const ids = t.members.map((m) => m.id);
+                        if (t.leader === id)
+                            tribes.disband(id);
+                        else
+                            tribes.leave(id);
+                        tribePush(ids);
+                    }
+                }
+                catch { /* */ }
+                try {
+                    const c = social.coupleOf(id);
+                    if (c) {
+                        social.adminBreakCouple(c.id);
+                        cpPoints.reset(cpKey(c.id, id, c.partner));
+                    }
+                }
+                catch { /* */ }
+                try {
+                    community.purgeUser(id);
+                }
+                catch { /* */ }
+                try {
+                    avatars.del(id);
+                }
+                catch { /* */ }
+                try {
+                    accounts.anonymize(id);
+                }
+                catch { /* */ }
+                try {
+                    identities.unlink(id);
+                }
+                catch { /* */ }
+                try {
+                    sessions.revokeHashes(id, null);
+                }
+                catch { /* */ }
+                deletion.markDone(id);
+                log('account_deleted', {});
+            };
+            const deletionSweep = async () => { for (const id of deletion.due()) {
+                try {
+                    await executeDeletion(id);
+                }
+                catch (e) {
+                    log('account_deletion_failed', { error: String(e.message).slice(0, 100) });
+                }
+            } };
+            const deletionTimer = setInterval(() => { void deletionSweep(); }, 60 * 60_000);
+            deletionTimer.unref?.();
+            setTimeout(() => { void deletionSweep(); }, 30_000).unref?.();
+            functionalHttp.add('GET', '/api/admin/admin-logins', () => ({ ok: true, list: admin.loginLog() }), 'owner');
+            functionalHttp.add('GET', '/api/admin/gifts', ({ url }) => { const days = Math.max(1, Math.min(90, Number(url.searchParams.get('days')) || 7)); return { ok: true, days, ...wallet.adminGifts({ q: url.searchParams.get('q') ?? '', since: Date.now() - days * 86_400_000, limit: 200 }) }; }, 'owner');
+            functionalHttp.add('GET', '/api/admin/economy-daily', ({ url }) => { const days = Math.max(7, Math.min(60, Number(url.searchParams.get('days')) || 14)); const e = wallet.adminEconomy(days); return { ok: true, ...e, topSpenders: e.topSpenders.map((x) => ({ name: nm(x.id), spent: x.spent })) }; }, 'owner');
+            functionalHttp.add('GET', '/api/admin/banned-words', () => ({ ok: true, words: siteFlags.words(), meta: siteFlags.wordsMeta(), max: BANNED_WORDS_MAX }), 'owner');
+            functionalHttp.add('POST', '/api/admin/banned-words', ({ actor, body }) => {
+                const reason = String(body.reason ?? '').trim().slice(0, 200);
+                adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+                let out;
+                try {
+                    out = siteFlags.editWords(body.add, body.remove, actor.name);
+                }
+                catch (e) {
+                    throw new FunctionalHttpError(400, e.message || 'تعذّر الحفظ.');
+                }
+                setExtraBannedWords(out.words);
+                const auditOk = admin.audit(actor, 'moderation.words', 'banned-words', `${out.added.length ? 'إضافة ' + out.added.length : ''}${out.removed.length ? ' حذف ' + out.removed.length : ''} — ${reason}`);
+                return { ok: true, words: out.words, auditOk };
+            }, 'owner');
+            functionalHttp.add('GET', '/api/admin/posts', ({ url }) => ({ ok: true, posts: community.adminPosts(url.searchParams.get('q') ?? '', 80), counts: community.counts() }), 'owner');
+            functionalHttp.add('POST', '/api/admin/posts/delete', ({ actor, body }) => {
+                const id = Number(body.id), reason = String(body.reason ?? '').trim().slice(0, 200);
+                adminNeed(Number.isSafeInteger(id) && id > 0, 'رقم المنشور غير صالح.');
+                adminNeed(reason.length >= 3, 'اكتب سبب الحذف.');
+                let r;
+                try {
+                    r = community.adminDeletePost(id);
+                }
+                catch {
+                    throw new FunctionalHttpError(404, 'المنشور غير موجود.');
+                }
+                const auditOk = admin.audit(actor, 'community.remove', r.author, `حذف منشور ${id}: ${reason}`);
+                return { ok: true, auditOk };
+            }, 'owner');
+            functionalHttp.add('POST', '/api/admin/tribes-cp/couple', ({ actor, body }) => {
+                const id = Number(body.id), op = String(body.op ?? ''), reason = String(body.reason ?? '').trim().slice(0, 200);
+                adminNeed(Number.isSafeInteger(id) && id > 0, 'رقم الارتباط غير صالح.');
+                adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+                const c = social.allCouples().find((x) => x.id === id);
+                adminNeed(!!c, 'الارتباط غير موجود.');
+                const key = cpKey(c.id, c.a, c.b);
+                if (op === 'reset')
+                    cpPoints.reset(key);
+                else if (op === 'break') {
+                    social.adminBreakCouple(id);
+                    cpPoints.reset(key);
+                }
+                else
+                    throw new FunctionalHttpError(400, 'عملية غير معروفة.');
+                for (const u of [c.a, c.b])
+                    sendToUser(u, { t: 'cp:update' });
+                const auditOk = admin.audit(actor, 'cp.' + op, 'couple:' + id, `${nm(c.a)} و ${nm(c.b)} — ${reason}`);
+                return { ok: true, auditOk };
+            }, 'owner');
+        }
         functionalHttp.add('GET', '/api/friends/live', ({ user }) => {
             const ids = social.friendInternalIds(user.id).slice(0, 200);
             const list = ids.map((f) => {
-                const room = accountTools.explicitSetting(f, 'showPresence') === false ? null : socialRooms.friendRoom(user.id, f);
+                const room = privacyOn(f, 'showPresence') ? null : socialRooms.friendRoom(user.id, f);
                 const photo = avatars.version(f);
-                return { id: community.pub(f), name: accounts.nameOf(f), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(f)}&v=${photo}` : null, room };
+                return { id: community.pub(f), name: accounts.nameOf(f), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(f)}&v=${photo}` : null, room, online: !privacyOn(f, 'showPresence') && (sockets.get(f)?.size ?? 0) > 0 };
             });
-            list.sort((a, b) => Number(!!b.room) - Number(!!a.room) || String(a.name).localeCompare(String(b.name), 'ar'));
+            list.sort((a, b) => Number(!!b.room) - Number(!!a.room) || Number(b.online) - Number(a.online) || String(a.name).localeCompare(String(b.name), 'ar'));
             return { ok: true, list: list.slice(0, 60) };
         });
         functionalHttp.add('GET', '/api/room-ids/mine', ({ user }) => ({ ok: true, items: wallet.owned(user.id).map((iid) => shopcat.get(iid)).filter((it) => !!it && it.slot === 'room-id' && typeof it.css === 'string').map((it) => ({ id: it.id, code: it.css, name: it.name })) }));
@@ -1219,7 +2231,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             catch {
                 return false;
             } } });
-        wireSocialRoutes(functionalHttp, { onRoomJoin: (uid, roomId) => notifyFriends(uid, (f) => { const room = socialRooms.friendRoom(f, uid); return room && room.id === roomId ? { t: 'friend:room', id: community.pub(uid), name: accounts.nameOf(uid), room: { id: room.id, name: room.name, locked: room.locked } } : null; }, 'room:' + uid + ':' + roomId, 5 * 60_000), rooms: socialRooms, voice: socialVoice, platform, eligible: socialEligible, publicId: id => community.pub(id), presentFriends: (id, publicIds) => social.friendsPresent(id, new Set(publicIds)), resolveTarget: value => accounts.has(value) ? value : community.resolvePublicId(value) ?? accounts.findByDisplayPlayerId(value) ?? null,
+        wireSocialRoutes(functionalHttp, { onRoomJoin: (uid, roomId) => notifyFriends(uid, (f) => { const room = socialRooms.friendRoom(f, uid); if (!room || room.id !== roomId)
+                return null; const cpc = social.coupleOf(uid); const cpLv = cpc && cpc.partner === f ? cpLevelOf(cpPoints.get(cpKey(cpc.id, uid, f))).level : 0; return { t: 'friend:room', id: community.pub(uid), name: accounts.nameOf(uid), room: { id: room.id, name: room.name, locked: room.locked }, ...(cpLv >= 3 ? { cp: true } : {}) }; }, 'room:' + uid + ':' + roomId, 5 * 60_000), rooms: socialRooms, voice: socialVoice, platform, eligible: socialEligible, publicId: id => community.pub(id), presentFriends: (id, publicIds) => social.friendsPresent(id, new Set(publicIds)), resolveTarget: value => accounts.has(value) ? value : community.resolvePublicId(value) ?? accounts.findByDisplayPlayerId(value) ?? null,
             resolveGiftTarget: value => community.resolvePublicId(value), replayGiftBatch: batchReplayView, replayGift: singleGiftReplayView, quoteGift: (user, body) => { const g = giftcat.get(body.gift); if (!g?.active)
                 return { ok: false, error: 'الهدية غير متاحة.' }; if (body.seen !== g.price || body.seenPolicy !== GIFT_REWARD_POLICY.id)
                 return { ok: false, error: 'تغير عرض الهدية. حدّث الكتالوج.' }; const qty = body.qty, q = Array.isArray(body.to) ? quoteGiftBatch(g.price, qty, body.to.length) : quoteGiftRewards(g.price, qty); if (!q || q.total > 1_000_000)
@@ -1289,6 +2302,14 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                     return;
                 const session = sessions.cookieUser(req.headers.cookie);
                 const user = session ? { ...session, name: accounts.nameOf(session.id) || session.name } : null;
+                if (user) {
+                    try {
+                        const h = sessions.tokenHash(req.headers.cookie);
+                        if (h)
+                            devices.touch(user.id, h, String(req.headers['user-agent'] ?? '').slice(0, 300), (x) => sessions.activeHashes(user.id).includes(x));
+                    }
+                    catch { /* الأجهزة ثانوية */ }
+                }
                 if (url.pathname === '/healthz') {
                     // liveness: الرمز مثل قبل (يتأثر بمخزن الغرف فقط)، ونضيف حقل storage للمراقبة
                     const ok = await store.ping();
@@ -1314,6 +2335,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 // الصيانة والحظر يُطبَّقان هنا بالخادم قبل أي مسار: الصيانة تمنع كل /api/ ما عدا الحالة والجلسة القديمة والإدارة
                 if (url.pathname === '/api/status' && req.method === 'GET')
                     return json(res, 200, admin.publicStatus(user));
+                if (user && req.method !== 'GET' && req.method !== 'HEAD' && url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/admin') && isGuest(user.id) && !guestHttpAllowed(url.pathname))
+                    return json(res, 403, { error: GUEST_MSG, code: 'guest' });
                 if (url.pathname.startsWith('/api/') && url.pathname !== '/api/me' && !url.pathname.startsWith('/api/admin/')) {
                     const mb = admin.maintenanceBlock(user);
                     if (mb)
@@ -1617,8 +2640,93 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                     }
                     return json(res, 200, { questions });
                 }
+                // R62: الأجهزة
+                if (url.pathname === '/api/devices' && req.method === 'GET') {
+                    if (!user)
+                        return json(res, 401, { error: 'سجّل دخولك.' });
+                    const cur = sessions.tokenHash(req.headers.cookie);
+                    const act = new Set(sessions.activeHashes(user.id));
+                    return json(res, 200, { ok: true, list: devices.list(user.id, cur, (h) => act.has(h)) });
+                }
+                if ((url.pathname === '/api/devices/revoke' || url.pathname === '/api/devices/revoke-others') && req.method === 'POST') {
+                    if (!user)
+                        return json(res, 401, { error: 'سجّل دخولك.' });
+                    if (!sameOrigin(req))
+                        return json(res, 403, { error: 'طلب مرفوض.' });
+                    let b = {};
+                    try {
+                        b = JSON.parse((await appReadBody(req)) || '{}');
+                    }
+                    catch {
+                        return json(res, 400, { error: 'بيانات غير صالحة.' });
+                    }
+                    const cur = sessions.tokenHash(req.headers.cookie);
+                    let n = 0;
+                    if (url.pathname.endsWith('/revoke-others'))
+                        n = sessions.revokeHashes(user.id, cur);
+                    else {
+                        const h = typeof b?.id === 'string' ? devices.resolve(user.id, b.id) : null;
+                        if (!h || h === cur)
+                            return json(res, 400, { error: 'هذا الجهاز مب موجود (أو هو جهازك الحالي — استخدم «تسجيل الخروج»).' });
+                        n = sessions.revokeHashes(user.id, cur, h);
+                    }
+                    kickRevoked(user.id);
+                    log('devices_revoked', { n });
+                    return json(res, 200, { ok: true, revoked: n });
+                }
+                if (url.pathname === '/api/first-topup' && req.method === 'GET')
+                    return json(res, 200, { ok: true, eligible: !!user && firstTopup.eligible(user.id) && (paymentSettings?.mode === 'live' || (paymentSettings?.mode === 'test' && firstTopup.allowTest)), percent: firstTopup.percent });
+                if (url.pathname === '/api/season' && req.method === 'GET')
+                    return json(res, 200, seasonView());
+                // R62: هدية الدخول اليومي المتصاعدة
+                if (url.pathname === '/api/home-banners' && req.method === 'GET')
+                    return json(res, 200, { ok: true, list: homeBanners.publicList() });
+                if (url.pathname.startsWith('/api/home-banners/img/') && (req.method === 'GET' || req.method === 'HEAD')) {
+                    const buf = homeBanners.image(url.pathname.slice('/api/home-banners/img/'.length));
+                    if (!buf)
+                        return json(res, 404, { error: 'الصورة غير موجودة.' });
+                    res.writeHead(200, { 'Content-Type': 'image/webp', 'Content-Length': buf.length, 'Cache-Control': 'public, max-age=31536000, immutable', ...SECURITY_HEADERS });
+                    return res.end(req.method === 'HEAD' ? undefined : buf);
+                }
+                if (url.pathname === '/api/site-flags' && req.method === 'GET') {
+                    const f = siteFlags.get();
+                    return json(res, 200, { ok: true, cinema: f.cinema, bigGiftMin: f.bigGiftMin, profileBgVip: f.profileBgVip, streak: f.streak, roomBgLevel: currentTuning().roomBg });
+                }
+                if (url.pathname === '/api/daily-streak' && req.method === 'GET') {
+                    if (!user)
+                        return json(res, 401, { error: 'سجّل دخولك.' });
+                    return json(res, 200, { ...streak.view(user.id, wallet.canClaim(user.id)), enabled: siteFlags.get().streak });
+                }
+                // R62: إشعارات الجوال
+                if (url.pathname === '/api/push/key' && req.method === 'GET')
+                    return json(res, 200, webPush ? { ok: true, key: webPush.publicKey, devices: user ? webPush.count(user.id) : 0 } : { ok: false });
+                if ((url.pathname === '/api/push/subscribe' || url.pathname === '/api/push/unsubscribe') && req.method === 'POST') {
+                    if (!user)
+                        return json(res, 401, { error: 'سجّل دخولك.' });
+                    if (!sameOrigin(req))
+                        return json(res, 403, { error: 'طلب مرفوض.' });
+                    if (!webPush)
+                        return json(res, 503, { error: 'الإشعارات غير متاحة.' });
+                    let b;
+                    try {
+                        b = JSON.parse(await appReadBody(req));
+                    }
+                    catch {
+                        return json(res, 400, { error: 'بيانات غير صالحة.' });
+                    }
+                    if (url.pathname.endsWith('/unsubscribe')) {
+                        if (typeof b?.endpoint === 'string')
+                            webPush.unsubscribe(user.id, b.endpoint);
+                        return json(res, 200, { ok: true, devices: webPush.count(user.id) });
+                    }
+                    if (!webPush.subscribe(user.id, b?.subscription, String(req.headers['user-agent'] ?? '')))
+                        return json(res, 400, { error: 'هالمتصفح ما يدعم الإشعارات أو الاشتراك غير صالح.' });
+                    if (b?.test)
+                        void webPush.send(user.id, { title: 'لعبك 🎮', body: 'تمام! الإشعارات شغالة على هالجهاز.', url: '#/', tag: 'push-test' });
+                    return json(res, 200, { ok: true, devices: webPush.count(user.id) });
+                }
                 if (url.pathname === '/api/me' && req.method === 'GET')
-                    return json(res, 200, { user, google: !!user && identities.linked(user.id) });
+                    return json(res, 200, { deletion: user ? deletion.pending(user.id) : null, user, google: !!user && identities.linked(user.id), guestReadOnly: !!user && isGuest(user.id), ...(user && unlinkedGuest(user.id) && inGrace(user.id) ? { guestLockAt } : {}) });
                 if (url.pathname === '/api/auth/config' && req.method === 'GET')
                     return json(res, 200, { google: cfg.googleClientId || null });
                 if (url.pathname === '/api/auth/google' && req.method === 'POST') {
@@ -1778,6 +2886,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             const blocked = admin.maintenanceBlock(user) ?? admin.banBlock(user);
             if (blocked)
                 return { ok: false, error: blocked };
+            if (isGuest(user.id) && (GUEST_WS_BLOCK.has(t) || (t === 'room:create' && m?.mode !== 'bots')))
+                return { ok: false, code: 'guest', error: GUEST_MSG };
             switch (t) {
                 case 'room:create':
                     if (typeof m.key !== 'string' || !/^[A-Za-z0-9_-]{8,128}$/.test(m.key))
@@ -1897,7 +3007,35 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                             return { ok: false, error: STORAGE_MSG, storage: true };
                         throw e;
                     }
-                    return n ? { ok: true, got: n, coins: wallet.balance(user.id) } : { ok: false, error: 'استلمت مكافأة اليوم. تعال بكرة.' };
+                    if (!n)
+                        return { ok: false, error: 'استلمت مكافأة اليوم. تعال بكرة.' };
+                    // R62: هدية السلسلة فوق المكافأة اليومية (مفتاح ثابت لكل يوم — ما تتكرر)
+                    let extra = 0, gemsGot = 0, day = 1;
+                    if (siteFlags.get().streak)
+                        try {
+                            const st = streak.claim(user.id);
+                            day = st.day;
+                            if (st.bonus.coins > 0 && wallet.grant(user.id, 'coins', st.bonus.coins, `هدية الدخول اليومي — اليوم ${st.day}`, `streak:${st.today}:c`))
+                                extra = st.bonus.coins;
+                            if (st.bonus.gems > 0 && wallet.grant(user.id, 'gems', st.bonus.gems, `هدية اليوم السابع`, `streak:${st.today}:g`))
+                                gemsGot = st.bonus.gems;
+                        }
+                        catch (e) {
+                            log('streak_failed', { error: String(e.message).slice(0, 100) });
+                        }
+                    // R67ae: فعالية «ضعف اليومية» من اللوحة (مفتاح ثابت لليوم — ما تتكرر)
+                    {
+                        const ev = siteFlags.activeEvents().find((e) => e.kind === 'daily2x');
+                        if (ev) {
+                            const dk = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10);
+                            try {
+                                if (wallet.grant(user.id, 'coins', n, 'فعالية: ضعف المكافأة اليومية 🎉', `daily2x:${ev.id}:${dk}`))
+                                    extra += n;
+                            }
+                            catch { /* المكافأة الأساسية انصرفت */ }
+                        }
+                    }
+                    return { ok: true, got: n + extra, base: n, bonus: extra, gems: gemsGot, streakDay: day, coins: wallet.balance(user.id), gemBalance: wallet.gems(user.id) };
                 }
                 case 'mm:leave':
                     return { ok: true, left: mm.leave(user.id) };
@@ -2007,7 +3145,14 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             clearInterval(tickTimer);
             clearInterval(cleanTimer);
             clearInterval(storageTimer);
+            clearInterval(micTimer);
+            clearInterval(warTimer);
+            clearInterval(seasonTimer);
+            clearInterval(gemsTimer);
+            clearInterval(inviteTimer);
+            devices.stop();
             admin.stop();
+            backups?.stop();
             bulkGrants.close();
             await socialVoice.close();
             wss.clients.forEach((c) => c.terminate());

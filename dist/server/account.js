@@ -406,11 +406,13 @@ export class Accounts {
     socialAge(id) { const p = this.d.profiles[id]; return p ? ageOf(p.birthDate, this.now()) : null; }
     /** اسم الحساب المحفوظ، أو '' لو الحساب غير موجود */
     /** بحث بالاسم لاختيار مستلم هدية: أسماء ومستويات فقط (لا بيانات خاصة)، بدون صاحب الطلب */
+    /** R67ae: حسابات مجدولة للحذف أو محذوفة ما تطلع بالبحث */
+    hiddenFilter;
     findByName(q, exclude, n = 8) {
         const t = q.trim().toLowerCase();
         if (t.length < 2)
             return [];
-        return Object.values(this.d.profiles).filter((p) => p.id !== exclude && p.name !== 'لاعب' && p.name.toLowerCase().includes(t))
+        return Object.values(this.d.profiles).filter((p) => p.id !== exclude && p.name !== 'لاعب' && p.name.toLowerCase().includes(t) && !this.hiddenFilter?.(p.id))
             .sort((x, y) => Number(y.name.toLowerCase() === t) - Number(x.name.toLowerCase() === t) || x.name.localeCompare(y.name)).slice(0, n)
             .map((p) => ({ id: p.id, name: p.name, level: levelOf(this.displayXp(p)) }));
     }
@@ -472,6 +474,27 @@ export class Accounts {
         return { ok: true, dup, specialPlayerId: p.specialPlayerId ?? null, playerId: p.playerId ?? null, displayPlayerId: p.specialPlayerId ?? p.playerId ?? null };
     }
     /** Observed authenticated activity only; never called by balance/grant mirrors. At most one write per five minutes. */
+    /** R67ae: حذف الحساب — يمسح البيانات الشخصية ويخلي اسم «حساب محذوف» (الإحصائيات تبقى بدون هوية) */
+    anonymize(id) {
+        const p = this.d.profiles[id];
+        if (!p)
+            return;
+        const prev = structuredClone(p);
+        p.name = 'حساب محذوف';
+        p.bio = '';
+        p.favoriteGames = [];
+        delete p.country;
+        delete p.gender;
+        delete p.birthDate;
+        delete p.specialPlayerId;
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.d.profiles[id] = prev;
+            throw e;
+        }
+    }
     noteActivity(id) {
         const p = this.d.profiles[id];
         if (!p)
@@ -585,6 +608,8 @@ export class Accounts {
     all() { return Object.values(this.d.profiles).map((p) => ({ id: p.id, name: p.name, since: p.since, xp: this.displayXp(p), level: levelOf(this.displayXp(p)), points: p.points, wins: p.wins, played: p.played })); }
     has(id) { return !!this.d.profiles[id]; }
     /** R53: وقت إنشاء الحساب (null لو غير معروف بدقة) — لربط دعوة الأصدقاء بالحسابات الجديدة فقط */
+    /** R62: عدد المباريات اللي لعبها مع لاعبين حقيقيين (بدون الكمبيوتر) — لشرط مكافأة الدعوة */
+    rankedPlayed(id) { const p = this.d.profiles[id]; return p ? Object.values(p.games).reduce((n, g) => n + (g.ranked ?? 0), 0) : 0; }
     sinceOf(id) { const p = this.d.profiles[id]; return p && !p.sinceInferred && Number.isSafeInteger(p.since) ? p.since : null; }
     /** ملخص عام لصفحة اللاعب بالمجتمع (قراءة فقط ولا ينشئ حساباً): المستوى والألعاب والفوز وأكثر لعبة لعبها. بدون عملات ولا سجلات */
     publicStats(id) {
@@ -612,6 +637,12 @@ export class Accounts {
             t.won += s.won;
         } return o; }
     /** ملف كامل لمراجعة الإدارة (معرّف كامل) */
+    /** R67: هل لعب الحسابين نفس المباراة من وقت معيّن (مهمة CP «العبوا لعبة وحدة») */
+    playedTogetherSince(a, b, since) {
+        const ha = this.d.profiles[a]?.history ?? [], hb = this.d.profiles[b]?.history ?? [];
+        const keys = new Set(hb.filter((h) => h.ts >= since).map((h) => h.key));
+        return ha.filter((h) => h.ts >= since && keys.has(h.key)).length;
+    }
     adminProfile(id) { const p = this.d.profiles[id]; return p ? { id: p.id, name: p.name, since: p.since, xp: this.displayXp(p), level: levelOf(this.displayXp(p)), points: p.points, wins: p.wins, played: p.played, games: p.games, history: p.history.slice(-20).reverse() } : null; }
     /** ملف اللاعب نفسه فقط (يُطلب بمعرّف جلسته، ما فيه مسار لحساب غيره) */
     profile(id, coins) {

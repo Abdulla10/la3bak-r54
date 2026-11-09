@@ -55,12 +55,29 @@ export const PRICE_LADDER = [10, 20, 50, 100, 200, 300, 500, 800, 1_000, 1_500, 
 export const rarityOf = (price) => (price < 100 ? 0 : price < 1_000 ? 1 : price < 5_000 ? 2 : price < 20_000 ? 3 : price < 100_000 ? 4 : 5);
 /** أقسام الهدايا القديمة المعتمدة (14) — تبقى بأسعارها ومعرّفاتها */
 const LEGACY_CAT = { rose: 'flowers', heart: 'love', coffee: 'normal', chocolate: 'normal', teddy: 'kids', balloons: 'party', bouquet: 'flowers', crown: 'palaces', diamond: 'luxury', butterfly: 'animals', car: 'cars', palace: 'palaces', dragon: 'dragons', rocket: 'space' };
+/** R68i: هدايا المالك ثلاثية الأبعاد (صوره) — هي الهدايا المعروضة بس. السعر بالعملات (يتخزن ÷20). */
+const ART3D = [
+    ['a08', 'قلعة الأحلام', 'palaces', 2_000_000], ['a05', 'يخت فاخر', 'sky', 1_500_000], ['a12', 'التنين الناري', 'dragons', 1_200_000], ['a01', 'العرش الملكي', 'palaces', 1_000_000],
+    ['a03', 'الأسد الملكي', 'animals', 800_000], ['a18', 'بيغاسوس المجنّح', 'dragons', 700_000], ['a09', 'سيارة رياضية', 'cars', 600_000], ['a02', 'العنقاء الزرقاء', 'dragons', 500_000],
+    ['c01', 'تاج ملكي', 'palaces', 400_000], ['c02', 'النسر المتوّج', 'animals', 300_000], ['a17', 'صندوق الكنز', 'luxury', 30_000], ['a10', 'هلال الأحلام', 'seasonal', 25_000],
+    ['a20', 'خاتم الماس', 'love', 20_000], ['a04', 'شجرة الساكورا', 'flowers', 15_000], ['b03', 'كمبيوتر قيمنق', 'luxury', 15_000], ['a15', 'منطاد الأحلام', 'sky', 12_000],
+    ['a14', 'بجعتا الحب', 'love', 10_000], ['b14', 'ساعة جيب ذهبية', 'luxury', 9_000], ['a11', 'رائد الفضاء', 'space', 8_000], ['b18', 'صاروخ النجوم', 'space', 7_000],
+    ['b06', 'كأس البطولة', 'legendary', 6_000], ['c09', 'الساعة الرملية', 'magic', 5_000], ['a07', 'قلب ماسي متوّج', 'love', 5_000], ['b13', 'العقرب الذهبي', 'magic', 4_000],
+    ['b02', 'آلة الألعاب', 'kids', 4_000], ['b11', 'عطر فاخر', 'luxury', 3_500], ['a13', 'وردة الجرس', 'flowers', 3_000], ['c07', 'كرة الساكورا', 'magic', 2_500],
+    ['a19', 'باقة ورد حمراء', 'flowers', 2_000], ['c06', 'كيكة ملكية', 'party', 2_000], ['a06', 'دلة قهوة عربية', 'seasonal', 1_500], ['b15', 'كرة المجرة', 'space', 1_500],
+    ['c08', 'ألعاب نارية', 'fireworks', 1_200], ['a16', 'دبدوب الفضاء', 'kids', 1_000], ['b09', 'سماعة الدي جي', 'party', 1_000], ['b01', 'المايك الذهبي', 'party', 800],
+    ['c04', 'سماعة قيمنق', 'kids', 800], ['b08', 'جويستيك', 'kids', 600], ['b20', 'فانوس رمضان', 'seasonal', 500], ['c05', 'يد التحكم', 'kids', 500],
+    ['b10', 'البومة الساعية', 'animals', 400], ['b07', 'حذاء رياضي', 'normal', 300], ['b12', 'سمكة الكوي', 'animals', 300], ['c03', 'القطوة الأميرة', 'animals', 200],
+    ['b04', 'زهر الحظ', 'normal', 200], ['b17', 'فراشة كريستال', 'animals', 100], ['b05', 'لوحة الفنان', 'normal', 100], ['b16', 'سوشي', 'normal', 60], ['b19', 'ندفة ثلج', 'seasonal', 20],
+];
 /** مواضيع جديدة تشارك GLB مع هدية قديمة: المعرف القديم وحده معتمد، حتى لو تعطّله الإدارة. */
 const LEGACY_SUBJECT_ID = Object.freeze({
     rose: 'rose', heart: 'heart', teddy: 'teddy', diamond: 'diamond', crown: 'crown',
     palace: 'palace', dragon: 'dragon', rocket: 'rocket', sportscar: 'car',
 });
-const shopEligible = (g) => g.motif.startsWith('legacy:') || (g.variant === 0 && !Object.hasOwn(LEGACY_SUBJECT_ID, g.motif));
+// R68i: الهدايا القديمة تبقى بالسجل بس؛ المعروض للإرسال هدايا المالك ثلاثية الأبعاد
+const shopEligible = (g) => g.motif.startsWith('img:');
+void LEGACY_SUBJECT_ID;
 /** أسماء بديلة للرسمات الجديدة اللي تشارك اسم هدية قديمة معتمدة */
 const ALT_NAME = { 'وردة': 'وردة جورية', 'قلب': 'قلب نابض', 'دبدوب': 'دبدوب محشي', 'صاروخ فضائي': 'صاروخ المجرة', 'ماسة': 'ماسة زرقاء', 'تاج': 'تاج الملوك' };
 function build() {
@@ -78,6 +95,10 @@ function build() {
                 out.push({ id: `${c.id}-${mid}-${v.key}`, name: nm, cat: c.id, price, rarity: rarityOf(price), motif: mid, variant: vi, fx: c.fx, added: 2, icon: c.icon });
             });
         });
+    }
+    for (const [art, name, cat, coins] of ART3D) {
+        const price = coins / 20;
+        out.push({ id: 'g3d-' + art, name, cat, price, rarity: rarityOf(price), motif: 'img:' + art, variant: 0, fx: GIFT_CATS.find((c) => c.id === cat).fx, added: 3, icon: GIFT_CATS.find((c) => c.id === cat).icon });
     }
     return out;
 }

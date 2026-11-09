@@ -129,6 +129,9 @@ export class Leaderboard {
     }
     /** الحفظ بعد التسجيل: لو فشل تبقى النقاط بالذاكرة وتنعاد الكتابة (retry) وتظهر الحالة في /readyz. */
     save() { this.disk.save(); }
+    /** R62: أوائل شهر معيّن (بداية الشهر بتوقيت الخليج) — لجوايز الموسم الشهري */
+    monthRows(start, limit = 10) { const b = this.d.months?.[String(start)]; if (!b)
+        return []; return Object.values(b).filter((r) => r.points > 0).sort((a, b2) => b2.points - a.points || b2.wins - a.wins || a.games - b2.games || a.id.localeCompare(b2.id)).slice(0, limit).map((r) => ({ ...r })); }
     retry() { this.disk.retry(); }
     /** نتائج بالذاكرة ما انكتبت بعد */
     unsaved() { return this.disk.unsaved; }

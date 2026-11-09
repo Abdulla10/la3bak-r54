@@ -50,6 +50,8 @@ export function wirePaymentRoutes(httpRoutes, payments, platform, changed) {
         fields(ctx, ['packId', 'key']);
         if (Object.keys(ctx.body).length !== 2 || !bounded(ctx.body.packId, 80) || !bounded(ctx.body.key, 80))
             throw new FunctionalHttpError(400, 'معرّف الباقة ومفتاح العملية مطلوبين.');
+        if (process.env.SINGLE_CURRENCY !== '0' && String(ctx.body.packId).startsWith('gems-'))
+            throw new FunctionalHttpError(410, 'باقات الجواهر انشالت — الموقع صار بالعملات بس.');
         const result = await payments.claim(ctx.user.id, ctx.body.packId, ctx.body.key);
         try {
             changed(ctx.user.id);
@@ -67,6 +69,8 @@ export function wirePaymentRoutes(httpRoutes, payments, platform, changed) {
         fields(ctx, ['packId', 'key', 'name', 'email']);
         if (!bounded(ctx.body.packId, 80) || !bounded(ctx.body.key, 80) || !bounded(ctx.body.name, 160) || !bounded(ctx.body.email, 254))
             throw new FunctionalHttpError(400, 'راجع اسم صاحب الطلب والبريد ومفتاح العملية.');
+        if (process.env.SINGLE_CURRENCY !== '0' && String(ctx.body.packId).startsWith('gems-'))
+            throw new FunctionalHttpError(410, 'باقات الجواهر انشالت — الموقع صار بالعملات بس.');
         return payments.create(ctx.user.id, ctx.body.packId, ctx.body.key, { name: ctx.body.name, email: ctx.body.email });
     }));
     httpRoutes.add('GET', '/api/payments/orders/:id', wrap(ctx => payments.get(ctx.user.id, ctx.params.id)));

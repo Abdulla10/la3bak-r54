@@ -4,7 +4,7 @@ import { can } from './platform.js';
 export const ACCOUNT_SETTINGS_DEFAULTS = Object.freeze({
     sound: false, notifications: false, showActivity: false, showPresence: false,
     // R55: مؤثرات الهدايا ثلاثية الأبعاد والدخوليات تظهر افتراضيًا (مثل باقي المنصات)، واللاعب يقدر يخفيها من الإعدادات
-    hideEntrances: false, hideChatEffects: false,
+    hideEntrances: false, hideChatEffects: false, hideVisits: false, hidePosts: false, hideNameColor: false, flatProfileBg: false,
 });
 export const ACCOUNT_REASON_MAX = 500;
 export const VERIFICATION_GRANT_REASON_MAX = 180;
@@ -230,6 +230,8 @@ export function validAccountTools(d) {
 const blank = () => ({ v: 1, settings: {}, requests: [], audit: [], seq: 0, directGrants: {}, grantHistory: [] });
 export class AccountTools {
     now;
+    /** R60: فحص صلاحية تغيير خيار (يرجع رسالة الرفض أو null) */
+    gate;
     d = blank();
     disk;
     persistent;
@@ -292,6 +294,12 @@ export class AccountTools {
     updateSettings(id, raw) {
         playerId(id);
         const patch = settingsPatch(raw), current = this.settings(id), next = { ...current, ...patch };
+        // R60: خيارات الخصوصية المقفولة برتبة VIP/نبيل (الخادم يتحقق، مو بس الواجهة)
+        for (const k of Object.keys(patch)) {
+            const why = this.gate?.(id, k, patch[k]);
+            if (why)
+                throw new AccountToolsError('privacy_level', why, 403);
+        }
         if (KEYS.every(k => current[k] === next[k]))
             return next;
         // R55: نخزن اختيارات اللاعب الصريحة فقط، عشان تغيير الافتراضي مستقبلًا ما ينحبس بقيم ما اختارها

@@ -300,6 +300,8 @@ export class SocialPrivate {
         }
         return rows;
     }
+    /** R67: عدد الرسائل بين طرفين من وقت معيّن (لمهمة CP اليومية) — داخلي */
+    pairMessagesSince(a, b, since) { return this.d.messages.filter(m => m.at >= since && ((m.from === a && m.to === b) || (m.from === b && m.to === a))).length; }
     unreadCount(me) { const peers = this.inboxRows(me); return this.d.messages.filter(m => m.to === me && m.readAt === null && peers.has(m.from)).length; }
     inbox(me, opts = {}) {
         this.actor(me);
@@ -377,6 +379,15 @@ export class SocialPrivate {
     }
     /** R58w: الارتباط الافتراضي الحالي (للخادم بس: نقاط CP). ما يغيّر شي ولا يتجاوز إعدادات الظهور. */
     coupleOf(me) { const b = (this.d.familyR47?.couples ?? []).find(x => x.a === me || x.b === me); return b ? { id: b.id, partner: b.a === me ? b.b : b.a, at: b.at } : null; }
+    /** R67ae: للإدارة — كل الارتباطات، وفك ارتباط واحد */
+    allCouples() { return (this.d.familyR47?.couples ?? []).map((x) => ({ id: x.id, a: x.a, b: x.b, at: x.at })); }
+    adminBreakCouple(id) {
+        const c = (this.d.familyR47?.couples ?? []).find((x) => x.id === id);
+        if (!c)
+            return null;
+        this.tx(() => { const st = this.d.familyR47; st.couples = st.couples.filter((x) => x.id !== id); });
+        return { a: c.a, b: c.b };
+    }
     /** Parent resolves subject/viewer from the current account/profile; never accept internal IDs from HTTP. */
     familyPublic(subject, viewer) {
         return publicFamilyView(this.d.familyR47 ?? emptyFamilyState(), subject, viewer, this.familyContext());

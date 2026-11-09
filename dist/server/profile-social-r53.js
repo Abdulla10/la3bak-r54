@@ -68,8 +68,10 @@ export class ProfileSocial {
         const list = (this.d.visits[me] ?? []).filter((v) => this.visible(me, v.by));
         const seen = this.d.seen[me] ?? 0;
         const lim = Math.max(1, Math.min(VISITS_KEEP, limit));
-        return { ok: true, total: list.length, fresh: list.filter((v) => v.at > seen).length, seenAt: seen || null,
-            list: list.slice(0, lim).map((v) => (v.h || this.dep.hidesActivity(v.by)
+        // R60: الأسماء والصور تنفتح من VIP 11 (حتى اللي مسكرين نشاطهم)، إلا اللي عنده VIP 14 ومشغّل التخفي. قبلها كل الزوار «زائر» مع عدد الزيارات.
+        const need = this.dep.needVip ?? 0, open = !need || (this.dep.viewerVip?.(me) ?? 0) >= need;
+        return { ok: true, total: list.length, fresh: list.filter((v) => v.at > seen).length, seenAt: seen || null, locked: !open, needVip: need,
+            list: list.slice(0, lim).map((v) => (!open || this.dep.stealthVisit?.(v.by) || (!need && (v.h || this.dep.hidesActivity(v.by)))
                 ? { hidden: true, publicId: null, name: 'زائر مخفي', avatar: null, level: null, at: v.at, count: v.n, fresh: v.at > seen }
                 : { ...this.dep.who(v.by), hidden: false, at: v.at, count: v.n, fresh: v.at > seen })) };
     }
@@ -96,8 +98,10 @@ export class ProfileSocial {
         return { ok: true, code: myPublicId, joinedCount: joined.length,
             joined: joined.slice(0, 100).map(([id, x]) => ({ ...this.dep.who(id), at: x.at })),
             invitedBy: mine && this.visible(me, mine.by) ? { ...this.dep.who(mine.by), at: mine.at } : null,
-            canClaim: !mine && since !== null && this.now() - since <= INVITE_WINDOW_MS, rewards: null };
+            canClaim: !mine && since !== null && this.now() - since <= INVITE_WINDOW_MS, rewards: this.dep.inviteRewards?.(me) ?? null };
     }
+    /** R62: كل الدعوات (المدعو، صاحب الدعوة، الوقت) — لمكافأة الدعوة */
+    allInvites() { return Object.entries(this.d.invites).map(([id, x]) => ({ id, by: x.by, at: x.at })); }
     claim(me, code) {
         if (this.d.invites[me])
             return { ok: true, already: true };

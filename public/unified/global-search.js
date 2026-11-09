@@ -1,4 +1,4 @@
-import { SEARCH_ICON } from './search-icon.js';
+import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
 
 const PUB = /^[A-Za-z0-9_-]{16}$/;
 const ROOM_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

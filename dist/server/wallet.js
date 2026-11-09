@@ -427,6 +427,61 @@ export class Wallet {
         this.disk = new Persister('wallet', file, () => this.d, now, mon);
         this.settleExpiredLuckyBags();
     }
+    /** R63: «عملة وحدة» — الجواهر انشالت من الموقع والكل يشوف عملات بس (جوهرة = 20 عملة).
+     * أي خصم بالجواهر (شراء، هدية، مزاد، حقيبة، مكافأة غرفة، باقة VIP) يحوّل قبله من العملات بالضبط اللي ناقص (بنفس النسبة)، بعملية محفوظة لحالها.
+     * التحويل محايد القيمة (الرصيد المعروض = عملات + جواهر × 20 ما يتغيّر)، فلو العملية بعده فشلت ما أحد يخسر شي. SINGLE_CURRENCY=0 يطفيه. */
+    static COINS_PER_GEM = 20;
+    coverGems(id, need) {
+        if (process.env.SINGLE_CURRENCY === '0' || !nat(need) || need <= 0 || !this.has(id))
+            return false;
+        const a = this.a(id), have = a.gems ?? 0;
+        if (have >= need)
+            return true;
+        const deficit = need - have, cost = deficit * Wallet.COINS_PER_GEM;
+        if (!nat(cost) || a.coins < cost || !this.auctionCanBalanceR47(id, 'coins', a.coins - cost) || !nat(have + deficit))
+            return false;
+        const sn = this.snap([id]);
+        a.coins -= cost;
+        a.gems = have + deficit;
+        this.rec(id, 'coins', 'transfer', -cost, a.coins, 'تحويل تلقائي (عملة وحدة)', 'single-currency');
+        this.rec(id, 'gems', 'transfer', deficit, a.gems, 'تحويل تلقائي (عملة وحدة)', 'single-currency');
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            throw e;
+        }
+        return true;
+    }
+    /** R63: يحوّل كل جواهر اللاعب لعملات (×20) — يُستخدم للتحويل الأول وبعد أي جوايز قديمة تنصرف بالجواهر. يرجع عدد الجواهر اللي انحولت. */
+    sweepGems(id) {
+        if (process.env.SINGLE_CURRENCY === '0' || !this.has(id))
+            return 0;
+        const a = this.a(id), g = a.gems ?? 0;
+        if (g <= 0)
+            return 0;
+        const add = g * Wallet.COINS_PER_GEM;
+        if (!nat(add) || !nat(a.coins + add) || !this.auctionCanBalanceR47(id, 'coins', a.coins + add))
+            return 0;
+        const sn = this.snap([id]);
+        a.gems = 0;
+        a.coins += add;
+        this.rec(id, 'gems', 'transfer', -g, 0, 'تحويل الجواهر إلى عملات (جوهرة = 20 عملة)', 'single-currency');
+        this.rec(id, 'coins', 'transfer', add, a.coins, 'تحويل الجواهر إلى عملات (جوهرة = 20 عملة)', 'single-currency');
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            throw e;
+        }
+        return g;
+    }
+    /** R63: اللاعبين اللي عندهم جواهر (للتحويل الدوري) */
+    withGems() { return Object.entries(this.d.acc).filter(([, a]) => (a.gems ?? 0) > 0).map(([id]) => id); }
+    /** R63: الرصيد الموحّد اللي ينعرض للاعب (عملات + جواهر × 20) */
+    unified(id) { const a = this.d.acc[id]; return a ? a.coins + (a.gems ?? 0) * Wallet.COINS_PER_GEM : 0; }
     snap(ids) { return new Map(ids.map((id) => [id, structuredClone(this.a(id))])); }
     restore(m) { for (const [id, a] of m)
         this.d.acc[id] = a; }
@@ -486,6 +541,28 @@ export class Wallet {
         }
         this.onTx?.(id, 'daily', DAILY_COINS, a.coins, '');
         return DAILY_COINS;
+    }
+    /** R67ae: خصم خدمة (مثل البرقية العالمية) — مرة وحدة لكل مرجع؛ نفس المرجع يرجع نفس النتيجة بدون خصم ثاني */
+    spendService(id, amount, reason, ref) {
+        if (!nat(amount) || amount <= 0 || !ref)
+            return { ok: false, code: 'bad' };
+        const acc = this.a(id);
+        if ((acc.ledger ?? []).some((l) => l.ref === ref && l.kind === 'purchase'))
+            return { ok: true, coins: acc.coins, dup: true };
+        if (acc.coins < amount)
+            return { ok: false, code: 'poor' };
+        const sn = this.snap([id]);
+        acc.coins -= amount;
+        this.rec(id, 'coins', 'purchase', -amount, acc.coins, reason, ref);
+        try {
+            this.disk.mustSave();
+        }
+        catch (e) {
+            this.restore(sn);
+            throw e;
+        }
+        this.onTx?.(id, 'purchase', -amount, acc.coins, ref);
+        return { ok: true, coins: acc.coins, dup: false };
     }
     /** يخصم من الكل أو ما يخصم أبداً. يرجّع أرقام الفاشلين (رصيدهم ما يكفي). لو الحفظ فشل يتراجع الخصم ويرمي StorageError. */
     charge(ids, amount, ref = '') {
@@ -718,6 +795,11 @@ export class Wallet {
             return { ok: false, code: 'low' };
         if (!this.auctionCapacityR47())
             return { ok: false, code: 'capacity' };
+        {
+            const held0 = lot.highest?.actor === actor ? lot.escrow : 0;
+            if (cur === 'gems' && amount > held0)
+                this.coverGems(actor, amount - held0);
+        }
         const have = a[cur] ?? 0, ownHeld = lot.highest?.actor === actor ? lot.escrow : 0;
         if (have + ownHeld < amount)
             return { ok: false, code: 'poor' };
@@ -911,6 +993,8 @@ export class Wallet {
         if (!nat(ts) || !nat(opensAt) || !nat(expiresAt))
             return { ok: false, code: 'bad' };
         const total = bagUnit(offer) * count, cur = bagCur(offer), a = this.d.acc[from];
+        if (cur === 'gems')
+            this.coverGems(from, total);
         const have = cur === 'coins' ? a.coins : a.gems ?? 0;
         if (have < total)
             return { ok: false, code: 'poor' };
@@ -1140,6 +1224,7 @@ export class Wallet {
         if (!nat(ts))
             return { ok: false, code: 'bad' };
         const a = this.d.acc[from], b = this.d.acc[to];
+        this.coverGems(from, amount);
         if ((a.gems ?? 0) < amount)
             return { ok: false, code: 'poor' };
         if (!nat((b.gems ?? 0) + amount))
@@ -1221,6 +1306,8 @@ export class Wallet {
         const a = this.a(id);
         if (item.permanent && (a.owned ?? []).includes(item.id))
             return { ok: false, code: 'owned' };
+        if (item.currency === 'gems')
+            this.coverGems(id, item.price);
         const bal = item.currency === 'coins' ? a.coins : (a.gems ?? 0);
         if (bal < item.price)
             return { ok: false, code: 'poor' };
@@ -1293,6 +1380,7 @@ export class Wallet {
             return { ok: false, code: 'bad' };
         if (!this.has(from) || !this.has(to))
             return { ok: false, code: 'noto' };
+        this.coverGems(from, quote.total);
         const a = this.d.acc[from], b = this.d.acc[to], { total, recv, house, senderBonus } = quote;
         if ((a.gems ?? 0) < total)
             return { ok: false, code: 'poor' };
@@ -1390,6 +1478,7 @@ export class Wallet {
         if (!this.has(from) || !canonical.every(id => this.has(id)))
             return { ok: false, code: 'noto' };
         const a = this.d.acc[from], count = canonical.length, per = quote.perRecipient;
+        this.coverGems(from, quote.total);
         if ((a.gems ?? 0) < quote.total)
             return { ok: false, code: 'poor' };
         const ts = this.now();
@@ -1530,6 +1619,78 @@ export class Wallet {
     houseView(n = 100) { const h = this.d.house ?? { coins: 0, count: 0, ledger: [] }; return { coins: h.coins, ...(h.gems !== undefined ? { gems: h.gems } : {}), count: h.count, ledger: structuredClone(h.ledger.slice(-n).reverse()) }; }
     /** عدد مرات إرسال كل هدية (للأكثر شعبية — من الإرسال الفعلي فقط) */
     giftPopularity() { return { ...(this.d.giftStats ?? {}) }; }
+    /** R67ae: للإدارة — كل الهدايا المرسلة (من سجلات الحسابات المحفوظة)، الأحدث أول */
+    adminGifts(opts = {}) {
+        const q = (opts.q ?? '').trim().toLowerCase(), since = opts.since ?? 0, limit = Math.max(1, Math.min(500, opts.limit ?? 200));
+        const all = [];
+        for (const a of Object.values(this.d.acc))
+            for (const g of a.gifts ?? [])
+                if (g.dir === 'out' && g.ts >= since)
+                    all.push(g);
+        all.sort((x, y) => y.ts - x.ts);
+        const val = (g) => (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1);
+        const hit = all.filter((g) => !q || g.fromName.toLowerCase().includes(q) || g.toName.toLowerCase().includes(q) || g.name.toLowerCase().includes(q));
+        // أزواج متكررة (نفس المرسل لنفس المستلم) — مؤشر لتحويل العملات بين الحسابات
+        const pairs = new Map();
+        for (const g of hit) {
+            const k = g.from + '>' + g.to;
+            const p = pairs.get(k) ?? { from: g.fromName, to: g.toName, count: 0, value: 0 };
+            p.count++;
+            p.value += val(g);
+            pairs.set(k, p);
+        }
+        return {
+            total: hit.length, value: hit.reduce((n, g) => n + val(g), 0),
+            list: hit.slice(0, limit).map((g) => ({ id: g.id, ts: g.ts, from: g.fromName, fromId: g.from, to: g.toName, toId: g.to, gift: g.name, icon: g.icon, qty: g.qty ?? 1, value: val(g), recv: g.recv ?? 0, room: !!g.room })),
+            pairs: [...pairs.values()].sort((x, y) => y.value - x.value).slice(0, 15),
+        };
+    }
+    /** R67ae: للإدارة — حركة العملات يوم بيوم (من سجلات الحسابات المحفوظة، بتوقيت الخليج) */
+    adminEconomy(days = 14, now = Date.now()) {
+        const GULF = 4 * 3600_000, dayOf = (t) => new Date(t + GULF).toISOString().slice(0, 10);
+        const since = now - days * 86_400_000;
+        const byDay = new Map();
+        for (let i = days - 1; i >= 0; i--) {
+            const d = dayOf(now - i * 86_400_000);
+            byDay.set(d, { day: d, in: 0, out: 0, kinds: {} });
+        }
+        const spend = new Map();
+        const giftCount = new Map();
+        for (const [id, a] of Object.entries(this.d.acc)) {
+            for (const l of a.ledger ?? []) {
+                if (l.ts < since)
+                    continue;
+                const coins = l.cur === 'gems' ? l.delta * 20 : l.delta;
+                const row = byDay.get(dayOf(l.ts));
+                if (!row)
+                    continue;
+                if (coins > 0)
+                    row.in += coins;
+                else
+                    row.out += -coins;
+                const k = (coins > 0 ? '+' : '-') + l.kind;
+                row.kinds[k] = (row.kinds[k] ?? 0) + Math.abs(coins);
+                if (coins < 0 && (l.kind === 'purchase' || l.kind === 'gift' || l.kind === 'entry_fee'))
+                    spend.set(id, (spend.get(id) ?? 0) - coins);
+            }
+            for (const g of a.gifts ?? []) {
+                if (g.dir !== 'out' || g.ts < since)
+                    continue;
+                const v = (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1);
+                const c = giftCount.get(g.gift) ?? { name: g.name, icon: g.icon, count: 0, value: 0 };
+                c.count += g.qty ?? 1;
+                c.value += v;
+                giftCount.set(g.gift, c);
+            }
+        }
+        const balances = Object.values(this.d.acc).reduce((n, a) => n + (a.coins ?? 0) + (a.gems ?? 0) * 20, 0);
+        return {
+            days: [...byDay.values()], balances, accounts: Object.keys(this.d.acc).length,
+            topSpenders: [...spend.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15).map(([id, v]) => ({ id, spent: v })),
+            topGifts: [...giftCount.values()].sort((a, b) => b.value - a.value).slice(0, 10),
+            house: { coins: this.d.house?.coins ?? 0, gems: this.d.house?.gems ?? 0 },
+        };
+    }
     /** سجل هدايا اللاعب نفسه (الأحدث أولاً). */
     giftsOf(id, dir, n = 50) { return structuredClone((this.d.acc[id]?.gifts ?? []).filter((g) => !dir || g.dir === dir).slice(-n).reverse()); }
     /** عدد الهدايا المرسلة والمستلمة (عمليات فعلية، للإنجازات) */
@@ -1617,6 +1778,8 @@ export class Wallet {
         const prev = opKey ? this.d.admOps?.[opKey] : undefined;
         if (prev)
             return prev.id === id && prev.cur === cur && prev.delta === delta ? { ok: true, coins: a.coins, gems: a.gems ?? 0, before: prev.before, after: prev.after, dup: true } : { ok: false, code: 'bad' };
+        if (cur === 'gems' && delta < 0)
+            this.coverGems(id, -delta);
         const have = cur === 'coins' ? a.coins : (a.gems ?? 0);
         if (have + delta < 0)
             return { ok: false, code: 'poor' };

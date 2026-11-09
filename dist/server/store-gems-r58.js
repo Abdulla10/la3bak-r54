@@ -13,6 +13,9 @@ const SHOWPIECES = Object.freeze({
     'lux-b-falls': 250_000, 'lux-b-snowcastle': 250_000, 'bg2-golden-hall': 200_000,
     'entrance-lux-black': 1_000_000, 'entrance-royal': 900_000,
     'lux-bub-imperial': 300_000, 'lux-board-inferno': 300_000,
+    // R67ad: خلفيات الملف الجديدة — أسعار متنوعة (بالجواهر؛ تنعرض عملات ×20)
+    'art-pb-11': 18_000, 'art-pb-12': 6_000, 'art-pb-13': 5_000, 'art-pb-14': 20_000, 'art-pb-15': 40_000, 'art-pb-16': 15_000,
+    'art-pb-17': 45_000, 'art-pb-18': 50_000, 'art-pb-19': 90_000, 'art-pb-20': 100_000, 'art-pb-21': 110_000, 'art-pb-22': 125_000,
 });
 export function gemsOnlyStorePrice(item) {
     const ladder = LADDERS[item.slot];

@@ -76,13 +76,39 @@ export function createAdmin(d) {
     let lag = 0, last = now();
     const lagTimer = setInterval(() => { const t = now(); lag = Math.max(0, t - last - 1000); last = t; }, 1000);
     lagTimer.unref?.();
+    /* R67ae: تنبيه دخول الإدارة — أول طلب من جهاز/شبكة جديدة خلال 12 ساعة ينسجل ويوصل تنبيه للمالك */
+    const loginSeen = new Map();
+    const loginLog = [];
+    const deviceOf = (ua) => { const os = /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'جهاز'; const br = /Edg\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : 'متصفح'; return `${os} · ${br}`; };
+    const netOf = (ip) => { const v4 = ip.replace(/^::ffff:/, ''); if (/^\d+\.\d+\.\d+\.\d+$/.test(v4))
+        return v4.split('.').slice(0, 2).join('.') + '.*.*'; return ip.split(':').slice(0, 3).join(':') + ':…'; };
+    function seenLogin(req, a) {
+        try {
+            const ua = String(req.headers['user-agent'] ?? '').slice(0, 300), net = netOf(d.ipOf(req)), device = deviceOf(ua), k = a.id + '|' + net + '|' + device, now = Date.now();
+            const last = loginSeen.get(k);
+            loginSeen.set(k, now);
+            if (loginSeen.size > 2000)
+                for (const [kk, t] of loginSeen)
+                    if (now - t > 12 * 3_600_000)
+                        loginSeen.delete(kk);
+            if (last === undefined || now - last > 12 * 3_600_000) {
+                const e = { at: now, actor: a.name, role: a.role, token: a.token, net, device };
+                loginLog.push(e);
+                if (loginLog.length > 100)
+                    loginLog.shift();
+                d.onAdminLogin?.(e, P.staff().filter((s) => s.role === 'owner').map((s) => s.id));
+            }
+        }
+        catch { /* التنبيه ما يوقف الدخول */ }
+        return a;
+    }
     function actorOf(req, user) {
         const tok = d.token();
         const bearer = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
         if (bearer)
-            return tok && safeEq(bearer, tok) ? { id: 'token', name: 'رمز الإدارة', role: 'owner', token: true } : null;
+            return tok && safeEq(bearer, tok) ? seenLogin(req, { id: 'token', name: 'رمز الإدارة', role: 'owner', token: true }) : null;
         const role = user ? P.roleOf(user.id) : null;
-        return user && role ? { id: user.id, name: user.name, role, token: false } : null;
+        return user && role ? seenLogin(req, { id: user.id, name: user.name, role, token: false }) : null;
     }
     const need = (a, perm) => { if (!can(a.role, perm))
         throw new HttpErr(403, 'ما عندك صلاحية لهذا الإجراء.'); };
@@ -277,11 +303,11 @@ export function createAdmin(d) {
     }
     function shop() {
         const owned = d.wallet.countOwned();
-        const items = d.shopcat.all().map(({ css, ...i }) => ({ ...i, css, owners: owned[i.id] ?? 0 }));
+        const items = d.shopcat.all().map(({ css, ...i }) => ({ ...i, ...(i.offer ? { price: i.offer.was, offerPrice: i.price } : {}), css, owners: owned[i.id] ?? 0 })); // R62: الإدارة تشوف السعر الأصلي (مب سعر العرض) عشان التعديل ما يحفظ السعر المخفّض
         return {
             items, purchases: Object.values(owned).reduce((a, b) => a + b, 0), editable: true, persistent: d.shopcat.persistent,
             presets: PRESETS, priceMax: PRICE_MAX,
-            note: 'تعديل السعر يسري على الشراء القادم فقط ولا يغيّر ما اشتراه اللاعبون. المنتج ما يُحذف: التعطيل يوقف البيع فقط ويبقى عند من يملكه. لا توجد هدايا بين اللاعبين بالنظام.',
+            note: 'تعديل السعر يسري على الشراء القادم فقط ولا يغيّر ما اشتراه اللاعبون. المنتج ما يُحذف: التعطيل يوقف البيع فقط ويبقى عند من يملكه.',
         };
     }
     const itemInput = (b) => { const o = {}; for (const k of ['id', 'slot', 'name', 'icon', 'desc', 'price', 'currency', 'css', 'active', 'status', 'minLevel', 'minVip', 'minNoble'])
@@ -951,6 +977,64 @@ export function createAdmin(d) {
                 need(actor, 'system.view');
                 return out(system()), true;
             }
+            // R62: عروض المتجر محدودة الوقت (المالك بس)
+            if (a === 'offers') {
+                if (actor.role !== 'owner')
+                    throw new HttpErr(403, 'عروض المتجر للمالك فقط.');
+                if (!d.offers)
+                    throw new HttpErr(503, 'غير متاح.');
+                if (!id && req.method === 'GET')
+                    return out({ list: d.offers.list().map((o) => ({ ...o, itemName: d.shopcat.get(o.itemId)?.name ?? o.itemId })) }), true;
+                try {
+                    if (!id && req.method === 'POST') {
+                        const b = await body();
+                        const o = d.offers.add(b, actor.name, (iid) => !!d.shopcat.get(iid) && d.shopcat.get(iid).status !== 'hidden');
+                        safeAudit(actor, 'offer.add', o.itemId, `${o.discount}% ${new Date(o.startsAt).toISOString()}→${new Date(o.endsAt).toISOString()}${o.exclusive ? ' حصري' : ''}`);
+                        return out({ ok: true, offer: o }), true;
+                    }
+                    if (id && act === 'end' && req.method === 'POST') {
+                        const o = d.offers.end(id);
+                        safeAudit(actor, 'offer.end', o.itemId, o.id);
+                        return out({ ok: true, offer: o }), true;
+                    }
+                }
+                catch (e) {
+                    if (e instanceof Error && 'code' in e && typeof e.code === 'number')
+                        throw new HttpErr(e.code, e.message);
+                    throw e;
+                }
+            }
+            // R61: حالة الموقع + النسخ الاحتياطية
+            if (a === 'health' && req.method === 'GET') {
+                need(actor, 'system.view');
+                if (!d.health)
+                    throw new HttpErr(503, 'غير متاح.');
+                return out(await d.health()), true;
+            }
+            if (a === 'backups') {
+                if (actor.role !== 'owner')
+                    throw new HttpErr(403, 'النسخ الاحتياطية للمالك فقط.');
+                if (!d.backups)
+                    throw new HttpErr(503, 'النسخ الاحتياطية مطفية على هالخادم.');
+                if (!id && req.method === 'GET')
+                    return out({ ...d.backups.status(), list: d.backups.list() }), true;
+                if (!id && req.method === 'POST') {
+                    try {
+                        const b = d.backups.run('manual');
+                        safeAudit(actor, 'backup.run', b.name, String(b.size));
+                        return out({ ok: true, backup: b }), true;
+                    }
+                    catch (e) {
+                        throw new HttpErr(String(e.message) === 'backup_running' ? 409 : 500, String(e.message) === 'backup_running' ? 'فيه نسخة تنسوي الحين.' : 'فشلت النسخة الاحتياطية، شوف الأخطاء.');
+                    }
+                }
+                if (id && req.method === 'GET') {
+                    safeAudit(actor, 'backup.download', id, '');
+                    if (!d.backups.send(res, id, {}))
+                        throw new HttpErr(404, 'النسخة مب موجودة.');
+                    return true;
+                }
+            }
             if (a === 'settings' && req.method === 'GET') {
                 need(actor, 'settings.view');
                 return out(settings()), true;
@@ -1003,5 +1087,5 @@ export function createAdmin(d) {
         }
     }
     const publicStatus = (user) => { const m = P.maintenance(); const ban = user ? P.banOf(user.id) : null; return { maintenance: { on: m.on, message: m.message, since: m.since }, staff: !!(user && P.roleOf(user.id)), ban: ban ? { reason: ban.reason } : null, notices: P.activeNotices() }; };
-    return { handle, actorOf, maintenanceBlock, banBlock, publicStatus, resumeApprovals, retryBulk: () => { bulkStore.retry(); d.bulkGrants?.runBatch(); }, stop: () => clearInterval(lagTimer) };
+    return { handle, actorOf, audit: safeAudit, loginLog: () => [...loginLog].reverse(), maintenanceBlock, banBlock, publicStatus, resumeApprovals, retryBulk: () => { bulkStore.retry(); d.bulkGrants?.runBatch(); }, stop: () => clearInterval(lagTimer) };
 }

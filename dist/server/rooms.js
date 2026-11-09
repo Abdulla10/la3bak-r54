@@ -81,8 +81,9 @@ export class RoomService {
     async persist(room) {
         const engine = this.engineOf(room);
         const ref = `${room.code}:${room.gameNo}`;
-        const release = this.accounts && room.status === 'finished' && room.state && room.gameNo && engine && !this.accounts.hasRecorded(ref)
-            ? this.hooks.onBeforeGameFinished?.(room, room.players.filter((p) => !p.bot).map((p) => ({ id: p.id, name: p.name })), engine.outcome(room.state).winners, ref, this.now()) : undefined;
+        const rewarded = room.players.filter((p) => !p.bot && !(room.mode === 'bots' && this.hooks.noRewards?.(p.id)));
+        const release = rewarded.length && this.accounts && room.status === 'finished' && room.state && room.gameNo && engine && !this.accounts.hasRecorded(ref)
+            ? this.hooks.onBeforeGameFinished?.(room, rewarded.map((p) => ({ id: p.id, name: p.name })), engine.outcome(room.state).winners, ref, this.now()) : undefined;
         try {
             const expected = room.revision;
             room.revision = expected + 1;
@@ -109,7 +110,9 @@ export class RoomService {
         if (!engine)
             return;
         // اللي غادر بنص المباراة يظل ضمن نتيجتها (يخسر مثل الصندوق)، وإلا نتيجته ما تنحسب عليه
-        const humans = room.players.filter((p) => !p.bot);
+        const humans = room.players.filter((p) => !p.bot && !(room.mode === 'bots' && this.hooks.noRewards?.(p.id)));
+        if (!humans.length)
+            return;
         const ref = `${room.code}:${room.gameNo}`;
         const players = humans.map((p) => ({ id: p.id, name: p.name }));
         const winners = engine.outcome(room.state).winners;

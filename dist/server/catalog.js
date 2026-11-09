@@ -1,5 +1,6 @@
 import { rankPerkCatalogItems } from './rank-perks-r56.js';
-import { LUX_ITEMS, LUX_SET, SPECIAL_ID_ITEMS, ROOM_ID_ITEMS, SOUVENIR_ITEMS } from './store-lux-r57.js';
+import { r67Price } from './store-price-r67.js';
+import { LUX_ITEMS, LUX_SET, SPECIAL_ID_ITEMS, ROOM_ID_ITEMS, SOUVENIR_ITEMS, ROOM_BG_ITEMS } from './store-lux-r57.js';
 import { luxuryPricedSeed } from './luxury-pricing-r23.js';
 import { gemsOnlyStorePrice } from './store-gems-r58.js';
 import { REFERENCE_ITEMS, REFERENCE_SETS } from './reference-catalog.js';
@@ -104,6 +105,35 @@ export const CATALOG = [
     N('badge2-flame', 'badge', 'شارة لهب', '🔥', 'premium', 'شارة بجانب اسمك.', '🔥'),
     N('badge2-moon', 'badge', 'شارة هلال', '🌙', 'rare', 'شارة بجانب اسمك.', '🌙', 'shadow'),
     N('badge2-crown', 'badge', 'شارة تاج', '👑', 'epic', 'شارة بجانب اسمك.', '👑', 'royal'),
+    N('title3-kind', 'title', 'لقب «طيب القلب»', '💚', 'common', 'لقب يظهر تحت اسمك.', 'طيب القلب'),
+    N('title3-funny', 'title', 'لقب «ملك الضحك»', '😂', 'common', 'لقب يظهر تحت اسمك.', 'ملك الضحك'),
+    N('title3-talker', 'title', 'لقب «أبو السوالف»', '🗣️', 'common', 'لقب يظهر تحت اسمك.', 'أبو السوالف'),
+    N('title3-hero', 'title', 'لقب «بطل المجلس»', '🛡️', 'premium', 'لقب يظهر تحت اسمك.', 'بطل المجلس'),
+    N('title3-gamer', 'title', 'لقب «قيمر محترف»', '🎮', 'premium', 'لقب يظهر تحت اسمك.', 'قيمر محترف'),
+    N('title3-sniper', 'title', 'لقب «القناص»', '🎯', 'premium', 'لقب يظهر تحت اسمك.', 'القناص'),
+    N('title3-generous', 'title', 'لقب «الكريم»', '🎁', 'rare', 'لقب يظهر تحت اسمك.', 'الكريم'),
+    N('title3-falcon', 'title', 'لقب «صقر الخليج»', '🦅', 'rare', 'لقب يظهر تحت اسمك.', 'صقر الخليج', 'royal'),
+    N('title3-sheikh', 'title', 'لقب «شيخ المجلس»', '🪔', 'rare', 'لقب يظهر تحت اسمك.', 'شيخ المجلس', 'royal'),
+    N('title3-star', 'title', 'لقب «نجمة المجلس»', '💫', 'epic', 'لقب يظهر تحت اسمك.', 'نجمة المجلس', 'galaxy'),
+    N('title3-wolf', 'title', 'لقب «الذيب»', '🐺', 'epic', 'لقب يظهر تحت اسمك.', 'الذيب', 'shadow'),
+    N('title3-dragon', 'title', 'لقب «سيّد التنين»', '🐉', 'legendary', 'لقب يظهر تحت اسمك.', 'سيّد التنين', 'dragon'),
+    N('title3-emperor', 'title', 'لقب «الإمبراطور»', '👑', 'legendary', 'لقب يظهر تحت اسمك.', 'الإمبراطور', 'emperor'),
+    N('title3-legend', 'title', 'لقب «أسطورة لعبك»', '🏆', 'ultra', 'لقب يظهر تحت اسمك.', 'أسطورة لعبك', 'emperor'),
+    N('title3-king', 'title', 'لقب «ملك الملوك»', '🔱', 'ultra', 'لقب يظهر تحت اسمك.', 'ملك الملوك', 'royal'),
+    N('badge3-heart', 'badge', 'شارة قلب', '💖', 'common', 'شارة بجانب اسمك.', '💖'),
+    N('badge3-sun', 'badge', 'شارة شمس', '☀️', 'common', 'شارة بجانب اسمك.', '☀️'),
+    N('badge3-rose', 'badge', 'شارة وردة', '🌹', 'common', 'شارة بجانب اسمك.', '🌹'),
+    N('badge3-music', 'badge', 'شارة نغمة', '🎵', 'premium', 'شارة بجانب اسمك.', '🎵'),
+    N('badge3-game', 'badge', 'شارة يد ألعاب', '🎮', 'premium', 'شارة بجانب اسمك.', '🎮'),
+    N('badge3-lightning', 'badge', 'شارة برق', '⚡', 'premium', 'شارة بجانب اسمك.', '⚡'),
+    N('badge3-butterfly', 'badge', 'شارة فراشة', '🦋', 'rare', 'شارة بجانب اسمك.', '🦋'),
+    N('badge3-sword', 'badge', 'شارة سيفين', '⚔️', 'rare', 'شارة بجانب اسمك.', '⚔️', 'shadow'),
+    N('badge3-shield', 'badge', 'شارة درع', '🛡️', 'rare', 'شارة بجانب اسمك.', '🛡️', 'royal'),
+    N('badge3-comet', 'badge', 'شارة مذنب', '☄️', 'epic', 'شارة بجانب اسمك.', '☄️', 'galaxy'),
+    N('badge3-snow', 'badge', 'شارة ندفة ثلج', '❄️', 'epic', 'شارة بجانب اسمك.', '❄️', 'ice'),
+    N('badge3-dragon', 'badge', 'شارة تنين', '🐉', 'legendary', 'شارة بجانب اسمك.', '🐉', 'dragon'),
+    N('badge3-trident', 'badge', 'شارة رمح ملكي', '🔱', 'legendary', 'شارة بجانب اسمك.', '🔱', 'emperor'),
+    N('badge3-gem', 'badge', 'شارة جوهرة ملكية', '💠', 'ultra', 'شارة بجانب اسمك.', '💠', 'emperor'),
 ];
 CATALOG.push(...REFERENCE_ITEMS);
 Object.assign(SETS, REFERENCE_SETS);
@@ -122,7 +152,7 @@ for (const i of ENTRANCE_ITEMS) {
 }
 CATALOG.push(...ENTRANCE_ITEMS);
 const perkIds = new Set(CATALOG.map((i) => i.id));
-for (const i of [...LUX_ITEMS, ...SPECIAL_ID_ITEMS, ...ROOM_ID_ITEMS, ...SOUVENIR_ITEMS]) {
+for (const i of [...LUX_ITEMS, ...SPECIAL_ID_ITEMS, ...ROOM_ID_ITEMS, ...SOUVENIR_ITEMS, ...ROOM_BG_ITEMS]) {
     if (perkIds.has(i.id))
         throw new Error(`Lux catalog ID collision: ${i.id}`);
     perkIds.add(i.id);
@@ -144,10 +174,10 @@ for (const i of CATALOG)
     if (i.id === 'av-emperor')
         i.set = 'emperor';
 for (let index = 0; index < CATALOG.length; index++)
-    CATALOG[index] = gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index]));
+    CATALOG[index] = r67Price(gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index])));
 const BY_ID = new Map(CATALOG.map((i) => [i.id, i]));
 export const itemOf = (id) => (typeof id === 'string' ? BY_ID.get(id) : undefined);
-export const SLOTS = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir', 'mic-frame'];
+export const SLOTS = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir', 'mic-frame', 'room-bg'];
 export const MILESTONES = [
     { id: 'm-first-win', label: 'أول فوز', cur: 'coins', amount: 100, goal: 1, metric: 'wins' },
     { id: 'm-played-10', label: 'أكمل 10 مباريات', cur: 'coins', amount: 150, goal: 10, metric: 'played' },

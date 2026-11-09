@@ -1,8 +1,8 @@
-import { createGlobalSearch } from '../unified/global-search.js?v=global-search-r17';
-import * as PR from './profile.js?v=r68u';
-import * as UNIFIED from '../unified/shell.js?v=r68u';
+import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
+import * as PR from './profile.js?v=r68v';
+import * as UNIFIED from '../unified/shell.js?v=r68v';
 import * as REF from '../unified/home.js?v=r68l';
-import * as SOCIAL from '../unified/social.js?v=r68u';
+import * as SOCIAL from '../unified/social.js?v=r68v';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68i';
@@ -22,8 +22,8 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r68u';
-import * as SHOP from '../shop.js?v=r68u';
+import * as PF from '../profile.js?v=r68v';
+import * as SHOP from '../shop.js?v=r68v';
 import * as GIFT from '../gifts.js?v=r68i';
 import * as GFX from '../giftfx.js?v=r68i';
 import * as AVR from '../avatars.js?v=r67ac';
@@ -35,10 +35,10 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r67as';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68u';
+import * as PWA from '../pwa.js?v=r68v';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r68u';
+import * as MIS from '../missions.js?v=r68v';
 import * as CHAT from '../chat.js?v=r68i';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -388,7 +388,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68u');
+  const M = await import('../settings-r60.js?v=r68v');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -641,7 +641,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r68u').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r68v').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':

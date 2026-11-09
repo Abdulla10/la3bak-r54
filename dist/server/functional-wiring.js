@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { RANK_PERK_ITEMS } from './rank-perks-r56.js';
+const perkName = (id) => RANK_PERK_ITEMS.find((i) => i.id === id)?.name ?? 'مقتنى خاص';
 import { FunctionalHttpError } from './functional-http.js';
 function need(condition, text, status = 400) { if (!condition)
     throw new FunctionalHttpError(status, text); }
@@ -46,7 +48,7 @@ export function wireFunctionalRoutes(http, d) {
     http.add('GET', '/api/rank-rewards', ({ user }) => {
         const view = d.rankRewards.view(user.id);
         return { list: view.policies.map((p) => ({ id: p.system + ':' + p.rank, label: `${p.system.toUpperCase()} ${p.rank}`, system: p.system, rank: p.rank,
-                description: p.rewards.map((r) => r.type === 'currency' ? `${r.amount} ${r.cur === 'coins' ? 'عملة' : 'جوهرة'}` : 'مقتنى: ' + r.itemId).join(' + '),
+                description: p.rewards.map((r) => r.type === 'currency' ? `${r.cur === 'gems' ? r.amount * 20 : r.amount} عملة` : perkName(r.itemId)).join(' + '),
                 fingerprint: p.fingerprint, eligible: p.eligible, claimed: p.status === 'claimed', pending: p.status === 'pending', claimable: p.claimable || p.status === 'pending' })), claims: view.claims };
     });
     http.add('POST', '/api/rank-rewards/:id/claim', async ({ user, params, body }) => {

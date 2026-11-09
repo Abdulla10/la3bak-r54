@@ -114,6 +114,18 @@ export class SessionRegistry {
             throw error;
         }
     }
+    /** R62: الجلسات الشغالة للاعب (بصمات بس — ما فيه توكنات) */
+    activeHashes(userId) { const now = this.now(); return Object.entries(this.data.tokens).filter(([, r]) => r.userId === userId && r.revokedAt === undefined && r.expiresAt > now).map(([h]) => h); }
+    /** R62: يطلّع الحساب من كل الأجهزة إلا الجهاز الحالي (أو جهاز واحد محدد لو only) */
+    revokeHashes(userId, keep, only = null) {
+        const now = this.now();
+        const targets = Object.entries(this.data.tokens).filter(([h, r]) => r.userId === userId && r.revokedAt === undefined && r.expiresAt > now && h !== keep && (only === null || h === only)).map(([h]) => h);
+        if (!targets.length)
+            return 0;
+        this.transaction(() => { for (const h of targets)
+            this.data.tokens[h] = { ...this.data.tokens[h], revokedAt: now }; });
+        return targets.length;
+    }
     retry() { this.disk.retry(); }
     unsaved() { return this.disk.unsaved; }
     /** أعداد فقط؛ ما يعرض بصمات ولا معرّفات حسابات. السجلات ما تنحذف تلقائياً. */

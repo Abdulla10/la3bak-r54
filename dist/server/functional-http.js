@@ -19,7 +19,7 @@ export class FunctionalHttp {
         this.deps = deps;
     }
     allowFallback(prefix) { this.fallbackPrefixes.add(prefix); return this; }
-    add(method, path, handler, staff = null) {
+    add(method, path, handler, staff = null, maxBody = 32768) {
         const names = [];
         const source = path.split('/').map((part) => {
             if (part.startsWith(':')) {
@@ -28,12 +28,12 @@ export class FunctionalHttp {
             }
             return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }).join('/');
-        this.routes.push({ method, pattern: new RegExp('^' + source + '$'), names, handler, staff });
+        this.routes.push({ method, pattern: new RegExp('^' + source + '$'), names, handler, staff, maxBody });
         this.prefixes.add(path.split('/').slice(0, staff ? 4 : 3).join('/'));
         return this;
     }
-    async body(req) {
-        if (Number(req.headers['content-length'] ?? 0) > 32768) {
+    async body(req, max = 32768) {
+        if (Number(req.headers['content-length'] ?? 0) > max) {
             req.resume();
             throw new FunctionalHttpError(413, 'الطلب كبير.');
         }
@@ -41,7 +41,7 @@ export class FunctionalHttp {
             const chunks = [];
             let size = 0;
             let big = false;
-            req.on('data', (chunk) => { size += chunk.length; if (size > 32768) {
+            req.on('data', (chunk) => { size += chunk.length; if (size > max) {
                 big = true;
                 chunks.length = 0;
             }
@@ -99,7 +99,7 @@ export class FunctionalHttp {
                     throw new FunctionalHttpError(403, 'مصدر الطلب غير مسموح.');
                 if (String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase() !== 'application/json')
                     throw new FunctionalHttpError(415, 'المطلوب طلب JSON.');
-                body = await this.body(req);
+                body = await this.body(req, route.maxBody ?? 32768);
             }
             const match = route.pattern.exec(url.pathname);
             const params = {};

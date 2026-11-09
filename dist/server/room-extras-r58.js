@@ -6,15 +6,65 @@ export function roomCodeOf(roomId) {
     return String(10_000_000 + n);
 }
 export const ROOM_VANITY = /^[1-9][0-9]{0,7}$/;
-/** حدود ليفل الغرفة بقيمة الهدايا (جواهر) اللي انرسلت داخل الغرفة. */
-export const ROOM_LEVELS = Object.freeze([0, 500, 2_000, 5_000, 12_000, 25_000, 50_000, 100_000, 200_000, 400_000]);
+/** R67au (طلب المالك): ليفل الغرفة لين 300 وبس. الحدود بالعملات (قيمة الهدايا داخل الغرفة؛ الدعم محفوظ بالجواهر ×20).
+ * نقاط المنحنى (تتعدل من لوحة التحكم): Lv2 = 500 ألف، Lv10 = 5 مليون، Lv50 = 60 مليون، Lv100 = 200 مليون، Lv300 = 2 مليار. */
+export const ROOM_LEVEL_MAX = 300;
+export const ROOM_CURVE = { l2: 500_000, l10: 5_000_000, l50: 60_000_000, l100: 200_000_000, l300: 2_000_000_000 };
+const niceLv = (n) => n >= 10_000_000 ? Math.round(n / 100_000) * 100_000 : n >= 1_000_000 ? Math.round(n / 10_000) * 10_000 : Math.round(n / 1_000) * 1_000;
+export function buildRoomLevels(c = ROOM_CURVE) {
+    const pts = [[2, c.l2], [10, c.l10], [50, c.l50], [100, c.l100], [300, c.l300]];
+    const out = [0];
+    for (let lv = 2; lv <= ROOM_LEVEL_MAX; lv++) {
+        let i = 0;
+        while (i < pts.length - 2 && lv > pts[i + 1][0])
+            i++;
+        const [a, va] = pts[i], [b, vb] = pts[i + 1];
+        const t = (lv - a) / (b - a);
+        let v = niceLv(Math.exp(Math.log(va) + (Math.log(vb) - Math.log(va)) * t));
+        if (v <= out[out.length - 1])
+            v = out[out.length - 1] + 1_000;
+        out.push(v);
+    }
+    return out;
+}
+/** حدود كل ليفل بالعملات (ROOM_LEVELS[i] = بداية الليفل i+1) */
+export const ROOM_LEVELS = buildRoomLevels();
+export function setRoomCurve(c) { Object.assign(ROOM_CURVE, c); ROOM_LEVELS.splice(0, ROOM_LEVELS.length, ...buildRoomLevels(ROOM_CURVE)); }
+/** support = قيمة الهدايا بالجواهر (القديمة)؛ الحساب والعرض بالعملات */
 export function roomLevelOf(support) {
-    const s = Number.isSafeInteger(support) && support > 0 ? support : 0;
-    let level = 1;
-    for (let i = 0; i < ROOM_LEVELS.length; i++)
-        if (s >= ROOM_LEVELS[i])
-            level = i + 1;
+    const s = (Number.isSafeInteger(support) && support > 0 ? support : 0) * 20;
+    let lo = 0, hi = ROOM_LEVELS.length - 1;
+    while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (s >= ROOM_LEVELS[mid])
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    const level = lo + 1;
     return { level, support: s, floor: ROOM_LEVELS[level - 1], next: level < ROOM_LEVELS.length ? ROOM_LEVELS[level] : null };
+}
+/** مميزات كل ليفل (يحطها Claude بطلب المالك). الأرقام الفعلية: سعة الأعضاء، هدية صاحب الغرفة، والخلفيات. */
+export const roomCapacityBonus = (level) => Math.max(0, Math.min(ROOM_LEVEL_MAX, level) - 1) * 2;
+export const roomOwnerGift = (level) => level >= 5 && level % 5 === 0 ? level * 2_000 : 0;
+const MILESTONES = {
+    10: 'فتح القبيلة + خلفية «قاعة المجرة»', 20: 'خلفية «القصر الكوني» + اسم الغرفة فضي', 30: 'خلفية «السجادة الزرقاء» + إطار فضي لبطاقة الغرفة', 40: 'خلفية «عرش الياقوت» + اسم الغرفة ذهبي',
+    50: 'إطار ذهبي لبطاقة الغرفة بقائمة الغرف', 60: 'شارة الغرفة تلمع', 70: 'ترحيب مميز يوم أحد يدخل الغرفة', 80: 'اسم الغرفة بلون متحرك', 90: 'هالة حول بطاقة الغرفة',
+    100: 'الغرفة تطلع أول قائمة الغرف (مميزة)', 120: 'إطار ماسي لبطاقة الغرفة', 150: 'إطار ملكي لبطاقة الغرفة', 180: 'شارة الغرفة الماسية', 200: 'اسم الغرفة بألوان ملكية',
+    230: 'إطار الغرفة الأسطوري', 260: 'هالة أسطورية متحركة', 300: 'لقب «أسطورة الغرف» + تاج دائم على الغرفة',
+};
+export function roomLevelPerks(level) {
+    if (level < 2 || level > ROOM_LEVEL_MAX)
+        return [];
+    const out = ['+2 أعضاء بسعة الغرفة'];
+    const g = roomOwnerGift(level);
+    if (g)
+        out.push(`هدية لصاحب الغرفة ${g.toLocaleString('en-US')} عملة`);
+    if (MILESTONES[level])
+        out.push(MILESTONES[level]);
+    else if (level % 10 === 0)
+        out.push('شعار الليفل يتطور');
+    return out;
 }
 export const ROOM_ADS_MAX = 10;
 /** R58c: رتبة الغرفة الشهرية — نقاط من قيمة الهدايا داخل الغرفة خلال الشهر (توقيت الخليج)، وتبدأ من جديد كل شهر.

@@ -1312,7 +1312,8 @@ export async function createApp(
       const pay = wallet.spendService(user.id, v.price, `شراء ${b.name}`, ref);
       if (!pay.ok) throw new FunctionalHttpError(pay.code === 'poor' ? 402 : 400, pay.code === 'poor' ? `رصيدك ما يكفي. الحزمة بـ ${v.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
       const op = ('bnd' + createHash('sha256').update(user.id + ref).digest('hex')).slice(0, 40);
-      await wallet.grantBulk(op, [user.id], missing.map((itemId) => ({ type: 'item', itemId, mode: 'grant' } as const)), `${b.name}`);
+      try { const g = await wallet.grantBulk(op, [user.id], missing.map((itemId) => ({ type: 'item', itemId, mode: 'grant' } as const)), `${b.name}`); if (!missing.every((id) => wallet.owned(user.id).includes(id)) && !pay.dup) throw new Error('grant_incomplete:' + JSON.stringify(g).slice(0, 80)); }
+      catch (e) { if (!pay.dup) wallet.grant(user.id, 'coins', v.price, `استرجاع ${b.name}`, 'refund:' + ref); log('bundle_grant_failed', { bundle: b.id, err: String(e).slice(0, 120) }); throw new FunctionalHttpError(500, 'تعذّر تسليم الحزمة ورجعنا لك عملاتك.'); }
       sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
       return { ok: true, coins: wallet.balance(user.id), bundle: bundleView(user.id, b) };
     });
