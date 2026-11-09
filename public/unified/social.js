@@ -6,7 +6,7 @@ import {renderUpgradePanel,roomUpgradeConfirmationR47,roomUpgradeErrorR47} from 
 import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room-photo-r31';
 import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r63a';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
-import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r67w';
+import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r67al';
 import {framed as frameOwnedPortrait} from '../shop.js?v=r67ac';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';

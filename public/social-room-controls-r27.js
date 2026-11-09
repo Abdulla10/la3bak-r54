@@ -23,7 +23,9 @@ export const ROOM_THEMES=Object.freeze({
 });
 const valid=v=>Object.prototype.hasOwnProperty.call(ROOM_THEMES,v);
 export const themeName=id=>valid(id)?ROOM_THEMES[id].name:ROOM_THEMES.royal.name;
-const BG_LEVEL={img10:3,img11:5,img12:6,img13:8},BG_STORE={img14:1,img15:1,img16:1,img17:1};
+let BG_LEVEL={img10:3,img11:5,img12:6,img13:8};const BG_STORE={img14:1,img15:1,img16:1,img17:1};
+// R67ae: مستويات الخلفيات تتعدل من لوحة التحكم
+try{fetch('/api/site-flags',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.roomBgLevel&&typeof j.roomBgLevel==='object')BG_LEVEL={...BG_LEVEL,...j.roomBgLevel};}).catch(()=>{});}catch{}
 export function themeCards(selected,level=1){const current=selected==='gold'?'royal':selected==='dusk'?'amethyst':selected;return `<div class="so-room-theme-grid" role="radiogroup" aria-label="خلفية البث">${Object.entries(ROOM_THEMES).filter(([,p])=>!p.legacy).map(([id,p])=>`<button type="button" class="so-room-theme-card" data-so-action="room-theme" data-theme="${id}" role="radio" aria-checked="${current===id}" style="background-image:${p.gradient.replace(/"/g,'\'')};background-size:cover;background-position:center"><span>${p.name}</span>${BG_LEVEL[id]&&level<BG_LEVEL[id]?`<em class="so-theme-lock">🔒 Lv${BG_LEVEL[id]}</em>`:BG_STORE[id]&&current!==id?'<em class="so-theme-lock is-store">🛒 المتجر</em>':''}</button>`).join('')}</div><p class="so-note">ألوان لعبك المعتمدة: الزمردي والعاجي والذهبي. محفوظة للغرفة ولا تغيّر صور المستخدم أو مقتنيات الحساب.</p>`;}
 export function applyRoomTheme(stage,id,gameBound){if(!stage||gameBound)return;const key=valid(id)?id:'royal';stage.dataset.soRoomTheme=key;stage.style.setProperty('--so-room-theme',ROOM_THEMES[key].gradient);}
 export function seatLockCards(council){

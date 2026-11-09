@@ -6,10 +6,10 @@ import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
  * - نقاط القبيلة = قيمة الهدايا (بالجواهر) اللي يرسلها أعضاؤها، من إيصال المحفظة. والمستوى والشعار والسعة من النقاط الكلية، والترتيب بنقاط الشهر. */
 export const TRIBE_ROOM_LEVEL = 10;
 export const TRIBE_LEVELS = Object.freeze([
-  Object.freeze({ level: 1, min: 0, cap: 30, name: 'قبيلة ناشئة' }),
-  Object.freeze({ level: 2, min: 1_000_000, cap: 40, name: 'قبيلة صاعدة' }),
-  Object.freeze({ level: 3, min: 5_000_000, cap: 50, name: 'قبيلة عريقة' }),
-  Object.freeze({ level: 4, min: 20_000_000, cap: 60, name: 'قبيلة أسطورية' }),
+  ({ level: 1, min: 0, cap: 30, name: 'قبيلة ناشئة' }),
+  ({ level: 2, min: 1_000_000, cap: 40, name: 'قبيلة صاعدة' }),
+  ({ level: 3, min: 5_000_000, cap: 50, name: 'قبيلة عريقة' }),
+  ({ level: 4, min: 20_000_000, cap: 60, name: 'قبيلة أسطورية' }),
 ]);
 export const TRIBE_REQUESTS_MAX = 50;
 export type TribeMember = { id: string; at: number; pts: number };

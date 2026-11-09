@@ -23,7 +23,7 @@ export const ROOM_BACKGROUND_PRESETS = Object.freeze([
   Object.freeze({ id: 'dusk', name: 'الغسق', gradient: 'linear-gradient(145deg, #463257 0%, #61466a 65%, #675645 100%)' }),
 ] as const);
 /** R67: خلفيات تنفتح بليفل الغرفة، وخلفيات تنشرى من المتجر (العنصر عند اللي يغيّر الخلفية أو مالك الغرفة) */
-export const ROOM_BG_LEVEL: Readonly<Record<string, number>> = Object.freeze({ img10: 3, img11: 5, img12: 6, img13: 8 });
+export const ROOM_BG_LEVEL: Record<string, number> = { img10: 3, img11: 5, img12: 6, img13: 8 }; // R67ae: تتعدل من لوحة التحكم
 export const ROOM_BG_STORE: Readonly<Record<string, string>> = Object.freeze({ img14: 'rbg-dragon-hall', img15: 'rbg-lava-dragon', img16: 'rbg-gold-dragon', img17: 'rbg-lion-throne' });
 export type RoomTheme = typeof ROOM_BACKGROUND_PRESETS[number]['id'];
 export const validRoomTheme = (x: unknown): x is RoomTheme => typeof x === 'string' && ROOM_BACKGROUND_PRESETS.some(p => p.id === x);

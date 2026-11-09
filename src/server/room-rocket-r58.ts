@@ -18,7 +18,7 @@ export const ROCKET_PLANETS = Object.freeze([
   { stage: 5, name: 'مجرة الملوك', goal: 250_000, prizes: [50_000, 25_000, 12_500], gifts: [[G('art-mf-15', 'إطار مايك الأسد الذهبي')], [G('art-f2-13', 'إطار التاج البنفسجي')], [G('art-pb-01', 'خلفية قاعة العرش')]], luck: G('art-bd-17', 'لوحة التاج الملكي') },
   { stage: 6, name: 'بوابة المجرات', goal: 500_000, prizes: [100_000, 50_000, 25_000], gifts: [[G('art-mf-36', 'إطار مايك البوابة الذهبية')], [G('souv-28', 'البوابة السحرية')], [G('art-mf-17', 'إطار مايك الحصان المجنح')]], luck: G('art-f2-23', 'إطار مدار النجوم') },
   { stage: 7, name: 'الأكوان المتعددة', goal: 1_000_000, prizes: [200_000, 100_000, 50_000], gifts: [[G('art-mf-18', 'إطار مايك تنين البنفسج'), G('souv-03', 'التاج الملكي')], [G('souv-09', 'العنقاء')], [G('art-pb-06', 'خلفية قلعة السماء')]], luck: G('art-bub-20', 'فقاعة قصر الليل') },
-].map((p) => Object.freeze(p)));
+]);
 /** صورة مصغّرة لقطعة المتجر (نفس رسومات المتجر) */
 export function rocketGiftArt(id: string): string {
   const m = /^(art-mf|art-f2|art-bub|art-bd|art-pb|souv)-(\d\d)$/.exec(id); if (!m) return '';

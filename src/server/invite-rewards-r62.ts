@@ -3,7 +3,7 @@
    كل منحة بمفتاح ثابت (invite:<المدعو>:…) فما تتكرر أبدًا. */
 import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 
-export const INVITE_REWARD = Object.freeze({ inviter: { coins: 2400, gems: 0 }, invitee: { coins: 1000 }, games: 3, monthlyCap: 20 });
+export const INVITE_REWARD = ({ inviter: { coins: 2400, gems: 0 }, invitee: { coins: 1000 }, games: 3, monthlyCap: 20 });
 type Data = { v: 1; done: Record<string, number>; months: Record<string, { key: string; n: number }> };
 const valid = (v: Record<string, unknown>) => v.v === 1 && isObj(v.done) && Object.values(v.done as object).every((x) => Number.isSafeInteger(x)) && isObj(v.months);
 const monthOf = (t: number) => new Date(t + 4 * 3600_000).toISOString().slice(0, 7);

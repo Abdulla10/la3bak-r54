@@ -22,17 +22,13 @@ export function mountTribesCpAdmin(root, { call }) {
     const tribes = d.tribes.filter((t) => !q || t.name.toLowerCase().includes(q) || t.members.some((m) => m.name.toLowerCase().includes(q)));
     const couples = d.couples.filter((c) => !q || c.a.toLowerCase().includes(q) || c.b.toLowerCase().includes(q));
     const c = d.config;
-    root.innerHTML = `<section class="ad-card"><h2>القبائل وCP والجوائز</h2><p class="ad-muted">كل تعديل هنا يطلب سبب وينسجل في سجل العمليات. الطرد وحل القبيلة وفك الارتباط ما ينرجعون.</p>
+    root.innerHTML = `<section class="ad-card"><h2>القبائل وCP</h2><p class="ad-muted">كل تعديل هنا يطلب سبب وينسجل في سجل العمليات. الطرد وحل القبيلة وفك الارتباط ما ينرجعون.</p>
       ${S.err ? `<div class="ad-note bad" role="alert">${esc(S.err)}</div>` : ''}${S.msg ? `<div class="ad-note ok">${esc(S.msg)}</div>` : ''}
       <div class="ad-grid"><div class="ad-stat"><b>${nf(d.tribes.length)}</b><span>قبيلة</span></div><div class="ad-stat"><b>${nf(d.tribes.reduce((a, t) => a + t.members.length, 0))}</b><span>عضو بالقبائل</span></div><div class="ad-stat"><b>${nf(d.couples.length)}</b><span>ارتباط CP</span></div></div>
       <input class="ad-in" data-tc-q placeholder="بحث باسم قبيلة أو لاعب" value="${esc(S.q)}"></section>
       <section class="ad-card"><h2>القبائل (${nf(tribes.length)})</h2>${tribes.length ? tribes.map(tribeCard).join('') : '<p class="ad-empty">ما فيه قبائل.</p>'}</section>
       <section class="ad-card"><h2>ارتباطات CP (${nf(couples.length)})</h2>${couples.length ? `<div class="ad-list">${couples.map(coupleRow).join('')}</div>` : '<p class="ad-empty">ما فيه ارتباطات.</p>'}</section>
-      <section class="ad-card"><h2>🚀 جوائز صاروخ الغرفة (يومي)</h2>${table(['المرحلة', 'الهدف', 'جوائز الأوائل (عملات)', 'هدايا الأوائل', 'جائزة الحظ'], c.rocket.map((r) => [`${r.stage}. ${esc(r.name)}`, nf(r.goal), r.prizes.map(nf).join(' / '), r.gifts.map((g) => esc(g.join('، '))).join(' / '), esc(r.luck)]))}</section>
-      <section class="ad-card"><h2>💣 جوائز المدفع</h2>${table(['المستوى', 'الهدف', 'عملات', 'جائزة الأول', 'قطع'], c.cannon.map((l) => [l.level, nf(l.goal), nf(l.coins), esc(l.top1), esc(l.items.join('، '))]))}</section>
-      <section class="ad-card"><h2>💞 مستويات CP ومهامه</h2>${table(['المستوى', 'من نقاط'], c.cpLevels.map((l, i) => [`${i + 1}. ${esc(l.name)}`, nf(l.min)]))}${table(['المهمة', 'المكافأة'], (c.cpTasks || []).map((t) => [esc(t.name), nf(t.reward) + ' نقطة']))}</section>
-      <section class="ad-card"><h2>🏰 مستويات القبائل وحرب القبائل</h2>${table(['المستوى', 'من نقاط'], (c.tribeLevels || []).map((l) => [`${l.level}. ${esc(l.name)} (حتى ${nf(l.cap)} عضو)`, nf(l.min)]))}<p class="ad-sub">وقود الحرب: فوز ${nf(c.warFuel?.win)} · تعادل ${nf(c.warFuel?.draw)} · أقل أعضاء ${nf(c.warFuel?.minMembers)} · هيبة الصاروخ ${nf(c.rocketPrestige)}</p>
-      <p class="ad-muted">أرقام الجوائز والمستويات مثبتة بالكود عشان ما تتغير بالغلط. لو تبي تغير رقم، اطلبه ونعدله.</p></section>`;
+      <section class="ad-card"><h2>🏆 أرقام الجوائز والمستويات</h2><p class="ad-muted">جوائز الصاروخ والمدفع، ومستويات القبائل وCP والغرف، والدخول اليومي والدعوات، صارت تتعدل من قسم «أرقام الجوائز والمستويات».</p></section>`;
     root.querySelector('[data-tc-q]')?.addEventListener('input', (e) => { S.q = e.target.value; const pos = e.target.selectionStart; paint(); const el = root.querySelector('[data-tc-q]'); el?.focus(); try { el?.setSelectionRange(pos, pos); } catch {} });
   }
   const ask = (msg) => { const r = window.prompt(msg + '\n\nاكتب سبب التعديل (إلزامي):'); return r && r.trim().length >= 3 ? r.trim() : null; };

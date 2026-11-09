@@ -4,7 +4,7 @@ import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
  * العلاقة نفسها (الطلب، القبول، 18+، موافقة الطرفين على الظهور، الإنهاء) تبقى بنظام R47 بدون أي تغيير.
  * هنا بس: نقاط CP = قيمة الهدايا (بالجواهر) بين الطرفين بعد بداية العلاقة، من إيصال المحفظة.
  * المفتاح مربوط برقم الارتباط + الطرفين، فلو انتهت العلاقة وبدأت وحدة جديدة تبدأ النقاط من صفر. */
-export const CP_LEVELS = Object.freeze([0, 10_000, 50_000, 200_000, 1_000_000]);
+export const CP_LEVELS: number[] = [0, 10_000, 50_000, 200_000, 1_000_000]; // R67ae: تتعدل من لوحة التحكم
 export const CP_LEVEL_NAMES = Object.freeze(['بداية', 'قريبين', 'متفاهمين', 'روح وحدة', 'أسطورة CP']);
 type Day = { d: string; gift: number; claimed: string[] };
 type Data = { v: 1; pts: Record<string, number>; days?: Record<string, Day> };

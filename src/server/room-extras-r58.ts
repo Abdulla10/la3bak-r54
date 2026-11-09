@@ -7,7 +7,7 @@ export function roomCodeOf(roomId: string): string {
 }
 export const ROOM_VANITY = /^[1-9][0-9]{0,7}$/;
 /** حدود ليفل الغرفة بقيمة الهدايا (جواهر) اللي انرسلت داخل الغرفة. */
-export const ROOM_LEVELS: readonly number[] = Object.freeze([0, 500, 2_000, 5_000, 12_000, 25_000, 50_000, 100_000, 200_000, 400_000]);
+export const ROOM_LEVELS: number[] = [0, 500, 2_000, 5_000, 12_000, 25_000, 50_000, 100_000, 200_000, 400_000]; // R67ae: تتعدل من لوحة التحكم
 export function roomLevelOf(support: number): { level: number; support: number; floor: number; next: number | null } {
   const s = Number.isSafeInteger(support) && support > 0 ? support : 0;
   let level = 1; for (let i = 0; i < ROOM_LEVELS.length; i++) if (s >= ROOM_LEVELS[i]) level = i + 1;

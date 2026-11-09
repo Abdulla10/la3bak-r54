@@ -23,6 +23,7 @@ import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
 import { CpPoints, cpKey, cpLevelOf, CP_TASKS, CP_LEVELS, CP_LEVEL_NAMES } from './cp-r58.js';
 import { ROCKET_PLANETS } from './room-rocket-r58.js';
 import { SiteFlagsStore } from './site-flags-r67.js';
+import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
 import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, TRIBE_LEVELS, tribeLevelOf, type Tribe } from './tribes-r58.js';
 import { TribeTreasure, TreasureError, TREASURE_ERR, TRIBE_TASKS, TRIBE_BOXES, TRIBE_SHOP, ROCKET_PRESTIGE, launchGrants, planetOfLaunch } from './tribe-treasure-r59.js';
@@ -340,6 +341,7 @@ export async function createApp(
   /* R67ae: إعدادات التشغيل من لوحة التحكم */
   const siteFlags = new SiteFlagsStore(functionalFile(undefined, 'site-flags'), Date.now, storage);
   setExtraBannedWords(siteFlags.words());
+  { const t = siteFlags.tuning(); if (t) try { applyTuning(validateTuning(t, TUNING_DEFAULT)); } catch (e) { log('tuning_invalid', { error: String((e as Error).message).slice(0, 120) }); } }
   /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
   const firstTopup = new FirstTopup(functionalFile(undefined, 'first-topup'), {
     percentOverride: () => siteFlags.get().firstTopupPercent,
@@ -1256,6 +1258,16 @@ export async function createApp(
       const auditOk = admin.audit(actor!, body.op === 'end' ? 'event.end' : 'event.add', ev.id, `${ev.title}${ev.slot ? ' · ' + ev.slot : ''} — ${reason}`);
       return { ok: true, event: ev, auditOk };
     }, 'owner');
+    functionalHttp.add('GET', '/api/admin/tuning', () => ({ ok: true, current: currentTuning(), defaults: TUNING_DEFAULT, meta: siteFlags.tuningMeta(), names: { rocket: ROCKET_PLANETS.map((p) => p.name), tribe: TRIBE_LEVELS.map((l) => l.name), cp: CP_LEVEL_NAMES } }), 'owner');
+    functionalHttp.add('POST', '/api/admin/tuning', ({ actor, body }) => {
+      const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+      const before = currentTuning(); let next;
+      try { next = body.reset === true ? structuredClone(TUNING_DEFAULT) : validateTuning(body.patch, before); } catch (e) { if (isTuningError(e)) throw new FunctionalHttpError(400, e.message); throw e; }
+      siteFlags.setTuning(body.reset === true ? null : next as unknown as Record<string, unknown>, actor!.name); applyTuning(next);
+      const changed = (Object.keys(next) as (keyof typeof next)[]).filter((k) => JSON.stringify(next[k]) !== JSON.stringify(before[k]));
+      const auditOk = admin.audit(actor!, 'tuning.update', 'tuning', `${body.reset === true ? 'ترجيع الأصلي' : changed.join('، ') || 'بدون تغيير'} — ${reason}`);
+      return { ok: true, current: currentTuning(), changed, auditOk };
+    }, 'owner');
     functionalHttp.add('GET', '/api/admin/admin-logins', () => ({ ok: true, list: admin.loginLog() }), 'owner');
     functionalHttp.add('GET', '/api/admin/gifts', ({ url }) => { const days = Math.max(1, Math.min(90, Number(url.searchParams.get('days')) || 7)); return { ok: true, days, ...wallet.adminGifts({ q: url.searchParams.get('q') ?? '', since: Date.now() - days * 86_400_000, limit: 200 }) }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/economy-daily', ({ url }) => { const days = Math.max(7, Math.min(60, Number(url.searchParams.get('days')) || 14)); const e = wallet.adminEconomy(days); return { ok: true, ...e, topSpenders: e.topSpenders.map((x) => ({ name: nm(x.id), spent: x.spent })) }; }, 'owner');
@@ -1582,7 +1594,7 @@ export async function createApp(
       if (url.pathname === '/api/first-topup' && req.method === 'GET') return json(res, 200, { ok: true, eligible: !!user && firstTopup.eligible(user.id) && (paymentSettings?.mode === 'live' || (paymentSettings?.mode === 'test' && firstTopup.allowTest)), percent: firstTopup.percent });
       if (url.pathname === '/api/season' && req.method === 'GET') return json(res, 200, seasonView());
       // R62: هدية الدخول اليومي المتصاعدة
-      if (url.pathname === '/api/site-flags' && req.method === 'GET') { const f = siteFlags.get(); return json(res, 200, { ok: true, cinema: f.cinema, bigGiftMin: f.bigGiftMin, profileBgVip: f.profileBgVip, streak: f.streak }); }
+      if (url.pathname === '/api/site-flags' && req.method === 'GET') { const f = siteFlags.get(); return json(res, 200, { ok: true, cinema: f.cinema, bigGiftMin: f.bigGiftMin, profileBgVip: f.profileBgVip, streak: f.streak, roomBgLevel: currentTuning().roomBg }); }
       if (url.pathname === '/api/daily-streak' && req.method === 'GET') { if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); return json(res, 200, { ...streak.view(user.id, wallet.canClaim(user.id)), enabled: siteFlags.get().streak }); }
       // R62: إشعارات الجوال
       if (url.pathname === '/api/push/key' && req.method === 'GET') return json(res, 200, webPush ? { ok: true, key: webPush.publicKey, devices: user ? webPush.count(user.id) : 0 } : { ok: false });
