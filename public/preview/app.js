@@ -14,7 +14,7 @@ import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
 import * as HUB from '../hub.js?v=shell-r6';
 import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
-import { initStatus, checkStatusNow } from '../status.js?v=root-navigation-r50';
+import { initStatus, checkStatusNow } from '../status.js?v=r68x-navigation-r50';
 import * as LOB from '../lobby.js?v=r68m';
 import * as AVT from '../avatar.js?v=shell-r6';
 import * as AUTH from '../auth.js?v=shell-r6';
@@ -35,7 +35,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r67as';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68w';
+import * as PWA from '../pwa.js?v=r68x';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68w';
@@ -388,7 +388,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68w');
+  const M = await import('../settings-r60.js?v=r68x');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

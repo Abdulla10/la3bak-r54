@@ -18,7 +18,7 @@ function paintMaintenance(st) {
     el = document.createElement('div'); el.id = 'mtScreen'; el.className = 'mt-screen'; el.setAttribute('role', 'alert'); el.dir = 'rtl';
     document.body.appendChild(el);
   }
-  el.innerHTML = `<div class="mt-box"><div class="mt-ico" aria-hidden="true">🛠️</div>${banned ? `<h1>تم إيقاف حسابك</h1><p>${esc(st.ban.reason || '')}</p><small>للاعتراض تواصل مع إدارة المنصة.</small>` : `<h1>المنصة تحت الصيانة</h1><p>${esc(st.maintenance.message)}</p><small>نتحقق تلقائياً، وترجع لك الصفحة لما تنتهي الصيانة.</small><button type="button" class="btn" id="mtRetry">تحقق الآن</button>`}</div>`;
+  el.innerHTML = `<div class="mt-box"><div class="mt68-logo" aria-hidden="true"><i>👑</i><b>لعبك</b><small>LA3BAK</small></div><div class="mt-ico" aria-hidden="true">🛠️</div>${banned ? `<h1>تم إيقاف حسابك</h1><p>${esc(st.ban.reason || '')}</p><small>للاعتراض تواصل مع إدارة المنصة.</small>` : `<h1>لعبك تحت الصيانة</h1><p>${esc(st.maintenance.message)}</p><small>نتحقق تلقائياً، وترجع لك الصفحة لما تنتهي الصيانة.</small><button type="button" class="btn" id="mtRetry">تحقق الآن</button>`}</div>`;
   const rb = el.querySelector('#mtRetry'); if (rb) rb.onclick = () => checkStatusNow();
 }
 function paintNotices(st) {

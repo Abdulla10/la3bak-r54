@@ -46,3 +46,15 @@ html body .nx-board a{background:linear-gradient(180deg,rgba(74,32,128,.7),rgba(
 html body .so-directory-r30 .so-dir-empty-icon{background:rgba(60,24,106,.7)!important;border:1.5px solid rgba(190,150,255,.45)!important;color:#fff!important}
 html body .so-directory-r30 .so-dir-empty :is(h2,p){color:#efe6ff!important}
 html body .lb-unified .fp68-rank{display:none}
+/* R68x: شاشة الصيانة والحظر بألوان لعبك */
+html body .mt-screen{background:radial-gradient(90% 60% at 50% 30%,#3b1670,#1a0a31 60%,#12071f)!important}
+html body .mt-box{background:linear-gradient(180deg,rgba(82,38,140,.7),rgba(40,16,76,.75))!important;border:1.5px solid rgba(190,140,255,.5)!important;box-shadow:0 0 30px rgba(160,80,255,.35)!important;color:#fff!important;text-align:center}
+html body .mt-box h1{color:#fff!important;font-weight:900!important;font-size:26px!important}
+html body .mt-box p{color:#f1e8ff!important;font-size:16px!important}
+html body .mt-box small{color:#c9b4ec!important}
+html body .mt-box button{background:linear-gradient(180deg,#ffe58a,#ffc83d 55%,#e8a01a)!important;color:#4a2600!important;border:0!important;box-shadow:0 3px 0 #9a5a00!important}
+.mt68-logo{position:relative;display:inline-flex;flex-direction:column;align-items:center;line-height:1;padding-top:12px;margin-bottom:10px}
+.mt68-logo i{position:absolute;top:-6px;font-style:normal;font-size:18px}
+.mt68-logo b{font-size:34px;font-weight:900;background:linear-gradient(180deg,#f3d4ff,#c46bff 45%,#8b2ff0);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+html body .mt68-logo small{font:900 11px/1 Arial,sans-serif;letter-spacing:1px;color:#ffcb47!important;margin-top:2px}
+html body .mt-box .mt-ico{font-size:46px}
