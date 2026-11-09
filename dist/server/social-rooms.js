@@ -691,6 +691,24 @@ export class SocialRooms {
                 out.push(m.id); return out; }
     presenceSince(userId, roomId) { const r = this.state.rooms.find((x) => x.id === roomId); const m = r?.members.find((x) => x.id === userId); return m && this.mediaAccess(userId)?.roomId === roomId ? m.joinedAt : null; }
     /** R67ae: للإدارة — غرف لاعب والغرف النشطة */
+    /** R68z: المسابقة المباشرة — هل اللاعب داخل الغرفة، وهل هو مشرف، ومين الأعضاء */
+    quizAccess(userId, roomId) {
+        const r = this.state.rooms.find((x) => x.id === roomId);
+        if (!r)
+            return null;
+        const now = this.clock();
+        const members = r.members.filter((m) => m.deadline === null || m.deadline > now).map((m) => m.id);
+        if (!members.includes(userId))
+            return null;
+        let mod = false;
+        try {
+            mod = this.moderator(r, userId);
+        }
+        catch {
+            mod = false;
+        }
+        return { mod, members, name: r.name };
+    }
     roomIdOf(userId) { return this.member(this.state, userId)?.room.id ?? null; }
     ownedRoomsOf(userId) { return this.state.rooms.filter((r) => r.ownerId === userId).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length })); }
     liveRooms() { return this.state.rooms.filter((r) => r.members.length > 0).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length, owner: this.opts.profile(r.ownerId)?.name ?? '', video: !!r.video })).sort((a, b) => b.members - a.members); }

@@ -1,6 +1,6 @@
 // R68c: لوحة التحكم — بنرات الصفحة الرئيسية (المالك فقط)
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const LINKS = [['#/tournaments', 'البطولات'], ['#/events', 'الفعاليات'], ['#/shop', 'المتجر'], ['#/shop/packs', 'باقات الشحن'], ['#/games', 'الألعاب'], ['#/social-rooms', 'الغرف'], ['#/missions', 'المهام اليومية'], ['#/leaderboard', 'التصنيف'], ['#/auction', 'المزادات'], ['#/vip', 'VIP'], ['#/community', 'المنشورات']];
+const LINKS = [['#/tournaments', 'البطولات'], ['#/events', 'الفعاليات'], ['#/wheel', 'عجلة الحظ'], ['#/shop', 'المتجر'], ['#/shop/packs', 'باقات الشحن'], ['#/games', 'الألعاب'], ['#/social-rooms', 'الغرف'], ['#/missions', 'المهام اليومية'], ['#/leaderboard', 'التصنيف'], ['#/auction', 'المزادات'], ['#/vip', 'VIP'], ['#/community', 'المنشورات']];
 /** يصغّر الصورة بالجهاز قبل الرفع (عرض 1200 كحد أقصى) */
 async function shrink(file) {
   const url = URL.createObjectURL(file);

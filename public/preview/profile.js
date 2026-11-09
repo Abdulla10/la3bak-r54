@@ -6,10 +6,10 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=r68w';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r68z';
 import { avatarArt } from '../avatars.js?v=r67ac';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r68w';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r68z';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r67ac';
 import { nav68HTML } from '../nav-r68.js?v=r68q';
 import { officialBadge } from '../official-badge-r67.js?v=r67as';
@@ -378,8 +378,9 @@ function pf68Hero(ctx,s) {
  const restricted=!ctx.user||ctx.noCommunity;
  const stat=(ic,label,value,attrs='')=>`<${attrs?'button type="button"':'div'} class="pf68-stat" ${attrs}>${PF68_SVG[ic]}<b dir="ltr">${value}</b><small>${label}</small></${attrs?'button':'div'}>`;
  const rate=m&&finite(m.played)&&Number(m.played)>0&&finite(m.wins)?`${new Intl.NumberFormat('en-US',{maximumFractionDigits:1}).format(Number(m.wins)/Number(m.played)*100)}%`:'—';
- return `${pf68Top(ctx)}<section class="pf68-hero" data-pvp-section="identity" aria-label="هوية اللاعب"><div class="pf68-coverbox">${cover}<div class="pf68-cover-fade" aria-hidden="true"></div></div>
- <div class="pf68-av" data-pvp-section="avatar-frame"><div class="pf68-portrait">${portrait}</div>${ctx.user?`<button type="button" class="pf68-cam" data-pvp="upload-photo" aria-label="رفع وتغيير صورة اللاعب" ${typeof ctx.pickPhoto!=='function'?'disabled':''}>${PF68_SVG.cam}</button>`:''}</div>
+ const nob=rankSummary(ctx,'noble'),nobN=nob.state==='earned'&&Number.isSafeInteger(nob.rank)?nob.rank:0,anim=vipN>=10||nobN>=6?2:vipN>=5||nobN>=3?1:0;
+ return `${pf68Top(ctx)}<section class="pf68-hero${anim?` pa68 t${anim}`:''}" data-pvp-section="identity" aria-label="هوية اللاعب">${anim?'<span class="pa68-fx" aria-hidden="true"><b></b><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>':''}<div class="pf68-coverbox">${cover}<div class="pf68-cover-fade" aria-hidden="true"></div></div>
+ <div class="pf68-av" data-pvp-section="avatar-frame"><div class="pf68-portrait">${anim?'<span class="pa68-ring" aria-hidden="true"></span>':''}${portrait}</div>${ctx.user?`<button type="button" class="pf68-cam" data-pvp="upload-photo" aria-label="رفع وتغيير صورة اللاعب" ${typeof ctx.pickPhoto!=='function'?'disabled':''}>${PF68_SVG.cam}</button>`:''}</div>
  <div class="pf68-mid">
   ${ctx.user?`<button type="button" class="pf68-edit" data-pvp="edit" ${!m||typeof ctx.rename!=='function'||typeof ctx.savePresentation!=='function'?'disabled':''}>${PF68_SVG.pen}<span>تعديل الملف</span></button>`:'<span></span>'}
   <div class="pf68-who"><h1 class="pf68-name">${verificationBadge(ctx)}<span class="${nameCls}" title="${esc(name)}">${esc(name)}</span>${vipN?`<button type="button" class="pf68-vip" data-pvp="rank-system" data-system="vip" aria-label="VIP ${vipN}">VIP<small>${vipN}</small></button>`:''}</h1>

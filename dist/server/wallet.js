@@ -58,7 +58,7 @@ const validGift = (v) => {
 const validAcc = (v) => isObj(v) && nat(v.coins) && optional(v.gems, nat) && optional(v.daily, str)
     && optional(v.owned, strs) && optional(v.claimed, strs) && optional(v.equipped, (x) => record(x, str))
     && optional(v.ledger, (x) => array(x, validLedger)) && optional(v.gifts, (x) => array(x, validGift)) && optional(v.gSent, nat) && optional(v.gRecv, nat)
-    && optional(v.prepaidGifts, (x) => record(x, validCredit));
+    && optional(v.prepaidGifts, (x) => record(x, validCredit)) && optional(v.exp, (x) => record(x, nat));
 const validBuyOp = (v) => {
     if (!isObj(v) || !str(v.itemId))
         return false;
@@ -494,6 +494,32 @@ export class Wallet {
     a(id) { return (this.d.acc[id] ??= { coins: START_COINS, daily: '' }); }
     balance(id) { this.recoverAuctionsR47(); return this.a(id).coins; }
     gems(id) { this.recoverAuctionsR47(); return this.a(id).gems ?? 0; }
+    /** R68z: الأغراض المؤقتة: متى تنتهي */
+    expiries(id) { return { ...(this.d.acc[id]?.exp ?? {}) }; }
+    /** R68z: نشيل الأغراض اللي خلصت مدتها (ونفك تجهيزها). يرجع مين انشال له شي. */
+    expireDue(now = Date.now()) {
+        const out = [];
+        for (const [id, a] of Object.entries(this.d.acc)) {
+            if (!a.exp)
+                continue;
+            const due = Object.entries(a.exp).filter(([, t]) => t <= now).map(([k]) => k);
+            if (!due.length)
+                continue;
+            a.owned = (a.owned ?? []).filter((x) => !due.includes(x));
+            if (a.equipped)
+                for (const [slot, it] of Object.entries(a.equipped))
+                    if (due.includes(it))
+                        delete a.equipped[slot];
+            for (const k of due)
+                delete a.exp[k];
+            if (!Object.keys(a.exp).length)
+                delete a.exp;
+            out.push({ id, items: due });
+        }
+        if (out.length)
+            this.disk.save();
+        return out;
+    }
     owned(id) { this.recoverAuctionsR47(); return [...(this.a(id).owned ?? [])]; }
     /** R58: هل يملك هذا العنصر حساب غير exceptId؟ (للمقتنيات الفريدة مثل أيدي الغرف) — قراءة فقط */
     anyOwner(itemId, exceptId) { for (const [key, acc] of Object.entries(this.d.acc))
@@ -1294,7 +1320,7 @@ export class Wallet {
      * شراء عنصر من المتجر. الخادم هو اللي يتحقق من السعر (من الكتالوج) والرصيد والملكية.
      * key = مفتاح طلب فريد من العميل: إعادة إرسال نفس الطلب ما تخصم مرة ثانية. العملية كلها (خصم + ملكية + سجل) تنحفظ بملف واحد أو تتراجع.
      */
-    buy(id, item, key) {
+    buy(id, item, key, days = 0) {
         const replay = this.replayBuy(id, key, 'item', item?.id);
         if (replay)
             return replay;
@@ -1306,7 +1332,10 @@ export class Wallet {
             return { ok: false, code: 'bad' };
         const k = this.opKey(id, key);
         const a = this.a(id);
-        if (item.permanent && (a.owned ?? []).includes(item.id))
+        const timedNow = a.exp?.[item.id] !== undefined;
+        if (!Number.isSafeInteger(days) || days < 0 || days > 365)
+            return { ok: false, code: 'bad' };
+        if (item.permanent && (a.owned ?? []).includes(item.id) && !timedNow)
             return { ok: false, code: 'owned' };
         if (item.currency === 'gems')
             this.coverGems(id, item.price);
@@ -1319,8 +1348,19 @@ export class Wallet {
             a.coins -= item.price;
         else
             a.gems = (a.gems ?? 0) - item.price;
-        (a.owned ??= []).push(item.id);
-        this.rec(id, item.currency, 'purchase', -item.price, item.currency === 'coins' ? a.coins : a.gems, 'شراء من المتجر', item.id);
+        const expBefore = a.exp ? { ...a.exp } : undefined;
+        if (!(a.owned ?? []).includes(item.id))
+            (a.owned ??= []).push(item.id);
+        if (days > 0) {
+            const base = Math.max(this.now(), a.exp?.[item.id] ?? 0);
+            (a.exp ??= {})[item.id] = base + days * 86_400_000;
+        }
+        else if (a.exp) {
+            delete a.exp[item.id];
+            if (!Object.keys(a.exp).length)
+                delete a.exp;
+        }
+        this.rec(id, item.currency, 'purchase', -item.price, item.currency === 'coins' ? a.coins : a.gems, days > 0 ? `شراء من المتجر (${days === 1 ? 'يوم' : days + ' أيام'})` : 'شراء من المتجر', item.id);
         this.d.buyOps = { ...opsBefore, [k]: { kind: 'item', itemId: item.id, cur: item.currency, price: item.price } };
         try {
             this.disk.mustSave();
@@ -1328,6 +1368,10 @@ export class Wallet {
         catch (e) {
             this.restore(sn);
             this.d.buyOps = opsBefore;
+            if (expBefore)
+                a.exp = expBefore;
+            else
+                delete a.exp;
             throw e;
         }
         if (item.currency === 'coins')

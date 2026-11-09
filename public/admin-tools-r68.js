@@ -19,7 +19,7 @@ function style() { if (!document.querySelector('style[data-at68]')) { const s = 
 function shell(root, S, body) {
   root.innerHTML = `<div class="at68">${S.err ? `<div class="ad-note bad" role="alert">${esc(S.err)}</div>` : ''}${S.msg ? `<div class="ad-note ok" role="status">${esc(S.msg)}</div>` : ''}${body}</div>`;
 }
-const who = (p, extra = '') => `<div class="at68-p"><b>${esc(p.name)} ${p.banned ? '<span class="at68-tag bad">محظور</span>' : ''}${p.suspect ? ' <span class="at68-tag gold">مشتبه</span>' : ''}</b><small>#${esc(p.displayId || '—')} · ${p.since ? 'سجّل ' + ago(p.since) : ''} · 🪙 ${nf(p.coins)}${extra}</small></div>`;
+const who = (p, extra = '') => `<div class="at68-p"><b>${esc(p.name)} ${p.banned ? '<span class="at68-tag bad">محظور</span>' : ''}${p.suspect ? ' <span class="at68-tag gold">مشتبه</span>' : ''}</b><small>#${esc(p.displayId || '—')}${p.phone ? ' · 📱 موثّق' : ''} · ${p.since ? 'سجّل ' + ago(p.since) : ''} · 🪙 ${nf(p.coins)}${extra}</small></div>`;
 const acts = (p, self = false) => `<div class="at68-btns">${self ? '' : `<button class="ad-btn ghost" type="button" data-at="log" data-q="${esc(p.displayId || p.id)}">السجل</button>`}${p.suspect ? `<button class="ad-btn ghost" type="button" data-at="clear" data-id="${esc(p.id)}">مو مشبوه</button>` : ''}${p.banned ? '' : `<button class="ad-btn danger" type="button" data-at="ban" data-id="${esc(p.id)}" data-n="${esc(p.name)}">حظر</button>`}</div>`;
 
 /* ---------------- (8) الحسابات المشبوهة ---------------- */
@@ -106,6 +106,7 @@ export function mountPlayerLog(root, { call, q: q0 = '' }) {
         ${p.ban ? `<div class="ad-note bad">محظور ${when(p.ban.at)}: ${esc(p.ban.reason)} <button class="ad-btn ghost" type="button" data-at="unban" data-id="${esc(p.id)}">رفع الحظر</button></div>` : ''}
         <div class="at68-stats"><div><b>${esc(p.level)}</b><small>الليفل</small></div><div><b>${esc(p.vip || '—')}</b><small>VIP</small></div><div><b>${nf(p.coins)}</b><small>عملات</small></div><div><b>${nf(p.played)}</b><small>مباريات</small></div><div><b>${nf(p.wins)}</b><small>فوز</small></div><div><b>${p.reportsCount.total}</b><small>بلاغات ضده</small></div><div><b>${p.rooms?.length ?? 0}</b><small>غرف يملكها</small></div><div><b>${p.sameNet.length}</b><small>حسابات بنفس شبكته</small></div></div>
         ${p.sameNet.length ? `<details><summary>حسابات بنفس الشبكة (${p.sameNet.length})</summary>${p.sameNet.map((x) => `<div class="at68-row">${who(x)}${acts(x)}</div>`).join('')}</details>` : ''}</section>
+        ${p.replays?.length ? `<section class="ad-card"><h2>🎬 إعادة آخر مبارياته</h2>${p.replays.map((r) => `<div class="at68-row"><div class="at68-p"><b>${esc(r.gameName)}</b><small>${when(r.at)} · ${esc(r.players.map((x) => x.name).join('، '))} · ${r.frames} لقطة</small></div><div class="at68-btns"><button class="ad-btn ghost" type="button" data-at="replay" data-ref="${esc(r.ref)}">▶ شاهد</button></div></div>`).join('')}</section>` : ''}
         <section class="ad-card"><h2>🕒 كل شي سواه (${tl.length})</h2><div class="at68-filter">${FILTERS.map(([k, l]) => `<button type="button" data-at="f" data-k="${k}" class="${S.f === k ? 'on' : ''}">${l}</button>`).join('')}</div>
         ${tl.length ? `<ul class="at68-tl">${tl.map((x) => `<li><span>${ICON[x.k] || '•'}</span><div>${esc(x.text)}<small>${when(x.t)}</small></div>${x.delta ? `<b dir="ltr" class="${x.delta > 0 ? 'plus' : 'minus'}">${x.delta > 0 ? '+' : ''}${nf(x.delta)} ${x.cur === 'gems' ? '💎' : '🪙'}</b>` : '<span></span>'}</li>`).join('')}</ul>` : '<p class="ad-muted">ما فيه شي هني.</p>'}</section>`;
     }
@@ -117,6 +118,7 @@ export function mountPlayerLog(root, { call, q: q0 = '' }) {
   root.addEventListener('click', (e) => {
     const b = e.target.closest('[data-at]'); if (!b || b.tagName === 'FORM') return; const a = b.dataset.at;
     if (a === 'f') { S.f = b.dataset.k; paint(); }
+    if (a === 'replay') { b.disabled = true; call('replay?ref=' + encodeURIComponent(b.dataset.ref)).then((r) => import('./replay-r68.js?v=r68z').then((M) => M.openReplay(r.replay))).catch((er) => { S.err = er.message; paint(); }).finally(() => { b.disabled = false; }); }
     if (a === 'pick' || a === 'log') { S.q = b.dataset.q; S.f = 'all'; load(); }
     if (a === 'clear') run(() => call(`players/${b.dataset.id}/clear-suspect`, { method: 'POST', body: {} }), 'انشال الاشتباه.');
     if (a === 'ban') { const r = ask(`حظر «${b.dataset.n}»؟ اكتب السبب:`); if (r) run(() => call(`players/${b.dataset.id}/ban`, { method: 'POST', body: { reason: r } }), 'انحظر الحساب.'); }

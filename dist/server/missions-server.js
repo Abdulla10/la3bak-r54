@@ -226,6 +226,13 @@ export class MissionsServer {
         });
     }
     /** R62: مهام افتراضية لو المالك ما ضبط أي مهام للحين (يقدر يعدّلها أو يطفيها من لوحة التحكم). */
+    /** R68z: يضيف مهام جديدة (بمعرّفات جديدة فقط) بدون ما يلمس اللي عدّلها المالك */
+    addMissing(defs) {
+        const fresh = defs.filter((x) => validDefinition(x) && !this.d.definitions.some((d) => d.id === x.id));
+        if (!fresh.length)
+            return 0;
+        return this.commit(() => { this.d.definitions = [...this.d.definitions, ...structuredClone(fresh)]; return fresh.length; });
+    }
     seedDefaults(defs) {
         if (this.d.definitions.length || this.d.configured || !defs.every(validDefinition))
             return false;

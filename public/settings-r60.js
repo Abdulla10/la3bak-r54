@@ -49,6 +49,7 @@ export function settingsHTML(ctx) {
     ${row('اللغة', '<small>العربية</small>')}
     ${btn('إعادة تعيين كلمة المرور', 'password', google ? 'من حساب Google' : '')}
     ${link('ربط الحساب', '#/account-info', google ? '<b class="s60-ok">محمي ✓</b>' : '<b class="s60-warn">غير محمي ⓘ</b>')}
+    ${link('توثيق الحساب برقم الجوال 📱', '#/phone')}
     ${link('الأجهزة اللي سجّلت الدخول منها', '#/devices')}
     ${row('الوضع الداكن', `<button type="button" class="s60-switch${document.documentElement.classList.contains('lb-dark') ? ' is-on' : ''}" role="switch" aria-checked="${document.documentElement.classList.contains('lb-dark')}" data-s60-dark><i></i></button>`)}
   </ul>

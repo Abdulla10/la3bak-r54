@@ -66,3 +66,10 @@ html body .r23-store .r68-bprice.is-own{color:#ffcb47}
 html body .r23-store .r68-bundle s{font-size:10.5px;color:#a891c9;margin-top:-2px}
 html body .r23-store .r68-bundle.is-done{opacity:.75}
 html body .r23-store .r68-bprice{white-space:nowrap}
+/* R68z: مدة الغرض */
+.du68{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0 4px}
+.du68-o{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:14px;border:1.5px solid #9b5cff55;background:#ffffff0a;color:#fff;font:inherit;cursor:pointer}
+.du68-o b{font-size:14px}.du68-o small{font-size:12px;color:#ffd76b;font-weight:800}
+.du68-o.on{border-color:#ffc83d;background:linear-gradient(160deg,#4a2a0a,#2a1048);box-shadow:0 0 12px #ffc83d55}
+.du68-o:disabled{opacity:.4;cursor:default}
+.du68-left{display:inline-flex;align-items:center;padding:6px 12px;border-radius:99px;background:#ffc83d22;color:#ffd76b;font-weight:800;font-size:13px}

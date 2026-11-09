@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
-import * as PR from './profile.js?v=r68w';
-import * as UNIFIED from '../unified/shell.js?v=r68y';
+import * as PR from './profile.js?v=r68z';
+import * as UNIFIED from '../unified/shell.js?v=r68z';
 import * as REF from '../unified/home.js?v=r68l';
-import * as SOCIAL from '../unified/social.js?v=r68w';
+import * as SOCIAL from '../unified/social.js?v=r68z';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68i';
@@ -22,8 +22,8 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r68w';
-import * as SHOP from '../shop.js?v=r68w';
+import * as PF from '../profile.js?v=r68z';
+import * as SHOP from '../shop.js?v=r68z';
 import * as GIFT from '../gifts.js?v=r68i';
 import * as GFX from '../giftfx.js?v=r68i';
 import * as AVR from '../avatars.js?v=r67ac';
@@ -32,13 +32,13 @@ import * as UNV from '../uno.js?v=r67ac';
 import * as CRV from '../carrom.js?v=r67ac';
 import * as MNV from '../minaboli-r47.js?v=r57';
 import * as CITY from '../city.js?v=r57';
-import * as COM from '../community.js?v=r67as';
+import * as COM from '../community.js?v=r68z';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
 import * as PWA from '../pwa.js?v=r68z';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r68w';
+import * as MIS from '../missions.js?v=r68z';
 import * as CHAT from '../chat.js?v=r68i';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -356,7 +356,7 @@ function loadFunctionalModule(name) {
     const promise = key === 'auction' ? import('../auction-r47.js?v=r63a')
       : key === 'family' ? import('../family-r47.js?v=build-all-r47')
       : key === 'private' ? import('../social-private.js?v=r57')
-      : key === 'missions' ? import('../missions-server.js?v=r63a')
+      : key === 'missions' ? import('../missions-server.js?v=r68z')
       : key === 'profile-social' ? import('../profile-social-r53.js?v=r67ac')
       : import('../functional-pages.js?v=r68o');
     functionalModules.set(key, promise);
@@ -564,6 +564,16 @@ async function render() {
       if (S.user) import('../daily-streak-r62.js?v=r62o').then((M) => { if (parseRoute().name === 'home') M.mountDailyBanner(view, { req, after: (r) => { S.coins = r.coins; S.canClaim = false; if (SHOP.SH.data) { SHOP.SH.data.coins = r.coins; SHOP.SH.data.canDaily = false; } ACCT.me = null; SHOP.invalidateLedger?.(); } }); }).catch(() => {});
       if(openRoyalMenuOnHome){openRoyalMenuOnHome=false;view.querySelector('[data-lb-shell=menu]')?.click();}
       break;
+    case 'phone':
+      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      unifiedPage(view,'phone','<div data-phone68></div>');
+      import('../phone-r68.js?v=r68z').then(({mountPhone})=>{const el=view.querySelector('[data-phone68]');if(el&&parseRoute().name==='phone')mountPhone(el,{api:functionalApi});}).catch(()=>{});
+      break;
+    case 'wheel':
+      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      unifiedPage(view,'wheel','<div data-wheel68></div>');
+      import('../wheel-r68.js?v=r68z').then(({mountWheel})=>{const el=view.querySelector('[data-wheel68]');if(el&&parseRoute().name==='wheel')mountWheel(el,{api:functionalApi});}).catch(()=>{});
+      break;
     case 'events':
     case 'tournaments':
       unifiedPage(view,r.name,referenceInfoPage(r.name));
@@ -659,6 +669,7 @@ async function render() {
     case 'social-room':
       if (needUser((globalThis.__LA3BAK_NAV__ || location).hash)) return;
       if (!keepLiveSocial) unifiedPage(view,r.name);
+      import('../room-quiz-r68.js?v=r68z').then(({startRoomQuiz})=>startRoomQuiz({api:functionalApi})).catch(()=>{});
       break;
     case 'community':
       if (changed) { COM.CM.menu = null; COM.CM.edit = null; COM.CM.report = null; if (S.user) COM.loadMe().then(updateTop); COM.loadFeed().then(() => { if (parseRoute().name === 'community') render(); }); }
@@ -1494,6 +1505,7 @@ function lobbyHTML(room) {
   </div>`;
 }
 
+try { Object.defineProperty(globalThis, '__LA3BAK_GAMEHTML__', { value: (room) => gameHTML(room), configurable: false }); } catch { /* مرة وحدة */ }
 function gameHTML(room) {
   const g = room.game;
   if (isRetiredGame(room.gameId) || isRetiredGame(g?.game)) return retiredGameHTML();
@@ -1757,6 +1769,7 @@ const ACTIONS = {
   async 'shop-preview'(el) {if(!SHOP.openPreview(el.dataset.id))return;storePreviewOrigin=el.dataset.id;await render();document.querySelector('[data-r23-dialog="preview"] button:not([disabled])')?.focus();},
   async 'shop-preview-close'(){await closeStorePreview();},
   'shop-ask'(el) {if(SHOP.SH.busy)return; if (el.getAttribute('aria-disabled')) return toast('رصيدك ما يكفي لهذا العنصر.', true); SHOP.SH.confirm = el.dataset.id; SHOP.SH.key = SHOP.newKey(); render(); },
+  'shop-dur'(el) { if (SHOP.SH.busy) return; SHOP.SH.dur = Number(el.dataset.d) || 0; SHOP.SH.key = SHOP.newKey(); render(); },
   'shop-cancel'() { if(SHOP.SH.busy)return;SHOP.SH.confirm = null; SHOP.SH.gemConfirm = null; render(); },
   'shop-gem-ask'() { toast('تحويل العملات إلى جواهر مقفول. باقات الجواهر من صفحة الباقات فقط.',true); },
   async 'shop-gem-buy'() {
@@ -1775,7 +1788,8 @@ const ACTIONS = {
     const owner=S.user?.id;
     SHOP.SH.busy = true; render();
     const asked = SHOP.SH.data?.items.find((x) => x.id === SHOP.SH.confirm);
-    const res = await req('shop:buy', { item: SHOP.SH.confirm, key: SHOP.SH.key, seen: asked?.price, seenCur: asked?.currency }).catch(() => ({ ok:false,net:true,error:'انقطع الاتصال والطلب غير محسوم. أعد التأكيد بنفس الطلب للتحقق دون خصم مكرر.' }));
+    const days = asked ? SHOP.chosenDays(asked) : 0;
+    const res = await req('shop:buy', { item: SHOP.SH.confirm, key: SHOP.SH.key, seen: asked ? SHOP.durPrice(asked, days) : undefined, seenCur: asked?.currency, ...(days ? { days } : {}) }).catch(() => ({ ok:false,net:true,error:'انقطع الاتصال والطلب غير محسوم. أعد التأكيد بنفس الطلب للتحقق دون خصم مكرر.' }));
     if(owner!==S.user?.id)return;
     SHOP.SH.busy = false;
     if(res.net){toast(res.error,true);render();return;}

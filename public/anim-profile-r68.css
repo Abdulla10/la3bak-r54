@@ -1,0 +1,22 @@
+/* R68z: الملف الشخصي المتحرك (VIP 5+ / نبيل 3+ لمعة — VIP 10+ / نبيل 6+ كامل). رسم أصلي بالـCSS. */
+.pa68{position:relative;isolation:isolate}
+.pa68-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1;border-radius:inherit}
+.pa68-fx i{position:absolute;bottom:-12px;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ffd76b 40%,transparent 70%);opacity:0;animation:pa68up 6s linear infinite}
+.pa68-fx i:nth-child(1){left:8%;animation-delay:0s}.pa68-fx i:nth-child(2){left:22%;animation-delay:1.2s;width:4px;height:4px}.pa68-fx i:nth-child(3){left:38%;animation-delay:2.5s}
+.pa68-fx i:nth-child(4){left:55%;animation-delay:.6s;width:8px;height:8px}.pa68-fx i:nth-child(5){left:70%;animation-delay:3.1s}.pa68-fx i:nth-child(6){left:84%;animation-delay:1.8s;width:5px;height:5px}
+.pa68-fx i:nth-child(7){left:93%;animation-delay:4s}.pa68-fx i:nth-child(8){left:47%;animation-delay:4.6s;width:4px;height:4px}
+@keyframes pa68up{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:1}100%{transform:translateY(-320px) scale(1.2);opacity:0}}
+.pa68-fx b{position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0 20%,#b44dff22 30%,transparent 40% 70%,#ffc83d1f 80%,transparent 90%);animation:pa68spin 14s linear infinite}
+@keyframes pa68spin{to{transform:rotate(360deg)}}
+/* إطار الصورة يلمع */
+.pa68 .pf68-portrait,.pa68 .cm-av-wrap,.pa68>.av{position:relative;z-index:2}
+.pa68 .pf68-portrait{isolation:isolate}
+.pa68-ring{position:absolute;inset:-8px;border-radius:50%;z-index:3;padding:5px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);background:conic-gradient(#ffc83d,#b44dff,#ff6bd5,#ffc83d);animation:pa68spin 4s linear infinite;filter:drop-shadow(0 0 10px #ffc83d88);pointer-events:none}
+/* الكامل: اسم يلمع + بريق إضافي */
+.pa68.t2 .pf68-name>span:last-of-type,.pa68.t2 .cm-pi h1{animation:pa68name 2.4s ease-in-out infinite}
+@keyframes pa68name{0%,100%{text-shadow:0 0 6px #ffc83d66}50%{text-shadow:0 0 14px #ffd76b,0 0 26px #ff9ef0aa}}
+.pa68.t2 .pa68-fx i{background:radial-gradient(circle,#fff 0,#ff9ef0 35%,transparent 70%)}
+.pa68.t2 .pa68-fx::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,#ffc83d26,transparent 60%);animation:pa68pulse 3s ease-in-out infinite}
+@keyframes pa68pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.pa68 *,.pa68 ::after,.pa68 ::before{animation:none!important}}
+.pa68 .pf68-cam{z-index:6}

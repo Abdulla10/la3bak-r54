@@ -6,7 +6,7 @@ import {mountPaymentAdmin} from './payment-admin.js?v=r68z';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
 import {mountSocialAdmin} from './social-admin.js?v=r68z';
 import { pricingHTML, progressionHTML } from './economy-admin.js?v=r68z';
-import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r68w';
+import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r68z';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -338,9 +338,9 @@ export function mountAdmin(root) {
     const waRoot=root.querySelector('[data-watch-admin]');
     if(waRoot && S.me?.role==='owner') import('./watch-admin-r67.js?v=r67ai').then(({mountWatchAdmin})=>{if(waRoot.isConnected)mountWatchAdmin(waRoot,{call});}).catch(()=>{if(waRoot.isConnected)waRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const atRoot=root.querySelector('[data-at68]');
-    if(atRoot && S.me?.role==='owner') import('./admin-tools-r68.js?v=r68y').then((M)=>{if(!atRoot.isConnected)return;const k=atRoot.dataset.at68;if(k==='suspicious')M.mountSuspicious(atRoot,{call,openLog:(q)=>{S.logQ=q;go('player-log');}});else if(k==='games')M.mountGamesControl(atRoot,{call});else{M.mountPlayerLog(atRoot,{call,q:S.logQ||''});}}).catch(()=>{if(atRoot.isConnected)atRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
+    if(atRoot && S.me?.role==='owner') import('./admin-tools-r68.js?v=r68z').then((M)=>{if(!atRoot.isConnected)return;const k=atRoot.dataset.at68;if(k==='suspicious')M.mountSuspicious(atRoot,{call,openLog:(q)=>{S.logQ=q;go('player-log');}});else if(k==='games')M.mountGamesControl(atRoot,{call});else{M.mountPlayerLog(atRoot,{call,q:S.logQ||''});}}).catch(()=>{if(atRoot.isConnected)atRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const hbRoot=root.querySelector('[data-home-banners-admin]');
-    if(hbRoot && S.me?.role==='owner') import('./home-banners-admin-r68.js?v=r68c').then(({mountHomeBannersAdmin})=>{if(hbRoot.isConnected)mountHomeBannersAdmin(hbRoot,{call});}).catch(()=>{if(hbRoot.isConnected)hbRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
+    if(hbRoot && S.me?.role==='owner') import('./home-banners-admin-r68.js?v=r68z').then(({mountHomeBannersAdmin})=>{if(hbRoot.isConnected)mountHomeBannersAdmin(hbRoot,{call});}).catch(()=>{if(hbRoot.isConnected)hbRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const saRoot=root.querySelector('[data-site-admin]');
     if(saRoot && S.me?.role==='owner') import('./site-admin-r67.js?v=r67at').then(({mountSiteAdmin})=>{if(saRoot.isConnected)mountSiteAdmin(saRoot,{call});}).catch(()=>{if(saRoot.isConnected)saRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const socialRoot=root.querySelector('[data-social-admin]');
