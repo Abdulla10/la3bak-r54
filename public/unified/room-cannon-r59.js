@@ -11,6 +11,7 @@ const SLOT = { frame: 'إطار', 'mic-frame': 'إطار مايك', badge: 'شا
 const prizeTile = (p, cls = '') => `<div class="c59-prize ${cls}"><span class="c59-prize-art">${safe(p.art) ? `<img src="${esc(p.art)}" alt="" loading="lazy">` : `<i>${esc(p.icon || '🎁')}</i>`}</span><small>${esc(SLOT[p.slot] || '')}</small><b>${esc(p.name)}</b></div>`;
 export function cannon3Shortcut(m) {
   if (!valid(m)) return '';
+  if (typeof requestIdleCallback === 'function' && !preloaded) requestIdleCallback(() => preload()); 
   const pct = Math.min(100, Math.floor(m.pts / m.goal * 100));
   return `<button type="button" class="so-cannon-shortcut c59-shortcut" data-so-action="open-panel" data-panel="cannon3" aria-label="مدفع الغرفة · المستوى ${esc(m.level)} · ${pct}%">${art(m.level, 'is-mini')}<span>${pct}%</span><span class="so-cannon-mini-track"><i style="transform:scaleX(${pct / 100})"></i></span></button>`;
 }
@@ -37,30 +38,50 @@ export function cannon3Panel(m, view, help = false) {
   <p class="c59-note">الأوائل الثلاثة ياخذون نفس الجوايز بالضبط، والأول ياخذ فوقها «للأول بس».</p></section>`;
 }
 const seen = new Set();
-/** R67 الانفجار مثل الفيديو: عد تنازلي 5→1 فوقه أعلى مساهم، المدفع يطلق وألعاب نارية، وبعدين بطاقة «تهانينا!» بزر حسنًا. */
+/** R67b الانفجار بالرسومات الجديدة: الدائرة الذهبية تدور، أعلى مساهم بالإطار، أرقام ذهبية 5→1، المدفع يطلق والألعاب النارية، انفجار، وبعدين «تهانينا!». */
+const FX = '/assets/art67/cannon/', FXV = 'r67b';
+const fx = (n) => `${FX}${n}.webp?v=${FXV}`;
+const CANNON_ART = ['cannon-green', 'cannon-red', 'cannon-purple'];
+const FW = ['fireworks-gold', 'fireworks-purple', 'fireworks-pink'];
+let preloaded = false;
+function preload() { if (preloaded) return; preloaded = true; for (const n of ['wheel', 'frame', 'card', 'base', 'fire-sheet', 'boom-sheet', ...CANNON_ART, ...FW, 'num-1', 'num-2', 'num-3', 'num-4', 'num-5']) { const i = new Image(); i.decoding = 'async'; i.src = fx(n); } }
 export function cannon3Blast(ev) {
   if (!ev || typeof ev.id !== 'string' || seen.has(ev.id) || document.hidden) return false; seen.add(ev.id);
+  preload();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const list = Array.isArray(ev.winners) ? ev.winners.filter((w) => w?.person?.name) : [];
   const top = list.find((w) => w.rank === 1) || list[0];
-  const n = document.createElement('section'); n.className = 'c59-blast c67-blast'; n.setAttribute('role', 'status'); n.setAttribute('dir', 'rtl');
-  const fireworks = Array.from({ length: 6 }, (_, k) => `<i class="c67-fw" style="--x:${[18, 78, 30, 70, 50, 12][k]}%;--y:${[16, 22, 34, 12, 8, 40][k]}%;--h:${[330, 45, 280, 190, 20, 300][k]};--d:${k * 0.55}s" aria-hidden="true">${Array.from({ length: 12 }, (_, j) => `<b style="--r:${j * 30}deg"></b>`).join('')}</i>`).join('');
+  const lv = Math.max(1, Math.min(3, ev.level | 0));
+  const n = document.createElement('section'); n.className = 'c59-blast c67-blast c67b'; n.setAttribute('role', 'status'); n.setAttribute('dir', 'rtl');
   const ws = list.map((w) => `<li><span class="c59-face">${face(w.person)}</span><i>${MEDAL[w.rank - 1] || ''}</i><b>${esc(w.person.name)}</b></li>`).join('');
   const mine = ev.mine && Array.isArray(ev.mine.items);
   const prize = mine ? `<p class="c67-prize">حصلت على ${ev.mine.items.map(esc).join(' + ')}${ev.mine.coins ? ` + 🪙 ${nf(ev.mine.coins)}` : ''}</p>` : '<p class="c67-prize">مبروك للفايزين بجوايز المدفع</p>';
-  n.innerHTML = `<i class="c67-sun" aria-hidden="true"></i>${fireworks}
-  <div class="c67-count">${top ? `<span class="c67-top"><span class="c67-frame">${face(top.person)}</span><em>أعلى 1 مساهم</em><small>${esc(top.person.name)}</small></span>` : ''}<b class="c67-num" data-c67-num>5</b></div>
-  <div class="c67-cannon">${art(ev.level, 'is-blast')}<i class="c67-shot" aria-hidden="true"></i></div>
-  <i class="c59-flash" aria-hidden="true"></i>${Array.from({ length: 22 }, (_, k) => `<i class="c59-spark" style="--a:${k * 16.4}deg;--d:${(k % 5) * 40}ms" aria-hidden="true"></i>`).join('')}
-  <div class="c67-card" role="dialog" aria-label="تهانينا"><button type="button" class="c67-x" data-c67-ok aria-label="إغلاق">×</button><span class="c67-card-art">${art(ev.level)}</span><h3>تهانينا! ✨</h3>${prize}${ws ? `<ol>${ws}</ol>` : ''}<button type="button" class="c67-ok" data-c67-ok>حسنًا</button></div>`;
+  n.innerHTML = `<img class="c67b-wheel" src="${fx('wheel')}" alt="" decoding="async">
+  <div class="c67b-fws" aria-hidden="true"></div>
+  <div class="c67b-top">${top ? `<span class="c67b-frame"><span class="c67b-face">${face(top.person)}</span><img src="${fx('frame')}" alt="" decoding="async"></span><em>أعلى 1 مساهم</em><small>${esc(top.person.name)}</small>` : ''}</div>
+  <img class="c67b-num" data-c67-num src="${fx('num-5')}" alt="5">
+  <div class="c67b-cannon"><img src="${fx(CANNON_ART[lv - 1])}" alt="" decoding="async"><i class="c67b-fire" data-c67-fire aria-hidden="true"></i></div>
+  <i class="c67b-boom" aria-hidden="true"></i><i class="c59-flash" aria-hidden="true"></i>${Array.from({ length: 22 }, (_, k) => `<i class="c59-spark" style="--a:${k * 16.4}deg;--d:${(k % 5) * 40}ms" aria-hidden="true"></i>`).join('')}
+  <div class="c67-card c67b-card" role="dialog" aria-label="تهانينا"><img class="c67b-cardbg" src="${fx('card')}" alt=""><button type="button" class="c67-x" data-c67-ok aria-label="إغلاق">×</button><span class="c67b-prize"><img class="c67b-base" src="${fx('base')}" alt=""><img class="c67b-prizeart" src="${fx(CANNON_ART[lv - 1])}" alt=""></span><h3>تهانينا!</h3>${prize}${ws ? `<ol>${ws}</ol>` : ''}<button type="button" class="c67-ok" data-c67-ok>حسنًا</button></div>`;
   document.body.appendChild(n);
   let done = false; const timers = [];
   const close = () => { if (done) return; done = true; timers.forEach(clearTimeout); n.classList.add('is-out'); setTimeout(() => n.remove(), 450); };
   n.addEventListener('click', (e) => { if (e.target.closest('[data-c67-ok]')) close(); });
-  const num = n.querySelector('[data-c67-num]'), step = reduced ? 400 : 1000;
-  for (let k = 1; k <= 4; k++) timers.push(setTimeout(() => { num.textContent = String(5 - k); num.classList.remove('is-pop'); void num.offsetWidth; num.classList.add('is-pop'); }, step * k));
-  timers.push(setTimeout(() => n.classList.add('is-boom'), step * 5));
-  timers.push(setTimeout(() => n.classList.add('is-card'), step * 5 + (reduced ? 300 : 1300)));
-  timers.push(setTimeout(close, step * 5 + 9000));
+  const num = n.querySelector('[data-c67-num]'), fire = n.querySelector('[data-c67-fire]'), fws = n.querySelector('.c67b-fws'), step = reduced ? 400 : 1000;
+  const replay = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
+  const burst = (k) => {
+    if (reduced) return;
+    for (let j = 0; j < 2; j++) {
+      const b = document.createElement('i'); b.className = 'c67b-fw';
+      b.style.cssText = `--x:${8 + Math.random() * 74}%;--y:${6 + Math.random() * 46}%;--s:${0.7 + Math.random() * 0.7};background-image:url(${fx(FW[(k + j) % 3])});animation-delay:${j * 0.35}s`;
+      fws.append(b); setTimeout(() => b.remove(), 1600);
+    }
+  };
+  const tick = (k) => { if (k > 0) { num.src = fx('num-' + (5 - k)); num.alt = String(5 - k); } replay(num, 'is-pop'); replay(fire, 'is-shoot'); burst(k); };
+  tick(0);
+  for (let k = 1; k <= 4; k++) timers.push(setTimeout(() => tick(k), step * k));
+  timers.push(setTimeout(() => { n.classList.add('is-boom'); burst(5); burst(6); }, step * 5));
+  timers.push(setTimeout(() => n.classList.add('is-card'), step * 5 + (reduced ? 300 : 1200)));
+  timers.push(setTimeout(close, step * 5 + 10000));
   return true;
 }
