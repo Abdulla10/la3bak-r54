@@ -9,7 +9,7 @@ type Rec = { orderId: string; cur: 'coins' | 'gems'; bonus: number; at: number; 
 type Data = { v: 1; granted: Record<string, Rec> };
 const valid = (v: Record<string, unknown>) => v.v === 1 && isObj(v.granted);
 export const FIRST_TOPUP_CAP = Object.freeze({ gems: 10_000, coins: 1_000_000 });
-export type FirstTopupDeps = {
+export type FirstTopupDeps = { percentOverride?: () => number;
   grant: (id: string, cur: 'coins' | 'gems', amount: number, reason: string, key: string) => boolean;
   debit: (id: string, cur: 'coins' | 'gems', amount: number, reason: string, key: string) => boolean;
   log?: (e: string, d?: Record<string, unknown>) => void;
@@ -17,11 +17,13 @@ export type FirstTopupDeps = {
 export class FirstTopup {
   private d: Data = { v: 1, granted: {} };
   private disk: Persister;
-  readonly percent: number; readonly allowTest: boolean;
+  private basePercent: number; readonly allowTest: boolean;
+  /** R67ae: المالك يقدر يغيّر النسبة من اللوحة (-1 = حسب إعداد الخادم) */
+  get percent(): number { const o = this.deps.percentOverride?.(); return typeof o === 'number' && o >= 0 ? Math.min(200, Math.floor(o)) : this.basePercent; }
   constructor(file: string, private deps: FirstTopupDeps, mon = new StorageMonitor(), private now: () => number = Date.now) {
     if (file) { const l = loadJsonFile(file, valid); if (l) this.d = l as unknown as Data; }
     this.disk = new Persister('first-topup', file, () => this.d, now, mon, valid);
-    const p = Number(process.env.FIRST_TOPUP_BONUS ?? 100); this.percent = Number.isFinite(p) ? Math.max(0, Math.min(200, Math.floor(p))) : 0;
+    const p = Number(process.env.FIRST_TOPUP_BONUS ?? 100); this.basePercent = Number.isFinite(p) ? Math.max(0, Math.min(200, Math.floor(p))) : 0;
     this.allowTest = process.env.FIRST_TOPUP_TEST === '1';
   }
   eligible(user: string) { return this.percent > 0 && !this.d.granted[user]; }

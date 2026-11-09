@@ -22,6 +22,7 @@ import { Matchmaker } from './matchmaker.js';
 import { MILESTONES, SLOTS, SETS, RARITIES } from './catalog.js';
 import { CpPoints, cpKey, cpLevelOf, CP_TASKS, CP_LEVELS, CP_LEVEL_NAMES } from './cp-r58.js';
 import { ROCKET_PLANETS } from './room-rocket-r58.js';
+import { SiteFlagsStore } from './site-flags-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
 import { Tribes, TribeError, TRIBE_ERR, TRIBE_ROOM_LEVEL, TRIBE_LEVELS, tribeLevelOf, type Tribe } from './tribes-r58.js';
 import { TribeTreasure, TreasureError, TREASURE_ERR, TRIBE_TASKS, TRIBE_BOXES, TRIBE_SHOP, ROCKET_PRESTIGE, launchGrants, planetOfLaunch } from './tribe-treasure-r59.js';
@@ -336,8 +337,11 @@ export async function createApp(
   const vipMembership = new VipMembership(vipMembershipFile,{wallet,progression,hasAccount:id=>accounts.has(id),mon:storage,catalogItem:id=>shopcat.get(id),notify:notice=>{support.announce([notice.userId],notice.title,notice.body,'VIP',notice.ref);}});
   const paymentSettings = cfg.payments;
   const provider = opts.paymentProvider ?? (!cfg.complimentaryPurchases && paymentSettings && paymentSettings.mode !== 'disabled' && paymentSettings.provider === 'tap' && paymentSettings.secretKey && paymentSettings.merchantId ? new TapPaymentProvider({mode:paymentSettings.mode,secretKey:paymentSettings.secretKey,merchantId:paymentSettings.merchantId}) : null);
+  /* R67ae: إعدادات التشغيل من لوحة التحكم */
+  const siteFlags = new SiteFlagsStore(functionalFile(undefined, 'site-flags'), Date.now, storage);
   /* R62: عرض الشحن الأول (ضعف الباقة مرة وحدة) */
   const firstTopup = new FirstTopup(functionalFile(undefined, 'first-topup'), {
+    percentOverride: () => siteFlags.get().firstTopupPercent,
     grant: (id, cur, amt, why, key) => wallet.grant(id, cur, amt, why, key),
     debit: (id, cur, amt, why, key) => { const r = wallet.adminAdjust(id, cur, -amt, why, key); return r.ok; }, log,
   }, storage);
@@ -906,7 +910,7 @@ export async function createApp(
     secret: cfg.cookieSecret, nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
     hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
     push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
-    profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg') return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= 6); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
+    profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg') return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
   }, Date.now, storage, opts.communityLimits);
   const social = new SocialPrivate(socialFile, Date.now, storage, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id),
@@ -943,6 +947,7 @@ export async function createApp(
     // R58: ليفل الغرفة من قيمة الهدايا الملتزمة بالمحفظة (جواهر داخل نفس الغرفة)
     giftValue:(from,to,ref,roomId)=>{const rec=wallet.committedGiftReceipt(from,to,ref);if(!rec||rec.cur!=='gems'||rec.status!=='done'||typeof rec.room!=='string'||!rec.room.startsWith(`social:${roomId}:`))return null;const v=rec.total??rec.price*(rec.qty??1);return Number.isSafeInteger(v)&&v>0?v:null;},
     ownsItem:(userId,itemId)=>wallet.owned(userId).includes(itemId),
+    cinemaOff:()=>!siteFlags.get().cinema,
     roomIdItem:(userId,itemId)=>{const it=shopcat.get(itemId);return it&&it.slot==='room-id'&&wallet.owned(userId).includes(it.id)&&typeof it.css==='string'?it.css:null;},
     moderate:(text,kind)=>{const m=moderateText(text,kind);return m.ok?{ok:true}:{ok:false,code:m.code};},
     verifyGiftSupport:(context,rec)=>{
@@ -976,8 +981,8 @@ export async function createApp(
     notify: (id, t, b, ref) => support.announce([id], t, b, 'دعوة صديق', ref), name: (id) => accounts.nameOf(id),
   }, storage);
   inviteRewardsView = (me) => inviteRewards.view(me);
-  const inviteTimer = setInterval(() => { try { inviteRewards.run(); } catch (e) { log('invite_rewards_failed', { error: String((e as Error).message).slice(0, 100) }); } }, 10 * 60_000); inviteTimer.unref?.();
-  setTimeout(() => { try { inviteRewards.run(); } catch { /* */ } }, 40_000).unref?.();
+  const inviteTimer = setInterval(() => { if (!siteFlags.get().invite) return; try { inviteRewards.run(); } catch (e) { log('invite_rewards_failed', { error: String((e as Error).message).slice(0, 100) }); } }, 10 * 60_000); inviteTimer.unref?.();
+  setTimeout(() => { if (!siteFlags.get().invite) return; try { inviteRewards.run(); } catch { /* */ } }, 40_000).unref?.();
   socialVoice=new SocialVoice({...cfg.socialVoice,enabled:cfg.socialVoice?.enabled??false,upstream:cfg.socialVoice?.upstream??'',apiKey:cfg.socialVoice?.apiKey??'',apiSecret:cfg.socialVoice?.apiSecret??'',cookieSecret:cfg.cookieSecret,
     access:id=>{const access=socialEligible(id)?socialRooms.mediaAccess(id):null;return access?{...access,id:community.pub(id)}:null;},
     authenticate:req=>{const user=sessions.cookieUser(req.headers.cookie);return user&&!admin.maintenanceBlock(user)&&!admin.banBlock(user)&&socialEligible(user.id)?user:null;},originAllowed:sameOrigin,
@@ -1204,6 +1209,23 @@ export async function createApp(
       else throw new FunctionalHttpError(400, 'عملية غير معروفة.');
       tribePush(ids);
       const auditOk = admin.audit(actor!, 'tribe.' + op, 'tribe:' + id, `${detail} — ${reason}`);
+      return { ok: true, auditOk };
+    }, 'owner');
+    functionalHttp.add('GET', '/api/admin/site-flags', () => ({ ok: true, flags: siteFlags.get(), meta: siteFlags.meta(), envFirstTopup: Number(process.env.FIRST_TOPUP_BONUS ?? 100), firstTopupNow: firstTopup.percent }), 'owner');
+    functionalHttp.add('POST', '/api/admin/site-flags', ({ actor, body }) => {
+      const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(reason.length >= 3, 'اكتب سبب التعديل.');
+      const input = { ...body } as Record<string, unknown>; delete input.reason;
+      let out; try { out = siteFlags.update(input, actor!.name); } catch (e) { throw new FunctionalHttpError(400, (e as Error).message || 'تعذّر الحفظ.'); }
+      const auditOk = out.changed.length ? admin.audit(actor!, 'site.flags', 'site-flags', out.changed.map((k) => `${k}: ${String(out.before[k as keyof typeof out.before])} → ${String(out.after[k as keyof typeof out.after])}`).join('، ') + ` — ${reason}`) : true;
+      if (out.changed.includes('cinema') && !out.after.cinema) { /* الفيديوهات الشغالة تكمل لين يطفونها؛ ما نقدر نوقف الكل بأمر واحد بأمان */ }
+      return { ok: true, flags: out.after, changed: out.changed, auditOk };
+    }, 'owner');
+    functionalHttp.add('GET', '/api/admin/posts', ({ url }) => ({ ok: true, posts: community.adminPosts(url.searchParams.get('q') ?? '', 80), counts: community.counts() }), 'owner');
+    functionalHttp.add('POST', '/api/admin/posts/delete', ({ actor, body }) => {
+      const id = Number(body.id), reason = String(body.reason ?? '').trim().slice(0, 200);
+      adminNeed(Number.isSafeInteger(id) && id > 0, 'رقم المنشور غير صالح.'); adminNeed(reason.length >= 3, 'اكتب سبب الحذف.');
+      let r; try { r = community.adminDeletePost(id); } catch { throw new FunctionalHttpError(404, 'المنشور غير موجود.'); }
+      const auditOk = admin.audit(actor!, 'community.remove', r.author, `حذف منشور ${id}: ${reason}`);
       return { ok: true, auditOk };
     }, 'owner');
     functionalHttp.add('POST', '/api/admin/tribes-cp/couple', ({ actor, body }) => {
@@ -1513,7 +1535,8 @@ export async function createApp(
       if (url.pathname === '/api/first-topup' && req.method === 'GET') return json(res, 200, { ok: true, eligible: !!user && firstTopup.eligible(user.id) && (paymentSettings?.mode === 'live' || (paymentSettings?.mode === 'test' && firstTopup.allowTest)), percent: firstTopup.percent });
       if (url.pathname === '/api/season' && req.method === 'GET') return json(res, 200, seasonView());
       // R62: هدية الدخول اليومي المتصاعدة
-      if (url.pathname === '/api/daily-streak' && req.method === 'GET') { if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); return json(res, 200, streak.view(user.id, wallet.canClaim(user.id))); }
+      if (url.pathname === '/api/site-flags' && req.method === 'GET') { const f = siteFlags.get(); return json(res, 200, { ok: true, cinema: f.cinema, bigGiftMin: f.bigGiftMin, profileBgVip: f.profileBgVip, streak: f.streak }); }
+      if (url.pathname === '/api/daily-streak' && req.method === 'GET') { if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); return json(res, 200, { ...streak.view(user.id, wallet.canClaim(user.id)), enabled: siteFlags.get().streak }); }
       // R62: إشعارات الجوال
       if (url.pathname === '/api/push/key' && req.method === 'GET') return json(res, 200, webPush ? { ok: true, key: webPush.publicKey, devices: user ? webPush.count(user.id) : 0 } : { ok: false });
       if ((url.pathname === '/api/push/subscribe' || url.pathname === '/api/push/unsubscribe') && req.method === 'POST') {
@@ -1727,7 +1750,7 @@ export async function createApp(
         if (!n) return { ok: false, error: 'استلمت مكافأة اليوم. تعال بكرة.' };
         // R62: هدية السلسلة فوق المكافأة اليومية (مفتاح ثابت لكل يوم — ما تتكرر)
         let extra = 0, gemsGot = 0, day = 1;
-        try { const st = streak.claim(user.id); day = st.day; if (st.bonus.coins > 0 && wallet.grant(user.id, 'coins', st.bonus.coins, `هدية الدخول اليومي — اليوم ${st.day}`, `streak:${st.today}:c`)) extra = st.bonus.coins; if (st.bonus.gems > 0 && wallet.grant(user.id, 'gems', st.bonus.gems, `هدية اليوم السابع`, `streak:${st.today}:g`)) gemsGot = st.bonus.gems; } catch (e) { log('streak_failed', { error: String((e as Error).message).slice(0, 100) }); }
+        if (siteFlags.get().streak) try { const st = streak.claim(user.id); day = st.day; if (st.bonus.coins > 0 && wallet.grant(user.id, 'coins', st.bonus.coins, `هدية الدخول اليومي — اليوم ${st.day}`, `streak:${st.today}:c`)) extra = st.bonus.coins; if (st.bonus.gems > 0 && wallet.grant(user.id, 'gems', st.bonus.gems, `هدية اليوم السابع`, `streak:${st.today}:g`)) gemsGot = st.bonus.gems; } catch (e) { log('streak_failed', { error: String((e as Error).message).slice(0, 100) }); }
         return { ok: true, got: n + extra, base: n, bonus: extra, gems: gemsGot, streakDay: day, coins: wallet.balance(user.id), gemBalance: wallet.gems(user.id) };
       }
       case 'mm:leave':

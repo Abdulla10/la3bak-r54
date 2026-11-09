@@ -69,7 +69,7 @@ export function wireSocialRoutes(http:FunctionalHttp,deps:{onRoomJoin?:(id:strin
   return {...stats,reports:reports?.reports??reports?.list??[],voice:deps.voice.health(),permissions:{view:true,moderate:can(a.role,'social.moderate'),configure:can(a.role,'social.configure'),ownership:a.role==='owner'}};
  },'support');
  http.add('POST','/api/admin/social',async({actor,body})=>{
-  const commands=['config:update','room:close','council:close','room:owner','room:moderator','report:resolve'];
+  const commands=['config:update','room:close','council:close','room:owner','room:moderator','report:resolve','room:video-off','room:theme-reset'];
   if(typeof body.command!=='string'||!commands.includes(body.command))throw new FunctionalHttpError(400,'الأمر الإداري مب مسموح.');
   const config=body.command==='config:update'||body.command==='room:owner'||body.command==='room:moderator';
   const a=permission(actor,config?'social.configure':'social.moderate');

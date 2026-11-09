@@ -5,9 +5,12 @@ const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const FX = '/assets/art67/cannon/', V = 'r67i';
 const seen = new Set(); const queue = []; let busy = false;
 export const BIG_GIFT_COINS = 9000;
+// R67ae: المالك يغيّر الحد من لوحة التحكم
+let bigMin = BIG_GIFT_COINS;
+try { fetch('/api/site-flags', { credentials: 'same-origin' }).then((r) => r.ok ? r.json() : null).then((j) => { if (j && Number.isSafeInteger(j.bigGiftMin) && j.bigGiftMin > 0) bigMin = j.bigGiftMin; }).catch(() => {}); } catch {}
 export function giftCoins(ev) { const p = Number(ev?.gift?.price) || 0, q = Number(ev?.qty) || 1; return p * q * (ev?.gift?.currency === 'gems' ? 20 : 1); }
 export function bigGift(ev) {
-  if (!ev?.tx || seen.has(ev.tx) || giftCoins(ev) < BIG_GIFT_COINS || typeof document === 'undefined' || document.hidden) return false;
+  if (!ev?.tx || seen.has(ev.tx) || giftCoins(ev) < bigMin || typeof document === 'undefined' || document.hidden) return false;
   seen.add(ev.tx); queue.push(ev); if (queue.length > 3) queue.splice(0, queue.length - 3); next(); return true;
 }
 function next() {

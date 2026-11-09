@@ -439,6 +439,16 @@ export class Community {
     this.dropMediaFile(media);
     return { ok: true, author: r.snap.author };
   }
+  /** R67ae: إدارة المنشورات — آخر المنشورات مع بحث، وحذف إداري */
+  adminPosts(q: string, limit = 60) {
+    const t = q.trim().toLowerCase();
+    const list = [...this.d.posts].reverse().filter((p) => !t || p.text.toLowerCase().includes(t) || this.dep.nameOf(p.by).toLowerCase().includes(t)).slice(0, Math.max(1, Math.min(200, limit)));
+    return list.map((p) => ({ id: p.id, author: this.dep.nameOf(p.by), authorId: p.by, text: p.text.slice(0, 300), media: p.media ? '/api/community/media/' + p.media : null, at: p.at, likes: p.likes.length, comments: this.d.comments.filter((c) => c.post === p.id).length }));
+  }
+  adminDeletePost(id: unknown): { author: string } {
+    const p = this.post(id); const media = p.media;
+    this.tx(() => this.purgePost(p)); this.dropMediaFile(media); return { author: p.by };
+  }
   openReports() { return this.d.reports.filter((r) => r.status === 'open').length; }
   counts() { return { posts: this.d.posts.length, comments: this.d.comments.length, reports: this.openReports() }; }
 }

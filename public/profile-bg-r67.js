@@ -1,5 +1,6 @@
 // R67aa: خلفية الملف الكاملة (زجاج غامق) — للخلفيات الأسطورية/الفخمة جدًا أو VIP 6+، وتنطفي من الإعدادات
-let flat = null, flatAt = 0, busy = false;
+let flat = null, flatAt = 0, busy = false, vipMin = 6;
+try { fetch('/api/site-flags', { credentials: 'same-origin' }).then((r) => r.ok ? r.json() : null).then((j) => { if (j && Number.isSafeInteger(j.profileBgVip)) { vipMin = j.profileBgVip; sched(); } }).catch(() => {}); } catch {}
 const H = document.documentElement;
 async function flatSetting() {
   if (flat !== null && Date.now() - flatAt < 30000) return flat;
@@ -32,7 +33,8 @@ async function check() {
     const vis = document.querySelector('.cm-prof .cm67-bg');
     if (vis) { await fillVisitor(vis); if (vis.dataset.full === '1') { await new Promise((r) => requestAnimationFrame(r)); return on(srcOf(vis)); } return off(); }
     const own = document.querySelector('.pv-profile .lpu-cover[data-pf67-full="1"]');
-    if (own && !(await flatSetting())) return on(srcOf(own));
+    const ok = own && own.dataset.pf67Flat !== '1' && (['legendary', 'ultra'].includes(own.dataset.pf67Rar) || Number(own.dataset.pf67Vip) >= vipMin);
+    if (ok && !(await flatSetting())) return on(srcOf(own));
     off();
   } finally { busy = false; }
 }

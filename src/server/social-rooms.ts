@@ -55,6 +55,8 @@ export interface SocialRoomsOptions {
   /** R58: أيدي غرفة مميز يملكه اللاعب (يرجّع الرقم) */
   roomIdItem?: (userId: string, itemId: string) => string | null;
   ownsItem?: (userId: string, itemId: string) => boolean;
+  /** R67ae: المالك طفّى وضع اليوتيوب من اللوحة */
+  cinemaOff?: () => boolean;
   /** R58: مراجعة تلقائية للنصوص */
   moderate?: (text: string, kind: 'room-name' | 'room-ad') => { ok: true } | { ok: false; code: string };
   /** Trusted existing outbox + canonical Wallet check; synchronous, never another queue. */
@@ -1189,6 +1191,7 @@ export class SocialRooms {
       this.requireMod(r,id,undefined,'identity');
       const pos=(v:RoomVideo)=>Math.max(0,v.paused??(now-v.base)/1000);
       if(command==='video:off'){if(!keys(b,['roomId']))fail('invalid_video');delete r.video;this.activity(r,command,now);return success({roomId:r.id,updated:true});}
+      if(command==='video:set'&&this.opts.cinemaOff?.())fail('cinema_disabled',403);
       if(command==='video:set'){if(!keys(b,['roomId','vid'])||typeof b.vid!=='string'||!YT_ID.test(b.vid))fail('invalid_video');r.video={vid:b.vid,by:id,base:now,paused:null,at:now};this.activity(r,command,now);return success({roomId:r.id,updated:true});}
       if(!r.video)fail('video_not_playing',409);
       if(!keys(b,['roomId','action','position'])||!['play','pause','seek'].includes(String(b.action))||(b.position!==null&&(typeof b.position!=='number'||!Number.isFinite(b.position)||b.position<0||b.position>86400*2)))fail('invalid_video');
@@ -1343,7 +1346,7 @@ export class SocialRooms {
     // Platform authorization is deliberately the parent route's responsibility, never inferred from social ownership.
     return this.serial(()=>this.guard(async()=>{
       this.ready();if(!ident(actorId)||!this.opts.profile(actorId)&&this.opts.trustedAdmin?.(actorId)!==true)fail('authentication_required',401);
-      if(command==='stats')return {ok:true,counts:{rooms:this.state.rooms.length,councils:this.state.rooms.reduce((n,r)=>n+r.councils.length,0),members:this.state.rooms.reduce((n,r)=>n+r.members.length,0),content:this.state.config.content.cards.length,reports:this.state.reports.length,pendingReports:this.state.reports.filter(r=>r.resolution===null).length},config:structuredClone(this.state.config),rooms:this.state.rooms.map(r=>({id:r.id,name:r.name,privacy:r.privacy,owner:this.who(r.ownerId),moderators:r.moderators.map(id=>this.who(id)),members:r.members.length,councils:r.councils.map(c=>({id:c.id,name:c.name,kind:c.kind,seats:c.seats,members:r.members.filter(m=>m.councilId===c.id).length}))})),audit:this.state.audit.slice(-100).map(a=>({id:a.id,actor:this.who(a.actor),action:a.action,targetId:a.targetId,reason:a.reason,at:a.at}))};
+      if(command==='stats')return {ok:true,counts:{rooms:this.state.rooms.length,councils:this.state.rooms.reduce((n,r)=>n+r.councils.length,0),members:this.state.rooms.reduce((n,r)=>n+r.members.length,0),content:this.state.config.content.cards.length,reports:this.state.reports.length,pendingReports:this.state.reports.filter(r=>r.resolution===null).length},config:structuredClone(this.state.config),rooms:this.state.rooms.map(r=>({id:r.id,name:r.name,privacy:r.privacy,level:roomLevelOf(r.support??0).level,support:r.support??0,theme:this.settings(r).theme,video:r.video?{vid:r.video.vid,playing:r.video.paused===null}:null,owner:this.who(r.ownerId),moderators:r.moderators.map(id=>this.who(id)),members:r.members.length,councils:r.councils.map(c=>({id:c.id,name:c.name,kind:c.kind,seats:c.seats,members:r.members.filter(m=>m.councilId===c.id).length}))})),audit:this.state.audit.slice(-100).map(a=>({id:a.id,actor:this.who(a.actor),action:a.action,targetId:a.targetId,reason:a.reason,at:a.at}))};
       if(command==='reports:list')return {ok:true,reports:this.state.reports.slice(-500).map(r=>({...r,actor:this.who(r.actor),subject:r.subjectId?this.who(r.subjectId):null}))};
       if(!isObj(body)||!jsonSafe(body)||Buffer.byteLength(canonical(body))>200000||!ident(body.key)||body.key.length>96)fail('idempotency_key_required');
       const b=Object.fromEntries(Object.entries(body).filter(([k])=>k!=='key'&&k!=='command')),fp=createHash('sha256').update(canonical(b)).digest('hex');
@@ -1362,6 +1365,8 @@ export class SocialRooms {
         else {
           const r=this.room(d,b.roomId);targetId=r.id;roomId=r.id;
           if(command==='room:close'){if(r.cannon&&this.cannonPendingFor(r.cannon)>0)fail('cannon_award_pending',409);for(const m of [...r.members])this.remove(d,m.id,media);d.rooms=d.rooms.filter(x=>x.id!==r.id);}
+          else if(command==='room:video-off'){if(!r.video)fail('video_not_playing',409);delete r.video;this.activity(r,'video:off',now);}
+          else if(command==='room:theme-reset'){r.settings={...r.settings,theme:defaultRoomSettings().theme};this.activity(r,'room:update',now);}
           else if(command==='council:close'){const c=this.council(r,b.councilId);targetId=c.id;this.closeCouncil(d,r,c,media);this.activity(r,command,now);}
           else if(command==='room:owner'){const t=this.target(d,b.targetId);if(this.opts.eligible(t)!==true||r.bans.some(b=>b.id===t))fail('target_unavailable',403);r.ownerId=t;r.moderators=r.moderators.filter(x=>x!==t);this.revokeAudio(r,media);this.activity(r,command,now);targetId=t;}
           else if(command==='room:moderator'){const t=this.target(d,b.targetId);if(t===r.ownerId)fail('protected_member',403);const prior=this.moderator(r,t);r.moderators=r.moderators.filter(x=>x!==t);if(boolean(b.enabled)){if(r.moderators.length>=50)fail('moderator_capacity',409);r.moderators.push(t);}if(prior!==this.moderator(r,t))this.revokeAudio(r,media,t);this.activity(r,command,now);targetId=t;}
