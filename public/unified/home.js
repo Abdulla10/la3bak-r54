@@ -73,7 +73,7 @@ function face(ctx, subject, size = 42) {
 }
 function accountHTML(ctx) {
   if (ctx.user) return !ctx.me ? `<p class="pv-account-status" role="status">${esc(ctx.error || 'جاري تحميل بيانات حسابك وأرصدتك…')}</p>` : '';
-  return '<div class="pv-home-welcome" data-home-section="home-account"><span>أهلًا بك في لعبنا</span><a class="pv-text-link" href="#/profile">سجّل دخولك والعب</a></div>';
+  return '<div class="pv-home-welcome" data-home-section="home-account"><span>أهلًا بك في لعبك</span><a class="pv-text-link" href="#/profile">سجّل دخولك والعب</a></div>';
 }
 function bannerList(ctx) {
   const base = { image: '', title: 'لعبتك وجمعتك في مكان واحد', text: 'اكتشف الألعاب المتاحة، واختر التحدي المناسب لك.', href: '#/games', cta: 'كل الألعاب', primary: true };
@@ -87,11 +87,11 @@ function bannerList(ctx) {
 }
 function heroHTML(ctx) {
   const banners = bannerList(ctx);
-  return `<section class="pv-hero" data-home-section="hero" aria-label="لافتات لعبنا" aria-roledescription="عارض لافتات">
+  return `<section class="pv-hero" data-home-section="hero" aria-label="لافتات لعبك" aria-roledescription="عارض لافتات">
     <div class="pv-hero-slides">${banners.map((b, i) => `<article class="pv-hero-slide" data-pv-slide="${i}"${i ? ' hidden' : ''} aria-label="${esc(`لافتة ${i + 1} من ${banners.length}`)}">
       ${b.image ? `<img class="pv-hero-art" src="${esc(b.image)}" alt=""${i ? ' loading="lazy"' : ' fetchpriority="high"'} decoding="async">` : ''}
       <div class="pv-hero-shade"></div><div class="pv-hero-copy">
-        ${b.primary ? `<h1>${esc(b.title || 'اكتشف لعبنا')}</h1>` : `<h2>${esc(b.title || 'اكتشف المزيد في لعبنا')}</h2>`}
+        ${b.primary ? `<h1>${esc(b.title || 'اكتشف لعبك')}</h1>` : `<h2>${esc(b.title || 'اكتشف المزيد في لعبك')}</h2>`}
         <p>${esc(b.text)}</p><a class="pv-button pv-hero-cta" href="${esc(b.href)}">${esc(b.cta)} ${icon('arrow')}</a>
       </div></article>`).join('')}</div>
     ${banners.length > 1 ? `<div class="pv-banner-dots" role="group" aria-label="اختيار اللافتة">${banners.map((_, i) => `<button type="button" data-pv-banner="${i}" aria-label="اللافتة ${i + 1}" aria-pressed="${i === 0}"></button>`).join('')}</div>` : ''}
@@ -175,7 +175,7 @@ function newsHTML(ctx) {
   const notices = list(ctx.notices).filter((n) => n && (n.title || n.body));
   if (notices.length) cards.push(`<a class="pv-news-card pv-news-card--season" href="#/events" data-preview-page="events"><span class="pv-news-visual pv-news-symbol">${icon(notices[0].kind === 'event' ? 'calendar' : 'bell')}</span><div><span class="pv-eyebrow">${notices[0].kind === 'event' ? 'فعالية من الإدارة' : 'إعلان من الإدارة'}</span><h3>${esc(notices[0].title)}</h3><p>${esc(notices[0].body)}</p><small>اقرأ آخر الإعلانات</small></div></a>`);
   else if (ctx.season) cards.push(`<article class="pv-news-card pv-news-card--season"><span class="pv-news-visual pv-news-symbol">${icon('calendar')}</span><div><span class="pv-eyebrow">فعالية موسمية</span><h3>${esc(ctx.season.title)}</h3><p>${esc(ctx.season.text)}</p><button class="pv-text-button" type="button" data-act="season-play" data-kind="${esc(ctx.season.kind)}">ابدأ التحدي ${icon('arrow')}</button></div></article>`);
-  else cards.push(`<article class="pv-news-card pv-news-card--season"><span class="pv-news-visual pv-news-symbol">${icon('crown')}</span><div><span class="pv-eyebrow">فعاليات لعبنا</span><h3>للمتعة موعد جديد</h3><p>لا توجد فعالية موسمية نشطة حاليًا.</p><a class="pv-text-link" href="#/events" data-preview-page="events">استعرض الفعاليات</a></div></article>`);
+  else cards.push(`<article class="pv-news-card pv-news-card--season"><span class="pv-news-visual pv-news-symbol">${icon('crown')}</span><div><span class="pv-eyebrow">فعاليات لعبك</span><h3>للمتعة موعد جديد</h3><p>لا توجد فعالية موسمية نشطة حاليًا.</p><a class="pv-text-link" href="#/events" data-preview-page="events">استعرض الفعاليات</a></div></article>`);
   if (!ctx.noCommunity) {
     if (ctx.postsLoading) cards.push(`<article class="pv-news-card"><span class="pv-news-visual pv-news-symbol">${icon('users')}</span><div role="status"><h3>من المجتمع</h3><p>جاري تحميل آخر المشاركات…</p></div></article>`);
     else if (ctx.postsError) cards.push(`<article class="pv-news-card"><span class="pv-news-visual pv-news-symbol">${icon('users')}</span><div><h3>من المجتمع</h3><p role="status">${esc(ctx.postsError)}</p><button class="pv-text-button" type="button" data-act="home-posts">إعادة المحاولة</button></div></article>`);
@@ -183,7 +183,7 @@ function newsHTML(ctx) {
     else cards.push(`<a class="pv-news-card" href="#/community"><span class="pv-news-visual pv-news-symbol">${icon('users')}</span><div><span class="pv-eyebrow">من المجتمع</span><h3>خلّ جمعتنا تبدأ معك</h3><p>ما فيه منشورات بعد. شارك أول لحظة من لعبك!</p><small>انضم للمجتمع</small></div></a>`);
   }
   const items = list(ctx.shopData?.items).filter((item) => !item.retired);
-  cards.push(`<a class="pv-news-card pv-news-card--shop" href="#/shop"><span class="pv-news-visual pv-news-symbol">${icon('frame')}</span><div><span class="pv-eyebrow">متجر لعبنا</span><h3>خلّ لملفك طابعه الخاص</h3><p>${items.length ? `${esc(number(items.length))} من المقتنيات المتاحة: أفتارات وإطارات وأكثر.` : 'اكتشف المقتنيات المتاحة في المتجر وزيّن ملفك.'}</p><small>استعرض المتجر ${icon('arrow')}</small></div></a>`);
+  cards.push(`<a class="pv-news-card pv-news-card--shop" href="#/shop"><span class="pv-news-visual pv-news-symbol">${icon('frame')}</span><div><span class="pv-eyebrow">متجر لعبك</span><h3>خلّ لملفك طابعه الخاص</h3><p>${items.length ? `${esc(number(items.length))} من المقتنيات المتاحة: أفتارات وإطارات وأكثر.` : 'اكتشف المقتنيات المتاحة في المتجر وزيّن ملفك.'}</p><small>استعرض المتجر ${icon('arrow')}</small></div></a>`);
   return `<section class="pv-section" data-home-section="news-events" aria-labelledby="pvNewsTitle"><div class="pv-section-heading"><h2 id="pvNewsTitle">${icon('bell')} أحدث الأخبار والفعاليات</h2><a class="pv-all-link" href="#/events" data-preview-page="events">عرض الكل ${icon('arrow')}</a></div><div class="pv-news-grid">${cards.join('')}</div>${!ctx.noCommunity && list(ctx.posts).length > 1 ? `<div class="pv-community-feed" aria-label="آخر منشورات المجتمع">${ctx.posts.slice(1, 3).map((post) => postCard(post, ctx)).join('')}</div>` : ''}</section>`;
 }
 function storeBadge(ctx, kind) {
@@ -196,7 +196,7 @@ function storeBadge(ctx, kind) {
 }
 function appsHTML(ctx) {
   const hasStore = officialStoreURL(ctx.siteConfig?.appStoreUrl, 'apple') || officialStoreURL(ctx.siteConfig?.googlePlayUrl, 'google');
-  return `<section class="pv-app-section" data-home-section="app-download" aria-labelledby="pvAppsTitle"><div class="pv-app-art" aria-hidden="true"><img src="${ROYAL_CROWN}" alt="">${icon('game')}</div><div class="pv-app-copy"><h2 id="pvAppsTitle">العب في أي وقت ومن أي مكان!</h2><p>${hasStore ? 'حمّل تطبيق لعبنا من روابط المتاجر المتاحة أدناه.' : 'تطبيق لعبنا قريبًا على App Store وGoogle Play'}</p></div><div class="pv-store-badges">${storeBadge(ctx, 'apple')}${storeBadge(ctx, 'google')}</div></section>`;
+  return `<section class="pv-app-section" data-home-section="app-download" aria-labelledby="pvAppsTitle"><div class="pv-app-art" aria-hidden="true"><img src="${ROYAL_CROWN}" alt="">${icon('game')}</div><div class="pv-app-copy"><h2 id="pvAppsTitle">العب في أي وقت ومن أي مكان!</h2><p>${hasStore ? 'حمّل تطبيق لعبك من روابط المتاجر المتاحة أدناه.' : 'تطبيق لعبك قريبًا على App Store وGoogle Play'}</p></div><div class="pv-store-badges">${storeBadge(ctx, 'apple')}${storeBadge(ctx, 'google')}</div></section>`;
 }
 function socialLinksHTML(ctx) {
   return `<nav class="pv-home-actions" data-home-section="social-rooms" aria-label="الغرف والمجتمع">${ctx.noCommunity ? `<span class="pv-parent-note">الغرف والمنشورات مقفلة من إعدادات الأمان السابقة.</span>` : `<a href="#/social-rooms">${icon('users')} اكتشف الغرف ${icon('arrow')}</a><a href="#/community">${icon('file')} منشورات المجتمع ${icon('arrow')}</a>`}<a href="#/rooms">${icon('game')} غرف الألعاب ${icon('arrow')}</a></nav>`;
@@ -220,7 +220,7 @@ export function footerHTML(ctx = {}) {
   const support = safeURL(config.supportUrl, { hash: true }) || '#/support';
   const contact = safeURL(config.contactUrl, { hash: true }) || '#/contact';
   const socials = (Array.isArray(config.socialLinks) ? config.socialLinks : Object.entries(config.socialLinks || {}).map(([label, href]) => ({ label, href }))).filter((s) => s && typeof s.label === 'string' && /^https:\/\//.test(safeURL(s.href || s.url)));
-  return `<footer class="lbh-footer" data-home-section="footer" dir="rtl"><div class="lbh-footer-main"><a class="lbh-footer-brand" href="#/" aria-label="LA3BAK | لعبنا — الرئيسية"><img src="${ROYAL_CROWN}" alt=""><b dir="ltr">LA3BAK <span lang="ar">| لعبنا</span></b></a><nav class="lbh-footer-links" aria-label="روابط الموقع"><a href="#/about">من نحن</a><a href="${esc(contact)}">اتصل بنا</a><a href="${esc(support)}">المساعدة والدعم</a><a href="#/terms">الشروط والأحكام</a><a href="#/privacy">سياسة الخصوصية</a></nav><div class="lbh-footer-meta">${socials.length ? `<nav class="lbh-social-links" aria-label="حساباتنا على التواصل الاجتماعي">${socials.map((s) => `<a href="${esc(safeURL(s.href || s.url))}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a>`).join('')}</nav>` : ''}<small>جميع الحقوق محفوظة © LA3BAK 2026</small><span class="lbh-footer-safe">${icon('shield')} ألعاب تجمعنا</span></div></div></footer>`;
+  return `<footer class="lbh-footer" data-home-section="footer" dir="rtl"><div class="lbh-footer-main"><a class="lbh-footer-brand" href="#/" aria-label="LA3BAK | لعبك — الرئيسية"><img src="${ROYAL_CROWN}" alt=""><b dir="ltr">LA3BAK <span lang="ar">| لعبك</span></b></a><nav class="lbh-footer-links" aria-label="روابط الموقع"><a href="#/about">من نحن</a><a href="${esc(contact)}">اتصل بنا</a><a href="${esc(support)}">المساعدة والدعم</a><a href="#/terms">الشروط والأحكام</a><a href="#/privacy">سياسة الخصوصية</a></nav><div class="lbh-footer-meta">${socials.length ? `<nav class="lbh-social-links" aria-label="حساباتنا على التواصل الاجتماعي">${socials.map((s) => `<a href="${esc(safeURL(s.href || s.url))}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a>`).join('')}</nav>` : ''}<small>جميع الحقوق محفوظة © LA3BAK 2026</small><span class="lbh-footer-safe">${icon('shield')} ألعاب تجمعنا</span></div></div></footer>`;
 }
 
 /** Only local banner/ranking interactions. Application-owned data-act and

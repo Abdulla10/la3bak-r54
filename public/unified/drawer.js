@@ -71,7 +71,7 @@ function faceHTML(ctx, me) {
 function identityHTML(ctx, state = {}) {
   const me = state.me ?? ctx.me;
   if (!ctx.user) {
-    return `<div class="drawer-user lb-drawer-user">${faceHTML({}, null)}<div class="grow"><b>حيّاك في لعبنا</b><small>سجّل دخولك عشان تشوف بيانات لاعبك.</small><a class="btn lb-drawer-login" href="#/account">تسجيل الدخول</a></div></div>`;
+    return `<div class="drawer-user lb-drawer-user">${faceHTML({}, null)}<div class="grow"><b>حيّاك في لعبك</b><small>سجّل دخولك عشان تشوف بيانات لاعبك.</small><a class="btn lb-drawer-login" href="#/account">تسجيل الدخول</a></div></div>`;
   }
   const name = (typeof me?.name === 'string' && me.name.trim() ? me.name : '') ||
     (typeof ctx.user.name === 'string' && ctx.user.name.trim() ? ctx.user.name : 'اسم اللاعب مب متوفر');
@@ -95,7 +95,7 @@ export function render(ctx = {}) {
   const active = currentPage(ctx);
   return `<div class="lb-drawer-body" data-lb-page="drawer" dir="rtl">
     <button type="button" class="lb-drawer-close" data-lb-shell="close" aria-label="إغلاق القائمة">${icon('close')}</button>
-    <div class="drawer-brand lb-drawer-brand"><a href="#/" aria-label="LA3BAK لعبنا — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" width="52" height="52" alt=""><b><span dir="ltr">LA3BAK</span> | لعبنا</b></a><p>كل خياراتك في مكان واحد</p></div>
+    <div class="drawer-brand lb-drawer-brand"><a href="#/" aria-label="LA3BAK لعبك — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" width="52" height="52" alt=""><b><span dir="ltr">LA3BAK</span> | لعبك</b></a><p>كل خياراتك في مكان واحد</p></div>
     <div data-lb-drawer-identity aria-live="polite">${identityHTML(ctx)}</div>
     <nav class="drawer-links lb-drawer-links" aria-label="روابط القائمة الجانبية">
       ${LINKS.map(([route, shape, label, note]) => `<a class="list-row lb-drawer-link${active === route ? ' active' : ''}" href="${esc('#/' + route)}" data-lb-drawer-route="${esc(route)}"${active === route ? ' aria-current="page"' : ''}>${icon(shape)}<span class="grow"><b>${esc(label)}</b>${note ? `<small>${esc(note)}</small>` : ''}</span>${icon('back')}</a>`).join('')}

@@ -218,7 +218,7 @@ function referenceFavorites(ctx) {
 }
 function referenceDrawer(ctx,s) {
  const links=[['settings','settings','الإعدادات'],['wallet','coin','المحفظة'],['shop/packs','coin','العروض والباقات'],['shop','shop','المتجر'],['games','game','الألعاب'],['leaderboard','trophy','ترتيب اللاعبين'],['support','help','الدعم والمساعدة'],['privacy','shield','الخصوصية']];
- return `<div class="lpu-drawer-backdrop" data-pvp="menu-close" ${s.menu?'':'hidden'}></div><aside class="lpu-drawer ${s.menu?'is-open':''}" aria-label="القائمة الجانبية" aria-hidden="${!s.menu}" ${s.menu?'':'inert'}><header><b>LA3BAK | لعبنا</b>${button('menu-close',icon('close'),'aria-label="إغلاق القائمة"','lpu-edit')}</header><nav>${links.map(([route,ic,label])=>`<a href="#/${route}">${icon(ic)}${label}</a>`).join('')}${ctx.user?button('logout',`${icon('logout')} تسجيل الخروج`,s.pending?'disabled':'','lpu-drawer-action'):''}</nav></aside>`;
+ return `<div class="lpu-drawer-backdrop" data-pvp="menu-close" ${s.menu?'':'hidden'}></div><aside class="lpu-drawer ${s.menu?'is-open':''}" aria-label="القائمة الجانبية" aria-hidden="${!s.menu}" ${s.menu?'':'inert'}><header><b>LA3BAK | لعبك</b>${button('menu-close',icon('close'),'aria-label="إغلاق القائمة"','lpu-edit')}</header><nav>${links.map(([route,ic,label])=>`<a href="#/${route}">${icon(ic)}${label}</a>`).join('')}${ctx.user?button('logout',`${icon('logout')} تسجيل الخروج`,s.pending?'disabled':'','lpu-drawer-action'):''}</nav></aside>`;
 }
 
 function referenceBottomNav(ctx={}) {
@@ -226,7 +226,7 @@ function referenceBottomNav(ctx={}) {
 }
 
 function referenceHeader(ctx,s) {
- return `<header class="top" dir="rtl"><a class="logo" href="#/" aria-label="LA3BAK لعبنا — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" alt="" width="28" height="24"><b dir="ltr">LA3BAK <span lang="ar">| لعبنا</span></b></a><nav class="actions" aria-label="أدوات الملف"><button type="button" class="lpu-head-button" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${!ctx.noCommunity?`<a href="#/notifications" aria-label="الإشعارات">${icon('bell')}${ctx.unread?'<i class="lpu-notification-dot"></i>':''}</a>`:''}${/* R67au: زر ☰ انشال بطلب المالك؛ الإعدادات والدعم والمتجر موجودة بالملف والشريط السفلي */''}</nav></header>`;
+ return `<header class="top" dir="rtl"><a class="logo" href="#/" aria-label="LA3BAK لعبك — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" alt="" width="28" height="24"><b dir="ltr">LA3BAK <span lang="ar">| لعبك</span></b></a><nav class="actions" aria-label="أدوات الملف"><button type="button" class="lpu-head-button" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${!ctx.noCommunity?`<a href="#/notifications" aria-label="الإشعارات">${icon('bell')}${ctx.unread?'<i class="lpu-notification-dot"></i>':''}</a>`:''}${/* R67au: زر ☰ انشال بطلب المالك؛ الإعدادات والدعم والمتجر موجودة بالملف والشريط السفلي */''}</nav></header>`;
 }
 
 const headerCount = value => typeof value==='number' && Number.isSafeInteger(value) && value>=0 ? new Intl.NumberFormat('en-US').format(value) : '—';

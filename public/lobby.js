@@ -1,4 +1,4 @@
-/* الصالة الموحدة: جكارو وبلوت ولودو بحساب واحد. كل رقم هنا جاي من الخادم (/api/account و/api/rankings)، ولا يوجد رقم ثابت أو تقريبي. */
+/* الصالة الموحدة: جاكارو وبلوت ولودو بحساب واحد. كل رقم هنا جاي من الخادم (/api/account و/api/rankings)، ولا يوجد رقم ثابت أو تقريبي. */
 import { HUBS } from './hub.js?v=shell-r6';
 import { mini } from './avatars.js?v=r67ac';
 import { frameArt, isFrame2 } from './cosmetics.js?v=r67ac';
@@ -6,7 +6,7 @@ import { referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './referen
 
 export const L = { me: null, rk: {}, tab: 'all', err: '', loading: false, loaded: false };
 export const GAME_IDS = ['jackaro', 'baloot', 'ludo'];
-const NAMES = { all: 'الكل', jackaro: 'جكارو', baloot: 'بلوت', ludo: 'لودو' };
+const NAMES = { all: 'الكل', jackaro: 'جاكارو', baloot: 'بلوت', ludo: 'لودو' };
 const THEME = {
   jackaro: { g1: '#ff8a3d', g2: '#c2410c', desc: 'ورق وكرات: وصّل كراتك للنهاية قبل خصومك.', modes: ['2 إلى 4 لاعبين', 'فريقين في 4 لاعبين'] },
   baloot: { g1: '#2fbf8f', g2: '#0b6b4f', desc: 'بلوت خليجي: فريقين، صن وحكم، وأول فريق يوصل 152.', modes: ['4 لاعبين (فريقين)'] },

@@ -1,7 +1,7 @@
 import { mini } from '../avatars.js?v=r67ac';
 
 // Read-only ranking UI. Scoring and ordering belong exclusively to the server.
-const GAME_NAMES = Object.freeze({ jackaro: 'جكارو', baloot: 'بلوت', ludo: 'لودو' });
+const GAME_NAMES = Object.freeze({ jackaro: 'جاكارو', baloot: 'بلوت', ludo: 'لودو' });
 const PERIODS = ['all', 'weekly', 'monthly'];
 const SCOPES = [...PERIODS, ...Object.keys(GAME_NAMES)];
 const nf = new Intl.NumberFormat('ar-AE-u-nu-latn');
@@ -133,7 +133,7 @@ function standings(state, ctx) {
   return `${summary}<section class="panel lb-rank-standings"><div class="panel-title"><h2>قائمة المتصدرين${partial ? ' — جزئية' : ''}</h2><button class="btn lb-rank-refresh" type="button" data-lb-rank-reload${canRead(ctx) ? '' : ' disabled'}>تحديث</button></div><ol class="lb-rank-list">${data.list.map(rowHTML).join('')}</ol>${ownOutside ? `<div class="lb-rank-own"><h3>مكانك خارج قائمة المتصدرين</h3><ol class="lb-rank-list">${rowHTML(personal)}</ol></div>` : ''}<p class="lb-rank-note">ظاهر ${num(data.list.length)} من ${num(data.total)} لاعب. الخادم يرجّع أول 20 لاعب فقط، ومعهم ترتيبك إذا عندك نقاط تصنيف. ما فيه صفحات إضافية متاحة.</p>${podiumHTML(data.list.slice(0, 3))}</section>`;
 }
 function bodyHTML(state, ctx) {
-  return `${controls(state, ctx)}<div class="lb-rank-results" aria-live="polite" aria-busy="${state.loading}">${standings(state, ctx)}</div><section class="panel lb-rank-rules"><h2 class="panel-title">شلون ينحسب الترتيب؟</h2><p>10 نقاط لكل مباراة منتهية، و20 نقطة زيادة للفوز، إذا فيها لاعبين حقيقيين أو أكثر. الكمبيوتر واللعب بروحك ما يزيدون نقاط التصنيف.</p><p>الخادم يرتّب حسب النقاط، عقب عدد الفوز، عقب الأقل مباريات، وعقب الاسم. هذي نقاط تصنيف، مب عملات.</p><p class="lb-rank-note">عام وترتيب الألعاب لكل الفترات. الأسبوع يبدأ السبت، والشهر هو الشهر التقويمي بتوقيت الإمارات، مب آخر 30 يوم ولا مجموع أسابيع. نقاط الشهر تتجمع من بداية التتبع فقط، وأي نقص قديم يظهر فوق بوضوح.</p><p class="lb-rank-note">ترتيب الألعاب متاح لجكارو وبلوت ولودو بس. ترتيب الأصدقاء والدول مب مدعوم بواجهات البيانات الحالية. هالصفحة للعرض فقط، وما فيها استلام جوائز.</p>${!canRead(ctx) && state.data ? '<p class="lb-rank-note" role="status">هذي البيانات الممرّرة من الصفحة الحالية؛ التحديث وتبديل النطاق يحتاجون ربط واجهة القراءة.</p>' : ''}</section>`;
+  return `${controls(state, ctx)}<div class="lb-rank-results" aria-live="polite" aria-busy="${state.loading}">${standings(state, ctx)}</div><section class="panel lb-rank-rules"><h2 class="panel-title">شلون ينحسب الترتيب؟</h2><p>10 نقاط لكل مباراة منتهية، و20 نقطة زيادة للفوز، إذا فيها لاعبين حقيقيين أو أكثر. الكمبيوتر واللعب بروحك ما يزيدون نقاط التصنيف.</p><p>الخادم يرتّب حسب النقاط، عقب عدد الفوز، عقب الأقل مباريات، وعقب الاسم. هذي نقاط تصنيف، مب عملات.</p><p class="lb-rank-note">عام وترتيب الألعاب لكل الفترات. الأسبوع يبدأ السبت، والشهر هو الشهر التقويمي بتوقيت الإمارات، مب آخر 30 يوم ولا مجموع أسابيع. نقاط الشهر تتجمع من بداية التتبع فقط، وأي نقص قديم يظهر فوق بوضوح.</p><p class="lb-rank-note">ترتيب الألعاب متاح لجاكارو وبلوت ولودو بس. ترتيب الأصدقاء والدول مب مدعوم بواجهات البيانات الحالية. هالصفحة للعرض فقط، وما فيها استلام جوائز.</p>${!canRead(ctx) && state.data ? '<p class="lb-rank-note" role="status">هذي البيانات الممرّرة من الصفحة الحالية؛ التحديث وتبديل النطاق يحتاجون ربط واجهة القراءة.</p>' : ''}</section>`;
 }
 
 /** Page BODY only. The common shell owns navigation, auth and wallet balances. */

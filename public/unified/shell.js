@@ -1,7 +1,7 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
 import { nav68HTML } from '../nav-r68.js?v=r68b';
 import { headerHTML as head68 } from './home-r68.js?v=r68h';
-import * as home from './home.js?v=r68h';
+import * as home from './home.js?v=r68l';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import {giftArt} from '../giftart.js?v=r68i-r14';
 import * as rooms from './rooms.js?v=r58p';
@@ -9,15 +9,15 @@ import * as wallet from './wallet.js?v=r68i';
 import * as notifications from './notifications.js?v=r67as';
 import * as messages from './messages.js?v=r68h';
 import * as friends from './friends.js?v=r58p';
-import * as drawer from './drawer.js?v=r67ac';
-import * as ranking from './ranking.js?v=r67ac';
+import * as drawer from './drawer.js?v=r68l';
+import * as ranking from './ranking.js?v=r68m';
 import * as games from './games.js?v=r67ac';
 import * as settings from './settings.js?v=r58p';
 import * as store from './store.js?v=r68i';
 import * as payments from './payments.js?v=r68i';
 import * as ranks from './ranks.js?v=r68i';
 import * as vip from './vip.js?v=r68i';
-import * as social from './social.js?v=r68i';
+import * as social from './social.js?v=r68l';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
 export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','devices','hidden-posts','community','post','u','not-found']);
 export const hasRoute=name=>routes.includes(name);
@@ -37,12 +37,18 @@ function identityHTML(ctx){
     try{const html=ctx.avatarHTML.length>=2?ctx.avatarHTML(me,36):ctx.avatarHTML(36);if(typeof html==='string'&&html)avatar=html;}catch{/* Optional art must not interrupt navigation. */}
   }
   const level=typeof me?.level==='number'&&Number.isFinite(me.level)?`<small class="lb-head-level">المستوى <bdi>${fmt(me.level)}</bdi></small>`:'';
-  return `<a class="lb-head-identity" href="#/profile" dir="rtl" aria-label="الملف الشخصي: ${esc(name)}"><span class="lb-head-avatar">${avatar}</span><span class="lb-head-account-copy"><small dir="ltr">LA3BAK <span lang="ar">| لعبنا</span></small><b>${esc(name)}</b>${level}</span><span class="conn lb-head-connection${ctx.connected?'':' off'}" id="conn" aria-label="${ctx.connected?'متصل بالخادم':'جاري الاتصال بالخادم'}"><i aria-hidden="true"></i><b class="lb-visually-hidden">${ctx.connected?'متصل':'جاري الاتصال…'}</b></span></a>`;
+  return `<a class="lb-head-identity" href="#/profile" dir="rtl" aria-label="الملف الشخصي: ${esc(name)}"><span class="lb-head-avatar">${avatar}</span><span class="lb-head-account-copy"><small dir="ltr">LA3BAK <span lang="ar">| لعبك</span></small><b>${esc(name)}</b>${level}</span><span class="conn lb-head-connection${ctx.connected?'':' off'}" id="conn" aria-label="${ctx.connected?'متصل بالخادم':'جاري الاتصال بالخادم'}"><i aria-hidden="true"></i><b class="lb-visually-hidden">${ctx.connected?'متصل':'جاري الاتصال…'}</b></span></a>`;
+}
+/* R68l: رأس الصفحات الداخلية بتصميم لعبك: رجوع · الشعار · البحث والإشعارات */
+function header68(ctx){
+  const bell=ctx.noCommunity?'':`<a class="lb68-ico" href="#/notifications" aria-label="الإشعارات"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v4.2L4.4 16a1 1 0 0 0 .9 1.5h13.4a1 1 0 0 0 .9-1.5L18 13.2V9a6 6 0 0 0-6-6zM9.5 19a2.5 2.5 0 0 0 5 0" fill="#e7d2ff"/></svg>${ctx.unread?'<i class="lb68-dot"></i>':''}</a>`;
+  return `<header class="lb-topbar lb68-head" dir="ltr"><a class="lb68-ico lb68-back" href="${esc(ctx.backHref||'#/')}" aria-label="رجوع"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="lb68-logo" href="#/" aria-label="لعبك — الرئيسية"><i aria-hidden="true">👑</i><b>لعبك</b><small>LA3BAK</small></a><span class="lb68-tools"><button type="button" class="lb68-ico" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${bell}</span></header>`;
 }
 export function headerHTML(ctx={}){
+  if(ctx.page!=='home')return header68(ctx);
   const homeAccount=ctx.page==='home'&&!!ctx.user;
   const notificationsLink=ctx.noCommunity?`<button type="button" data-lb-locked aria-disabled="true" aria-label="الإشعارات الاجتماعية مقفلة">${icon('bell')}</button>`:`<a href="#/notifications" aria-label="الإشعارات">${icon('bell')}${ctx.unread?'<i class="lb-unread-dot"></i>':''}</a>`;
-  return `<header class="lb-topbar lb-compact-topbar${homeAccount?' lb-home-wallet-header':''}" dir="ltr"><div class="lb-head-row"><nav class="lb-head-tools" aria-label="البحث والإشعارات والترتيب"><button type="button" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${notificationsLink}<a href="#/leaderboard" aria-label="الترتيب">${icon('trophy')}</a></nav>${homeAccount?identityHTML(ctx):`<a class="lb-brand" href="#/" aria-label="LA3BAK | لعبنا — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" alt=""><b dir="ltr">LA3BAK <span lang="ar">| لعبنا</span></b></a>`}${/* R60: زر ☰ انشال بطلب المالك؛ روابطه موجودة بالشريط وملفي، والمزادات والبطولات والأخبار انتقلت للرئيسية */''}</div>${homeAccount?walletStripHTML(ctx):''}</header>`;
+  return `<header class="lb-topbar lb-compact-topbar${homeAccount?' lb-home-wallet-header':''}" dir="ltr"><div class="lb-head-row"><nav class="lb-head-tools" aria-label="البحث والإشعارات والترتيب"><button type="button" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${notificationsLink}<a href="#/leaderboard" aria-label="الترتيب">${icon('trophy')}</a></nav>${homeAccount?identityHTML(ctx):`<a class="lb-brand" href="#/" aria-label="LA3BAK | لعبك — الرئيسية"><img src="/preview/assets/profile/icon-game.svg" alt=""><b dir="ltr">LA3BAK <span lang="ar">| لعبك</span></b></a>`}${/* R60: زر ☰ انشال بطلب المالك؛ روابطه موجودة بالشريط وملفي، والمزادات والبطولات والأخبار انتقلت للرئيسية */''}</div>${homeAccount?walletStripHTML(ctx):''}</header>`;
 }
 // Both currency artworks are existing transparent vectors. No financial writes.
 export function walletStripHTML(ctx={}){
@@ -61,7 +67,7 @@ function drawerHTML(ctx){
 }
 export function pageHTML(ctx){
   const key=pageKey(ctx.page);const locked=ctx.noCommunity&&protectedRoute('#/'+ctx.page);const mod=ctx.contentOnly||locked?null:modules[key];
-  const meta=ctx.page==='home'||ctx.page==='shop'?'':`<div class="lb-route-meta"><a class="lb-route-back" href="${esc(ctx.backHref||'#/')}" aria-label="رجوع">رجوع</a>${ctx.user?`<span class="lb-route-connection${ctx.connected?'':' lb-offline'}"><i aria-hidden="true"></i>${ctx.connected?'متصل':'جاري الاتصال…'}</span>`:''}</div>`;
+  const meta=true?'':`<div class="lb-route-meta"><a class="lb-route-back" href="${esc(ctx.backHref||'#/')}" aria-label="رجوع">رجوع</a>${ctx.user?`<span class="lb-route-connection${ctx.connected?'':' lb-offline'}"><i aria-hidden="true"></i>${ctx.connected?'متصل':'جاري الاتصال…'}</span>`:''}</div>`;
   const body=locked?`<section class="panel empty-state" role="status"><p>${esc(lockedText)}</p><a class="btn" href="#/">الرئيسية</a></section>`:mod?.render(ctx)??ctx.content??'';
   return `<article class="lb-unified" data-lb-release="reference-milestone-1" data-lb-route="${esc(key)}" dir="rtl">${ctx.page==='shop'?`<div class="h68 h68-shophead">${head68(ctx)}</div>`:headerHTML(ctx)}${meta}<main class="lb-content" data-lb-page="${key}">${body}</main>${bottomHTML(ctx.page,ctx)}${ctx.page==='home'?home.footerHTML(ctx):''}<div class="lb-backdrop" data-lb-shell="close" hidden></div><aside class="lb-drawer" aria-label="القائمة الجانبية" aria-hidden="true" inert>${drawerHTML(ctx)}</aside><p class="lb-visually-hidden" data-lb-lock-status role="status" aria-live="polite"></p></article>`;
 }

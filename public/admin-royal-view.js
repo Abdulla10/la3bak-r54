@@ -55,13 +55,13 @@ export function adminRoyalIcon(name) {
   return `<svg class="ad-royal-icon" data-royal-icon="${key}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[key]}</svg>`;
 }
 export function adminRoyalBrand() {
-  return `<span class="ad-royal-brand-icon" aria-hidden="true">${adminRoyalIcon('games')}</span><span class="ad-royal-brand-copy"><b lang="ar">لعبنا</b><small dir="ltr">LA3BAK</small></span>`;
+  return `<span class="ad-royal-brand-icon" aria-hidden="true">${adminRoyalIcon('games')}</span><span class="ad-royal-brand-copy"><b lang="ar">لعبك</b><small dir="ltr">LA3BAK</small></span>`;
 }
 export function adminRoyalLogin({error = '', busy = false, checking = false} = {}) {
   const waiting = Boolean(busy || checking);
   return `<section class="ad-royal-login" dir="rtl" aria-labelledby="ad-royal-login-title"><header class="ad-royal-login-brand">${adminRoyalBrand()}</header>
     <div class="ad-royal-login-stage"><div class="ad-royal-login-art" aria-hidden="true"><img src="/admin-royal-assets/login-royal-art.png" alt="" decoding="async"><span class="ad-royal-orbit"></span></div>
-      <div class="ad-royal-login-card"><div class="ad-royal-login-title-mark" aria-hidden="true">${adminRoyalIcon('crown')}</div><h1 id="ad-royal-login-title">لوحة الإدارة</h1><p class="ad-royal-login-subtitle">أهلًا بك في مركز إدارة لعبنا</p>
+      <div class="ad-royal-login-card"><div class="ad-royal-login-title-mark" aria-hidden="true">${adminRoyalIcon('crown')}</div><h1 id="ad-royal-login-title">لوحة الإدارة</h1><p class="ad-royal-login-subtitle">أهلًا بك في مركز إدارة لعبك</p>
         <p class="ad-royal-auth-note">الدخول برمز الإدارة الحالي، أو بحساب لاعب مسجّل ضمن الطاقم. يحدّد الخادم هويتك وصلاحياتك.</p>
         ${error ? `<div class="ad-royal-login-error" role="alert">${adminRoyalIcon('info')}<span>${escapeHTML(error)}</span></div>` : ''}
         <form data-adf="login" class="ad-royal-login-form" aria-busy="${waiting}">
@@ -157,7 +157,7 @@ export function adminRoyalOverview(data = {}) {
   const modeLabel = ['test','sandbox'].includes(mode) ? 'بيئة اختبار — ليست إيرادات إنتاج' : ['live','production'].includes(mode) ? 'مدفوعات فعلية' : `وضع المدفوعات: ${mode}`;
   const quickItems = [['المنتجات',quick.products,'shop'],['منتجات فعّالة',quick.activeProducts,'check'],['الفعاليات',quick.events,'notices'],['العروض',quick.offers,'offers']];
   return `<div class="ad-royal-overview" dir="rtl">${overview.maintenance?.on ? `<div class="ad-royal-maintenance" role="status">${adminRoyalIcon('info')}<span>وضع الصيانة مفعّل ${escapeHTML(overview.maintenance.message || '')}</span></div>` : ''}
-    <section class="ad-royal-welcome" aria-labelledby="ad-royal-welcome-title"><div><span class="ad-royal-eyebrow">لوحة إدارة لعبنا</span><h1 id="ad-royal-welcome-title">أهلًا بك في لوحة الإدارة <span aria-hidden="true">${adminRoyalIcon('crown')}</span></h1><p>نظرة شاملة على اللاعبين والألعاب وأداء المنصة</p><div class="ad-royal-welcome-meta">${adminRoyalIcon('globe')}<span>بيانات الخادم · ${escapeHTML(timezone)}</span></div></div><img class="ad-royal-welcome-crown" src="/admin-royal-assets/welcome-crown.webp" alt="" aria-hidden="true"></section>
+    <section class="ad-royal-welcome" aria-labelledby="ad-royal-welcome-title"><div><span class="ad-royal-eyebrow">لوحة إدارة لعبك</span><h1 id="ad-royal-welcome-title">أهلًا بك في لوحة الإدارة <span aria-hidden="true">${adminRoyalIcon('crown')}</span></h1><p>نظرة شاملة على اللاعبين والألعاب وأداء المنصة</p><div class="ad-royal-welcome-meta">${adminRoyalIcon('globe')}<span>بيانات الخادم · ${escapeHTML(timezone)}</span></div></div><img class="ad-royal-welcome-crown" src="/admin-royal-assets/welcome-crown.webp" alt="" aria-hidden="true"></section>
     <div class="ad-royal-kpis">${kpi('إجمالي المستخدمين',overview.players?.total,'players',count(overview.players?.new24h) ? `${countText(overview.players.new24h)} حساب جديد خلال 24 ساعة` : 'إجمالي حسابات اللاعبين المسجّلة.','gold')}${kpi('المستخدمون النشطون',activeValue,'active',activeNote,'purple')}${kpi('الألعاب النشطة',dashboard.activeGames?.value,'games',safeText(dashboard.activeGames?.definition,'لا يتوفر تعريف الألعاب النشطة من الخادم.'),'pink')}${kpi('مباريات اليوم',matchValue,'matches',safeText(matches?.note,matches?.complete === true ? `بحسب يوم الخادم · ${timezone}` : 'السجل اليومي غير مكتمل؛ لا نعرض عددًا تقديريًا.'),'amber')}</div>
     <div class="ad-royal-dashboard-grid"><section class="ad-royal-panel ad-royal-growth-panel">${panelTitle('نمو اللاعبين','chart',periodButtons(period))}${growthChart(dashboard.growth)}<p class="ad-royal-source-note">الفترة: ${period ? period === '7d' ? '7 أيام' : period === '30d' ? '30 يومًا' : '90 يومًا' : 'غير محددة من الخادم'} · ${escapeHTML(timezone)}</p></section>
       <section class="ad-royal-panel ad-royal-revenue-panel">${panelTitle('إيرادات المنصة · AED','money')}<span class="ad-royal-mode-pill">${escapeHTML(modeLabel)}</span>${revenue(commerce)}</section>
@@ -165,5 +165,5 @@ export function adminRoyalOverview(data = {}) {
       <section class="ad-royal-panel ad-royal-distribution-panel">${panelTitle('توزيع الإيرادات','chart')}${distribution(commerce)}</section>
       <section class="ad-royal-panel ad-royal-transactions-panel">${panelTitle('آخر المعاملات · كل الفترات','money',`<span class="ad-royal-panel-kicker">${escapeHTML(modeLabel)}</span>`)}${transactions(commerce,timezone)}</section>
       <section class="ad-royal-panel ad-royal-quick-panel">${panelTitle('إحصائيات سريعة','overview')}<dl class="ad-royal-quick-list">${quickItems.map(([label,value,icon]) => `<div><dt>${adminRoyalIcon(icon)}<span>${label}</span></dt><dd dir="ltr">${countText(value)}</dd></div>`).join('')}</dl>${quickItems.some(([,value]) => !count(value)) ? '<p class="ad-royal-source-note">— تعني أن العدد غير متاح من الخادم.</p>' : ''}</section></div>
-    <footer class="ad-royal-overview-footer"><span>لعبنا · مركز الإدارة</span><span>الأرقام من استجابة الخادم فقط</span></footer></div>`;
+    <footer class="ad-royal-overview-footer"><span>لعبك · مركز الإدارة</span><span>الأرقام من استجابة الخادم فقط</span></footer></div>`;
 }

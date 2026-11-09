@@ -1,0 +1,42 @@
+/* R68l: توحيد ألوان الموقع (بنفسجي غامق + ذهبي) */
+/* رأس الصفحات الداخلية */
+html body .lb-unified>.lb-topbar.lb68-head{position:sticky;top:0;z-index:30;display:grid!important;grid-template-columns:44px 1fr auto;align-items:center;gap:6px;height:auto!important;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px!important;margin:0!important;background:linear-gradient(180deg,rgba(26,10,49,.97),rgba(26,10,49,.85))!important;border:0!important;box-shadow:0 1px 0 rgba(186,140,255,.18)!important;backdrop-filter:blur(10px)}
+html body .lb68-head .lb68-ico{position:relative;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:rgba(60,24,106,.6);border:1.5px solid rgba(190,150,255,.45);color:#fff!important;padding:0;text-decoration:none}
+html body .lb68-head .lb68-ico svg,html body .lb68-head .lb68-ico .pvp-icon{width:22px!important;height:22px!important;color:#fff}
+html body .lb68-head .lb68-back svg{width:26px!important;height:26px!important}
+html body .lb68-head .lb68-logo{justify-self:center;position:relative;display:flex;flex-direction:column;align-items:center;line-height:1;text-decoration:none;padding-top:10px}
+html body .lb68-head .lb68-logo i{position:absolute;top:-6px;font-style:normal;font-size:16px}
+html body .lb68-head .lb68-logo b{font-size:26px;font-weight:900;background:linear-gradient(180deg,#f3d4ff,#c46bff 45%,#8b2ff0);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 7px rgba(190,90,255,.6))}
+html body .lb68-head .lb68-logo small{font:900 10px/1 Arial,sans-serif;letter-spacing:1px;color:#ffcb47!important;margin-top:2px}
+html body .lb68-head .lb68-tools{display:flex;gap:8px}
+html body .lb68-head .lb68-dot{position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#ff2b55;border:2px solid #1a0a31}
+.lb-unified>.lb-route-meta{display:none!important}
+html body .lb-unified:not([data-lb-route="home"]){background:radial-gradient(120% 40% at 50% 0%,#2e1155,#1a0a31 55%,#12071f)!important}
+/* بطاقات فاتحة قديمة → بنفسجي غامق */
+html body .lb-unified :is(a.feat,section.lb-bar,section.ld-modes,section.verification-ui-r3,aside.lbp-disabled){background:linear-gradient(180deg,rgba(82,38,140,.6),rgba(40,16,76,.6))!important;border:1.5px solid rgba(186,140,255,.4)!important;color:#fff!important;box-shadow:none!important}
+html body .lb-unified :is(a.feat,section.lb-bar,section.ld-modes,section.verification-ui-r3,aside.lbp-disabled) :is(h1,h2,h3,b,strong,p,small,span,div,li,label){color:#f1e8ff!important}
+html body .lb-unified :is(section.ld-modes,section.verification-ui-r3,aside.lbp-disabled) :is(small,p){color:#cdb8e6!important}
+html body .lb-unified :is(span.badge.tag,span.badge.live){background:rgba(60,24,106,.8)!important;color:#fff!important;border:1px solid rgba(190,150,255,.45)!important}
+html body .lb-unified .lb-bar button.on,html body .lb-unified [data-lb-route] button.on{background:linear-gradient(180deg,#b65cff,#7c2ae0)!important;color:#fff!important;border-color:transparent!important}
+html body .lb-unified a.lb-play{background:linear-gradient(180deg,#ffe58a,#ffc83d 55%,#e8a01a)!important;color:#4a2600!important}
+html body .lb-unified[data-lb-route="city"] div:is([class=""],:not([class])){background-color:rgba(60,24,106,.6)}
+/* صفحة VIP (كانت تركوازي) ومركز نوبل (كان بني) */
+html body[data-page="vip"],html body[data-page="ranks"],html:has(> body[data-page="vip"]),html:has(> body[data-page="ranks"]){background:radial-gradient(90% 40% at 50% 0%,#3b1670,#1a0a31 55%,#12071f) no-repeat #12071f!important}
+html body .vx-page .vn-topbar,html body .nx-page .vn-topbar{background:linear-gradient(#1f0b3b,rgba(31,11,59,.92))!important}
+html body .vx-sticky{background:linear-gradient(rgba(31,11,59,.96) 70%,rgba(31,11,59,0))!important}
+html body .nx-switch-wrap{background:linear-gradient(#1f0b3b 75%,rgba(31,11,59,0))!important}
+html body .vx-card{background:radial-gradient(90% 120% at 15% 10%,rgba(220,150,255,.35),transparent 60%),linear-gradient(135deg,#7a2fd0 0%,#4f1a96 45%,#33106a 100%)!important;border-color:rgba(225,180,255,.55)!important;color:#fff!important;box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 24px rgba(176,92,255,.3)!important}
+html body .nx-card{background:radial-gradient(80% 80% at 20% 0%,rgba(255,220,150,.22),transparent 60%),linear-gradient(135deg,#5b2499,#2e1060)!important;border-color:rgba(255,203,71,.5)!important}
+html body .nx-rules,html body .vn-empty,html body .vn-perk{background:rgba(50,20,90,.6)!important;border-color:rgba(186,140,255,.35)!important}
+html body .vx-dock-bar{background:#1a0a31!important}
+html body .nx-dock{background:linear-gradient(rgba(26,10,49,0),#1a0a31 40%)!important}
+html body .nx-page .vn-sheet,html body .vn-sheet{background:linear-gradient(#2a0f50,#1a0a31)!important}
+/* أيقونات الصفحات بالأخضر القديم → ذهبي */
+html body .lb-unified .hero .hero-symbol svg,html body .lb-unified .hero .hero-symbol .pvp-icon{color:#ffcb47!important;fill:currentColor}
+html body .lb-unified[data-lb-route] button.on{background:linear-gradient(180deg,#b65cff,#7c2ae0)!important;color:#fff!important;border-color:transparent!important}
+html body .lb-unified ul.lb-facts{background:rgba(20,8,40,.35)!important}
+/* صفحات لها رأس خاص بها: نخفي الرأس العام */
+html body .lb-unified:is([data-lb-route="vip"],[data-lb-route="ranks"],[data-lb-route="messages"])>.lb-topbar.lb68-head,html body .lb-unified:has(.s68-head)>.lb-topbar.lb68-head,html body .lb-unified:has(.so-directory-r30)>.lb-topbar.lb68-head{display:none!important}
+html body .lb-unified .s60-head:not(.s68-head) .s60-back{display:none!important}
+html body .lb-unified .s60-head:not(.s68-head){display:block!important;margin:4px 0 12px!important}
+html body .lb-unified .s60-head:not(.s68-head) h1{text-align:right!important;font-size:22px!important;color:#fff!important}
