@@ -193,7 +193,7 @@ async function voiceConnect(c,confirmedCurrent=null) {
   try {
     if(c.voiceTarget && c.voiceTarget!==target) await disconnectVoice(c);
     if(!c.voice) {
-      const module=await import('../social-voice.js?v=r69zj-r14');
+      const module=await import('../social-voice.js?v=r69zr-r14');
       if(c!==live || epoch!==c.epoch) return;
       c.voice=new module.SocialVoiceClient({api:(...args)=>c.api(...args),onState:state=>{if(c!==live)return;c.voiceState=typeof state==='string'?{status:state}:{...state,status:state?.state||state?.status||'disconnected'};if(state?.error)c.error=state.error;c.notify();},onSpeakers:ids=>{if(c!==live)return;c.speakers=new Set(arr(ids).map(x=>String(typeof x==='object'?x.id:x)));c.notify();}});
     }

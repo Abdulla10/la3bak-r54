@@ -922,6 +922,16 @@ export async function createApp(
     onDecision: (it, r) => {
       const label = { profanity: 'شتم', sexual: 'محتوى غير لائق', harassment: 'تحرش أو تهديد', hate: 'كراهية', scam: 'احتيال', contact: 'طلب تواصل', self_harm: 'إيذاء النفس', spam: 'إزعاج', other: 'مخالفة' }[r.category] ?? 'مخالفة';
       if (it.kind === 'room-name') { arena.alert('reports', '🏷️ اسم غرفة مخالف', `غرفة «${it.text.slice(0, 60)}» (${label}): ${r.reason}`, `roomname:${it.id}:${it.text.slice(0, 40)}`); return 'تنبيه للإدارة'; }
+      if (it.kind === 'voice') {
+        const who = accounts.nameOf(it.by) || 'لاعب';
+        if (r.category === 'self_harm') arena.alert('reports', '⚠️ محتاج انتباه', `${who} قال كلام فيه إشارة لإيذاء النفس بغرفة صوتية. تواصل معه بلطف.`, 'voice-sh-' + it.by.slice(0, 8));
+        if (r.verdict !== 'block') return 'للمراجعة';
+        const strikes = (voiceStrikes.get(it.by) ?? []).filter((t) => Date.now() - t < 86400_000); strikes.push(Date.now()); voiceStrikes.set(it.by, strikes);
+        const mins = strikes.length >= 3 ? 60 : strikes.length === 2 ? 15 : 5;
+        void socialRooms.systemMute(it.by, true).then((rid) => { if (!rid) return; try { support.announce([it.by], '🔇 انكتم مايكك', `المشرف الصوتي سمع كلام مخالف (${label}). مايكك مكتوم ${mins} دقيقة. التكرار يطوّل الكتم.`, 'المشرف الذكي', 'vmute-' + it.id); } catch { /* */ } sendToUser(it.by, { t: 'social:update', roomId: rid });
+          setTimeout(() => { void socialRooms.systemMute(it.by, false).then((r2) => { if (r2) sendToUser(it.by, { t: 'social:update', roomId: r2 }); }); }, mins * 60_000).unref?.(); });
+        return `انكتم ${mins} دقيقة`;
+      }
       if (it.kind === 'chat' || it.kind === 'dm') {
         const where = it.kind === 'chat' ? 'دردشة غرفة' : 'رسالة خاصة', who = accounts.nameOf(it.by) || 'لاعب';
         if (r.category === 'self_harm' || r.category === 'contact') arena.alert('reports', r.category === 'self_harm' ? '⚠️ محتاج انتباه' : '📵 طلب تواصل', `${who} في ${where}: ${r.category === 'self_harm' ? 'إشارة لإيذاء النفس' : 'يطلب رقم أو سناب'}. شوف «المشرف الذكي».`, `ai-${it.kind}:${it.id}`);
@@ -937,6 +947,11 @@ export async function createApp(
       return community.systemReport(kind, id, `🤖 المشرف الذكي: ${label} — ${r.reason}`) ? 'للمراجعة' : '';
     },
   });
+  const voiceStrikes = new Map<string, number[]>();
+  const vmFile = cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'voice-mod.json') : '/dev/null';
+  const vmFlags: { on: boolean; ios: boolean } = (() => { try { const j = JSON.parse(readFileSync(vmFile, 'utf8')); return { on: j.on !== false, ios: j.ios === true }; } catch { return { on: true, ios: false }; } })();
+  const voiceModOn = () => vmFlags.on, voiceModIOS = () => vmFlags.ios;
+  const voiceLimiter = new KeyedLimiter(6, 6 / 60);
   /* رسائل قصيرة جداً أو بدون حروف (ضحك، إيموجي، أرقام) ما تستاهل فحص */
   const aiWorth = (t: string) => { const x = t.replace(/[\s\p{Extended_Pictographic}\p{P}\d]/gu, ''); return x.length >= 3 && !/^(ه|ھ|h|a|خ|ك)+$/i.test(x); };
   /* R69za: كشف الحسابات الوهمية على نفس الجهاز */
@@ -1825,6 +1840,11 @@ export async function createApp(
       setTimeout(() => { (process as unknown as { emit: (e: string) => void }).emit('la3bak-restart'); }, 1500);
       return { ok: true, files: meta.files, createdAt: meta.createdAt };
     }, 'owner');
+    /* R69zq: المشرف الصوتي — جهاز المتكلم يحوّل كلامه لنص ويرسله هني */
+    functionalHttp.add('POST', '/api/voice-mod', ({ user, body }) => { const text = String((body as { text?: unknown }).text ?? '').replace(/\s+/g, ' ').trim().slice(0, 400); if (!text || !aiMod.ready() || !voiceModOn()) return { ok: true }; const rid = socialRooms.onMicIn(user.id); if (!rid || !voiceLimiter.allow(user.id) || !aiWorth(text)) return { ok: true }; aiMod.enqueue({ kind: 'voice', id: randomUUID(), by: user.id, text, ref: rid }); return { ok: true }; });
+    functionalHttp.add('GET', '/api/voice-mod/config', () => ({ ok: true, on: voiceModOn() && aiMod.ready(), ios: voiceModIOS() }));
+    functionalHttp.add('POST', '/api/admin/voice-mod', ({ actor, body }) => { const b = body as { on?: unknown; ios?: unknown }; if (typeof b.on === 'boolean') vmFlags.on = b.on; if (typeof b.ios === 'boolean') vmFlags.ios = b.ios; try { writeFileSync(vmFile, JSON.stringify(vmFlags)); } catch { /* */ } if (actor) admin.audit(actor, 'voicemod.set', 'ai-mod', JSON.stringify(vmFlags)); return { ok: true, ...vmFlags }; }, 'owner');
+    functionalHttp.add('GET', '/api/admin/voice-mod', () => ({ ok: true, ...vmFlags, ready: aiMod.ready() }), 'owner');
     functionalHttp.add('GET', '/api/admin/shield', () => ({ ok: true, ...shield.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/monitor', () => ({ ok: true, ...monitor.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');

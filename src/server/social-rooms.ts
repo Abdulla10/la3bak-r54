@@ -293,6 +293,13 @@ export class SocialRooms {
     let who: string | null = null;
     return this.serial(() => this.guard(async () => { this.ready(); return this.tx((d) => { const r = d.rooms.find(x => x.id === roomId), c = r?.councils.find(x => x.id === councilId); const i = c ? c.chat.findIndex(m => m.id === msgId) : -1; if (!c || i < 0) return { ok: true }; who = c.chat[i].actor; c.chat.splice(i, 1); return { ok: true }; }); })).then(() => who, () => null);
   }
+  /** R69zq: المشرف الصوتي — يكتم/يفك مايك لاعب بالغرفة (بدون صلاحيات مشرف بشري) */
+  systemMute(userId: string, muted: boolean): Promise<string | null> {
+    let roomId: string | null = null;
+    return this.serial(() => this.guard(async () => { this.ready(); return this.tx((d, media) => { const x = this.member(d, userId); if (!x || x.member.muted === muted) return { ok: true }; x.member.muted = muted; x.member.epoch = randomUUID(); media.add(userId); roomId = x.room.id; return { ok: true }; }); })).then(() => roomId, () => null);
+  }
+  /** هل اللاعب جالس على مقعد ومايكه مفتوح بغرفة صوتية؟ */
+  onMicIn(userId: string): string | null { const x = this.member(this.state, userId); return x && x.member.councilId && !x.member.muted ? x.room.id : null; }
   retry(): Promise<SocialResult> { return this.serial(() => this.guard(async () => { this.ready(); await this.repairDisconnects(); this.save(this.state, this.clock()); await this.deliverAudit(); return { ok: true }; })); }
   /** Server-only bridge: caller holds RoomService's current active-membership lock.
    * Uses existing room/council/receipt shapes, never a client-supplied binding ID. */
