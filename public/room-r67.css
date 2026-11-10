@@ -628,3 +628,14 @@ html.has-game-voice .gv-wrapper .gv-social{padding-top:58px!important}
 html body .so-page .so-room-detail.r68 .r68-sbtn.is-chest img.r69-cannon-ic{height:58px;width:auto;max-width:100%;transform:scale(1.18);animation:r69cn 3s ease-in-out infinite}
 @keyframes r69cn{0%,100%{transform:scale(1.18) rotate(-3deg)}50%{transform:scale(1.18) rotate(3deg)}}
 @media (prefers-reduced-motion:reduce){html body .so-page .so-room-detail.r68 .r68-sbtn.is-chest img.r69-cannon-ic{animation:none}}
+/* R69p: خانة الكتابة وزر الإرسال مرتبين — زر الإرسال دائرة داخل الخانة، والأزرار الجانبية تختفي وقت الكتابة عشان الخانة تكبر */
+html body .so-page .so-room-detail.r68 .r68-row{gap:5px!important}
+html body .so-page .so-room-detail.r68 .r68-row>.r68-dbtn{width:40px!important;min-width:40px!important;flex:none!important}
+html body .so-page .so-room-detail.r68 .r68-row>.r68-mic{width:46px!important;height:46px!important;flex:none!important}
+html body .so-page .so-room-detail.r68 form.r68-form{flex:1 1 auto!important;min-width:0!important}
+html body .so-page .so-room-detail.r68 form.r68-form .so-chat-input-wrap{width:100%!important;display:flex!important;align-items:center!important;gap:4px!important;padding:0 5px!important;height:46px!important;box-sizing:border-box}
+html body .so-page .so-room-detail.r68 form.r68-form .r68-emoji{flex:none!important;width:32px!important;height:32px!important}
+html body .so-page .so-room-detail.r68 form.r68-form input#so-chat-text{flex:1 1 auto!important;min-width:0!important;width:auto!important;height:40px!important;padding:0 6px!important;font-size:16px!important}
+html body .so-page .so-room-detail.r68 form.r68-form .so-send-button{flex:none!important;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;margin:0!important}
+html body .so-page .so-room-detail.r68 form.r68-form .so-send-button svg{width:18px!important;height:18px!important}
+html body .so-page .so-room-detail.r68 .r68-row:focus-within>.r68-dbtn{display:none!important}

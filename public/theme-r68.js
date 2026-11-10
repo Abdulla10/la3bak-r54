@@ -49,6 +49,6 @@ function css() {
 }
 if (typeof document !== 'undefined' && !globalThis.__LB_THEME__) {
   globalThis.__LB_THEME__ = true; css(); applyTheme();
-  document.addEventListener('click', (e) => { const b = e.target.closest?.('[data-lb-theme]'); if (!b) return; e.preventDefault(); setTheme(b.dataset.lbTheme);
-    document.querySelectorAll('[data-lb-theme]').forEach((x) => { const on = x.dataset.lbTheme === b.dataset.lbTheme; x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', String(on)); x.querySelector('.th68-on')?.remove(); if (on) x.insertAdjacentHTML('beforeend', '<em class="th68-on">✓ مختار</em>'); }); });
+  document.addEventListener('click', (e) => { const b = e.target.closest?.('button[data-lb-theme]'); if (!b) return; e.preventDefault(); setTheme(b.dataset.lbTheme);
+    document.querySelectorAll('button[data-lb-theme]').forEach((x) => { const on = x.dataset.lbTheme === b.dataset.lbTheme; x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', String(on)); x.querySelector('.th68-on')?.remove(); if (on) x.insertAdjacentHTML('beforeend', '<em class="th68-on">✓ مختار</em>'); }); });
 }
