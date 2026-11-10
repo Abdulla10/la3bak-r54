@@ -1,3 +1,4 @@
+import { Bonds, BondError } from './bonds-r68.js';
 import { recordQuit, quitBlock } from './quit-guard-r68.js';
 import { moderateText, maskBanned, profanityOnly, setExtraBannedWords, BANNED_WORDS_MAX } from './moderation-r58.js';
 import { Economy, validEconomy, MANUAL_CONVERSION_DISABLED, MANUAL_CONVERSION_CLOSED_MESSAGE } from './economy.js';
@@ -294,6 +295,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
     const besideSocial = (name) => socialFile ? path.join(path.dirname(socialFile), name) : '';
     const boardFile = functionalFile(cfg.leaderboardFile, 'leaderboard');
     const cpFile = process.env.CP_POINTS_FILE ?? besideSocial('cp-points.json');
+    const bondsFile = process.env.BONDS_FILE ?? besideSocial('bonds.json');
     const missionsFile = functionalFile(cfg.missionsFile, 'missions');
     const rankRewardsFile = functionalFile(cfg.rankRewardsFile, 'rank-rewards');
     const supportFile = functionalFile(cfg.supportNotificationsFile, 'support-notifications');
@@ -1370,6 +1372,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             catch { /* */ } return out; };
         }
         const cpPoints = new CpPoints(cpFile, Date.now, storage);
+        const bonds = new Bonds(bondsFile, Date.now, storage);
         const tribes = new Tribes(process.env.TRIBES_FILE ?? besideSocial('tribes.json'), Date.now, storage);
         const treasure = new TribeTreasure(process.env.TRIBE_TREASURE_FILE ?? besideSocial('tribe-treasure.json'), Date.now, storage);
         // R58w: هدية بين طرفين بينهم ارتباط افتراضي (R47) ترفع نقاط CP
@@ -1674,6 +1677,67 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                     sendToUser(id, { t: 'cp:update', kind: 'points' });
             return { ok: true, tasks: cpTaskView(user.id)?.list ?? [] };
         });
+        // R68z36: علاقات BF / BR / SS
+        const bondRun = (fn) => { try {
+            return fn();
+        }
+        catch (e) {
+            if (e instanceof BondError)
+                return { ok: false, error: e.message };
+            if (e instanceof StorageError)
+                return { ok: false, error: STORAGE_MSG };
+            throw e;
+        } };
+        const bondView = (b, me) => ({ id: b.id, kind: b.kind, partner: cpPerson(b.a === me ? b.b : b.a), days: Math.max(1, Math.ceil((Date.now() - b.at) / 86_400_000)) });
+        const bondsOf = (id, viewer) => bonds.of(id).filter((b) => { const o = b.a === id ? b.b : b.a; return accounts.has(o) && !deletion.hidden(o) && !(viewer && community.pairBlocked(viewer, o)); }).map((b) => bondView(b, id));
+        functionalHttp.add('GET', '/api/bonds/me', ({ user }) => {
+            const r = bonds.reqsFor(user.id);
+            const pv = (x, o) => ({ id: x.id, kind: x.kind, user: cpPerson(o) });
+            return { ok: true, bonds: bondsOf(user.id, user.id), incoming: r.incoming.filter((x) => accounts.has(x.from) && !community.pairBlocked(user.id, x.from)).map((x) => pv(x, x.from)), outgoing: r.outgoing.filter((x) => accounts.has(x.to)).map((x) => pv(x, x.to)) };
+        });
+        functionalHttp.add('GET', '/api/bonds/of/:pub', ({ user, params }) => {
+            const id = community.resolvePublicId(String(params.pub ?? ''));
+            if (!id || !accounts.has(id) || deletion.hidden(id))
+                return { ok: false, error: 'الحساب غير متاح.' };
+            if (id !== user.id && community.pairBlocked(user.id, id))
+                return { ok: true, bonds: [], me: false, can: false };
+            const mine = bonds.between(user.id, id), pend = bonds.pendingBetween(user.id, id);
+            return { ok: true, bonds: bondsOf(id, user.id), me: id === user.id, can: id !== user.id && !mine && !pend && !isGuest(user.id), pending: pend ? (pend.from === user.id ? 'out' : 'in') : null, pendingId: pend?.id ?? null, withMe: mine ? { id: mine.id, kind: mine.kind } : null };
+        });
+        functionalHttp.add('POST', '/api/bonds/request', ({ user, body }) => bondRun(() => {
+            if (isGuest(user.id))
+                return { ok: false, error: GUEST_MSG };
+            const to = community.resolvePublicId(String(body?.to ?? ''));
+            if (!to || !accounts.has(to) || deletion.hidden(to))
+                return { ok: false, error: 'الحساب غير متاح.' };
+            if (community.pairBlocked(user.id, to))
+                return { ok: false, error: 'ما تقدر ترسل طلب لهالحساب.' };
+            const r = bonds.request(user.id, to, body?.kind);
+            sendToUser(to, { t: 'bond:update', kind: 'request' });
+            return { ok: true, id: r.id };
+        }));
+        functionalHttp.add('POST', '/api/bonds/:id/:act', ({ user, params }) => bondRun(() => {
+            const id = Number(params.id), act = String(params.act ?? '');
+            if (!Number.isSafeInteger(id))
+                return { ok: false, error: 'طلب غير صالح.' };
+            if (act === 'accept' || act === 'decline') {
+                const r = bonds.reqsFor(user.id).incoming.find((x) => x.id === id);
+                const b = bonds.answer(user.id, id, act === 'accept');
+                if (r)
+                    sendToUser(r.from, { t: 'bond:update', kind: act });
+                return { ok: true, bond: b ? bondView(b, user.id) : null };
+            }
+            if (act === 'cancel') {
+                bonds.cancel(user.id, id);
+                return { ok: true };
+            }
+            if (act === 'end') {
+                const b = bonds.end(user.id, id);
+                sendToUser(b.a === user.id ? b.b : b.a, { t: 'bond:update', kind: 'end' });
+                return { ok: true };
+            }
+            return { ok: false, error: 'طلب غير صالح.' };
+        }));
         functionalHttp.add('GET', '/api/cp/of/:pub', ({ user, params }) => {
             const id = community.resolvePublicId(String(params.pub ?? ''));
             if (!id || !accounts.has(id))

@@ -423,7 +423,7 @@ function pf68TabBody(ctx,s) {
  return `${pf68Card('شاراتي','crown',pf68Badges(ctx),'data-pvp="pf-tab" data-pf="ach"','is-badges')}
  <div class="pf68-two">${pf68Card('صورتي الرمزية','',`<div class="pf68-avcard">${av}</div>`,ctx.user?'data-pvp="edit-appearance"':'')}${pf68Card('إطاري','',`<div class="pf68-frcard">${fr?frame(ctx,'<span class="pf68-blank"></span>',fr,96):'<span class="pf68-noframe">بدون إطار</span>'}</div>`,'data-pvp="pf-tab" data-pf="items" data-slot="frame"')}</div>
  ${pf68Card('أفضل الألعاب','pad',pf68TopGames(ctx),ctx.user?'data-pvp="edit-favorites"':'')}
- ${profileMenu(ctx,s)}${familyCard(ctx,s)}${ctx.user?'<div data-cp-me></div><div data-tribe-me class="tr58-me"></div><div data-kingdom-me></div>':''}${savedRoomsCard(ctx,s)}`;
+ ${profileMenu(ctx,s)}${familyCard(ctx,s)}${ctx.user?'<div data-cp-me></div><div data-bonds-me></div><div data-tribe-me class="tr58-me"></div><div data-kingdom-me></div>':''}${savedRoomsCard(ctx,s)}`;
 }
 
 export function profileHTML(ctx={}) {
