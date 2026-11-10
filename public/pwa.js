@@ -13,7 +13,7 @@ export function init(cb) {
   onChange = cb;
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     // R60b: لو الصفحة خلصت تحميل قبل ما يوصل هالسطر، حدث load ما يرجع يصير — فنسجّل على طول (قبل كان الـ SW أحيانًا ما يتسجل أبدًا)
-    const reg = () => navigator.serviceWorker.register('/sw.js?v=r68z32').catch(() => {});
+    const reg = () => navigator.serviceWorker.register('/sw.js?v=r68z33').catch(() => {});
     if (document.readyState === 'complete') reg(); else window.addEventListener('load', reg);
   }
   window.addEventListener('beforeinstallprompt', (e) => {

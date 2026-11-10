@@ -20,7 +20,8 @@ export const COLORS = [
 ];
 
 export const AVATARS = [
-  { id: 'brain', label: 'دماغ' },
+  { id: 'brain', label: 'رجل بالبشت' },
+  { id: 'boy', label: 'ولد' },
   { id: 'smart', label: 'ذكي' },
   { id: 'robot', label: 'روبوت' },
   { id: 'smile', label: 'مبتسم' },
@@ -169,7 +170,9 @@ export function recordLeftEarly(room) {
 
 /* ---------------- الرسم ---------------- */
 const SHAPES = {
-  brain: `<g fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M32 15C25 11 15 15 16 24C10 27 11 36 17 38C16 45 24 49 28 46C30 49 32 48 32 47Z"/><path d="M32 15C39 11 49 15 48 24C54 27 53 36 47 38C48 45 40 49 36 46C34 49 32 48 32 47Z"/></g><path d="M21 26q4-3 7 0M43 26q-4-3-7 0M21 36q5 3 8-1M43 36q-5 3-8-1" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>`,
+  // R68z33: الافتراضي صار شخصية خليجية (غترة وعقال وبشت) بدال رسمة المخ — المعرّف نفسه عشان الحسابات القديمة
+  brain: `<path d="M5 64c2-12 12-18 27-18s25 6 27 18z" fill="#15151d"/><path d="M26 46l6 14 6-14z" fill="#fbfbfd"/><path d="M25.5 46.5L32 61l6.5-14.5" fill="none" stroke="#e3b23c" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 31c0-14 8-22 19-22s19 8 19 22l2 18c-6-1-10-4-12-8H23c-2 4-6 7-12 8z" fill="#f7f7fa" stroke="#cfd2dc" stroke-width=".8"/><ellipse cx="32" cy="30" rx="9.6" ry="11.6" fill="#d8a274"/><path d="M22.6 31.5c0 8.5 4.6 12.4 9.4 12.4s9.4-3.9 9.4-12.4c-2 4.4-5 5.6-9.4 5.6s-7.4-1.2-9.4-5.6z" fill="#2a1c13"/><path d="M27.4 35.2q4.6-1.6 9.2 0" fill="none" stroke="#1a110b" stroke-width="2" stroke-linecap="round"/><path d="M28.8 37.8q3.2 2.6 6.4 0" fill="none" stroke="#e8b48e" stroke-width="1.5" stroke-linecap="round"/><circle cx="28.2" cy="28.6" r="1.3" fill="#1b120c"/><circle cx="35.8" cy="28.6" r="1.3" fill="#1b120c"/><path d="M25.6 25.4q2.5-1.6 4.8-.4M33.6 25q2.5-1.2 4.8.4" fill="none" stroke="#2a1c13" stroke-width="1.2" stroke-linecap="round"/><path d="M20.6 25c1-8 5.6-11.4 11.4-11.4S42.4 17 43.4 25c-3-3.6-7-4.8-11.4-4.8s-8.4 1.2-11.4 4.8z" fill="#f7f7fa"/><ellipse cx="32" cy="15.6" rx="12.4" ry="3.2" fill="none" stroke="#121218" stroke-width="2.6"/><ellipse cx="32" cy="12.6" rx="11" ry="2.6" fill="none" stroke="#121218" stroke-width="2.2"/>`,
+  boy: `<path d="M8 64c2-11 11-16 24-16s22 5 24 16z" fill="#f7f7fa"/><path d="M29 48h6l-3 7z" fill="#d9dce6"/><ellipse cx="32" cy="31" rx="12" ry="13" fill="#e2ad7e"/><path d="M19.6 29c-1-10 5-16 12.4-16s13.4 6 12.4 16c-2-5-5-7.6-8.4-8.4-2.4 2.4-7 3.4-11 2.6-2.4 1.2-4 3-5.4 5.8z" fill="#2b1b12"/><circle cx="27.4" cy="31" r="1.6" fill="#1b120c"/><circle cx="36.6" cy="31" r="1.6" fill="#1b120c"/><circle cx="27.9" cy="30.4" r=".5" fill="#fff"/><circle cx="37.1" cy="30.4" r=".5" fill="#fff"/><path d="M27.4 37.4q4.6 4 9.2 0" fill="none" stroke="#7a3b22" stroke-width="1.8" stroke-linecap="round"/><circle cx="23.6" cy="35.2" r="2" fill="#f08a7a" opacity=".45"/><circle cx="40.4" cy="35.2" r="2" fill="#f08a7a" opacity=".45"/><ellipse cx="19.6" cy="32" rx="1.8" ry="2.6" fill="#d89c6c"/><ellipse cx="44.4" cy="32" rx="1.8" ry="2.6" fill="#d89c6c"/>`,
   smart: `<g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><circle cx="23" cy="29" r="8"/><circle cx="41" cy="29" r="8"/><path d="M31 29h2M15 27l-4-3M49 27l4-3M24 46q8 6 16 0"/></g><circle cx="23" cy="29" r="2.5" fill="#fff"/><circle cx="41" cy="29" r="2.5" fill="#fff"/><path d="M26 14q6-6 12 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`,
   robot: `<g fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="20" width="36" height="30" rx="8"/><path d="M32 20v-8"/></g><circle cx="32" cy="10" r="3.5" fill="#fff"/><rect x="21" y="30" width="7" height="7" rx="2" fill="#fff"/><rect x="36" y="30" width="7" height="7" rx="2" fill="#fff"/><path d="M24 43h16" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`,
   smile: `<circle cx="23" cy="26" r="3.8" fill="#fff"/><circle cx="41" cy="26" r="3.8" fill="#fff"/><path d="M19 38q13 15 26 0" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>`,
