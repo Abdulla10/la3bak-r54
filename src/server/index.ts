@@ -502,7 +502,7 @@ export async function createApp(
   /** R67au: تذكارات CP الجديدة اللي يرسلها المالك تنضاف هنا (فاضي لين توصل رسوماته) */
   const SOUVENIR_R67 = new Set<string>();
   /** R68z: مدة الأغراض بالمتجر — 7 / 15 / 30 يوم / دائم. السعر نسبة من سعر الدائم. */
-  const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar']); // R68z30: العصي وكور البولينغ دائم بس
+  const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar', 'voice-fx']); // R68z32: مؤثرات الصوت بمدة. R68z30: العصي وكور البولينغ دائم بس
   const DURATIONS = [{ days: 7, pct: 25, label: '7 أيام' }, { days: 15, pct: 40, label: '15 يوم' }, { days: 30, pct: 60, label: '30 يوم' }, { days: 0, pct: 100, label: 'دائم' }] as const; // R68z29: مثل فيديو المالك
   const durPrice = (price: number, days: number) => { const d = DURATIONS.find((x) => x.days === days); if (!d) return -1; if (!days || price <= 0) return price; const v = price * d.pct / 100; const step = v >= 10000 ? 1000 : v >= 1000 ? 100 : 10; return Math.max(step, Math.round(v / step) * step); };
   const shopView = (id: string) => {
@@ -1024,8 +1024,8 @@ export async function createApp(
       const frame=equippedFrameView(wallet,shopcat,id);
       // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
       const eq=wallet.equipped(id),cosm=(slot:string)=>{const it=eq[slot]?shopcat.get(eq[slot]):undefined;return it&&it.slot===slot&&typeof it.css==='string'?it.css:null;};
-      const bubble=cosm('chat-bubble'),board=cosm('board'),micFrame=cosm('mic-frame');
-      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),ranks:{...(accountTools.settings(id).hideNameColor===true?{nameOff:true}:{}),...(verificationView(id).verificationKind==='administration'?{official:true}:{}),level:p.level.enabled?p.level.value:null,vip:p.vip.enabled?vip:null,noble:p.noble.enabled?noble:null},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
+      const bubble=cosm('chat-bubble'),board=cosm('board'),micFrame=cosm('mic-frame'),voiceFx=cosm('voice-fx');
+      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),...(voiceFx?{voiceFx}:{}),ranks:{...(accountTools.settings(id).hideNameColor===true?{nameOff:true}:{}),...(verificationView(id).verificationKind==='administration'?{official:true}:{}),level:p.level.enabled?p.level.value:null,vip:p.vip.enabled?vip:null,noble:p.noble.enabled?noble:null},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
     },
     blocked:(a,b)=>community.pairBlocked(a,b),eligible:socialEligible,trustedAdmin:id=>id==='token',
     emit:(ids,event)=>{for(const id of ids)sendToUser(id,event);},

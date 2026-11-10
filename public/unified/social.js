@@ -7,14 +7,14 @@ import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room
 import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r68z20';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
 import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r67al';
-import {framed as frameOwnedPortrait} from '../shop.js?v=r68z31';
+import {framed as frameOwnedPortrait} from '../shop.js?v=r68z32';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r58r';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
 import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r68i';
 import {bigGift} from './gift-big-r67.js?v=r68i';
 import {cinemaHTML,cinemaMount,cinemaUnmount,cinemaPosition,parseYouTube} from './room-cinema-r67.js?v=r67s';
 import {cannon3Shortcut,cannon3Panel,cannon3Blast} from './room-cannon-r59.js?v=r67i';
-import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r68z31';
+import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r68z32';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
 import { mini as avatarMini } from '../avatars.js?v=r68z31';
@@ -305,7 +305,9 @@ function memberBadge(m,c) {
   // R58r: إطار المايك (من المتجر) يطلع بدل إطار الملف وأنت على المقعد
   const face=micFrame?`${portrait}<img class="so-mic-frame-r58" src="/assets/art58/mic/m${micFrame.slice(2)}.webp?v=r58r" alt="" decoding="async">`:frame?frameOwnedPortrait(frame,portrait,'so-owned-seat-frame'):portrait;
   const fx=rankEffects(m.ranks);
-  return `<span class="so-member${speaking?' is-speaking':''}${host?' is-host':''}${fx.aura?' rp-aura-'+fx.aura:''}" data-so-member-id="${esc(m.id)}" data-so-role="${role}" data-so-mic-state="${state}" title="${esc(m.name||'عضو')}${ROLE_NAMES[role]?' · '+ROLE_NAMES[role]:''} · ${label}"><span class="so-portrait"><span class="so-avatar">${face}</span>${host?crown():''}${rankBadges(m)}<span class="so-seat-mic so-seat-mic-${state}" aria-label="${label}">${icon(serverMuted||state==='local-off'||state==='remote-off'?'off':'mic')}<small class="so-sr">${label}</small></span></span><span class="so-member-nameline"><span class="so-member-name${fx.name?' rp-name-'+fx.name:''}${typeof m.board==='string'&&/^[a-z][a-z0-9-]{0,39}$/.test(m.board)?' lux-board lux-board-'+m.board:''}">${esc(m.name||'عضو')}</span>${Number.isInteger(m.ranks?.vip)&&m.ranks.vip>0?`<i class="r68-vchip" dir="ltr">V${m.ranks.vip}</i>`:''}</span>${host?'<small class="so-member-role">المضيف</small>':`<small class="so-sr">${esc(ROLE_NAMES[role]||'عضو')}</small>`}</span>`;
+  // R68z32: مؤثر الصوت من المتجر — يطلع حول الصورة وقت الكلام بس
+  const vfx=typeof m.voiceFx==='string'&&/^vfx\d\d$/.test(m.voiceFx)?m.voiceFx.slice(3):null;
+  return `<span class="so-member${speaking?' is-speaking':''}${host?' is-host':''}${fx.aura?' rp-aura-'+fx.aura:''}" data-so-member-id="${esc(m.id)}" data-so-role="${role}" data-so-mic-state="${state}" title="${esc(m.name||'عضو')}${ROLE_NAMES[role]?' · '+ROLE_NAMES[role]:''} · ${label}"><span class="so-portrait">${vfx?`<img class="so-vfx68" src="/assets/art68/vfx/v${vfx}.webp?v=r68z32" alt="" decoding="async">`:''}<span class="so-avatar">${face}</span>${host?crown():''}${rankBadges(m)}<span class="so-seat-mic so-seat-mic-${state}" aria-label="${label}">${icon(serverMuted||state==='local-off'||state==='remote-off'?'off':'mic')}<small class="so-sr">${label}</small></span></span><span class="so-member-nameline"><span class="so-member-name${fx.name?' rp-name-'+fx.name:''}${typeof m.board==='string'&&/^[a-z][a-z0-9-]{0,39}$/.test(m.board)?' lux-board lux-board-'+m.board:''}">${esc(m.name||'عضو')}</span>${Number.isInteger(m.ranks?.vip)&&m.ranks.vip>0?`<i class="r68-vchip" dir="ltr">V${m.ranks.vip}</i>`:''}</span>${host?'<small class="so-member-role">المضيف</small>':`<small class="so-sr">${esc(ROLE_NAMES[role]||'عضو')}</small>`}</span>`;
 }
 function challengeMemberHTML(m,c) {
   const member={...m,photo:safeImage(m.photo)||safeImage(m.avatarUrl)||m.photo};

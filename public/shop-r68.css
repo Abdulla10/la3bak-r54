@@ -123,3 +123,21 @@ html body .ids-card,html body .ids-card:hover{background:linear-gradient(180deg,
 /* R68z29: ملاحظة التأكيد سطر مرتب */
 .r23-confirm-note{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px;text-align:center}
 .r23-confirm-note img,.r23-confirm-note svg,.r23-confirm-note .coin,.r23-confirm-note i{display:inline-block!important;width:18px!important;height:18px!important;vertical-align:middle}
+/* R68z32: مؤثرات الصوت */
+.vfx68-thumb{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%}
+.vfx68-thumb img{width:96%;height:96%;object-fit:contain}
+.vfx68-pv{position:relative;width:200px;height:200px;margin:8px auto;display:grid;place-items:center}
+.vfx68-face{position:relative;z-index:1;width:112px;height:112px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#1c0a38;animation:vfx68talk 1.1s ease-in-out infinite}
+.vfx68-face>*{width:100%!important;height:100%!important;object-fit:cover;border-radius:50%}
+.vfx68-ring{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;pointer-events:none;animation:vfx68ring 1.1s ease-in-out infinite}
+.vfx68-mic{position:absolute;bottom:22px;z-index:3;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:15px;background:#2a1050;border:1.5px solid #c9a24a}
+@keyframes vfx68ring{0%,100%{transform:scale(.97);filter:brightness(1) drop-shadow(0 0 6px #fff3)}50%{transform:scale(1.04);filter:brightness(1.35) drop-shadow(0 0 14px #fff6)}}
+@keyframes vfx68talk{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes vfx68spin{to{rotate:360deg}}
+/* بالغرفة: حول صورة المتكلم بس */
+.so-portrait{position:relative}
+.so-vfx68{position:absolute;left:50%;top:50%;width:178%;height:178%;max-width:none;transform:translate(-50%,-50%) scale(.85);opacity:0;z-index:3;pointer-events:none;transition:opacity .18s,transform .18s}
+.so-member.is-speaking .so-vfx68{opacity:1;transform:translate(-50%,-50%) scale(1);animation:vfx68live 1s ease-in-out infinite}
+@keyframes vfx68live{0%,100%{transform:translate(-50%,-50%) scale(.97);filter:brightness(1)}50%{transform:translate(-50%,-50%) scale(1.05);filter:brightness(1.35)}}
+@media(prefers-reduced-motion:reduce){.vfx68-ring,.vfx68-face,.so-member.is-speaking .so-vfx68{animation:none}}
+.r23-lux-preview:has(.vfx68-pv)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}

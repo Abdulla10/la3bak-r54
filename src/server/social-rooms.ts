@@ -30,7 +30,7 @@ import { initialRoomToolsR33, validRoomToolsR33, validRoomToolResultR33, applyRo
 export type SocialResult = { ok: true; [key: string]: unknown } | { ok: false; error: string; status?: number };
 export interface SocialRoomsOptions {
   file: string;
-  profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null } } | null;
+  profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null } } | null;
   blocked: (a: string, b: string) => boolean;
   eligible: (id: string) => boolean;
   /** Optional non-player platform admin identity, authenticated/authorized by parent HTTP only. */
@@ -1446,10 +1446,10 @@ export class SocialRooms {
     const ranks=r?{level:num(r.level,1,100)?r.level:null,vip:num(r.vip,0,15)?r.vip:null,noble:num(r.noble,0,9)?r.noble:null,...((r as {nameOff?:boolean}).nameOff===true?{nameOff:true}:{}),...((r as {official?:boolean}).official===true?{official:true}:{})}:undefined;
     const frame=typeof p.frame==='string'&&/^[A-Za-z_][A-Za-z0-9_-]{0,79}$/.test(p.frame)?p.frame:null;
     const cosmetic=(v:unknown)=>typeof v==='string'&&/^[a-z][a-z0-9-]{0,39}$/.test(v)?v:null;
-    const bubble=cosmetic(p.bubble),board=cosmetic(p.board),micFrame=cosmetic(p.micFrame);
+    const bubble=cosmetic(p.bubble),board=cosmetic(p.board),micFrame=cosmetic(p.micFrame),voiceFx=typeof p.voiceFx==='string'&&/^vfx\d\d$/.test(p.voiceFx)?p.voiceFx:null;
     // R57: مركبات الدخول من كتالوج الخادم فقط (المسار لازم يطابق صورة العنصر نفسه)
     const entranceOk=!!p.entrance&&ENTRANCE_ART_PATHS[p.entrance.id]===p.entrance.art;
-    return {id:p.publicId??p.id,name:p.name,...(p.avatar?{avatar:p.avatar}:{}),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),...(ranks?{ranks}:{}),...(entranceOk?{entrance:{id:p.entrance!.id,name:p.entrance!.name,art:p.entrance!.art}}:{}),...(p.stealth===true?{stealth:true}:{})};
+    return {id:p.publicId??p.id,name:p.name,...(p.avatar?{avatar:p.avatar}:{}),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),...(voiceFx?{voiceFx}:{}),...(ranks?{ranks}:{}),...(entranceOk?{entrance:{id:p.entrance!.id,name:p.entrance!.name,art:p.entrance!.art}}:{}),...(p.stealth===true?{stealth:true}:{})};
   }
   private role(r:Room,id:string,c?:Council) {return r.ownerId===id?'owner':r.moderators.includes(id)?'moderator':c?.ownerId===id?'council-owner':c?.hostId===id?'council-host':r.hostId===id?'host':'member';}
   private memberView(r:Room,m:Member,viewer:string,c?:Council) {

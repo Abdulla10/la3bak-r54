@@ -1,6 +1,6 @@
 import { rankPerkCatalogItems } from './rank-perks-r56.js';
 import { r67Price } from './store-price-r67.js';
-import { LUX_ITEMS, LUX_SET, SPECIAL_ID_ITEMS, ROOM_ID_ITEMS, SOUVENIR_ITEMS, ROOM_BG_ITEMS, CUE_ITEMS, BALL_ITEMS } from './store-lux-r57.js';
+import { LUX_ITEMS, LUX_SET, SPECIAL_ID_ITEMS, ROOM_ID_ITEMS, SOUVENIR_ITEMS, ROOM_BG_ITEMS, CUE_ITEMS, BALL_ITEMS, VFX_ITEMS } from './store-lux-r57.js';
 import { luxuryPricedSeed } from './luxury-pricing-r23.js';
 import { gemsOnlyStorePrice } from './store-gems-r58.js';
 import type { Cur, ShopItemRef } from './wallet.js';
@@ -12,7 +12,7 @@ import { ENTRANCE_ITEMS } from './entrance-catalog.js';
  * كتالوج المتجر — المصدر الوحيد للأسعار. العميل يرسل معرّف العنصر فقط والخادم يقرر السعر.
  * كل العناصر تجميلية بالكامل (تظهر بالملف الشخصي وبطاقة اللاعب) وما تعطي أي أفضلية داخل اللعب.
  */
-export type Slot = 'frame' | 'bg' | 'title' | 'badge' | 'avatar' | 'entrance' | 'chat-bubble' | 'board' | 'special-id' | 'room-id' | 'souvenir' | 'mic-frame' | 'room-bg' | 'cue' | 'bball';
+export type Slot = 'frame' | 'bg' | 'title' | 'badge' | 'avatar' | 'entrance' | 'chat-bubble' | 'board' | 'special-id' | 'room-id' | 'souvenir' | 'mic-frame' | 'room-bg' | 'cue' | 'bball' | 'voice-fx';
 export type Rarity = 'common' | 'premium' | 'rare' | 'epic' | 'legendary' | 'ultra';
 export const RARITIES: Rarity[] = ['common', 'premium', 'rare', 'epic', 'legendary', 'ultra'];
 /** set = المجموعة المنسّقة، season = وسم موسمي (عرض فقط، بدون انتهاء)، kids = مناسب لعالم الصغار */
@@ -171,7 +171,7 @@ for (const i of ENTRANCE_ITEMS) {
 }
 CATALOG.push(...ENTRANCE_ITEMS);
 const perkIds = new Set(CATALOG.map((i) => i.id));
-for (const i of [...LUX_ITEMS, ...SPECIAL_ID_ITEMS, ...ROOM_ID_ITEMS, ...SOUVENIR_ITEMS, ...ROOM_BG_ITEMS, ...CUE_ITEMS, ...BALL_ITEMS]) { if (perkIds.has(i.id)) throw new Error(`Lux catalog ID collision: ${i.id}`); perkIds.add(i.id); CATALOG.push(i); }
+for (const i of [...LUX_ITEMS, ...SPECIAL_ID_ITEMS, ...ROOM_ID_ITEMS, ...SOUVENIR_ITEMS, ...ROOM_BG_ITEMS, ...CUE_ITEMS, ...BALL_ITEMS, ...VFX_ITEMS]) { if (perkIds.has(i.id)) throw new Error(`Lux catalog ID collision: ${i.id}`); perkIds.add(i.id); CATALOG.push(i); }
 Object.assign(SETS, LUX_SET);
 for (const i of rankPerkCatalogItems()) { if (perkIds.has(i.id)) throw new Error(`Rank perk catalog ID collision: ${i.id}`); perkIds.add(i.id); CATALOG.push(i); }
 /** ندرة العناصر القديمة (ما تغيّرت أسعارها) */
@@ -181,7 +181,7 @@ for (const i of CATALOG) if (i.id === 'av-emperor') i.set = 'emperor';
 for (let index=0;index<CATALOG.length;index++) CATALOG[index]=r67Price(gemsOnlyStorePrice(luxuryPricedSeed(CATALOG[index])));
 const BY_ID = new Map(CATALOG.map((i) => [i.id, i]));
 export const itemOf = (id: unknown): ShopItem | undefined => (typeof id === 'string' ? BY_ID.get(id) : undefined);
-export const SLOTS: Slot[] = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir', 'mic-frame', 'room-bg', 'cue', 'bball'];
+export const SLOTS: Slot[] = ['frame', 'bg', 'title', 'badge', 'avatar', 'entrance', 'chat-bubble', 'board', 'special-id', 'room-id', 'souvenir', 'mic-frame', 'room-bg', 'cue', 'bball', 'voice-fx'];
 
 /** مكافآت إنجازات محددة: الخادم يتحقق من الشرط من سجله هو (مو من العميل) وتنصرف مرة وحدة لكل حساب */
 export interface Milestone { id: string; label: string; cur: Cur; amount: number; goal: number; metric: 'wins' | 'played' | 'level' }

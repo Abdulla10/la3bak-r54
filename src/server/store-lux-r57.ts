@@ -3,7 +3,7 @@
 import type { ShopItem, Rarity } from './catalog.js';
 const X = (id: string, slot: ShopItem['slot'], name: string, icon: string, price: number, currency: 'coins' | 'gems', rarity: Rarity, desc: string, css: string): ShopItem =>
   ({ id, slot, name, icon, price, currency, desc, css, permanent: true, rarity, set: 'lux' });
-export const LUX_SET = { lux: 'مجموعة الفخامة', cues: 'عصي البلياردو', balls: 'كور البولينغ' };
+export const LUX_SET = { lux: 'مجموعة الفخامة', cues: 'عصي البلياردو', balls: 'كور البولينغ', vfx: 'مؤثرات الصوت' };
 export const LUX_ITEMS: ShopItem[] = [
   // إطارات
   X('lux-f-rose', 'frame', 'إطار الوردة الكريستالية', '💍', 800, 'gems', 'rare', 'كريستال وردي بفصوص لامعة.', 'lux-rose'),
@@ -415,4 +415,19 @@ export const BALL_ITEMS: ShopItem[] = [
   BALL('01', 'كرة التاج الملكي', 550_000, 'ultra', 'رخام أسود وتاج ذهبي بأغصان الغار.'),
   BALL('04', 'كرة التنين البنفسجي', 1_500_000, 'ultra', 'تنين بنفسجي ملتف بالبرق.'),
   BALL('09', 'كرة الألماس الذهبي', 2_000_000, 'ultra', 'ألماس ذهبي مقطّع يلمع.'),
+];
+
+/* R68z32: مؤثرات الصوت (صور المالك) — تطلع حول صورتك بالغرفة وقت ما تتكلم بس */
+const VFX = (n: string, name: string, coins: number, rarity: Rarity): ShopItem => ({ id: `vfx-${n}`, slot: 'voice-fx', name, icon: '🔊', price: Math.round(coins / 20), currency: 'gems', desc: 'يطلع حول صورتك بالغرفة وقت ما تتكلم.', css: `vfx${n}`, art: `/assets/art68/vfx/v${n}.webp`, permanent: true, rarity, set: 'vfx' });
+export const VFX_ITEMS: ShopItem[] = [
+  VFX('05', 'مؤثر الرومانسي', 60_000, 'rare'),
+  VFX('10', 'مؤثر المحيطي', 90_000, 'rare'),
+  VFX('04', 'مؤثر الجليدي', 120_000, 'epic'),
+  VFX('03', 'مؤثر الناري', 150_000, 'epic'),
+  VFX('07', 'مؤثر الفراشات', 180_000, 'epic'),
+  VFX('08', 'مؤثر الإيقاعي', 250_000, 'legendary'),
+  VFX('02', 'مؤثر الكريستال', 300_000, 'legendary'),
+  VFX('06', 'مؤثر المجري', 400_000, 'legendary'),
+  VFX('09', 'مؤثر التنين', 600_000, 'ultra'),
+  VFX('01', 'مؤثر الملكي', 800_000, 'ultra'),
 ];
