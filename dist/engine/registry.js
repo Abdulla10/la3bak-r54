@@ -9,6 +9,7 @@ import { createDominoEngine } from './domino.js';
 import { createUnoEngine } from './uno.js';
 import { createLiarsEngine } from './liars.js';
 import { createPoolEngine } from './pool.js';
+import { createBowlingEngine } from './bowling.js';
 import { createCarromEngine } from './carrom.js';
 import { createMinaboliEngine } from './minaboli.js';
 import { createQuizEngines } from './quiz-games.js';
@@ -29,7 +30,7 @@ export function createRegistry(rng = Math.random) {
     for (const e of [
         createLettersEngine(rng), createMostLikelyEngine(rng), createOutsiderEngine(rng), createCodewordsEngine(rng),
         createJackaroEngine(rng), createLudoEngine(rng), createBalootEngine(rng), createDominoEngine(rng), createUnoEngine(rng), createCarromEngine(rng),
-        createMinaboliEngine(rng), createLiarsEngine(rng), createPoolEngine(rng),
+        createMinaboliEngine(rng), createLiarsEngine(rng), createPoolEngine(rng), createBowlingEngine(rng),
         ...createQuizEngines(rng),
     ])
         engines.set(e.info.id, e);

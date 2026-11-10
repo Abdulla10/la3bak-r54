@@ -1,14 +1,14 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
 import * as PR from './profile.js?v=r68z16';
-import * as UNIFIED from '../unified/shell.js?v=r68z19';
-import * as REF from '../unified/home.js?v=r68z5';
-import * as SOCIAL from '../unified/social.js?v=r68z16';
+import * as UNIFIED from '../unified/shell.js?v=r68z20b';
+import * as REF from '../unified/home.js?v=r68z20';
+import * as SOCIAL from '../unified/social.js?v=r68z20';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68i';
 import {giftArtwork} from '../gift-assets-r27.js?v=r68i-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r68z19';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r68z20b';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
@@ -31,13 +31,14 @@ import * as DMV from '../domino.js?v=r67ac';
 import * as UNV from '../uno.js?v=r67ac';
 import * as LRV from '../liars.js?v=r68z19';
 import * as PLV from '../pool.js?v=r68z16';
+import * as BWV from '../bowling.js?v=r68z20b';
 import * as CRV from '../carrom.js?v=r67ac';
 import * as MNV from '../minaboli-r47.js?v=r57';
 import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z15';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68z19';
+import * as PWA from '../pwa.js?v=r68z20b';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z16';
@@ -391,7 +392,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68z19');
+  const M = await import('../settings-r60.js?v=r68z20b');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -832,6 +833,7 @@ function statusStrip() {
  * كل قسم مستقل: لو فشل رسمه يطلع مكانه تنبيه صغير وما تنكسر الصفحة. كل الأرقام من الخادم (الرصيد، المنشورات، المتجر) أو حالة فاضية صادقة. */
 const HOME_FEATURED = [
   { id: 'pool', href: '#/game/pool', tag: 'بلياردو أونلاين 🎱', bg: 'linear-gradient(135deg,#1f6fd6,#06204f)' },
+  { id: 'bowling', href: '#/game/bowling', tag: 'طيّح الدبابيس العشرة 🎳', bg: 'linear-gradient(135deg,#2b3a8a,#0a0d26)' },
   { id: 'liars', href: '#/game/liars', tag: 'اكذب أو اكشف الكذاب 💣', bg: 'linear-gradient(135deg,#9b1f38,#3a120d)' },
   { id: 'uno', href: '#/game/uno', tag: 'ألوان وأرقام وتخطيط', bg: 'linear-gradient(135deg,#e53935,#f2b705)' },
   { id: 'domino', href: '#/game/domino', tag: 'كلاسيكية المجالس', bg: 'linear-gradient(135deg,#17908a,#0b5a5c)' },
@@ -1026,7 +1028,7 @@ const UI_CATS = [
   { id: 'solo', label: 'فردية', icon: '🎯' },
 ];
 const UI_OF = {
-  jackaro: 'party', ludo: 'party', baloot: 'party', domino: 'party', uno: 'party', carrom: 'party', codewords: 'party', liars: 'party', pool: 'party',
+  jackaro: 'party', ludo: 'party', baloot: 'party', domino: 'party', uno: 'party', carrom: 'party', codewords: 'party', liars: 'party', pool: 'party', bowling: 'party',
 };
 function uiCat(g) {
   if (UI_OF[g.id]) return UI_OF[g.id];
@@ -1038,7 +1040,7 @@ function uiCat(g) {
   return 'party';
 }
 /* مختارات يدوية (مو ترتيب حسب اللعب: ما عندنا أرقام استخدام) */
-const FEATURED = ['pool', 'liars', 'uno', 'domino', 'carrom', 'jackaro', 'ludo', 'baloot'];
+const FEATURED = ['pool', 'bowling', 'liars', 'uno', 'domino', 'carrom', 'jackaro', 'ludo', 'baloot'];
 
 function gamesView() {
   const live = visibleGameCatalogue(S.games).filter((g) => g.status === 'available');
@@ -1342,7 +1344,7 @@ function structKey(room) {
     return ['L', room.gameId, room.seats, room.hostId, room.players.map((p) => p.id + (p.ready ? 'r' : '') + (p.left ? 'x' : '')).join(',')].join('|');
   }
   const g = room.game || {};
-  return ['G', room.status, g.phase, g.ver, g.youSubmitted, g.youVoted, g.youChose, room.hostId, room.gameId === 'domino' ? DMV.uiKey() : room.gameId === 'uno' ? UNV.uiKey() : room.gameId === 'liars' ? LRV.uiKey() : room.gameId === 'pool' ? PLV.uiKey() : room.gameId === 'carrom' ? CRV.uiKey() : ''].join('|');
+  return ['G', room.status, g.phase, g.ver, g.youSubmitted, g.youVoted, g.youChose, room.hostId, room.gameId === 'domino' ? DMV.uiKey() : room.gameId === 'uno' ? UNV.uiKey() : room.gameId === 'liars' ? LRV.uiKey() : room.gameId === 'pool' ? PLV.uiKey() : room.gameId === 'bowling' ? BWV.uiKey() : room.gameId === 'carrom' ? CRV.uiKey() : ''].join('|');
 }
 
 /* جاكارو: لو المساحة الآمنة العلوية (الجزيرة بالتطبيق المثبّت) دفعت المقعد العلوي لين صار اسمه يلمس حافة اللوحة،
@@ -1423,6 +1425,7 @@ function renderRoom(code, force) {
   if (visible && room.gameId === 'uno' && room.status !== 'lobby') UNV.afterRender(surface, room);
   if (visible && room.gameId === 'liars' && room.status !== 'lobby') LRV.afterRender(surface, room);
   if (visible && room.gameId === 'pool' && room.status !== 'lobby') PLV.afterRender(surface, room, (a) => ACTIONS['pl-send'](a));
+  if (visible && room.gameId === 'bowling' && room.status !== 'lobby') BWV.afterRender(surface, room, (a) => ACTIONS['bw-send'](a));
   if (visible && room.gameId === 'carrom' && room.status !== 'lobby') CRV.afterRender(surface, room, () => { if (roomUI.code === code) renderRoom(code, true); });
   if (visible && room.gameId === 'jackaro' && room.status !== 'lobby') jkFitTop(surface);
   if (visible && fx?.mode === 'play') runPlan(surface, buildPlan(room.game, fx.events, geom), geom);
@@ -1948,7 +1951,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r68z19', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r68z20b', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },
@@ -2113,6 +2116,15 @@ const ACTIONS = {
     if (!res.ok) { toast(res.error, true); renderRoom(r.code, true); return; }
     SFX.play(action.type === 'liar' ? 'win' : 'tap');
     afterRoomOk(res);
+  },
+  async 'bw-send'(action) {
+    const r = currentRoom(); const g = r?.game;
+    if (!g || g.game !== 'bowling' || BWV.BW.busy) return;
+    BWV.BW.busy = true;
+    const res = await req('game:action', { code: r.code, ver: g.ver, action }).catch(() => ({ ok: false, error: 'انقطع الاتصال، جرّب مرة ثانية.' }));
+    BWV.BW.busy = false;
+    if (!res.ok) { toast(res.error, true); renderRoom(r.code, true); return; }
+    SFX.play('tap'); afterRoomOk(res);
   },
   async 'pl-send'(action) {
     const r = currentRoom(); const g = r?.game;
