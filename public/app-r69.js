@@ -1,6 +1,6 @@
 // R69za: تحسينات «التطبيق» — رقم الجهاز (لكشف الحسابات الوهمية)، شاشة «ما فيه نت» مع لعبة XO تشتغل بدون نت،
 // بانر «ثبّت لعبك على جوالك»، وعداد الإشعارات على أيقونة التطبيق.
-import * as PWA from './pwa.js?v=r69zc';
+import * as PWA from './pwa.js?v=r69zd';
 const KEY_DID = 'la3_did', KEY_DISMISS = 'la3_install_x';
 const CSS = `
 .ap69-off{position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 30px) 18px 24px;background:radial-gradient(circle at 50% 20%,#4a1680,#160530 70%);color:#fff;direction:rtl;font-family:inherit;text-align:center;overflow:auto}
@@ -36,14 +36,24 @@ const CSS = `
 const rnd = () => { const a = new Uint8Array(18); crypto.getRandomValues(a); return btoa(String.fromCharCode(...a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
 const ls = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* */ } } };
 
-/* ---------- 1) رقم الجهاز ---------- */
+/* ---------- 1) رقم الجهاز + بصمته ---------- */
+// البصمة من صفات ثابتة بالجهاز (الشاشة، اللغة، المنطقة الزمنية، المعالج، طريقة رسم المتصفح) — نرسل بس الهاش، مو الصفات نفسها
+async function fingerprint() {
+  try {
+    const parts = [screen.width, screen.height, screen.colorDepth, devicePixelRatio, Intl.DateTimeFormat().resolvedOptions().timeZone, navigator.language, (navigator.languages || []).join(','), navigator.hardwareConcurrency || 0, navigator.maxTouchPoints || 0, navigator.platform || ''];
+    try { const c = document.createElement('canvas'); c.width = 220; c.height = 40; const x = c.getContext('2d'); x.textBaseline = 'top'; x.font = '16px Arial'; x.fillStyle = '#f60'; x.fillRect(80, 1, 60, 20); x.fillStyle = '#069'; x.fillText('لعبك LA3BAK ✓😀', 2, 14); x.globalCompositeOperation = 'multiply'; x.fillStyle = 'rgba(102,204,0,.7)'; x.arc(50, 20, 20, 0, Math.PI * 2); x.fill(); parts.push(c.toDataURL()); } catch { /* */ }
+    try { const g = document.createElement('canvas').getContext('webgl'); const d = g && g.getExtension('WEBGL_debug_renderer_info'); if (d) parts.push(g.getParameter(d.UNMASKED_VENDOR_WEBGL), g.getParameter(d.UNMASKED_RENDERER_WEBGL)); } catch { /* */ }
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(parts.join('|')));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 40);
+  } catch { return ''; }
+}
 let pinged = '';
 async function devicePing() {
   try {
     const me = await fetch('/api/account', { credentials: 'same-origin', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
     const uid = me?.id || me?.displayId || ''; if (!uid || pinged === uid) return; pinged = uid;
     let did = ls.get(KEY_DID); if (!did || !/^[A-Za-z0-9_-]{20,64}$/.test(did)) { did = rnd(); ls.set(KEY_DID, did); }
-    const r = await fetch('/api/device', { method: 'POST', credentials: 'same-origin', headers: { 'x-la3-did': did } }).then((x) => x.json()).catch(() => null);
+    const r = await fetch('/api/device', { method: 'POST', credentials: 'same-origin', headers: { 'x-la3-did': did, 'x-la3-fp': await fingerprint() } }).then((x) => x.json()).catch(() => null);
     if (r?.did && r.did !== did) ls.set(KEY_DID, r.did);
   } catch { /* */ }
 }

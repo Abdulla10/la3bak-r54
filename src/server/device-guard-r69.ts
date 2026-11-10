@@ -6,7 +6,8 @@ import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 export const DEVICE_ALLOWED = 2;
 const DID = /^[A-Za-z0-9_-]{20,64}$/;
 type Dev = { ids: string[]; first: number; last: number; allowed?: boolean };
-type Data = { v: 1; dev: Record<string, Dev>; byId: Record<string, string[]>; alerted: string[] };
+type Net = { ids: { id: string; at: number }[]; last: number };
+type Data = { v: 1; dev: Record<string, Dev>; byId: Record<string, string[]>; alerted: string[]; net?: Record<string, Net> };
 
 export class DeviceGuard {
   private d: Data;
@@ -29,6 +30,19 @@ export class DeviceGuard {
     if (dv.ids.length > DEVICE_ALLOWED && !dv.allowed && !this.d.alerted.includes(did)) { this.d.alerted.push(did); if (this.d.alerted.length > 5000) this.d.alerted.shift(); try { this.deps.alert(did, [...dv.ids]); } catch { /* */ } changed = true; }
     if (changed) this.disk.save();
     return dv.ids.length;
+  }
+  /** نفس الشبكة (الـ IP مقصوص ومشفر، ما نحفظه): للمراقبة بس، ما نمنع فيها (البيوت والكافيهات يتشاركون نت) */
+  seeNet(net: string, uid: string) {
+    if (!/^[a-f0-9]{24}$/.test(net) || !uid) return; const m = this.d.net ?? (this.d.net = {}); const t = (this.deps.now ?? Date.now)();
+    const n = m[net] ?? (m[net] = { ids: [], last: t }); let changed = false;
+    if (!n.ids.some((x) => x.id === uid)) { n.ids.push({ id: uid, at: t }); if (n.ids.length > 40) n.ids.shift(); changed = true; }
+    if (t - n.last > 3600_000) { n.last = t; changed = true; }
+    const keys = Object.keys(m); if (keys.length > 50000) for (const k of keys.slice(0, 5000)) delete m[k];
+    if (changed) this.disk.save();
+  }
+  /** شبكات عليها حسابات كثيرة انضافت خلال وقت قصير */
+  netClusters(limit = 30) {
+    return Object.entries(this.d.net ?? {}).filter(([, v]) => v.ids.length >= 4).sort((a, b) => b[1].ids.length - a[1].ids.length || b[1].last - a[1].last).slice(0, limit).map(([k, v]) => ({ net: k.slice(0, 8), ids: v.ids.map((x) => x.id), last: v.last }));
   }
   /** هل الحساب يستاهل جوائز مجانية؟ لا، لو هو حساب زايد (الثالث وطالع) على أي جهاز ما سمح له المالك */
   rewardOk(uid: string): boolean {

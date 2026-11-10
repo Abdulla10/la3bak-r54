@@ -917,6 +917,14 @@ export async function createApp(
   /* رسائل قصيرة جداً أو بدون حروف (ضحك، إيموجي، أرقام) ما تستاهل فحص */
   const aiWorth = (t: string) => { const x = t.replace(/[\s\p{Extended_Pictographic}\p{P}\d]/gu, ''); return x.length >= 3 && !/^(ه|ھ|h|a|خ|ك)+$/i.test(x); };
   /* R69za: كشف الحسابات الوهمية على نفس الجهاز */
+  /** R69za: شروط الجوائز المجانية: الحساب مو زايد على جهاز، وعمره 3 أيام أو أكثر، ولعب 5 مباريات */
+  const REWARD_MIN_AGE = 3 * 86400_000, REWARD_MIN_GAMES = 5;
+  const rewardBlock = (uid: string): string | null => {
+    if (!devGuard.rewardOk(uid)) return 'هالحساب ما ياخذ جوائز مجانية: فيه حسابات كثيرة على نفس الجهاز. تواصل مع الدعم لو هذا خطأ.';
+    const since = accounts.sinceOf(uid); if (since !== null && Date.now() - since < REWARD_MIN_AGE) return `الجوائز المجانية للحسابات اللي عمرها ${REWARD_MIN_AGE / 86400_000} أيام أو أكثر. حسابك جديد، العب وتعال بعدين 😉`;
+    const played = accounts.publicStats(uid)?.played ?? 0; if (played < REWARD_MIN_GAMES) return `العب ${REWARD_MIN_GAMES - played} مباريات بعد وتقدر تاخذ الجوائز المجانية 🎮`;
+    return null;
+  };
   const devGuard = new DeviceGuard(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'device-guard.json') : '', {
     alert: (_did, ids) => arena.alert('collusion', '📱 حسابات كثيرة على جهاز واحد', `${ids.length} حسابات دخلت من نفس الجهاز: ${ids.slice(0, 6).map((i) => accounts.nameOf(i) || 'لاعب').join('، ')}. الحسابات الزايدة ما تاخذ جوائز مجانية لين تسمح لها من لوحة المالك.`, `dev:${_did}`),
   }, storage);
@@ -1666,7 +1674,7 @@ export async function createApp(
     const bombWins = new Map<string, { day: string; n: number }>();
     const bomb = new BombGames({ prize: (winner, players, gameId) => {
       // الجائزة: 5000 عملة للفايز، إذا كانوا 3 لاعبين أو أكثر، وحد أقصى 5 جوائز باليوم لنفس اللاعب (عشان ما ينحلب)
-      if (players < BOMB_PRIZE_MIN_PLAYERS || isGuest(winner) || !devGuard.rewardOk(winner)) return 0;
+      if (players < BOMB_PRIZE_MIN_PLAYERS || isGuest(winner) || rewardBlock(winner)) return 0;
       const day = new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10), w = bombWins.get(winner);
       const n = w && w.day === day ? w.n : 0; if (n >= 5) return 0;
       if (!wallet.grant(winner, 'coins', BOMB_PRIZE, 'فوز بلعبة القنبلة 💣', `bomb:${gameId}:${winner}`)) return 0;
@@ -1697,7 +1705,7 @@ export async function createApp(
     const spyWins = new Map<string, { day: string; n: number }>();
     const spy = new SpyGames({ prize: (winner, amount, gameId) => {
       // الجائزة توصل للفايز تلقائياً. حد أقصى 5 جوائز باليوم لنفس اللاعب عشان ما تنحلب بحسابات وهمية
-      if (isGuest(winner) || amount <= 0 || amount > SPY_PRIZE || !devGuard.rewardOk(winner)) return 0;
+      if (isGuest(winner) || amount <= 0 || amount > SPY_PRIZE || rewardBlock(winner)) return 0;
       const day = new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10), w = spyWins.get(winner); const n = w && w.day === day ? w.n : 0; if (n >= 5) return 0;
       if (!wallet.grant(winner, 'coins', amount, 'فوز بلعبة الجاسوس 🕵️', `spy:${gameId}:${winner}`)) return 0;
       spyWins.set(winner, { day, n: n + 1 }); return amount;
@@ -1733,11 +1741,11 @@ export async function createApp(
     { const ct = setInterval(() => { try { chests.tick(); } catch (e) { log('chest_tick_failed', { error: String(e).slice(0, 100) }); } }, 2000); ct.unref?.(); }
     functionalHttp.add('GET', '/api/chest', ({ user }) => ({ ok: true, ...chests.view(user.id) }));
     functionalHttp.add('POST', '/api/chest/claim', ({ user, body }) => {
-      noGuest(user.id); if (!devGuard.rewardOk(user.id)) throw new FunctionalHttpError(403, 'هالحساب ما ياخذ صناديق: فيه حسابات كثيرة على نفس الجهاز. تواصل مع الدعم لو هذا خطأ.');
+      noGuest(user.id); { const why = rewardBlock(user.id); if (why) throw new FunctionalHttpError(403, why); }
       try { const w = chests.claim(user.id, String(body.id ?? '')); return { ok: true, coins: w.coins, itemName: w.itemName, balance: wallet.balance(user.id) }; }
       catch (e) { if (e instanceof ChestError) throw new FunctionalHttpError(e.status, e.message); throw e; }
     });
-    functionalHttp.add('GET', '/api/admin/devices', () => ({ ok: true, ...devGuard.stats(), list: devGuard.clusters().map((c) => ({ ...c, players: c.ids.map((id, i) => ({ name: accounts.nameOf(id) || 'لاعب', displayId: accounts.displayPlayerId?.(id) ?? '', extra: i >= 2 })) , ids: undefined })) }), 'owner');
+    functionalHttp.add('GET', '/api/admin/devices', () => ({ ok: true, ...devGuard.stats(), nets: devGuard.netClusters().map((n) => ({ ...n, players: n.ids.map((id) => ({ name: accounts.nameOf(id) || 'لاعب', displayId: accounts.displayPlayerId(id) ?? '', since: accounts.sinceOf(id) })), ids: undefined })), list: devGuard.clusters().map((c) => ({ ...c, players: c.ids.map((id, i) => ({ name: accounts.nameOf(id) || 'لاعب', displayId: accounts.displayPlayerId?.(id) ?? '', extra: i >= 2 })) , ids: undefined })) }), 'owner');
     functionalHttp.add('POST', '/api/admin/devices/allow', ({ actor, body }) => { adminNeed(devGuard.allow(String(body.did ?? ''), !!body.on), 'الجهاز مو موجود.'); admin.audit(actor!, 'device.allow', String(body.did).slice(0, 12), body.on ? 'سماح' : 'منع'); return { ok: true }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');
     functionalHttp.add('POST', '/api/admin/chest/drop', ({ actor }) => { try { chests.dropNow(); } catch (e) { if (e instanceof ChestError) throw new FunctionalHttpError(409, e.message); throw e; } admin.audit(actor!, 'chest.drop', 'gold-chest', 'إطلاق صندوق ذهبي يدوي'); return { ok: true, ...chests.adminView() }; }, 'owner');
@@ -1762,7 +1770,7 @@ export async function createApp(
     const roomAcc = (uid: string, room: unknown) => { const acc = socialRooms.quizAccess(uid, String(room ?? '')); if (!acc) throw new FunctionalHttpError(403, 'لازم تكون داخل الغرفة.'); return acc; };
     functionalHttp.add('GET', '/api/room-env', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false, envs: [] }; return { ok: true, member: true, amounts: ENV_AMOUNTS, counts: ENV_COUNTS, envs: arena.envView(room, user.id) }; });
     functionalHttp.add('POST', '/api/room-env/throw', ({ user, body }) => { noGuest(user.id); roomAcc(user.id, body.room); return arenaRun(() => { const e = arena.envThrow(String(body.room), user.id, Number(body.total), Number(body.count)); const acc = socialRooms.quizAccess(user.id, String(body.room)); for (const m of acc?.members ?? []) if (m !== user.id) sendToUser(m, { t: 'room:env', room: body.room, by: e.byName, total: e.total }); return { ok: true, envs: arena.envView(String(body.room), user.id) }; }); });
-    functionalHttp.add('POST', '/api/room-env/grab', ({ user, body }) => { noGuest(user.id); if (!devGuard.rewardOk(user.id)) throw new FunctionalHttpError(403, 'هالحساب ما ياخذ من الظرف: فيه حسابات كثيرة على نفس الجهاز.'); roomAcc(user.id, body.room); return arenaRun(() => { const r = arena.envGrab(String(body.room), String(body.id ?? ''), user.id); return { ok: true, amt: r.amt, envs: arena.envView(String(body.room), user.id) }; }); });
+    functionalHttp.add('POST', '/api/room-env/grab', ({ user, body }) => { noGuest(user.id); { const why = rewardBlock(user.id); if (why) throw new FunctionalHttpError(403, why); } roomAcc(user.id, body.room); return arenaRun(() => { const r = arena.envGrab(String(body.room), String(body.id ?? ''), user.id); return { ok: true, amt: r.amt, envs: arena.envView(String(body.room), user.id) }; }); });
     functionalHttp.add('GET', '/api/room-music', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false }; return { ok: true, member: true, mod: acc.mod, ...arena.musicView(room) }; });
     functionalHttp.add('POST', '/api/room-music/add', ({ user, body }) => { roomAcc(user.id, body.room); return arenaRun(() => { const vid = String(body.vid ?? ''); if (!ARENA_YT.test(vid)) throw new ArenaError('رابط يوتيوب غير صالح.', 400); arena.musicAdd(String(body.room), user.id, vid); return { ok: true, ...arena.musicView(String(body.room)) }; }); });
     functionalHttp.add('POST', '/api/room-music/skip', ({ user, body }) => { const acc = roomAcc(user.id, body.room); return arenaRun(() => { arena.musicSkip(String(body.room), user.id, acc.mod); return { ok: true, ...arena.musicView(String(body.room)) }; }); });
@@ -2127,7 +2135,14 @@ export async function createApp(
         const ck = String(req.headers.cookie ?? '').match(/(?:^|;\s*)la3_did=([A-Za-z0-9_-]{20,64})/)?.[1];
         const hd = String(req.headers['x-la3-did'] ?? '');
         const did = ck || (DeviceGuard.valid(hd) ? hd : rb69(18).toString('base64url'));
-        if (!isGuest(user.id)) devGuard.see(did, user.id);
+        if (!isGuest(user.id)) {
+          devGuard.see(did, user.id);
+          // الشبكة: نقص الـ IP (أول 3 أجزاء) ونشفره، وما نحفظ الـ IP نفسه
+          const ip = ipOf(req).replace(/^::ffff:/, ''); const subnet = ip.includes(':') ? ip.split(':').slice(0, 3).join(':') : ip.split('.').slice(0, 3).join('.');
+          const net = createHash('sha256').update(cfg.cookieSecret + '|net|' + subnet).digest('hex').slice(0, 24); devGuard.seeNet(net, user.id);
+          // بصمة الجهاز مع الشبكة (عشان جوالين من نفس النوع ببيتين مختلفين ما يتلخبطون)
+          const fp = String(req.headers['x-la3-fp'] ?? ''); if (/^[a-f0-9]{16,64}$/.test(fp)) devGuard.see('f_' + createHash('sha256').update(fp + '|' + net).digest('hex').slice(0, 30), user.id);
+        }
         const cookie = [`la3_did=${did}`, 'Path=/', 'Max-Age=63072000', 'HttpOnly', 'SameSite=Lax', ...(cfg.cookieSecure ? ['Secure'] : [])].join('; ');
         return json(res, 200, { ok: true, did }, { 'Set-Cookie': cookie, 'Cache-Control': 'no-store' });
       }
