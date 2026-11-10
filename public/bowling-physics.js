@@ -38,59 +38,82 @@ export function simulate(standing, shot, record = false) {
   const s = normShot(shot);
   const v0 = 560 + s.power * 380; // سم/ث
   const ball = { x: s.x0, y: BALL_Y0, vx: v0 * s.aim, vy: v0, gutter: false, on: true };
-  const pins = PINS.map((p, i) => ({ i, x: p.x, y: p.y, vx: 0, vy: 0, up: !!standing[i], down: false, gone: !standing[i], tilt: 0, dir: 0, z: 0, vz: 0, rot: 0, vr: 0 }));
+  // x,y = مركز الدبوس على الأرض. tilt: 0 واقف → 1 طايح. f = اتجاه الطيحة. z/rot = نطة وتقلّب (شكل بس)
+  const pins = PINS.map((p, i) => ({ i, x: p.x, y: p.y, vx: 0, vy: 0, up: !!standing[i], down: false, gone: !standing[i], tilt: 0, tv: 0, fx: 0, fy: 1, z: 0, vz: 0, rot: 0, vr: 0 }));
   const frames = record ? [] : null;
-  const hook = s.spin * 95; // تسارع جانبي بعد ما تمسك الكرة
+  const hook = s.spin * 80; // تسارع جانبي بعد ما تمسك الكرة
   let steps = 0, quiet = 0;
   const live = () => pins.filter((p) => !p.gone);
   while (steps < 120 * 6) {
     steps++;
-    // الكرة
+    // الكرة: تتزحلق أول المسار، بعدها تمسك وتنحني، وتخف شوي مع الاحتكاك
     if (ball.on) {
-      if (!ball.gutter && ball.y > 900 && ball.y < HP - 60) ball.vx += hook * DT;
+      if (!ball.gutter && ball.y > 800 && ball.y < HP - 60) ball.vx += hook * (0.6 + (ball.y - 800) / 1400) * DT;
+      if (!ball.gutter) ball.vy *= 1 - 0.035 * DT;
       ball.x += ball.vx * DT; ball.y += ball.vy * DT;
       if (!ball.gutter && (ball.x < -HALF || ball.x > HALF) && ball.y < HP - 20) { ball.gutter = true; ball.x = ball.x < 0 ? -HALF - BR * 0.9 : HALF + BR * 0.9; ball.vx = 0; }
       if (ball.y > END_Y + 40) ball.on = false;
     }
     // الدبابيس تتحرك
     for (const p of pins) {
-      if (p.gone || (p.vx === 0 && p.vy === 0 && p.vz === 0 && p.z === 0 && p.vr === 0)) continue;
-      p.x += p.vx * DT; p.y += p.vy * DT;
-      const f = p.down ? 0.95 : 0.9;
-      p.vx *= f; p.vy *= f;
-      if (p.vx * p.vx + p.vy * p.vy < 16) { p.vx = 0; p.vy = 0; }
-      if (p.down && p.tilt < 1) p.tilt = Math.min(1, p.tilt + 0.06);
-      // شكل بس (ما يأثر على النتيجة): الدبوس ينط ويتقلب بالهوا
-      if (p.z > 0 || p.vz !== 0) { p.vz -= 980 * DT; p.z += p.vz * DT; if (p.z <= 0) { p.z = 0; p.vz = p.vz < -70 ? -p.vz * 0.3 : 0; p.vr *= 0.6; } }
-      if (p.vr !== 0) { p.rot += p.vr * DT; if (p.z === 0) { p.vr *= 0.93; if (p.vr * p.vr < 0.05) p.vr = 0; } }
-      if (p.x < -HALF - 4 || p.x > HALF + 4 || p.y > END_Y) { p.gone = true; p.down = true; p.up = false; }
+      if (!p.gone && (p.vx !== 0 || p.vy !== 0)) {
+        p.x += p.vx * DT; p.y += p.vy * DT;
+        const f = p.down ? 0.95 : 0.9;
+        p.vx *= f; p.vy *= f;
+        if (p.vx * p.vx + p.vy * p.vy < 16) { p.vx = 0; p.vy = 0; }
+      }
+      // الطيحة: يميل ويتسارع لين ينسدح، ومركزه يمشي مع الطيحة (يضرب اللي جنبه)
+      if (p.down && (p.tilt < 1 || p.tv !== 0)) {
+        p.tv += 5 * (0.3 + p.tilt) * DT;
+        let nt = p.tilt + p.tv * DT;
+        if (nt >= 1) { nt = 1; p.tv = p.tv > 3 ? -p.tv * 0.18 : 0; }
+        if (nt < 0.85 && p.tv < 0) { p.tv = 0; nt = 0.85; }
+        if (!p.gone) { const d = (nt - p.tilt) * 19; p.x += p.fx * d; p.y += p.fy * d; }
+        p.tilt = nt;
+      }
+      // نطة وتقلّب بالهوا (شكل بس)
+      if (p.z > 0 || p.vz !== 0) { p.vz -= 980 * DT; p.z += p.vz * DT; if (p.z <= 0) { p.z = 0; p.vz = p.vz < -70 ? -p.vz * 0.3 : 0; p.vr *= 0.5; } }
+      if (p.vr !== 0) { p.rot += p.vr * DT; if (p.z === 0) { p.vr *= 0.9; if (p.vr * p.vr < 0.05) p.vr = 0; } }
+      if (!p.gone && (p.x < -HALF - 4 || p.x > HALF + 4 || p.y > END_Y)) { p.gone = true; p.down = true; p.up = false; p.vx = 0; p.vy = 0; }
     }
     // تصادم الكرة مع الدبابيس
     if (ball.on && !ball.gutter && ball.y > HP - 40) {
       for (const p of pins) {
         if (p.gone) continue;
         const r = BR + (p.down ? PR * 1.6 : PR);
-        hit(ball, MB, p, MP, r, 0.6, p);
+        hit(ball, MB, p, MP, r, 0.6);
       }
     }
     // دبوس مع دبوس
     const L = live();
     for (let a = 0; a < L.length; a++) for (let b = a + 1; b < L.length; b++) {
       const A = L[a], B = L[b];
-      if (A.vx === 0 && A.vy === 0 && B.vx === 0 && B.vy === 0) continue;
+      if (A.vx === 0 && A.vy === 0 && B.vx === 0 && B.vy === 0 && A.tv === 0 && B.tv === 0) continue;
       const r = (A.down ? PR * 1.7 : PR) + (B.down ? PR * 1.7 : PR);
-      hit(A, MP, B, MP, r, 0.55, null);
+      hit(A, MP, B, MP, r, 0.55);
     }
-    if (frames && steps % 2 === 0) frames.push({ b: [round1(ball.x), round1(ball.y), ball.gutter ? 1 : 0, ball.on ? 1 : 0], p: pins.map((p) => [round1(p.x), round1(p.y), p.gone ? 2 : p.down ? 1 : 0, round2(p.tilt), round2(p.dir), round1(p.z), round2(p.rot)]) });
-    const moving = pins.some((p) => !p.gone && (p.vx !== 0 || p.vy !== 0 || p.z > 0));
+    if (frames && steps % 2 === 0) frames.push({ b: [round1(ball.x), round1(ball.y), ball.gutter ? 1 : 0, ball.on ? 1 : 0], p: pins.map((p) => [round1(p.x), round1(p.y), p.gone ? 2 : p.down ? 1 : 0, round2(p.tilt), round2(p.fx), round2(p.fy), round1(p.z), round2(p.rot)]) });
+    const moving = pins.some((p) => (!p.gone && (p.vx !== 0 || p.vy !== 0)) || p.z > 0 || p.tv !== 0);
     if (!ball.on && !moving) { quiet++; if (quiet > 12) break; }
   }
   const knocked = pins.filter((p) => standing[p.i] && (p.down || p.gone)).map((p) => p.i);
   return { knocked, gutter: ball.gutter, steps, ...(frames ? { frames } : {}) };
 }
+/** مسار الكرة بس (للسهم قبل الرمية) */
+export function ballPath(shot, every = 6) {
+  const s = normShot(shot); const v0 = 560 + s.power * 380; const hook = s.spin * 80;
+  const b = { x: s.x0, y: BALL_Y0, vx: v0 * s.aim, vy: v0 }; const out = [];
+  for (let k = 0; k < 120 * 4 && b.y < HP; k++) {
+    if (b.y > 800 && b.y < HP - 60) b.vx += hook * (0.6 + (b.y - 800) / 1400) * DT;
+    b.vy *= 1 - 0.035 * DT; b.x += b.vx * DT; b.y += b.vy * DT;
+    if (k % every === 0) out.push([b.x, b.y]);
+    if (b.x < -HALF || b.x > HALF) { out.push([b.x, b.y]); break; }
+  }
+  return out;
+}
 const round1 = (v) => Math.round(v * 10) / 10, round2 = (v) => Math.round(v * 100) / 100;
 
-function hit(A, ma, B, mb, r, e, pinB) {
+function hit(A, ma, B, mb, r, e) {
   const dx = B.x - A.x, dy = B.y - A.y, d2 = dx * dx + dy * dy;
   if (d2 >= r * r || d2 === 0) return;
   const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
@@ -101,12 +124,17 @@ function hit(A, ma, B, mb, r, e, pinB) {
   if (rv > 0) return;
   const j = -(1 + e) * rv / (1 / ma + 1 / mb);
   A.vx -= j * nx / ma; A.vy -= j * ny / ma; B.vx += j * nx / mb; B.vy += j * ny / mb;
-  // أي دبوس ينضرب بقوة يطيح
+  // أي دبوس ينضرب بقوة يطيح باتجاه الضربة
   for (const P of [A, B]) {
     if (P.up === undefined || P.down) continue;
-    if (P.vx * P.vx + P.vy * P.vy > 900) { P.down = true; P.up = false; const sp = Math.sqrt(P.vx * P.vx + P.vy * P.vy) || 1; P.dir = round2(P.vx / sp); P.vz = sp > 220 ? Math.min(260, (sp - 180) * 0.55) : 0; P.vr = (P.vx >= 0 ? 1 : -1) * Math.min(14, sp / 40); }
+    const v2 = P.vx * P.vx + P.vy * P.vy;
+    if (v2 > 900) {
+      const sp = Math.sqrt(v2); P.down = true; P.up = false; P.fx = P.vx / sp; P.fy = P.vy / sp;
+      P.tv = Math.min(9, sp / 55);
+      P.vz = sp > 230 ? Math.min(240, (sp - 190) * 0.5) : 0;
+      P.vr = sp > 230 ? Math.min(16, sp / 35) : 0;
+    }
   }
-  void pinB;
 }
 
 /** النتيجة: rolls = مصفوفة لكل إطار (أرقام الدبابيس الطايحة لكل رمية). F = عدد الإطارات */

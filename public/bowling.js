@@ -3,7 +3,8 @@
 import { faceHtml } from './characters.js?v=shell-r6';
 import { avatarArt } from './avatars.js?v=r67ac';
 import { isOn as soundOn } from './sfx.js?v=shell-r6';
-import { simulate, PINS, HALF, HP, BR, normShot, BALL_Y0 } from './bowling-physics.js?v=r68z22';
+import { simulate, PINS, HALF, HP, BR, normShot, BALL_Y0, ballPath } from './bowling-physics.js?v=r68z23';
+import * as R3 from './bowling3d.js?v=r68z23';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const BW = { room: '', x0: 0, anim: null, shown: -1, busy: false, send: null, hold: 0, drag: null, mark: '' };
@@ -129,20 +130,36 @@ function drawBall(ctx, b, ci) {
 
 /* ---------- الحالة الحالية (بدون حركة) ---------- */
 const restPins = (standing) => PINS.map((q, i) => ({ x: q.x, y: q.y, st: standing[i] ? 0 : 2, tilt: 0, dir: 0 }));
-function paintIdle(cv, g, room) {
-  const ctx = cv.getContext('2d');
-  const myTurn = g.phase === 'aim' && g.turnId === room.you;
-  const ti = Math.max(0, g.players.indexOf(g.turnId));
-  const ball = { x: myTurn ? BW.x0 : 0, y: BALL_Y0, on: g.phase === 'aim' };
-  drawScene(ctx, 1, restPins(g.standing), ball, ti);
+
+/* الرسم ثلاثي الأبعاد (لو الجهاز يدعمه) — المشهد واحد ويبقى حتى لو الصفحة انرسمت من جديد */
+function ensure3D() {
+  if (BW.r3 || BW.r3load || BW.no3d) return;
+  if (!R3.supported()) { BW.no3d = true; return; }
+  const c = document.createElement('canvas'); c.className = 'bw-cv bw-3d'; c.setAttribute('aria-label', 'مسار البولينغ');
+  BW.r3load = R3.create(c).then((st) => { BW.r3 = st; BW.r3load = null; R3.snapCamera(st); BW.mount?.(); }).catch(() => { BW.no3d = true; BW.r3load = null; });
 }
+const toPins3 = (fr) => fr.p.map(([x, y, st, tilt, fx, fy, z, rot]) => ({ x, y, st, tilt, fx, fy, dir: fx, z, rot }));
+function present(c, o) {
+  if (BW.r3 && c === BW.r3.canvas) { R3.draw(BW.r3, o); return; }
+  const zoom = o.follow && o.ball?.on ? 1 + 1.25 * Math.min(1, Math.max(0, (o.ball.y - 700) / 1000)) ** 1.4 : 1;
+  drawScene(c.getContext('2d'), zoom, o.pins, o.ball, o.ci);
+}
+function idleState(g, room) {
+  const myTurn = g.phase === 'aim' && g.turnId === room.you; const ti = Math.max(0, g.players.indexOf(g.turnId));
+  return { pins: restPins(g.standing), ball: { x: myTurn ? BW.x0 : 0, y: BALL_Y0, on: g.phase === 'aim' }, ci: ti, follow: false, guide: BW.guide };
+}
+function paintIdle(cv, g, room) { present(cv, idleState(g, room)); }
 
 let clockT = 0;
 export function afterRender(view, room, send) {
   const g = room.game; if (!g || g.game !== 'bowling') return;
   BW.send = send;
-  const cv = view.querySelector('.bw-cv'); if (!cv) return;
-  const ctx = cv.getContext('2d');
+  ensure3D();
+  let cv = view.querySelector('.bw-cv'); if (!cv) return;
+  // نركّب كانفس الـ3D مكان الكانفس العادي
+  if (BW.r3) { if (cv !== BW.r3.canvas) { cv.replaceWith(BW.r3.canvas); cv = BW.r3.canvas; } const w = cv.parentElement.clientWidth || 360; R3.resize(BW.r3, w, Math.round(w * CH / CW)); }
+  BW.mount = () => { const v = document.querySelector('.bw-stage'); if (v) afterRender(v.parentElement, BW.lastRoom || room, BW.send); };
+  BW.lastRoom = room;
   const myTurn = g.phase === 'aim' && g.turnId === room.you;
   clearInterval(clockT); clockT = setInterval(() => { const els = document.querySelectorAll('[data-bw-left]'); if (!els.length) return clearInterval(clockT); for (const el of els) { const l = Number(el.dataset.bwLeft) - (Date.now() - Number(el.dataset.bwAt)); el.textContent = String(Math.max(0, Math.ceil(l / 1000))); el.classList.toggle('low', l < 6000); } }, 300);
   // حركة الرمية الأخيرة
@@ -151,12 +168,14 @@ export function afterRender(view, room, send) {
     if (!first && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const r = simulate(g.last.before, g.last.shot, true);
       BW.anim = { frames: r.frames, t0: performance.now(), kmh: Math.round((560 + g.last.shot.power * 380) * 0.036), ci: Math.max(0, g.players.indexOf(g.last.by)), mark: g.last.mark, n: g.last.knocked.length, by: g.last.by };
+      BW.guide = null; if (BW.r3) R3.newThrow(BW.r3);
     }
   } else if (!g.last) BW.shown = g.shotNo;
-  BW.repaint = () => { if (!BW.anim) { const c = document.querySelector('.bw-cv'); if (c) paintIdle(c, room.game, room); } };
   const showBan = (t, cls) => { const ban = document.querySelector('.bw-ban'); if (!ban) return; ban.hidden = false; ban.className = 'bw-ban ' + (cls || ''); ban.textContent = t; };
   const lid = BW.loopId = (BW.loopId || 0) + 1;
   const tb = view.querySelector('.bw-turn'); if (tb && BW.anim) tb.hidden = true;
+  let idleFrames = 0;
+  BW.repaint = () => { idleFrames = 0; if (BW.idleStopped) { BW.idleStopped = false; requestAnimationFrame(loop); } };
   const loop = () => {
     if (lid !== BW.loopId) return;
     const c = document.querySelector('.bw-cv'); if (!c) { BW.anim = null; return; }
@@ -165,45 +184,55 @@ export function afterRender(view, room, send) {
       { const t2 = document.querySelector('.bw-turn'); if (t2 && !t2.hidden) t2.hidden = true; const sp = document.querySelector('.bw-kmh'); if (sp && sp.hidden) { sp.hidden = false; sp.textContent = `${A.kmh} كم/س`; } }
       const k = Math.floor((performance.now() - A.t0) / (1000 / 60)); const fr = A.frames[Math.min(k, A.frames.length - 1)];
       const b = { x: fr.b[0], y: fr.b[1], gutter: !!fr.b[2], on: !!fr.b[3] };
-      const zoom = 1 + 1.25 * Math.min(1, Math.max(0, (b.y - 700) / 1000)) ** 1.4;
-      const pins = fr.p.map(([x, y, st, tilt, dir, z, rot]) => ({ x, y, st, tilt, dir, z, rot }));
       sound(A, fr, k);
-      const cx2 = c.getContext('2d');
-      drawScene(cx2, zoom, pins, b, A.ci);
+      present(c, { pins: toPins3(fr), ball: b, ci: A.ci, follow: true, guide: null });
       if (A.shakeAt) { const e = performance.now() - A.shakeAt; if (e < 450) { const m = 9 * (1 - e / 450); c.style.transform = `translate(${(Math.random() - .5) * m}px,${(Math.random() - .5) * m}px)`; } else c.style.transform = ''; }
       if (k >= A.frames.length - 1) {
         if (!A.endAt) { A.endAt = performance.now(); if (A.mark === 'strike') A.shakeAt = performance.now(); A.banT = A.mark === 'strike' ? 'STRIKE!' : A.mark === 'spare' ? 'SPARE' : A.mark === 'gutter' ? 'مجرى 😬' : `${A.n} ${A.n === 1 ? 'دبوس' : 'دبابيس'}`; showBan(A.banT, A.mark || 'n'); }
         else if (document.querySelector('.bw-ban')?.hidden) showBan(A.banT, A.mark || 'n');
-        if (performance.now() - A.endAt > 1300) { BW.anim = null; stopRoll(); const bn = document.querySelector('.bw-ban'); if (bn) bn.hidden = true; const sp = document.querySelector('.bw-kmh'); if (sp) sp.hidden = true; c.style.transform = ''; const t2 = document.querySelector('.bw-turn'); if (t2) { t2.hidden = false; t2.style.animation = 'none'; void t2.offsetWidth; t2.style.animation = ''; } paintIdle(c, room.game, room); return; }
+        if (performance.now() - A.endAt > 1500) { BW.anim = null; stopRoll(); const bn = document.querySelector('.bw-ban'); if (bn) bn.hidden = true; const sp = document.querySelector('.bw-kmh'); if (sp) sp.hidden = true; c.style.transform = ''; const t2 = document.querySelector('.bw-turn'); if (t2) { t2.hidden = false; t2.style.animation = 'none'; void t2.offsetWidth; t2.style.animation = ''; } if (BW.r3) R3.newThrow(BW.r3); idleFrames = 0; }
       }
       requestAnimationFrame(loop); return;
     }
-    paintIdle(c, g, room);
+    // بدون حركة: الكاميرا ترجع بنعومة، وبعدها نوقف الرسم (توفير بطارية)
+    present(c, idleState(BW.lastRoom?.game || g, BW.lastRoom || room));
+    if (!BW.r3 || c !== BW.r3.canvas || ++idleFrames > 90) { BW.idleStopped = true; return; }
+    requestAnimationFrame(loop);
   };
-  loop();
+  BW.idleStopped = false; loop();
   if (!myTurn) return;
-  // اللمس: سحب يمين/يسار = مكان الكرة، سحب لفوق = رمية
-  const toCanvas = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * CW / r.width, y: (e.clientY - r.top) * CH / r.height, t: performance.now() }; };
-  cv.onpointerdown = (e) => { if (BW.anim || BW.busy) return; cv.setPointerCapture(e.pointerId); const p = toCanvas(e); BW.drag = { pts: [p], x0: BW.x0 }; };
-  cv.onpointermove = (e) => {
-    const D = BW.drag; if (!D) return; const p = toCanvas(e); D.pts.push(p); if (D.pts.length > 80) D.pts.splice(1, 1);
-    const s0 = D.pts[0]; const dy = p.y - s0.y, dx = p.x - s0.x;
-    if (dy > -40) { const sc = P3(0, BALL_Y0, BR).s; BW.x0 = Math.max(-HALF + BR, Math.min(HALF - BR, D.x0 + dx / sc)); paintIdle(cv, g, room); }
-  };
-  cv.onpointerup = (e) => {
-    const D = BW.drag; BW.drag = null; if (!D) return; const p = toCanvas(e); D.pts.push(p);
-    // نحسب من آخر جزء من السحبة (الانطلاقة)
-    let i0 = D.pts.length - 1; while (i0 > 0 && p.t - D.pts[i0 - 1].t < 260) i0--;
-    const s = D.pts[i0]; const dy = p.y - s.y, dx = p.x - s.x, dt = Math.max(16, p.t - s.t);
-    if (dy > -70) return; // مو رمية
-    const speed = -dy / dt; // بكسل كانفس لكل ملي ثانية
-    const power = Math.max(0.35, Math.min(1, 0.25 + speed / 3.2));
+  // اللمس: سحب يمين/يسار = مكان الكرة، سحب لفوق = رمية (ويطلع سهم يوضح المسار)
+  const rect = () => cv.getBoundingClientRect();
+  const toCanvas = (e) => { const r = rect(); return { x: (e.clientX - r.left) * CW / r.width, y: (e.clientY - r.top) * CH / r.height, t: performance.now() }; };
+  const xScale = () => (BW.r3 && cv === BW.r3.canvas ? 1 / R3.laneXPerPx(BW.r3, CW) : P3(0, BALL_Y0, BR).s); // بكسل لكل سم
+  const shotFrom = (pts, final) => {
+    const p = pts[pts.length - 1];
+    let i0 = pts.length - 1; while (i0 > 0 && p.t - pts[i0 - 1].t < 260) i0--;
+    if (!final) i0 = Math.max(0, pts.findIndex((q) => pts[0].y - q.y > 25));
+    const s = pts[i0]; const dy = p.y - s.y, dx = p.x - s.x, dt = Math.max(16, p.t - s.t);
+    if (dy > -40) return null;
+    const speed = -dy / dt;
+    const power = final ? Math.max(0.35, Math.min(1, 0.25 + speed / 3.2)) : 0.75;
     const aim = Math.max(-0.06, Math.min(0.06, (dx / -dy) * 0.045));
-    // الانحناء: الفرق بين اتجاه أول السحبة وآخرها
-    const mid = D.pts[Math.floor((i0 + D.pts.length - 1) / 2)];
+    const mid = pts[Math.floor((i0 + pts.length - 1) / 2)];
     const s1 = (mid.x - s.x) / Math.min(-1, mid.y - s.y), s2 = (p.x - mid.x) / Math.min(-1, p.y - mid.y);
     const spin = Math.max(-1, Math.min(1, (s1 - s2) * 1.6));
-    send?.({ type: 'throw', ...normShot({ x0: BW.x0, aim, spin, power }) });
+    return { dy, aim, spin, power };
+  };
+  cv.onpointerdown = (e) => { if (BW.anim || BW.busy) return; cv.setPointerCapture(e.pointerId); const p = toCanvas(e); BW.drag = { pts: [p], x0: BW.x0, mode: '' }; };
+  cv.onpointermove = (e) => {
+    const D = BW.drag; if (!D) return; const p = toCanvas(e); D.pts.push(p); if (D.pts.length > 90) D.pts.splice(1, 1);
+    const s0 = D.pts[0]; const dy = p.y - s0.y, dx = p.x - s0.x;
+    if (!D.mode && (Math.abs(dx) > 14 || dy < -25)) D.mode = dy < -25 && -dy > Math.abs(dx) ? 'throw' : 'move';
+    if (D.mode === 'move') { BW.x0 = Math.max(-HALF + BR, Math.min(HALF - BR, D.x0 + dx / xScale())); BW.guide = null; }
+    else if (D.mode === 'throw') { const sh = shotFrom(D.pts, false); BW.guide = sh ? ballPath({ x0: BW.x0, aim: sh.aim, spin: sh.spin, power: 0.75 }, 5) : null; }
+    BW.repaint();
+  };
+  cv.onpointerup = cv.onpointercancel = (e) => {
+    const D = BW.drag; BW.drag = null; BW.guide = null; if (!D) return; const p = toCanvas(e); D.pts.push(p);
+    const sh = D.mode === 'throw' ? shotFrom(D.pts, true) : null;
+    if (!sh || sh.dy > -70) { BW.repaint(); return; }
+    send?.({ type: 'throw', ...normShot({ x0: BW.x0, aim: sh.aim, spin: sh.spin, power: sh.power }) });
   };
 }
 
