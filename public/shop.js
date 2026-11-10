@@ -85,7 +85,7 @@ function thumb(i) {
   if (i.slot === 'entrance') return safeArt(i.art) ? `<img class="r23-entrance-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : `<span class="r23-art-missing">${renderProfileIcon('image')}<small>صورة المركبة غير متاحة</small></span>`;
   // R58r: إطار المايك فوق دائرة تمثّل صورة المتحدث
   if (i.slot === 'mic-frame') return /^mf\d\d$/.test(i.css || '') ? `<span class="mf-thumb"><i aria-hidden="true">🎙️</i><img src="/assets/art58/mic/m${esc(i.css.slice(2))}.webp?v=r58r" alt="" loading="lazy" decoding="async"></span>` : renderProfileIcon('star');
-  if (i.slot === 'souvenir') return safeArt(i.art) ? `<img class="r23-souv-art" src="${esc(safeArt(i.art))}?v=${i.id >= 'souv-29' ? 'r68z40c' : 'r58o'}" alt="" loading="lazy" decoding="async">` : renderProfileIcon('star');
+  if (i.slot === 'souvenir') return safeArt(i.art) ? `<img class="r23-souv-art" src="${esc(safeArt(i.art))}?v=${i.id >= 'souv-29' ? 'r68z40d' : 'r58o'}" alt="" loading="lazy" decoding="async">` : renderProfileIcon('star');
   if (i.slot === 'avatar') return avatarArt(i.id, 64, i.css === 'av2' ? undefined : i.css) || renderProfileIcon('person');
   if (i.slot === 'frame') return safeArt(i.art) ? `<img class="r23-frame-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : referenceOf(i.css || i.id)?.slot === 'frame' ? referenceImage(i.css || i.id, 'r23-frame-art') : framed(i.css, FACE, 'sm');
   if (i.slot === 'bg') return `<span class="cx-bgthumb">${bgLayer(i)}</span>`;
