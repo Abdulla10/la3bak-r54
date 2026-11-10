@@ -91,15 +91,23 @@ const PRIV = [
   { key: 'hideVisits', title: 'التخفي في زيارة الملف', desc: 'بعد التشغيل، تطلع «زائر مخفي» لما تزور ملف أحد، حتى لأصحاب VIP 11.' },
   { key: 'showActivity', title: 'إظهار نشاطي', desc: 'السماح بعرض إحصائيات نشاطك العامة.' },
   { key: 'hideChatEffects', title: 'إخفاء مؤثرات الصوت والمحادثة', desc: 'إخفاء مؤثرات الهدايا والمحادثة في الغرف عندك.' },
+  // R68z41
+  { key: 'hideGender', title: 'خصوصية نوع الجنس', desc: 'بعد التشغيل، جنسك ما يطلع للناس بملفك.' },
+  { key: 'hideLists', title: 'إخفاء القوائم المتعلقة بي', desc: 'قائمة متابعينك واللي تتابعهم ما تطلع لأحد غيرك.' },
+  { key: 'hideGiftLog', title: 'إخفاء سجل الهدايا', desc: 'عدد الهدايا اللي وصلتك وأرسلتها ما يطلع للناس.' },
+  { key: 'hideVipId', title: 'إخفاء هوية VIP', desc: 'شارة VIP حقتك ما تطلع للناس بالغرف والملف.' },
+  { key: 'noFollow', title: 'لا يمكن متابعتك', desc: 'ما أحد يقدر يتابعك (اللي يتابعونك من قبل يبقون).' },
+  { key: 'unsearchable', title: 'عدم إمكانية العثور عليك', desc: 'ما تطلع بالبحث، لا بالاسم ولا بالـID.' },
+  { key: 'hideWealth', title: 'إخفاء مستوى الثروة', desc: 'مستواك ما يطلع للناس بالغرف والملف.' },
 ];
-const SOON_PRIV = [['أدخل الغرفة متخفي', 'ما أحد يشوفك وأنت داخل الغرفة.'], ['حظر تعليقات وإعجابات الغرباء', 'ما تستقبل تعليقات وإعجابات من غير الأصدقاء.'], ['غير مسموح بإرسال طلب صداقة', 'ما أحد يقدر يرسلك طلب صداقة.'], ['الإخفاء من التصنيفات', 'تطلع بالقوائم كشخص غامض.'], ['إخفاء أيقونة النبلاء', 'ما تطلع شارة النبلاء حقتك.'], ['إخفاء عدد أيام تسجيل الدخول', 'ما أحد يشوف كم يوم دخلت.'], ['حالتك داخل الغرفة', 'تحدد مين يشوف إنك بغرفة صوت.'], ['حفظ سجل الدردشة', 'تحتفظ بسجل دردشتك مع أصدقائك.']];
-const chip = (g) => g ? `${g.vip ? `<em class="s60-chip is-vip">VIP${g.vip}</em>` : ''}${g.noble ? `<em class="s60-chip is-noble">N${g.noble}</em>` : ''}` : '';
+const SOON_PRIV = [['أدخل الغرفة متخفي', 'ما أحد يشوفك وأنت داخل الغرفة.'], ['حظر تعليقات وإعجابات الغرباء', 'ما تستقبل تعليقات وإعجابات من غير الأصدقاء.'], ['غير مسموح بإرسال طلب صداقة', 'ما أحد يقدر يرسلك طلب صداقة.'], ['إخفاء أيقونة النبلاء', 'ما تطلع شارة النبلاء حقتك.'], ['إخفاء عدد أيام تسجيل الدخول', 'ما أحد يشوف كم يوم دخلت.'], ['حالتك داخل الغرفة', 'تحدد مين يشوف إنك بغرفة صوت.'], ['حفظ سجل الدردشة', 'تحتفظ بسجل دردشتك مع أصدقائك.']];
+const chip = (g) => g ? `${g.vip ? `<em class="s60-chip is-vip">VIP${g.vip}</em>` : ''}${g.noble ? `<em class="s60-chip is-noble">N${g.noble}</em>` : ''}${g.level ? `<em class="s60-chip is-vip">Lv.${g.level}</em>` : ''}` : '';
 /** صفحة «إعدادات الخصوصية» */
 export function privacyHTML(d, m = '', bad = false) {
   if (!d) return `<section class="s60" dir="rtl">${head('إعدادات الخصوصية', '#/settings')}<p class="s60-msg">جاري التحميل…</p></section>`;
   if (d.ok === false) return `<section class="s60" dir="rtl">${head('إعدادات الخصوصية', '#/settings')}${msg(d.error || 'تعذّر التحميل.', true)}</section>`;
   const items = PRIV.map((p) => { const g = d.gates?.[p.key]; const raw = d.settings?.[p.key] === true; const on = p.invert ? !raw : raw; const locked = g && !g.allowed;
-    return `<li class="s60-prow${locked ? ' is-locked' : ''}"><div><b>${esc(p.title)} ${chip(g)}</b><small>${esc(p.desc)}${locked ? ` <span class="s60-need">يحتاج ${g.vip ? 'VIP ' + g.vip : ''}${g.noble ? ' أو نبيل ' + g.noble : ''}</span>` : ''}</small></div>${toggle(p.key, locked ? false : on, locked)}</li>`; }).join('');
+    return `<li class="s60-prow${locked ? ' is-locked' : ''}"><div><b>${esc(p.title)} ${chip(g)}</b><small>${esc(p.desc)}${locked ? ` <span class="s60-need">يحتاج ${g.vip ? 'VIP ' + g.vip : ''}${g.noble ? ' أو نبيل ' + g.noble : ''}${g.level ? 'المستوى ' + g.level : ''}</span>` : ''}</small></div>${toggle(p.key, locked ? false : on, locked)}</li>`; }).join('');
   const visitors = `<li class="s60-prow${d.visitorsOpen ? '' : ' is-locked'}"><div><b>من الذي رآني ${chip({ vip: d.visitorsVip })}</b><small>تشوف أسماء وصور اللي زاروا ملفك، حتى اللي مسكرين نشاطهم.${d.visitorsOpen ? '' : ` <span class="s60-need">يحتاج VIP ${esc(d.visitorsVip)}</span>`}</small></div><a class="s60-mini" href="#/visitors">${d.visitorsOpen ? 'فتح' : 'شوف'}</a></li>`;
   const later = SOON_PRIV.map(([t, x]) => `<li class="s60-prow is-soon"><div><b>${esc(t)}</b><small>${esc(x)}</small></div>${soon}</li>`).join('');
   return `<section class="s60" dir="rtl">${head('إعدادات الخصوصية', '#/settings')}<p class="s60-tier">رتبتك: <b>${d.vip ? 'VIP ' + d.vip : 'بدون VIP'}</b>${d.noble ? ` · <b>نبيل ${d.noble}</b>` : ''}</p>${msg(m, bad)}<ul class="s60-plist">${visitors}${items}${later}</ul></section>`;
@@ -186,7 +194,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r68z40e'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r68z41'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;

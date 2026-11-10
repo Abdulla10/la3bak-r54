@@ -27,7 +27,7 @@ export function wireFunctionalRoutes(http, d) {
     http.add('GET', '/api/social-private/search', ({ user, url }) => {
         const q = (url.searchParams.get('q') ?? '').trim().slice(0, 30);
         need(q.length >= 2 || /^[1-9][0-9]*$/.test(q), 'اكتب حرفين أو ID مميز.');
-        const list = d.accounts.all().filter((p) => p.id !== user.id && !d.platform.isBanned(p.id) && !d.community.pairBlocked(user.id, p.id)
+        const list = d.accounts.all().filter((p) => p.id !== user.id && !d.platform.isBanned(p.id) && !d.community.pairBlocked(user.id, p.id) && !(d.unsearchable?.(p.id))
             && (p.name.toLocaleLowerCase().includes(q.toLocaleLowerCase()) || d.accounts.publicPlayerId(p.id) === q || d.accounts.displayPlayerId(p.id) === q)).slice(0, 20)
             .map((p) => ({ pub: d.community.pub(p.id), name: p.name, playerId: d.accounts.displayPlayerId(p.id), originalPlayerId: d.accounts.publicPlayerId(p.id) }));
         return { list };

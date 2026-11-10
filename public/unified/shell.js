@@ -6,7 +6,7 @@ import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inli
 import {giftArt} from '../giftart.js?v=r68i-r14';
 import * as rooms from './rooms.js?v=r58p';
 import * as wallet from './wallet.js?v=r68i';
-import * as notifications from './notifications.js?v=r68z35';
+import * as notifications from './notifications.js?v=r68z41';
 import * as messages from './messages.js?v=r68h';
 import * as friends from './friends.js?v=r58p';
 import * as drawer from './drawer.js?v=r68z31';

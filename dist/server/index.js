@@ -670,11 +670,18 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             showPresence: { on: false, vip: 4, noble: 3, msg: 'إخفاء حالة الاتصال يحتاج VIP 4 أو نبيل 3.' },
             hideEntrances: { on: true, vip: 6, noble: 8, msg: 'إخفاء الدخولية يحتاج VIP 6 أو نبيل 8.' },
             hideVisits: { on: true, vip: 14, noble: null, msg: 'التخفي في زيارة الملف يحتاج VIP 14.' },
+            // R68z41
+            hideGiftLog: { on: true, vip: 10, noble: 5, msg: 'إخفاء سجل الهدايا يحتاج VIP 10 أو نبيل 5.' },
+            hideVipId: { on: true, vip: 13, noble: null, msg: 'إخفاء هوية VIP يحتاج VIP 13.' },
+            noFollow: { on: true, vip: 14, noble: 7, msg: '«لا يمكن متابعتك» يحتاج VIP 14 أو نبيل 7 (الإمبراطور).' },
+            unsearchable: { on: true, vip: 15, noble: 8, msg: '«عدم إمكانية العثور عليك» يحتاج VIP 15 أو نبيل 8 (الأسطورة).' },
+            hideWealth: { on: true, vip: 99, noble: null, level: 55, msg: 'إخفاء مستوى الثروة يحتاج المستوى 55.' },
         };
         const VISITORS_VIP = 11;
         accountTools.gate = (id, key, value) => { const g = PRIVACY_GATES[key]; return g && value === g.on && !privacyAllowed(id, key) ? g.msg : null; };
         const privacyAllowed = (id, key) => { const g = PRIVACY_GATES[key]; if (!g)
-            return true; const t = tierOf(id); return t.vip >= g.vip || (g.noble !== null && t.noble >= g.noble); };
+            return true; const t = tierOf(id); if (g.level && (progression.view(id).level.value ?? 0) >= g.level)
+            return true; return t.vip >= g.vip || (g.noble !== null && t.noble >= g.noble); };
         /** الخيار مفعّل فعليًا (اختاره اللاعب + رتبته تسمح الحين) */
         const privacyOn = (id, key) => { const g = PRIVACY_GATES[key]; const v = accountTools.explicitSetting(id, key); return v === g.on && privacyAllowed(id, key); };
         const eligibleItem = (id, it) => {
@@ -1352,6 +1359,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
             animTier: (id) => profileAnimTier(id),
             phoneOk: (id) => phoneVerify.verified(id),
+            privacyOf: (id) => { const st = accountTools.settings(id); const pv = progression.view(id); return { gender: st.hideGender === true ? null : accounts.genderOf(id), hideLists: st.hideLists === true, gifts: privacyOn(id, 'hideGiftLog') ? null : wallet.giftCounts(id), noFollow: privacyOn(id, 'noFollow'), hideWealth: privacyOn(id, 'hideWealth'), vip: privacyOn(id, 'hideVipId') || !pv.vip.enabled || !pv.vip.value ? 0 : Number(pv.vip.value.slice(1)) || 0 }; },
             adminIdOf: (id) => { const v = accounts.displayPlayerId(id); return v && /^[1-9]\d{2}$/.test(v) ? v : null; },
             profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg')
                 return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
@@ -1467,7 +1475,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
                 const eq = wallet.equipped(id), cosm = (slot) => { const it = eq[slot] ? shopcat.get(eq[slot]) : undefined; return it && it.slot === slot && typeof it.css === 'string' ? it.css : null; };
                 const bubble = cosm('chat-bubble'), board = cosm('board'), micFrame = cosm('mic-frame'), voiceFx = cosm('voice-fx');
-                return { id, publicId: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ...(micFrame ? { micFrame } : {}), ...(voiceFx ? { voiceFx } : {}), ranks: { ...(accountTools.settings(id).hideNameColor === true ? { nameOff: true } : {}), ...(verificationView(id).verificationKind === 'administration' ? { official: true } : {}), level: p.level.enabled ? p.level.value : null, vip: p.vip.enabled ? vip : null, noble: p.noble.enabled ? noble : null }, ...(entrance && !privacyOn(id, 'hideEntrances') ? { entrance } : {}), ...(privacyOn(id, 'hideEntrances') ? { stealth: true } : {}) };
+                return { id, publicId: community.pub(id), name: accounts.nameOf(id), avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), ...(frame ? { frame } : {}), ...(bubble ? { bubble } : {}), ...(board ? { board } : {}), ...(micFrame ? { micFrame } : {}), ...(voiceFx ? { voiceFx } : {}), ranks: { ...(accountTools.settings(id).hideNameColor === true ? { nameOff: true } : {}), ...(verificationView(id).verificationKind === 'administration' ? { official: true } : {}), level: p.level.enabled && !privacyOn(id, 'hideWealth') ? p.level.value : null, vip: p.vip.enabled && !privacyOn(id, 'hideVipId') ? vip : null, noble: p.noble.enabled ? noble : null }, ...(entrance && !privacyOn(id, 'hideEntrances') ? { entrance } : {}), ...(privacyOn(id, 'hideEntrances') ? { stealth: true } : {}) };
             },
             blocked: (a, b) => community.pairBlocked(a, b), eligible: socialEligible, trustedAdmin: id => id === 'token',
             emit: (ids, event) => { for (const id of ids)
@@ -1620,9 +1628,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         const webhook = paymentWebhookHandler(payments, json);
         let auctionAdminActorR47 = null;
         const auctionR47 = new AuctionR47(wallet, { item: id => shopcat.get(id), isAdmin: id => platform.roleOf(id) === 'owner' || auctionAdminActorR47 === id, canBid: (id, item) => accounts.has(id) && !platform.isBanned(id) && platform.roleOf(id) !== 'owner' && !!shopcat.get(item.id) && eligibleItem(id, shopcat.get(item.id)) });
-        const functionalHttp = wireFunctionalRoutes(new FunctionalHttp({ json, sameOrigin, actorOf: admin.actorOf, isBanned: (id) => platform.isBanned(id), log }), {
-            accounts, platform, community, accountTools, social, missions, rankRewards, support, online: () => [...sockets.keys()],
-        });
+        const functionalHttp = wireFunctionalRoutes(new FunctionalHttp({ json, sameOrigin, actorOf: admin.actorOf, isBanned: (id) => platform.isBanned(id), log }), { unsearchable: (id) => privacyOn(id, 'unsearchable'),
+            accounts, platform, community, accountTools, social, missions, rankRewards, support, online: () => [...sockets.keys()], });
         wireProfileSocialRoutes(functionalHttp, profileSocial, (id) => community.pub(id));
         // R58: أيديات الغرف المميزة اللي يملكها اللاعب (لاختيارها من إعدادات غرفته)
         // R58f: شريط الأصدقاء مثل انستغرام: صورة كل صديق، وإذا هو داخل غرفة ظاهرة تطلع عليه «في غرفة» وتدخل عليها مباشرة
@@ -1768,7 +1775,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         functionalHttp.add('GET', '/api/privacy', ({ user }) => {
             const t = tierOf(user.id), st = accountTools.settings(user.id);
             return { ok: true, vip: t.vip, noble: t.noble, settings: st, visitorsVip: VISITORS_VIP, visitorsOpen: t.vip >= VISITORS_VIP,
-                gates: Object.fromEntries(Object.entries(PRIVACY_GATES).map(([k, g]) => [k, { vip: g.vip, noble: g.noble, allowed: privacyAllowed(user.id, k) }])) };
+                gates: Object.fromEntries(Object.entries(PRIVACY_GATES).map(([k, g]) => [k, { vip: g.vip < 99 ? g.vip : 0, noble: g.noble, level: g.level ?? 0, allowed: privacyAllowed(user.id, k) }])) };
         });
         const tribePush = (ids) => { for (const id of ids)
             sendToUser(id, { t: 'tribe:update' }); };

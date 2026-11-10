@@ -1,6 +1,6 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r68z40e';
+import * as UNIFIED from '../unified/shell.js?v=r68z41';
 import * as REF from '../unified/home.js?v=r68z20';
 import * as SOCIAL from '../unified/social.js?v=r68z40e';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -37,10 +37,10 @@ import * as BWV from '../bowling.js?v=r68z31';
 import * as CRV from '../carrom.js?v=r68z31';
 import * as MNV from '../minaboli-r47.js?v=r57';
 import * as CITY from '../city.js?v=r57';
-import * as COM from '../community.js?v=r68z35';
+import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68z40e';
+import * as PWA from '../pwa.js?v=r68z41';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -395,7 +395,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68z40e');
+  const M = await import('../settings-r60.js?v=r68z41');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

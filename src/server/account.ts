@@ -346,6 +346,8 @@ export class Accounts {
   }
   nameOf(id: string) { const n = this.d.profiles[id]?.name ?? ''; return n === 'لاعب' ? '' : n; }
   /** Read only: legacy records stay unassigned until a separately approved migration. */
+  /** R68z41: الجنس (للعرض العام لو صاحبه ما أخفاه) */
+  genderOf(id: string): string | null { return (this.d.profiles[id] as { gender?: string } | undefined)?.gender ?? null; }
   publicPlayerId(id: string): string | undefined { return this.d.profiles[id]?.playerId; }
   /** Distinguished presentation ID, falling back only to the existing publicPlayerId contract. */
   /** R57: الأيدي المميز الحالي (أو null) — للقراءة فقط */

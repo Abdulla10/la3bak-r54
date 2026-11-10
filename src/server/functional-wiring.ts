@@ -16,6 +16,7 @@ interface FunctionalServices {
   accountTools: AccountTools; social: SocialPrivate; missions: MissionsServer;
   rankRewards: RankRewards; support: SupportNotifications; accounts: Accounts;
   platform: Platform; community: Community; online: () => string[];
+  unsearchable?: (id: string) => boolean;
 }
 function need(condition: unknown, text: string, status = 400): asserts condition { if (!condition) throw new FunctionalHttpError(status, text); }
 const key = (v: unknown): string => { need(typeof v === 'string' && /^[A-Za-z0-9:_-]{8,100}$/.test(v), 'معرّف العملية مطلوب.'); return v as string; };
@@ -42,7 +43,7 @@ export function wireFunctionalRoutes(http: FunctionalHttp, d: FunctionalServices
   http.add('DELETE', '/api/social-private/friends/:id', ({ user, params }) => d.social.remove(user.id, peer(params.id)));
   http.add('GET', '/api/social-private/search', ({ user, url }) => {
     const q = (url.searchParams.get('q') ?? '').trim().slice(0, 30); need(q.length >= 2 || /^[1-9][0-9]*$/.test(q), 'اكتب حرفين أو ID مميز.');
-    const list = d.accounts.all().filter((p) => p.id !== user.id && !d.platform.isBanned(p.id) && !d.community.pairBlocked(user.id, p.id)
+    const list = d.accounts.all().filter((p) => p.id !== user.id && !d.platform.isBanned(p.id) && !d.community.pairBlocked(user.id, p.id) && !(d.unsearchable?.(p.id))
       && (p.name.toLocaleLowerCase().includes(q.toLocaleLowerCase()) || d.accounts.publicPlayerId(p.id) === q || d.accounts.displayPlayerId(p.id) === q)).slice(0, 20)
       .map((p) => ({ pub: d.community.pub(p.id), name: p.name, playerId: d.accounts.displayPlayerId(p.id), originalPlayerId: d.accounts.publicPlayerId(p.id) }));
     return { list };

@@ -5,6 +5,7 @@ export const ACCOUNT_SETTINGS_DEFAULTS = Object.freeze({
     sound: false, notifications: false, showActivity: false, showPresence: false,
     // R55: مؤثرات الهدايا ثلاثية الأبعاد والدخوليات تظهر افتراضيًا (مثل باقي المنصات)، واللاعب يقدر يخفيها من الإعدادات
     hideEntrances: false, hideChatEffects: false, hideVisits: false, hidePosts: false, hideNameColor: false, flatProfileBg: false,
+    hideGender: false, hideLists: false, hideGiftLog: false, hideVipId: false, noFollow: false, unsearchable: false, hideWealth: false,
 });
 export const ACCOUNT_REASON_MAX = 500;
 export const VERIFICATION_GRANT_REASON_MAX = 180;
