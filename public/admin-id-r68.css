@@ -14,3 +14,7 @@ html body .aid68 .aid68-tag{background:#ffd34d!important;color:#5a0a00!important
 html body .aid68 i.aid68-v{background:none!important;width:24px;height:24px;filter:drop-shadow(0 0 4px #1d9bf0aa)}
 html body .aid68.sm i.aid68-v{width:18px;height:18px}
 html body .aid68 i.aid68-v svg{width:100%!important;height:100%!important;max-width:none!important}html body .pf68-id .aid68 i.aid68-v{width:26px!important;height:26px!important}
+/* علامة التوثيق: دائرة سودا بإطار ذهبي، بالنص تمام */
+html body .aid68 i.aid68-v{display:inline-grid!important;place-items:center;flex:none;align-self:center;margin:0!important;padding:0!important;border-radius:50%!important;filter:drop-shadow(0 0 4px #ffd34d88)!important;line-height:0}
+html body .aid68 i.aid68-v svg{display:block}
+html body .aid68{align-items:center!important}
