@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
-import * as PR from './profile.js?v=r68z27';
-import * as UNIFIED from '../unified/shell.js?v=r68z27';
+import * as PR from './profile.js?v=r68z29';
+import * as UNIFIED from '../unified/shell.js?v=r68z29';
 import * as REF from '../unified/home.js?v=r68z20';
-import * as SOCIAL from '../unified/social.js?v=r68z24';
+import * as SOCIAL from '../unified/social.js?v=r68z29';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68i';
@@ -22,8 +22,8 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r68z27';
-import * as SHOP from '../shop.js?v=r68z24';
+import * as PF from '../profile.js?v=r68z29';
+import * as SHOP from '../shop.js?v=r68z29';
 import * as GIFT from '../gifts.js?v=r68i';
 import * as GFX from '../giftfx.js?v=r68i';
 import * as AVR from '../avatars.js?v=r67ac';
@@ -39,10 +39,10 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z15';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68z28';
+import * as PWA from '../pwa.js?v=r68z29';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r68z27';
+import * as MIS from '../missions.js?v=r68z29';
 import * as CHAT from '../chat.js?v=r68i';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -394,7 +394,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68z28');
+  const M = await import('../settings-r60.js?v=r68z29');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -664,7 +664,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r68z24').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r68z29').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -1786,7 +1786,7 @@ const ACTIONS = {
   'shop-reload'() { SHOP.load(req).then(render); render(); },
   async 'shop-preview'(el) {if(!SHOP.openPreview(el.dataset.id))return;storePreviewOrigin=el.dataset.id;await render();document.querySelector('[data-r23-dialog="preview"] button:not([disabled])')?.focus();},
   async 'shop-preview-close'(){await closeStorePreview();},
-  'shop-ask'(el) {if(SHOP.SH.busy)return; if (el.getAttribute('aria-disabled')) return toast('رصيدك ما يكفي لهذا العنصر.', true); SHOP.SH.confirm = el.dataset.id; SHOP.SH.key = SHOP.newKey(); render(); },
+  'shop-ask'(el) {if(SHOP.SH.busy)return; if (el.getAttribute('aria-disabled')) return toast('رصيدك ما يكفي لهذا العنصر.', true); SHOP.SH.confirm = el.dataset.id; SHOP.SH.key = SHOP.newKey(); const it = SHOP.SH.data?.items.find((x) => x.id === el.dataset.id); if (it && SHOP.isTimed(it)) { SHOP.SH.preview = el.dataset.id; return ACTIONS['shop-buy'](); } render(); }, // R68z29: المدة تنختار قبل، والشراء مباشر مثل الفيديو
   'shop-dur'(el) { if (SHOP.SH.busy) return; SHOP.SH.dur = Number(el.dataset.d) || 0; SHOP.SH.key = SHOP.newKey(); render(); },
   'shop-cancel'() { if(SHOP.SH.busy)return;SHOP.SH.confirm = null; SHOP.SH.gemConfirm = null; render(); },
   'shop-gem-ask'() { toast('تحويل العملات إلى جواهر مقفول. باقات الجواهر من صفحة الباقات فقط.',true); },

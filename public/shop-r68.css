@@ -120,3 +120,6 @@ html body .ids-card,html body .ids-card:hover{background:linear-gradient(180deg,
 /* R68z25: الكور والعصي بنص الدائرة */
 .r23-product-art .bb68-thumb,.r23-product-art .cue68-thumb{min-height:0;height:100%;width:100%;border-radius:50%;background:none}
 .r23-product-art .bb68-thumb img{width:84%;height:84%;object-fit:contain;filter:drop-shadow(0 4px 6px #0009)}
+/* R68z29: ملاحظة التأكيد سطر مرتب */
+.r23-confirm-note{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px;text-align:center}
+.r23-confirm-note img,.r23-confirm-note svg,.r23-confirm-note .coin,.r23-confirm-note i{display:inline-block!important;width:18px!important;height:18px!important;vertical-align:middle}
