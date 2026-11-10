@@ -9,9 +9,9 @@ html body nav.nav68 .n68-item::before,html body nav.nav68 .n68-item::after{displ
 html body nav.nav68 .n68-ic{display:grid;place-items:center;width:32px;height:30px}
 html body nav.nav68 .n68-ic svg{width:30px;height:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
 html body nav.nav68 small{display:block!important;font:800 12.5px/1.2 Cairo,Tahoma,sans-serif!important;color:#f3eaff!important;white-space:nowrap!important;opacity:1!important;margin:0!important}
-html body nav.nav68 .n68-item.is-on:not(.is-games){background:linear-gradient(180deg,#9b45f2,#6a1fc9)!important;box-shadow:0 0 16px rgba(160,80,255,.75),inset 0 1px 0 rgba(255,255,255,.35)!important;border:1px solid rgba(225,190,255,.6)!important}
+html body nav.nav68 .n68-item.is-on:not(.is-games){background:none!important;box-shadow:none!important;border:1px solid transparent!important}
 html body nav.nav68 .n68-item.is-on small{color:#fff!important}
-html body nav.nav68 .n68-item.is-on .n68-ic svg{filter:drop-shadow(0 0 6px rgba(255,200,71,.65))}
+html body nav.nav68 .n68-item.is-on .n68-ic svg{filter:none}
 /* زر الألعاب بالنص مرفوع */
 html body nav.nav68 .n68-item.is-games{height:62px!important;overflow:visible!important}
 html body nav.nav68 .n68-dome{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:84px;height:62px;display:grid;place-items:center;border-radius:42px 42px 18px 18px;
@@ -19,7 +19,7 @@ html body nav.nav68 .n68-dome{position:absolute;left:50%;bottom:22px;transform:t
 html body nav.nav68 .n68-dome>svg:not(.n68-crown){width:48px;height:34px;margin-top:8px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
 html body nav.nav68 .n68-crown{position:absolute;top:-17px;left:50%;transform:translateX(-50%);width:34px;height:22px;filter:drop-shadow(0 0 5px rgba(255,200,71,.7))}
 html body nav.nav68 .n68-item.is-games small{font-size:14px!important;font-weight:900!important}
-html body nav.nav68 .n68-item.is-games.is-on .n68-dome{box-shadow:0 0 26px rgba(255,200,71,.55),0 0 18px rgba(160,80,255,.9),inset 0 2px 0 rgba(255,255,255,.35);border-color:#ffd66b}
+html body nav.nav68 .n68-item.is-games.is-on .n68-dome{border-color:#ffd66b}
 html body nav.nav68 [data-lb-locked]{opacity:.5}
 html body nav.nav68 .n68-item:active{transform:scale(.96)}
 html body nav.lb-bottom.nav68{grid-template-columns:1.3fr 1.05fr 1.1fr 1fr 1.05fr!important}
