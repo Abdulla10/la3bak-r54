@@ -97,6 +97,7 @@ import { BulkGrants } from './bulk-grants.js';
 import { OwnerOps, OwnerError, dayKey as gulfDay } from './owner-r69.js';
 import { AiMod } from './ai-mod-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
+import { BombGames, BombError } from './bomb-r69.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
@@ -1652,6 +1653,29 @@ export async function createApp(
       z!.answered.set(user.id, pick);
       if (pick === z!.correct && !z!.winner) { z!.winner = user.id; z!.winnerName = accounts.nameOf(user.id) || 'لاعب'; z!.endsAt = Date.now(); quizSettle(z!); }
       return { ok: true, correct: pick === z!.correct, quiz: quizView(z!, user.id, acc!.mod) };
+    });
+    /* R69s: لعبة القنبلة داخل الغرفة */
+    const bomb = new BombGames({ name: (id) => accounts.nameOf(id) || 'لاعب', avatar: (id) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); }, notify: (ids, room) => { for (const id of new Set(ids)) sendToUser(id, { t: 'bomb', room }); } });
+    { const bt = setInterval(() => { try { bomb.tick(); } catch (e) { log('bomb_tick_failed', { error: String(e).slice(0, 100) }); } }, 300); bt.unref?.(); }
+    const bombRun = <T,>(fn: () => T): T => { try { return fn(); } catch (e) { if (e instanceof BombError) throw new FunctionalHttpError(e.status, e.message); throw e; } };
+    const bombAcc = (uid: string, room: unknown) => { const acc = socialRooms.quizAccess(uid, String(room ?? '')); if (!acc) throw new FunctionalHttpError(403, 'لازم تكون داخل الغرفة.'); return acc; };
+    functionalHttp.add('GET', '/api/room-bomb', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false, game: null, can: {} }; return { ok: true, member: true, now: Date.now(), ...bomb.view(room, user.id, acc.mod) }; });
+    functionalHttp.add('POST', '/api/room-bomb/:act', ({ user, body, params }) => {
+      noGuest(user.id); const room = String(body.room ?? ''); const acc = bombAcc(user.id, room);
+      bombRun(() => {
+        const a = String(params.act);
+        if (a === 'create') bomb.create(room, user.id, acc.members);
+        else if (a === 'join') bomb.join(room, user.id);
+        else if (a === 'leave') bomb.leave(room, user.id);
+        else if (a === 'settings') bomb.settings(room, user.id, body);
+        else if (a === 'start') bomb.start(room, user.id, acc.members);
+        else if (a === 'pass') bomb.pass(room, user.id, acc.members);
+        else if (a === 'cancel') bomb.cancel(room, user.id, acc.mod);
+        else if (a === 'again') bomb.again(room, user.id, acc.mod, acc.members);
+        else throw new BombError('إجراء غير معروف.', 404);
+      });
+      for (const id of acc.members) if (id !== user.id) sendToUser(id, { t: 'bomb', room });
+      return { ok: true, now: Date.now(), ...bomb.view(room, user.id, acc.mod) };
     });
     functionalHttp.add('POST', '/api/room-quiz/cancel', ({ user, body }) => {
       const roomId = String(body.room ?? ''); const acc = socialRooms.quizAccess(user.id, roomId); adminNeed(!!acc && acc.mod, 'للمشرفين بس.');
