@@ -99,6 +99,7 @@ import { AiMod } from './ai-mod-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
 import { BombGames, BombError, BOMB_PRIZE, BOMB_PRIZE_MIN_PLAYERS } from './bomb-r69.js';
 import { SpyGames, SpyError, SPY_PRIZE } from './spy-r69.js';
+import { GoldChests, ChestError } from './gold-chest-r69.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
@@ -1716,6 +1717,22 @@ export async function createApp(
       for (const id of acc.members) if (id !== user.id) sendToUser(id, { t: 'spy', room });
       return { ok: true, ...spy.view(room, user.id, acc.mod) };
     });
+    /* R69z: الصناديق الذهبية — تطيح لكل المتصلين بأوقات عشوائية، وأسرع 5 ياخذون عملات أو إطار */
+    const chests = new GoldChests(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'gold-chest.json') : '', {
+      coins: (id, amount, key) => { try { const ok = wallet.grant(id, 'coins', amount, 'صندوق ذهبي 🎁', key); if (ok) sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }); return ok; } catch { return false; } },
+      item: (id, itemId, cid, fp) => { if (!shopcat.get(itemId)) return 'failed'; try { const r = wallet.grantCampaignBatch(cid, fp, [id], { coins: 0, gems: 0, itemIds: [itemId] }, 'صندوق ذهبي 🎁')[0] as { addedItems?: string[] } | undefined; return r?.addedItems?.includes(itemId) ? 'added' : 'owned'; } catch { return 'failed'; } },
+      itemName: (itemId) => shopcat.get(itemId)?.name ?? null, name: (id) => accounts.nameOf(id) || 'لاعب',
+      broadcast: (msg) => { for (const id of sockets.keys()) if (!isGuest(id)) sendToUser(id, msg); }, log,
+    }, storage);
+    { const ct = setInterval(() => { try { chests.tick(); } catch (e) { log('chest_tick_failed', { error: String(e).slice(0, 100) }); } }, 2000); ct.unref?.(); }
+    functionalHttp.add('GET', '/api/chest', ({ user }) => ({ ok: true, ...chests.view(user.id) }));
+    functionalHttp.add('POST', '/api/chest/claim', ({ user, body }) => {
+      noGuest(user.id);
+      try { const w = chests.claim(user.id, String(body.id ?? '')); return { ok: true, coins: w.coins, itemName: w.itemName, balance: wallet.balance(user.id) }; }
+      catch (e) { if (e instanceof ChestError) throw new FunctionalHttpError(e.status, e.message); throw e; }
+    });
+    functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');
+    functionalHttp.add('POST', '/api/admin/chest/drop', ({ actor }) => { try { chests.dropNow(); } catch (e) { if (e instanceof ChestError) throw new FunctionalHttpError(409, e.message); throw e; } admin.audit(actor!, 'chest.drop', 'gold-chest', 'إطلاق صندوق ذهبي يدوي'); return { ok: true, ...chests.adminView() }; }, 'owner');
     functionalHttp.add('POST', '/api/room-quiz/cancel', ({ user, body }) => {
       const roomId = String(body.room ?? ''); const acc = socialRooms.quizAccess(user.id, roomId); adminNeed(!!acc && acc.mod, 'للمشرفين بس.');
       const z = quizzes.get(roomId); adminNeed(!!z && !z.closed, 'ما فيه مسابقة شغالة.'); z!.endsAt = Date.now(); quizSettle(z!); return { ok: true };
