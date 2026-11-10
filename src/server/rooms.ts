@@ -565,7 +565,7 @@ export class RoomService {
         if (result.kind==='bot_limit') {
           /* R69j: غرفة التدريب القديمة تنقفل بروحها ونبدأ الجديدة على طول */
           if (attempt < 2) { for (const old of await this.store.listByUser(user.id)) if (old.mode === 'bots' && old.hostId === user.id && !this.unresolvedPaid(old)) await this.leave(user, old.code).catch(() => null); continue; }
-          return fail('عندك غرفة تدريب مع الكمبيوتر مفتوحة، احذفها أو كمّل فيها.');
+          return fail('عندك لعبة مع الكمبيوتر مفتوحة، كمّل فيها أو احذفها.');
         }
         if (!('room' in result) || !this.member(result.room,user.id)) return fail('ما عادت لك عضوية في هالغرفة.');
         await this.emit(result.room);
@@ -620,7 +620,7 @@ export class RoomService {
         if (!room) return fail('ما لقينا غرفة بهذا الرمز. تأكد منه مع صاحبك.');
         if (this.member(room, user.id)) return { ok: true as const, room: this.snapshot(room, user.id) };
         if (isRetiredGame(room.gameId)) return fail(RETIRED_GAME_MESSAGE);
-        if (room.mode === 'bots') return fail('هذي غرفة تدريب مع الكمبيوتر، ما تقبل لاعبين.');
+        if (room.mode === 'bots') return fail('هذي لعبة مع الكمبيوتر، ما تقبل لاعبين.');
         if (room.status !== 'lobby') return fail('اللعبة بدأت، ما تقدر تنضم الحين.');
         if (room.access) {
           if (typeof password !== 'string' || password.length > 128 || Buffer.byteLength(password) > 512) return fail('الغرفة محمية. اكتب كلمة المرور.');

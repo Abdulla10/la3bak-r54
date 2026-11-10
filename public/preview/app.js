@@ -1,6 +1,6 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69z5';
+import * as UNIFIED from '../unified/shell.js?v=r69z7';
 import * as REF from '../unified/home.js?v=r69z1';
 import * as SOCIAL from '../unified/social.js?v=r69z5';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -42,7 +42,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69z6';
+import * as PWA from '../pwa.js?v=r69z7';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -401,7 +401,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69z6');
+  const M = await import('../settings-r60.js?v=r69z7');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -620,6 +620,8 @@ async function render() {
       unifiedPage(view,'game',gameInfoView(r.a));
       break;
     case 'daily':
+      (globalThis.__LA3BAK_NAV__ || location).replace('#/missions');
+      return;
     case 'play':
     case 'challenge':
     case 'offline':
@@ -1123,7 +1125,7 @@ function applyGameFilter() {
 
 function createFormHTML(g) {
   const seats = Array.from({ length: g.maxPlayers - g.minPlayers + 1 }, (_, i) => g.minPlayers + i)
-    .map((n) => `<option value="${n}" ${n === g.defaultSeats ? 'selected' : ''}>${n === 1 ? 'لاعب واحد (تدريب)' : n + ' مقاعد'}</option>`)
+    .map((n) => `<option value="${n}" ${n === g.defaultSeats ? 'selected' : ''}>${n === 1 ? 'لاعب واحد' : n + ' مقاعد'}</option>`)
     .join('');
   return `<form class="form" data-form="create" data-game="${esc(g.id)}">
     <div class="field">
@@ -1507,7 +1509,7 @@ function lobbyHTML(room) {
     .join('');
   return `<div class="stack">
     <section class="card code-box glow">
-      <span class="muted">${room.mode === 'bots' ? 'غرفة تدريب مع الكمبيوتر' : 'رمز الغرفة، أرسله لأصحابك'}</span>
+      <span class="muted">${room.mode === 'bots' ? 'اللعب مع الكمبيوتر' : 'رمز الغرفة، أرسله لأصحابك'}</span>
       <div class="code-big" id="roomCode">${esc(room.code)}</div>
       ${
         room.mode === 'bots'
@@ -2752,7 +2754,7 @@ document.addEventListener('click',(event)=>{
 function referenceInfoPage(name) {
  const content={
 tournaments:['البطولات','نظام إدارة البطولات والتسجيل فيها مب موجود في هالنسخة. ما بنعرض بطولات أو جوائز غير حقيقية. تقدر تلعب في الغرف الحالية وتتابع ترتيب نتائجك.','العب مع الأصدقاء','#/rooms'],
- events:['الأخبار والفعاليات',SEASON.season()?.text || 'ما فيه فعالية موسمية حالية معلنة في هالنسخة. منشورات المجتمع والتحدي اليومي متوفرة فعلًا.','تحدي اليوم','#/daily'],
+ events:['الأخبار والفعاليات',SEASON.season()?.text || 'ما فيه فعالية موسمية حالية الحين. تقدر تشارك بالبطولات أو تكمّل مهامك اليومية.','البطولات','#/tournaments'],
  support:['المساعدة والدعم','لإنشاء غرفة: افتح الألعاب، اختر لعبتك ثم أنشئ غرفة وشارك رمزها. لتغيير مظهرك: افتح المتجر ثم مقتنياتي وجهّز العنصر المملوك. تفاصيل سياسة الحساب والتواصل المعلنة موجودة في صفحة من نحن.','من نحن','#/about'],
  contact:['اتصل بنا','ما تمت تهيئة قناة دعم خارجية موثقة في إعدادات هالنسخة. ما بنحط بريد أو رابط تواصل من عندنا. تقدر تراجع معلومات المشروع وقنواته المعلنة من صفحة من نحن.','من نحن','#/about']
  }[name];

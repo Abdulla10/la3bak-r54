@@ -116,3 +116,5 @@ html body .h68 .h68-pinfo small{color:#c9b4ec!important}
 .g69x a{position:relative;aspect-ratio:1.07;display:flex;align-items:flex-end;justify-content:center;border-radius:16px;overflow:hidden;text-decoration:none}
 .g69x a img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
 .g69x a b{position:relative;margin-bottom:6px;font-size:13.5px;font-weight:900;color:#fff;text-shadow:0 2px 4px #000c,0 0 10px #000a}
+/* R69x: آيفون يكبّر الشاشة لما تكتب بخانة خطها أصغر من 16 — نخلي كل الخانات 16 على الجوال */
+@media (pointer:coarse){html body input:not([type=checkbox]):not([type=radio]):not([type=range]),html body textarea,html body select{font-size:16px!important}}
