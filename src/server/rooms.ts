@@ -557,8 +557,16 @@ export class RoomService {
         if (result.kind==='collision') { room.code=await this.newCode(); continue; }
         if (result.kind==='mismatch') return fail('هذا المفتاح مستخدم لاختيارات غرفة مختلفة. ابدأ طلب إنشاء يديد.');
         if (result.kind==='gone') return fail('الغرفة المنشأة بهالطلب انحذفت. ابدأ طلب إنشاء يديد.');
-        if (result.kind==='room_limit') return fail(`عندك ${this.cfg.maxRoomsPerUser} غرف مفتوحة، احذف وحدة منها أول.`);
-        if (result.kind==='bot_limit') return fail('عندك غرفة تدريب مع الكمبيوتر مفتوحة، احذفها أو كمّل فيها.');
+        if (result.kind==='room_limit') {
+          /* R69j: نقفل الغرف القديمة اللي ما بدت (انتظار) بدال ما نطلب من اللاعب يحذفها */
+          if (attempt < 2) { const olds = (await this.store.listByUser(user.id)).filter((r) => r.hostId === user.id && r.status === 'lobby' && !this.unresolvedPaid(r)).sort((a, b) => a.updatedAt - b.updatedAt); for (const old of olds) await this.leave(user, old.code).catch(() => null); if (olds.length) continue; }
+          return fail(`عندك ${this.cfg.maxRoomsPerUser} غرف مفتوحة، احذف وحدة منها أول.`);
+        }
+        if (result.kind==='bot_limit') {
+          /* R69j: غرفة التدريب القديمة تنقفل بروحها ونبدأ الجديدة على طول */
+          if (attempt < 2) { for (const old of await this.store.listByUser(user.id)) if (old.mode === 'bots' && old.hostId === user.id && !this.unresolvedPaid(old)) await this.leave(user, old.code).catch(() => null); continue; }
+          return fail('عندك غرفة تدريب مع الكمبيوتر مفتوحة، احذفها أو كمّل فيها.');
+        }
         if (!('room' in result) || !this.member(result.room,user.id)) return fail('ما عادت لك عضوية في هالغرفة.');
         await this.emit(result.room);
         if (result.kind==='created') this.hooks.log?.('room_created',{mode,game:room.gameId});

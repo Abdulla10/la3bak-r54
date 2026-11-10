@@ -317,7 +317,10 @@ export class SocialRooms {
         if(old&&old.member.deadline!==null&&old.member.deadline<=now)this.remove(d,actingId,media);
         let r=d.rooms.find(r=>r.id===roomId),c=r?.councils.find(c=>c.id===councilId);
         if (!r) {
-          if(d.rooms.length>=1000||d.rooms.filter(r=>r.ownerId===ctx.hostId).length>=10)fail('room_capacity',409);
+          // R69j: غرف صوت الألعاب الفاضية القديمة تنشال، عشان ما يوقف الصوت بعد 10 ألعاب
+          {const gone=new Set(d.rooms.filter(x=>x.ownerId===ctx.hostId&&x.members.length===0&&now-x.updatedAt>120000&&!x.cannon&&this.gameBound(d,x)).map(x=>x.id));
+          if(gone.size){d.rooms=d.rooms.filter(x=>!gone.has(x.id));for(const p of d.preferences){if(p.followedRoomIds)p.followedRoomIds=p.followedRoomIds.filter(x=>!gone.has(x));if(p.recentRoomIds)p.recentRoomIds=p.recentRoomIds.filter(x=>!gone.has(x));if(p.previous&&gone.has(p.previous.roomId))p.previous=null;p.favorites=p.favorites.filter(f=>!gone.has(f.roomId));}}}
+          if(d.rooms.length>=1000||d.rooms.filter(r=>r.ownerId===ctx.hostId&&this.gameBound(d,r)).length>=10)fail('room_capacity',409);
           if(d.receipts.length>=this.maxReceipts)fail('idempotency_capacity',409);
           const councilSeats=Math.max(d.config.defaultCouncilSeats,ctx.seats);
           if(councilSeats>d.config.maxCouncilSeats)fail('invalid_seats');
@@ -865,6 +868,9 @@ export class SocialRooms {
   }
   private settings(r: Room): RoomSettings { const defaults = defaultRoomSettings(); return { ...defaults, ...r.settings, moderatorPermissions: { ...defaults.moderatorPermissions, ...r.settings?.moderatorPermissions } }; }
   private permissions(r: Room, id: string): Record<RoomPermission | 'owner' | 'audit' | 'createBag', boolean> { const owner = r.ownerId === id, mod = this.moderator(r,id), s = this.settings(r), p = s.moderatorPermissions; const member=r.members.some(m=>m.id===id&&(m.deadline===null||m.deadline>this.clock()));const createBag=member&&this.opts.eligible(id)===true&&this.state.config.enabled&&(this.opts.requireAdultAck===false||this.pref(this.state,id,false)?.adultConsent===true)&&!this.transitioning.has(id)&&!this.failedDisconnects.has(id)&&this.visibleRoom(r,id)&&(owner||s.luckyBag==='everyone'||s.luckyBag==='moderators'&&mod);return { ...(Object.fromEntries(roomPermissionKeys.map(k => [k, owner || mod && p[k]])) as Record<RoomPermission,boolean>), owner, audit: owner || mod && p.moderation, createBag }; }
+  private pushChat(r: Room, c: Council, id: string, b: Record<string, unknown>, command: string, now: number) {
+    const raw0=text(b.text,1000),masked=this.opts.maskChat?this.opts.maskChat(raw0):raw0;const message:Chat={id:randomUUID(),actor:id,text:masked.slice(0,1000)||raw0,at:now};c.chat.push(message);c.chat=c.chat.slice(-100);this.activity(r,command,now);const hk=this.opts.onChat;if(hk)queueMicrotask(()=>{try{hk(r.id,c.id,message.id,id,raw0);}catch{/* */}});return ({ok:true as const,messageId:message.id,roomId:r.id,councilId:c.id}) as SocialResult;
+  }
   private canChat(r: Room, id: string) { return this.settings(r).chat === 'everyone' || this.moderator(r,id); }
   private audioMuted(r: Room, m: Member) { const s = this.settings(r); return m.muted || s.speak === 'moderators' && !this.moderator(r,m.id) || s.micRequests && !(r.micApprovals ?? []).includes(m.id); }
   private revokeAudio(r: Room, media: Set<string>, id?: string) { for (const m of r.members) if (!id || m.id === id) { m.epoch = randomUUID(); media.add(m.id); } }
@@ -1136,7 +1142,7 @@ export class SocialRooms {
     }
     if(command==='room:create') {
       if(!keys(b,['name','description','privacy','memory','maxMembers','roomMode','roomTag','country','password']))fail('invalid_room_create');
-      if(d.rooms.length>=1000||d.rooms.filter(r=>r.ownerId===id).length>=10)fail('room_capacity',409);
+      if(d.rooms.length>=1000||d.rooms.filter(r=>r.ownerId===id&&!this.gameBound(d,r)).length>=10)fail('room_capacity',409);
       const room:Room={id:randomUUID(),name:text(b.name,80),description:text(b.description,400,true),privacy:b.privacy===undefined?'public':privacy(b.privacy)?b.privacy:fail('invalid_privacy'),memory:b.memory===undefined?false:boolean(b.memory),maxMembers:b.maxMembers===undefined?24:num(b.maxMembers,2,50)?b.maxMembers:fail('invalid_members_limit'),ownerId:id,hostId:null,moderators:[],invites:[],bans:[],members:[],councils:[],memories:[],activity:[],createdAt:now,updatedAt:now};
       for(const k of ['roomMode','roomTag','country'] as const)if(Object.hasOwn(b,k))(room as any)[k]=b[k];
       if(admission.protection)room.password=admission.protection;
@@ -1155,6 +1161,16 @@ export class SocialRooms {
     if(command==='council:leave') {
       const x=this.currentCouncil(d,id,b);this.previous(d,id,x.room,x.member.councilId);x.member.councilId=null;delete x.member.seatIndex;x.member.epoch=randomUUID();this.clearMic(x.room,id);media.add(id);this.activity(x.room,command,now);return success({left:true,roomId:x.room.id});
     }
+    // R69j: الحضور يكتبون بالدردشة بدون ما ياخذون مقعد (المجلس العام للغرفة بس)
+    if(command==='chat:send'&&!this.member(d,id)?.member.councilId) {
+      const x=this.member(d,id);if(!x)fail('room_membership_required',403);
+      const {room:r,member:m}=x;if(b.roomId!==undefined&&b.roomId!==r.id)fail('wrong_room',403);
+      if(this.gameBound(d,r))fail('council_membership_required',403);
+      const c=this.council(r,b.councilId);if(c.privacy!=='public'||c.locked||this.blocked(id,c.ownerId))fail('council_private',403);
+      if(m.deadline!==null&&m.deadline<=now)fail('membership_expired',403);
+      if(m.muted)fail('member_muted',403);if(!this.canChat(r,id))fail('chat_policy_denied',403);
+      this.rate(d,id,now);return this.pushChat(r,c,id,b,command,now);
+    }
     if(command==='chat:send'||command==='mode:action'||command==='report:send'||command==='memory:propose') {
       const x=this.currentCouncil(d,id,b),{room:r,council:c,member:m}=x;
       const withdrawingR47=command==='mode:action'&&SOCIAL_GAME_IDS.includes(b.mode as any)&&isObj(b.action)&&b.action.type==='participate'&&b.action.enabled===false;
@@ -1165,7 +1181,7 @@ export class SocialRooms {
         if(b.action.type==='moderate')this.requireMod(r,id,c,'chat');
       }
       this.rate(d,id,now);
-      if(command==='chat:send') {const raw0=text(b.text,1000),masked=this.opts.maskChat?this.opts.maskChat(raw0):raw0;const message:Chat={id:randomUUID(),actor:id,text:masked.slice(0,1000)||raw0,at:now};c.chat.push(message);c.chat=c.chat.slice(-100);this.activity(r,command,now);const hk=this.opts.onChat;if(hk)queueMicrotask(()=>{try{hk(r.id,c.id,message.id,id,raw0);}catch{/* */}});return success({messageId:message.id,roomId:r.id,councilId:c.id});}
+      if(command==='chat:send') return this.pushChat(r,c,id,b,command,now);
       if(command==='mode:action') {
         if(!SOCIAL_MODE_IDS.includes(b.mode as SocialModeId)||!isObj(b.action)||typeof b.action.type!=='string')fail('invalid_mode_action');
         const mode=b.mode as SocialModeId;if(!c.modeEnabled[mode]&&!withdrawingR47)fail('council_mode_disabled',403);
@@ -1500,7 +1516,8 @@ export class SocialRooms {
     const layout=councilSeatLayout(c,members),occupied=new Set(layout?.values()),lockedSeats=c.lockedSeats??[];
     const available=Array.from({length:c.seats},(_,i)=>i).some(i=>!occupied.has(i)&&!lockedSeats.includes(i));
     const canJoin=accessible&&available&&(!(c.locked||c.privacy==='private')||c.invites.includes(id)||mod)||joined;
-    const content=joined?{chat:c.chat.filter(m=>!this.blocked(id,m.actor)).map(m=>({id:m.id,author:this.who(m.actor),text:m.text,at:m.at})),modes:Object.fromEntries(SOCIAL_MODE_IDS.map(mode=>[mode,c.modeEnabled[mode]&&this.state.config.content.settings[mode].enabled?this.modeProjection(SOCIAL_MODES[mode].view(c.modes[mode],this.context(this.state,r,c,id,this.clock()))):null]))}:{};
+    const listen=!joined&&accessible&&c.privacy==='public'&&!c.locked&&!this.gameBound(this.state,r)&&r.members.some(m=>m.id===id);
+    const content=listen?{chat:c.chat.filter(m=>!this.blocked(id,m.actor)).map(m=>({id:m.id,author:this.who(m.actor),text:m.text,at:m.at}))}:joined?{chat:c.chat.filter(m=>!this.blocked(id,m.actor)).map(m=>({id:m.id,author:this.who(m.actor),text:m.text,at:m.at})),modes:Object.fromEntries(SOCIAL_MODE_IDS.map(mode=>[mode,c.modeEnabled[mode]&&this.state.config.content.settings[mode].enabled?this.modeProjection(SOCIAL_MODES[mode].view(c.modes[mode],this.context(this.state,r,c,id,this.clock()))):null]))}:{};
     // room-tools-r33: public projection
     const tools = joined && accessible && !this.gameBound(this.state, r) ? projectRoomToolsR33(c.tools, this.toolContextR33(this.state, r, c, id, this.clock())) : null;
     // Aggregate occupancy has no identity fields. Never add positions to a private outsider's view.

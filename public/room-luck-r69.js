@@ -74,7 +74,8 @@ export function startRoomLuck() {
   }
   function paint() {
     const inRoom = !!S.room && !!S.env?.member;
-    fabE.hidden = !inRoom; fabM.hidden = true;
+    /* R69j: الظرف يطلع عايم بس لما فيه ظرف شغال، والرمي من قائمة الغرفة */
+    fabE.hidden = !inRoom || !active().length; fabM.hidden = true;
     fabE.classList.toggle('has', active().some((e) => !e.mine && e.got === null && e.left > 0));
     fabM.classList.toggle('has', !!S.mus?.cur);
     if (!inRoom) { ov.hidden = true; S.open = ''; }
@@ -114,6 +115,7 @@ export function startRoomLuck() {
   fabE.addEventListener('click', () => { S.open = 'env'; S.err = ''; S.ok = ''; paint(); });
   fabM.addEventListener('click', () => { S.open = 'mus'; S.err = ''; S.ok = ''; paint(); });
   // R69b: زر الأغاني صار داخل قائمة الغرفة (☰)
+  document.addEventListener('click', (e) => { if (e.target.closest?.('[data-rl69-env]')) { e.preventDefault(); e.stopPropagation(); document.querySelector('[data-so-action="panel-close"]')?.click(); S.open = 'env'; S.err = ''; S.ok = ''; paint(); poll(); } }, true);
   document.addEventListener('click', (e) => { if (e.target.closest?.('[data-rl69-music]')) { e.preventDefault(); S.open = 'mus'; S.err = ''; S.ok = ''; paint(); poll(); } }, true);
   bar.addEventListener('click', (e) => { if (e.target.closest('[data-rl="mute"]')) { S.listen = false; paint(); } });
   ov.addEventListener('click', (e) => {

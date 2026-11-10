@@ -25,7 +25,7 @@ export function startRoomQuiz({ api }) {
   const left = () => S.d?.quiz && !S.d.quiz.closed ? Math.max(0, Math.ceil((S.d.quiz.endsAt - Date.now()) / 1000)) : 0;
   function paint() {
     const z = S.d?.quiz;
-    fab.hidden = !(S.room && S.d?.mod && (!z || z.closed) && !S.form);
+    fab.hidden = true; /* R69j: المسابقة صارت من قائمة الغرفة بدال الدائرة العايمة */
     if (S.form) {
       const f = S.form;
       host.hidden = false; host.innerHTML = `<div class="rq68-card rq68-form"><div class="rq68-h"><b>🧠 مسابقة جديدة</b><button class="rq68-x" type="button" data-rq="close" aria-label="إغلاق">✕</button></div>
@@ -52,6 +52,7 @@ export function startRoomQuiz({ api }) {
     paint();
   }
   const run = async (fn) => { if (S.busy) return; S.busy = true; S.err = ''; try { await fn(); } catch (e) { S.err = e.message || 'تعذّر الطلب.'; } S.busy = false; await poll(); };
+  document.addEventListener('click', (e) => { if (!e.target.closest?.('[data-rq68-open]')) return; e.preventDefault(); e.stopPropagation(); if (!S.d?.mod) { S.err = ''; return; } if (S.d?.quiz && !S.d.quiz.closed) return; document.querySelector('[data-so-action="panel-close"]')?.click(); S.form = { q: '', options: ['', '', '', ''], correct: 0, prize: 0 }; S.err = ''; paint(); }, true);
   fab.addEventListener('click', () => { S.form = { q: '', options: ['', '', '', ''], correct: 0, prize: 0 }; S.err = ''; paint(); });
   host.addEventListener('input', (e) => { const f = S.form; if (!f) return; const t = e.target; if (t.dataset.rqIn === 'q') f.q = t.value; if (t.dataset.rqO) f.options[Number(t.dataset.rqO)] = t.value; });
   host.addEventListener('click', (e) => {
