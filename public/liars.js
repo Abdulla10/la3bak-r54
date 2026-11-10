@@ -28,7 +28,7 @@ const PLIERS = '<img class="lr-pliers" src="/assets/games68/liars-pliers.webp" a
 const clock = (g, cls = '') => { const left = Math.max(0, g.endsAt - g.serverNow); return `<span class="lr-clock ${cls}" data-lr-left="${left}" data-lr-at="${Date.now()}" role="timer">${Math.ceil(left / 1000)}</span>`; };
 const BAR = '<img class="lr-bar" src="/assets/games68/liars-bg.webp" alt="" aria-hidden="true">';
 /* أماكن الخصوم حسب عددهم (نسب من عرض/ارتفاع الطاولة) */
-const SEATS = { 1: [[50, 1]], 2: [[24, 4], [76, 4]], 3: [[17, 6], [50, 0], [83, 6]] };
+const SEATS = { 1: [[50, 0]], 2: [[15, 30], [85, 30]], 3: [[15, 34], [50, 0], [85, 34]] };
 
 export function liars(room) {
   const g = room.game;
