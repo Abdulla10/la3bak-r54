@@ -6,9 +6,9 @@
  *  - AI_MOD_MOCK=1 للتجربة المحلية بدون مفتاح (حكم تقريبي بقواعد بسيطة). */
 import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 
-export type ModKind = 'post' | 'comment' | 'room-name';
+export type ModKind = 'post' | 'comment' | 'room-name' | 'chat' | 'dm';
 export type Verdict = 'ok' | 'review' | 'block';
-export type ModItem = { kind: ModKind; id: string; by: string; text: string };
+export type ModItem = { kind: ModKind; id: string; by: string; text: string; ref?: string };
 export type ModResult = { verdict: Verdict; category: string; reason: string };
 type Decision = ModItem & ModResult & { at: number; action: string };
 type Data = { v: 1; on: boolean; day: string; used: number; stats: Record<Verdict, number>; log: Decision[]; seenRooms: Record<string, string> };
@@ -16,7 +16,7 @@ const valid = (x: Record<string, unknown>) => x.v === 1 && typeof x.on === 'bool
 const dayKey = (t: number) => new Date(t + 4 * 3_600_000).toISOString().slice(0, 10);
 export const CATEGORIES: Record<string, string> = { none: 'سليم', profanity: 'شتم وسب', sexual: 'محتوى جنسي', harassment: 'تحرش أو تهديد', hate: 'كراهية أو عنصرية', scam: 'احتيال أو بيع عملات', contact: 'طلب تواصل خارج الموقع', self_harm: 'إيذاء النفس', spam: 'إزعاج وتكرار', other: 'أخرى' };
 
-const SYSTEM = `أنت مشرف محتوى لمجتمع ألعاب عربي (أغلبه خليجي) مناسب للعائلات. يجيك نص كتبه لاعب (منشور أو تعليق أو اسم غرفة).
+const SYSTEM = `أنت مشرف محتوى لمجتمع ألعاب عربي (أغلبه خليجي) مناسب للعائلات. يجيك نص كتبه لاعب (منشور أو تعليق أو اسم غرفة أو رسالة دردشة في غرفة أو رسالة خاصة بين أصدقاء). رسائل الدردشة قصيرة وعفوية؛ لا تحكم على الكلام العادي أو العامية أو الضحك.
 احكم عليه وارجع JSON بس بهالشكل: {"verdict":"ok|review|block","category":"none|profanity|sexual|harassment|hate|scam|contact|self_harm|spam|other","reason":"سبب قصير بالعربي"}
 القواعد:
 - block: شتم أو سب واضح (حتى لو مكتوب بحيلة مثل نقاط بين الحروف أو حروف مكررة أو مقلوبة أو أرقام بدل الحروف)، محتوى جنسي، تهديد أو تحرش، عنصرية أو كراهية ضد فئة، احتيال (بيع عملات أو حسابات برا الموقع، روابط تصيد).

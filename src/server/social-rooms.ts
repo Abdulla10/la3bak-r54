@@ -63,6 +63,7 @@ export interface SocialRoomsOptions {
   roomLevelUp?: (roomId: string, ownerId: string, name: string, from: number, to: number, members: string[]) => void;
   /** R67ae: إخفاء الكلمات الممنوعة بالدردشة */
   maskChat?: (text: string) => string;
+  onChat?: (roomId: string, councilId: string, msgId: string, actor: string, text: string) => void;
   /** R58: مراجعة تلقائية للنصوص */
   moderate?: (text: string, kind: 'room-name' | 'room-ad') => { ok: true } | { ok: false; code: string };
   /** Trusted existing outbox + canonical Wallet check; synchronous, never another queue. */
@@ -287,6 +288,11 @@ export class SocialRooms {
   }
   unsaved(): boolean { return this.failedDisconnects.size > 0; } // Mutations never publish dirty drafts; a physical socket-close lease may need retry.
   waitForIdle(): Promise<void> { return this.queue.then(() => undefined); }
+  /** R69i: المشرف الذكي يخفي رسالة دردشة مخالفة. يرجع صاحب الرسالة أو null. */
+  systemHideChat(roomId: string, councilId: string, msgId: string): Promise<string | null> {
+    let who: string | null = null;
+    return this.serial(() => this.guard(async () => { this.ready(); return this.tx((d) => { const r = d.rooms.find(x => x.id === roomId), c = r?.councils.find(x => x.id === councilId); const i = c ? c.chat.findIndex(m => m.id === msgId) : -1; if (!c || i < 0) return { ok: true }; who = c.chat[i].actor; c.chat.splice(i, 1); return { ok: true }; }); })).then(() => who, () => null);
+  }
   retry(): Promise<SocialResult> { return this.serial(() => this.guard(async () => { this.ready(); await this.repairDisconnects(); this.save(this.state, this.clock()); await this.deliverAudit(); return { ok: true }; })); }
   /** Server-only bridge: caller holds RoomService's current active-membership lock.
    * Uses existing room/council/receipt shapes, never a client-supplied binding ID. */
@@ -1159,7 +1165,7 @@ export class SocialRooms {
         if(b.action.type==='moderate')this.requireMod(r,id,c,'chat');
       }
       this.rate(d,id,now);
-      if(command==='chat:send') {const raw0=text(b.text,1000),masked=this.opts.maskChat?this.opts.maskChat(raw0):raw0;const message:Chat={id:randomUUID(),actor:id,text:masked.slice(0,1000)||raw0,at:now};c.chat.push(message);c.chat=c.chat.slice(-100);this.activity(r,command,now);return success({messageId:message.id,roomId:r.id,councilId:c.id});}
+      if(command==='chat:send') {const raw0=text(b.text,1000),masked=this.opts.maskChat?this.opts.maskChat(raw0):raw0;const message:Chat={id:randomUUID(),actor:id,text:masked.slice(0,1000)||raw0,at:now};c.chat.push(message);c.chat=c.chat.slice(-100);this.activity(r,command,now);const hk=this.opts.onChat;if(hk)queueMicrotask(()=>{try{hk(r.id,c.id,message.id,id,raw0);}catch{/* */}});return success({messageId:message.id,roomId:r.id,councilId:c.id});}
       if(command==='mode:action') {
         if(!SOCIAL_MODE_IDS.includes(b.mode as SocialModeId)||!isObj(b.action)||typeof b.action.type!=='string')fail('invalid_mode_action');
         const mode=b.mode as SocialModeId;if(!c.modeEnabled[mode]&&!withdrawingR47)fail('council_mode_disabled',403);

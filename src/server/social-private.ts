@@ -13,6 +13,8 @@ export interface SocialPrivateCallbacks {
   pub?(id: string): string;
   nameOf?(id: string): string;
   isMuted?(actor: string, target: string): boolean;
+  /** R69i: يوصل نص الرسالة للمشرف الذكي بعد الحفظ. */
+  onMessage?(id: number, from: string, body: string): void;
   /** Existing public-ID bridge only; relations never accept an internal target ID from the browser. */
   resolvePublicId?(pub: string): string | null;
   /** Explicit existing account self-declared age: only true means eligible; null/unknown is NOT adult. */
@@ -36,6 +38,7 @@ const positive = (x: unknown): x is number => natural(x) && x > 0;
 const fingerprint = (to: string, body: string) => createHash('sha256').update(JSON.stringify([to, body])).digest('hex');
 type LinkState = 'pending' | 'accepted' | 'rejected' | 'removed';
 interface Link { id: number; from: string; to: string; state: LinkState; at: number; decidedAt: number | null }
+export const HIDDEN_BODY = '🚫 انحذفت هذي الرسالة من المشرف.';
 interface Message { id: number; from: string; to: string; body: string; ref: string; fingerprint: string; at: number; readAt: number | null }
 interface Preference { id: string; dmEnabled: boolean }
 interface Data { v: 1; seq: number; links: Link[]; messages: Message[]; preferences: Preference[]; familyR47?: FamilyState }
@@ -211,8 +214,10 @@ export class SocialPrivate {
     if (old) { if (old.fingerprint !== fp) return error(409, 'ref_conflict', 'معرّف الرسالة مستخدم لمحتوى مختلف.'); return { message: this.messageView(old, me), duplicate: true }; }
     if (!this.dmEnabled(me) || !this.dmEnabled(other)) return error(403, 'dm_disabled', 'الرسائل الخاصة موقوفة.');
     this.rate('send', me);
-    return this.tx(() => { const m: Message = { id: this.nextId(), from: me, to: other, body, ref: input.ref as string, fingerprint: fp, at: this.tick(), readAt: null }; this.d.messages.push(m); return { message: this.messageView(m, me), duplicate: false }; });
+    return this.tx(() => { const m: Message = { id: this.nextId(), from: me, to: other, body, ref: input.ref as string, fingerprint: fp, at: this.tick(), readAt: null }; this.d.messages.push(m); const hk = this.callbacks.onMessage; if (hk) queueMicrotask(() => { try { hk(m.id, me, body); } catch { /* */ } }); return { message: this.messageView(m, me), duplicate: false }; });
   }
+  /** R69i: المشرف الذكي يخفي نص رسالة خاصة مخالفة. يرجع المرسل أو null. */
+  systemHide(id: number): string | null { const m = this.d.messages.find(x => x.id === id); if (!m || m.body === HIDDEN_BODY) return null; return this.tx(() => { m.body = HIDDEN_BODY; return m.from; }); }
   conversation(me: string, other: string, opts: PrivatePage = {}) {
     this.friendGuard(me, other); this.rate('read', me);
     const p = this.page(this.d.messages.filter(m => (m.from === me && m.to === other) || (m.to === me && m.from === other)), opts);

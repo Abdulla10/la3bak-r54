@@ -894,12 +894,23 @@ export async function createApp(
     onDecision: (it, r) => {
       const label = { profanity: 'شتم', sexual: 'محتوى غير لائق', harassment: 'تحرش أو تهديد', hate: 'كراهية', scam: 'احتيال', contact: 'طلب تواصل', self_harm: 'إيذاء النفس', spam: 'إزعاج', other: 'مخالفة' }[r.category] ?? 'مخالفة';
       if (it.kind === 'room-name') { arena.alert('reports', '🏷️ اسم غرفة مخالف', `غرفة «${it.text.slice(0, 60)}» (${label}): ${r.reason}`, `roomname:${it.id}:${it.text.slice(0, 40)}`); return 'تنبيه للإدارة'; }
+      if (it.kind === 'chat' || it.kind === 'dm') {
+        const where = it.kind === 'chat' ? 'دردشة غرفة' : 'رسالة خاصة', who = accounts.nameOf(it.by) || 'لاعب';
+        if (r.category === 'self_harm' || r.category === 'contact') arena.alert('reports', r.category === 'self_harm' ? '⚠️ محتاج انتباه' : '📵 طلب تواصل', `${who} في ${where}: ${r.category === 'self_harm' ? 'إشارة لإيذاء النفس' : 'يطلب رقم أو سناب'}. شوف «المشرف الذكي».`, `ai-${it.kind}:${it.id}`);
+        if (r.verdict !== 'block') return 'للمراجعة';
+        const tell = () => { try { support.announce([it.by], 'انحذفت رسالتك', `المشرف الآلي حذف رسالتك في ${where} لأنها تخالف القواعد (${label}). تكرارها يعرض حسابك للإيقاف.`, 'المشرف', `aimod-${it.kind}-${it.by}-${new Date().toISOString().slice(0, 10)}`); } catch { /* */ } };
+        if (it.kind === 'dm') { const from = social.systemHide(Number(it.id)); if (from) tell(); return from ? 'انحذفت' : 'محذوفة من قبل'; }
+        const [roomId, councilId] = String(it.ref ?? '').split('|'); void socialRooms.systemHideChat(roomId, councilId, it.id).then((w) => { if (w) tell(); });
+        return 'انحذفت';
+      }
       const kind = it.kind as 'post' | 'comment', id = Number(it.id);
       if (r.category === 'self_harm') arena.alert('reports', '⚠️ محتاج انتباه', `${accounts.nameOf(it.by) || 'لاعب'} كتب ${kind === 'post' ? 'منشور' : 'تعليق'} فيه إشارة لإيذاء النفس. راجعه بسرعة من «بلاغات المجتمع».`, `selfharm:${it.kind}:${it.id}`);
       if (r.verdict === 'block') { const author = community.systemRemove(kind, id); if (author) { try { support.announce([author], kind === 'post' ? 'انحذف منشورك' : 'انحذف تعليقك', `المشرف الآلي حذفه لأنه يخالف قواعد المجتمع (${label}). لو تشوف إنه خطأ، تواصل مع الدعم.`, 'المشرف', `aimod-${it.kind}-${it.id}`); } catch { /* */ } } return author ? 'انحذف' : 'محذوف من قبل'; }
       return community.systemReport(kind, id, `🤖 المشرف الذكي: ${label} — ${r.reason}`) ? 'للمراجعة' : '';
     },
   });
+  /* رسائل قصيرة جداً أو بدون حروف (ضحك، إيموجي، أرقام) ما تستاهل فحص */
+  const aiWorth = (t: string) => { const x = t.replace(/[\s\p{Extended_Pictographic}\p{P}\d]/gu, ''); return x.length >= 3 && !/^(ه|ھ|h|a|خ|ك)+$/i.test(x); };
   { const rt = setInterval(() => { try { if (!aiMod.ready()) return; for (const r of socialRooms.liveRooms().slice(0, 100)) if (aiMod.roomNeedsCheck(r.id, r.name)) { aiMod.markRoom(r.id, r.name); aiMod.enqueue({ kind: 'room-name', id: r.id, by: '', text: r.name }); } } catch (e) { log('ai_room_scan_failed', { message: String(e).slice(0, 120) }); } }, 10 * 60_000); rt.unref?.(); }
   /* R69: التقرير الصباحي للمالك (9 الصبح بتوقيت الإمارات) */
   const morningText = () => {
@@ -1043,7 +1054,7 @@ export async function createApp(
     resolvePublicId: pub => community.resolvePublicId(pub),
     adultSelfDeclared: id => { const age=accounts.socialAge(id); return age===null?null:age>=18; },
     isDeactivated: id => !accounts.has(id),
-    isBlocked: (a, b) => community.pairBlocked(a, b), isMuted: (a, b) => community.isMuted(a, b),
+    isBlocked: (a, b) => community.pairBlocked(a, b), isMuted: (a, b) => community.isMuted(a, b), onMessage: (id, from, body) => { if (aiWorth(body)) aiMod.enqueue({ kind: 'dm', id: String(id), by: from, text: body }); },
     pub: (id) => community.pub(id), nameOf: (id) => accounts.nameOf(id),
   });
   /* R62: رسالة خاصة جديدة → إشعار جوال للمستلم لو مب فاتح الموقع */
@@ -1075,7 +1086,7 @@ export async function createApp(
     giftValue:(from,to,ref,roomId)=>{const rec=wallet.committedGiftReceipt(from,to,ref);if(!rec||rec.cur!=='gems'||rec.status!=='done'||typeof rec.room!=='string'||!rec.room.startsWith(`social:${roomId}:`))return null;const v=rec.total??rec.price*(rec.qty??1);return Number.isSafeInteger(v)&&v>0?v:null;},
     ownsItem:(userId,itemId)=>wallet.owned(userId).includes(itemId),
     cinemaOff:()=>!siteFlags.get().cinema,
-    maskChat:(t)=>maskBanned(t),
+    maskChat:(t)=>maskBanned(t), onChat:(roomId,councilId,msgId,actor,t)=>{ if (aiWorth(t)) aiMod.enqueue({ kind:'chat', id: msgId, ref: roomId+'|'+councilId, by: actor, text: t }); },
     roomLevelUp:(roomId,ownerId,name,from,to,members)=>{
       for(let lv=from+1;lv<=to&&lv<=from+50;lv++){const g=roomOwnerGift(lv);if(g&&accounts.has(ownerId)){try{if(wallet.grant(ownerId,'coins',g,`هدية ليفل الغرفة ${lv}`,`roomlv:${roomId}:${lv}`))sendToUser(ownerId,{t:'wallet',coins:wallet.balance(ownerId),gems:wallet.gems(ownerId),won:0});}catch{/* */}}}
       try{support.announce([ownerId],`🎉 غرفتك وصلت Lv ${to}`,`مبروك! «${name}» وصلت Lv ${to}. افتح «ليفل الغرفة» تشوف المميزات الجديدة.`,'الغرف',`roomlv-${roomId}-${to}`);}catch{/* */}
