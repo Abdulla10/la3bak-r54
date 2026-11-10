@@ -141,3 +141,6 @@ html body .ids-card,html body .ids-card:hover{background:linear-gradient(180deg,
 @keyframes vfx68live{0%,100%{transform:translate(-50%,-50%) scale(.97);filter:brightness(1)}50%{transform:translate(-50%,-50%) scale(1.05);filter:brightness(1.35)}}
 @media(prefers-reduced-motion:reduce){.vfx68-ring,.vfx68-face,.so-member.is-speaking .so-vfx68{animation:none}}
 .r23-lux-preview:has(.vfx68-pv)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}
+/* R68z37: الدخوليات */
+html body .r23-store .r23-product-art>.r23-entrance-art{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;transform:scale(1.25)}
+.r23-lux-preview:has(.e3d-slot)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}

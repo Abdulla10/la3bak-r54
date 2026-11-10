@@ -116,10 +116,12 @@ export function validSocialGiftOutbox(d) {
 export const CARS_REMOVED = true;
 export function equippedEntranceView(wallet, shopcat, id, ranks) {
     // R58e: السيارات انشالت من الموقع بطلب المالك — ما تنعرض ولا تشتغل بالغرف
-    if (CARS_REMOVED || !wallet.has(id))
+    if (!wallet.has(id))
         return null;
     const iid = wallet.equipped(id).entrance;
     const base = ENTRANCE_ITEMS.find((i) => i.id === iid);
+    if (CARS_REMOVED && base?.set !== 'ent3d')
+        return null; // R68z31: السيارات القديمة بس انشالت
     const item = base && shopcat.get(base.id);
     if (!base?.art || !item || item.custom || item.slot !== 'entrance' || !wallet.owned(id).includes(base.id) || !shopEligibility(item, ranks).eligible)
         return null;
@@ -629,7 +631,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         /** R67au: تذكارات CP الجديدة اللي يرسلها المالك تنضاف هنا (فاضي لين توصل رسوماته) */
         const SOUVENIR_R67 = new Set();
         /** R68z: مدة الأغراض بالمتجر — 7 / 15 / 30 يوم / دائم. السعر نسبة من سعر الدائم. */
-        const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar', 'voice-fx']); // R68z32: مؤثرات الصوت بمدة. R68z30: العصي وكور البولينغ دائم بس
+        const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar', 'voice-fx', 'entrance']); // R68z32: مؤثرات الصوت بمدة. R68z30: العصي وكور البولينغ دائم بس
         const DURATIONS = [{ days: 7, pct: 25, label: '7 أيام' }, { days: 15, pct: 40, label: '15 يوم' }, { days: 30, pct: 60, label: '30 يوم' }, { days: 0, pct: 100, label: 'دائم' }]; // R68z29: مثل فيديو المالك
         const durPrice = (price, days) => { const d = DURATIONS.find((x) => x.days === days); if (!d)
             return -1; if (!days || price <= 0)
@@ -652,8 +654,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             return {
                 ok: true, canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), exp: wallet.expiries(id), durations: DURATIONS, timedSlots: [...TIMED_SLOTS], equipped: wallet.equipped(id), equippedView: equippedView(id),
                 // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
-                items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && (specialTaken(id, String(i.css ?? '')) || String(i.css ?? '').length <= 3)) && !(i.slot === 'souvenir' && !owned.has(i.id) && !SOUVENIR_R67.has(i.id)) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
-                collectionItems: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance') && i.set && (i.status !== 'hidden' || owned.has(i.id))),
+                items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance' && i.set !== 'ent3d') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && (specialTaken(id, String(i.css ?? '')) || String(i.css ?? '').length <= 3)) && !(i.slot === 'souvenir' && !owned.has(i.id) && !SOUVENIR_R67.has(i.id)) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
+                collectionItems: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance' && i.set !== 'ent3d') && i.set && (i.status !== 'hidden' || owned.has(i.id))),
                 sets: SETS, rarities: RARITIES, achievements: achView(achInput(id)),
                 economy: economy.view(), gemPacks: [],
                 milestones: MILESTONES.map((x) => ({ ...x, value: pr[x.metric], done: got.has(x.id), ready: !got.has(x.id) && pr[x.metric] >= x.goal })),
@@ -714,7 +716,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
                 if (!it)
                     return { ok: false, error: 'عنصر غير موجود.' };
                 // R58e: السيارات انشالت من الموقع بطلب المالك (الملكية القديمة محفوظة بالبيانات)
-                if (it.slot === 'entrance')
+                if (it.slot === 'entrance' && it.set !== 'ent3d')
                     return { ok: false, code: 'unavailable', error: 'هذا القسم غير متاح.' };
                 if (achOf(it.id))
                     return { ok: false, code: 'reserved', error: 'هذا المعرّف مخصص لإنجاز مكتسب، ولا يُشترى.' };

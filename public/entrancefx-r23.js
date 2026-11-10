@@ -1,6 +1,19 @@
 /* Vehicle entrances are 2D cosmetic assets, not a 3D runtime.
  * Only server-verified public member snapshots can trigger them. */
+import { is3D, entrance3DNode } from './entrance3d-r68.js?v=r68z37d';
 export const ENTRANCE_ART = Object.freeze({
+  // R68z31: دخوليات ثلاثية الأبعاد (صور المالك)
+  'ent-dragon':'/assets/entr68/ent-dragon.webp',
+  'ent-pegasus':'/assets/entr68/ent-pegasus.webp',
+  'ent-royalcar':'/assets/entr68/ent-royalcar.webp',
+  'ent-moto':'/assets/entr68/ent-moto.webp',
+  'ent-yacht':'/assets/entr68/ent-yacht.webp',
+  'ent-jet':'/assets/entr68/ent-jet.webp',
+  'ent-portal':'/assets/entr68/ent-portal.webp',
+  'ent-carriage':'/assets/entr68/ent-carriage.webp',
+  'ent-whale':'/assets/entr68/ent-whale.webp',
+  'ent-phoenix':'/assets/entr68/ent-phoenix.webp',
+
   'entrance-sport':'/assets/store-r23/entrance-sport.webp',
   'entrance-royal':'/assets/store-r23/entrance-royal.webp',
   // R57: مركبات «مجموعة الفخامة»
@@ -20,6 +33,7 @@ export function createEntranceFX({getHost,getScope,now=()=>Date.now()}={}) {
     const item=member?.entrance,src=ENTRANCE_ART[item?.id],target=getHost?.();
     if(!src||item?.art!==src||!target?.isConnected)return false;
     clear();
+    if(is3D(item.id)){const n3=entrance3DNode(item.id,src,'وصل '+String(member.name||'عضو الغرفة'));n3.setAttribute('role','status');n3.setAttribute('aria-live','polite');n3.dataset.entranceMember=String(member.id);target.append(n3);active=n3;timer=setTimeout(clear,5700);return true;}
     const node=document.createElement('div');node.className='r23-entrancefx';node.dataset.entranceId=item.id;node.dataset.entranceMember=String(member.id);node.setAttribute('role','status');node.setAttribute('aria-live','polite');
     const image=document.createElement('img');image.src=src;image.alt='';image.decoding='async';
     const label=document.createElement('span');label.textContent='وصل '+String(member.name||'عضو الغرفة');

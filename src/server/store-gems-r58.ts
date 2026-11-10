@@ -19,6 +19,8 @@ const SHOWPIECES: Readonly<Record<string, number>> = Object.freeze({
   'ref-p-frame-02': 500_000, 'lux-f-galaxy': 400_000, 'lux-f-inferno': 450_000,
   'lux-b-falls': 250_000, 'lux-b-snowcastle': 250_000, 'bg2-golden-hall': 200_000,
   'entrance-lux-black': 1_000_000, 'entrance-royal': 900_000,
+  // R68z31: الدخوليات ثلاثية الأبعاد (بالجواهر؛ تنعرض عملات ×20): من مليون إلى 6 ملايين
+  'ent-whale': 50_000, 'ent-moto': 60_000, 'ent-phoenix': 75_000, 'ent-royalcar': 100_000, 'ent-pegasus': 125_000, 'ent-portal': 150_000, 'ent-dragon': 175_000, 'ent-yacht': 200_000, 'ent-jet': 250_000, 'ent-carriage': 300_000,
   'lux-bub-imperial': 300_000, 'lux-board-inferno': 300_000,
   // R67ad: خلفيات الملف الجديدة — أسعار متنوعة (بالجواهر؛ تنعرض عملات ×20)
   'art-pb-11': 18_000, 'art-pb-12': 6_000, 'art-pb-13': 5_000, 'art-pb-14': 20_000, 'art-pb-15': 40_000, 'art-pb-16': 15_000,
