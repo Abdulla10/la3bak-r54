@@ -1,7 +1,7 @@
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69zj';
+import * as UNIFIED from '../unified/shell.js?v=r69zn';
 import * as REF from '../unified/home.js?v=r69z8';
 import * as SOCIAL from '../unified/social.js?v=r69zj';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -9,14 +9,14 @@ import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-av
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
 import {giftArtwork} from '../gift-assets-r27.js?v=r68i-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69z8';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69zn';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
-import * as HUB from '../hub.js?v=r68y-r6';
+import * as HUB from '../hub.js?v=r69zn-r6';
 import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
 import { initStatus, checkStatusNow } from '../status.js?v=r68x-navigation-r50';
-import * as LOB from '../lobby.js?v=r68z31';
+import * as LOB from '../lobby.js?v=r69zn';
 import * as AVT from '../avatar.js?v=shell-r6';
 import * as AUTH from '../auth.js?v=r69a-r6';
 import * as FS from '../fullscreen.js?v=shell-r6';
@@ -44,7 +44,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69zm';
+import * as PWA from '../pwa.js?v=r69zn';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -411,7 +411,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69zm');
+  const M = await import('../settings-r60.js?v=r69zn');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -1893,11 +1893,12 @@ const ACTIONS = {
     const res = await req('mm:fill');
     if (!res.ok) { toast(res.error, true); HUB.reset(); render(); }
   },
+  'hub-botlvl'(el) { HUB.setBotLevel(el.dataset.lvl); render(); },
   async 'hub-bots'(el) {
     const g = el.dataset.g;
     const seats = HUB.MM.size[g] ?? HUB.HUBS[g].defSize;
     if (g === 'ludo' && !HUB.ldPlayable()) return toast('هذا الوضع قيد التطوير. اختر «كلاسيكي» عشان تلعب.', true);
-    let c = await req('room:create', { gameId: g, mode: 'bots', seats, ...(g === 'ludo' ? { variant: HUB.ldMode() } : {}) });
+    let c = await req('room:create', { gameId: g, mode: 'bots', seats, ...(g === 'ludo' ? { variant: HUB.ldMode() } : {}), ...(HUB.BOT_LEVEL_GAMES?.has(g) && HUB.botLevel() !== 'normal' ? { botLevel: HUB.botLevel() } : {}) });
     if (!c.ok) return toast(c.error, true);
     S.rooms.set(c.room.code, c.room);
     const st = await req('room:start', { code: c.room.code });
@@ -1998,7 +1999,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69z8', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69zn', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },

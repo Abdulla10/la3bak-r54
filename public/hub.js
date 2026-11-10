@@ -73,6 +73,7 @@ export function hubHTML(id, o) {
       ${stake ? `<p class="stake-info" role="status">رسم الدخول: <b>🪙 ${o.nf(stake)}</b> · صندوق الجائزة: <b>🪙 ${o.nf(stake * size)}</b> يقتسمه الفائزون${o.coins < stake ? ' · <span class="neg">رصيدك ما يكفي لهذا الرسم</span>' : ''}</p>` : ''}
       ${lockNote}<button class="btn block" type="button" data-act="hub-search" data-g="${id}" style="margin-top:12px"${lockAttr}>🔍 ابحث عن لاعبين</button></section>
     <section class="card"><h2>🤖 العب ضد الكمبيوتر</h2><p class="muted">تبدأ فوراً بدون انتظار.</p>
+      ${BOT_LEVEL_GAMES.has(id) ? `<p class="hint" style="margin:8px 0 4px">مستوى الكمبيوتر:</p><div class="of-seg">${[['easy', '😊 سهل'], ['normal', '😎 متوسط'], ['pro', '🔥 محترف']].map(([k, t]) => `<button type="button" class="chip-btn ${botLevel() === k ? 'on' : ''}"${botLevel() === k ? ' style="background:linear-gradient(#ffd86b,#e2a920);color:#2a1500;border-color:#f5c542;font-weight:800"' : ''} data-act="hub-botlvl" data-lvl="${k}" aria-pressed="${botLevel() === k}">${t}</button>`).join('')}</div><p class="hint" style="margin:4px 0 10px">${botLevel() === 'pro' ? 'يعدّ الورق ويخطط مثل اللاعب الخبير.' : botLevel() === 'easy' ? 'يغلط أحياناً — مناسب للتعلّم.' : 'لاعب عادي.'}</p>` : ''}
       <button class="btn block ghost" type="button" data-act="hub-bots" data-g="${id}"${lockAttr}>ابدأ ضد الكمبيوتر (${size} لاعبين)</button></section>
     <section class="card"><h2>👥 مع أصدقائك</h2><p class="muted">أنشئ غرفة وأرسل الرمز، أو ادخل برمز صديقك.</p>
       <div class="btn-row">${locked ? '<button class="btn ghost" type="button" disabled aria-disabled="true">أنشئ غرفة</button>' : `<a class="btn ghost" href="#/game/${id}">أنشئ غرفة</a>`}<a class="btn ghost" href="#/rooms">عندي رمز</a></div></section>
@@ -110,3 +111,8 @@ export function tickTimer() {
   }, 500);
 }
 export function reset() { clearInterval(MM.timer); MM.game = ''; MM.seats = 0; MM.waiting = 0; MM.asked = false; MM.snooze = false; }
+
+/* R69zm: مستوى البوت */
+export const BOT_LEVEL_GAMES = new Set(['baloot', 'jackaro']);
+export const botLevel = () => { try { const v = localStorage.getItem('la3_botlvl'); return v === 'easy' || v === 'pro' ? v : 'normal'; } catch { return 'normal'; } };
+export const setBotLevel = (v) => { try { localStorage.setItem('la3_botlvl', v); } catch { /* */ } };

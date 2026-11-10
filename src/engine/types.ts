@@ -76,6 +76,8 @@ export interface Engine<S = any, A = any> {
   tick(state: S, now: number): S;
   view(state: S, playerId: string, now: number): unknown;
   botAction(state: S, botId: string, now: number): BotPlan<A> | null;
+  /** R69zm: مستوى البوت (اختياري لكل لعبة): سهل يغلط أحياناً، محترف يحسب الورق ويخطط */
+  botLevelAction?(state: S, botId: string, now: number, level: 'easy' | 'pro'): BotPlan<A> | null;
   isOver(state: S): boolean;
   /** نتيجة اللعبة بعد انتهائها */
   outcome(state: S): Outcome;

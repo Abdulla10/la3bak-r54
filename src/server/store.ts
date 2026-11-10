@@ -12,6 +12,8 @@ export interface Room {
   code: string;
   hostId: string;
   mode: 'friends' | 'bots';
+  /** R69zm: مستوى البوتات */
+  botLevel?: 'easy' | 'normal' | 'pro';
   gameId: string;
   seats: number;
   status: 'lobby' | 'playing' | 'finished';

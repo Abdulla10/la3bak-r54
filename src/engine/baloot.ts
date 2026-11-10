@@ -36,6 +36,8 @@ export interface BalootState {
   turn: number;
   trick: { p: number; c: Card }[];
   lastTrick: { p: number; c: Card }[] | null;
+  /** R69zm: الأوراق اللي انلعبت بهالجولة (مكشوفة للكل) — البوت المحترف يعدّها */
+  played?: Card[];
   lastWinner: number | null;
   tricks: number;
   abnat: [number, number];
@@ -239,6 +241,7 @@ function playCard(s: BalootState, pi: number, card: Card, now: number) {
   const i = s.hands[pi].findIndex((c) => same(c, card));
   s.hands[pi].splice(i, 1);
   s.trick.push({ p: pi, c: card });
+  (s.played ??= []).push({ s: card.s, r: card.r });
   if (s.trick.length < 4) {
     s.turn = (pi + 1) % 4;
     s.endsAt = now + s.turnMs;
@@ -331,8 +334,61 @@ export function createBalootEngine(rng: Rng): Engine<BalootState, BalootAction> 
     return lowest(legal);
   };
 
+  /** R69zm: البوت المحترف — يعدّ الورق اللي طلع ويلعب «سيد الورق» ويسحب الحكم */
+  const unseen = (s: BalootState, pi: number): Card[] => {
+    const gone = [...(s.played ?? []), ...s.hands[pi], ...s.trick.map((x) => x.c)];
+    const out: Card[] = []; for (let su = 0; su < 4; su++) for (let r = 7; r <= 14; r++) if (!gone.some((c) => c.s === su && c.r === r)) out.push({ s: su, r });
+    return out;
+  };
+  const isMaster = (s: BalootState, c: Card, others: Card[]) => !others.some((o) => o.s === c.s && strength(s, o) > strength(s, c));
+  const proPlay = (s: BalootState, pi: number): Card => {
+    const legal = legalCards(s, pi); if (legal.length === 1) return legal[0];
+    const others = unseen(s, pi), val = (c: Card) => pointsOf(s, c);
+    const lowest = (cs: Card[]) => cs.reduce((a, c) => (strength(s, c) < strength(s, a) || (strength(s, c) === strength(s, a) && val(c) < val(a)) ? c : a));
+    if (!s.trick.length) {
+      const hokm = s.contract?.type === 'hokm', ourBuy = s.contract && teamOf(s.contract.bidder) === teamOf(pi);
+      const trumpsOut = hokm ? others.filter((c) => isTrump(s, c)).length : 0;
+      // نسحب الحكم من الخصم لو عندنا سيده وإحنا اللي شارين
+      if (hokm && ourBuy && trumpsOut > 0) { const mt = legal.filter((c) => isTrump(s, c) && isMaster(s, c, others)); if (mt.length) return mt.sort((a, b) => strength(s, b) - strength(s, a))[0]; }
+      // سيد الورق بلون ما ينقطع عليه حكم
+      const masters = legal.filter((c) => !isTrump(s, c) && isMaster(s, c, others) && (!hokm || trumpsOut === 0 || others.filter((o) => o.s === c.s).length >= 2));
+      if (masters.length) return masters.sort((a, b) => val(b) - val(a))[0];
+      const cheap = legal.filter((c) => !isTrump(s, c) && val(c) === 0);
+      return lowest(cheap.length ? cheap : legal.filter((c) => !isTrump(s, c)).length ? legal.filter((c) => !isTrump(s, c)) : legal);
+    }
+    const w = trickWinner(s), partnerWins = teamOf(w) === teamOf(pi);
+    const beaters = legal.filter((c) => trickWinner({ contract: s.contract, trick: [...s.trick, { p: pi, c }] }) === pi);
+    const last = s.trick.length === 3;
+    if (partnerWins) {
+      const top = s.trick.find((x) => x.p === w)!.c;
+      const safe = last || isMaster(s, top, others);
+      const heavy = legal.filter((c) => !isTrump(s, c)).sort((a, b) => val(b) - val(a))[0];
+      if (safe && heavy && val(heavy) > 0) return heavy; // نعطي شريكنا النقاط وهو ضامن الأكلة
+      return lowest(legal);
+    }
+    if (beaters.length) {
+      if (last) return lowest(beaters);
+      const sure = beaters.filter((c) => isMaster(s, c, others));
+      if (sure.length) return lowest(sure);
+      const trickPts = s.trick.reduce((a, x) => a + val(x.c), 0);
+      return trickPts >= 10 ? lowest(beaters) : lowest(legal);
+    }
+    // ما نقدر ناكل: نرمي أخف ورقة نقاط
+    return legal.reduce((a, c) => (val(c) < val(a) || (val(c) === val(a) && strength(s, c) < strength(s, a)) ? c : a));
+  };
+
   return {
     info,
+    botLevelAction(state, botId, now, level): BotPlan<BalootAction> | null {
+      const pi = state.players.indexOf(botId);
+      if (state.turn !== pi || state.phase !== 'play') return null;
+      if (state.tricks === 0 && state.hands[pi].length === 8 && !state.projDecl[pi] && state.projCand[pi].length) return null; // نفس منطق المشاريع
+      if (state.contract?.type === 'hokm' && state.balootBy === pi && !state.balootDeclared) return null;
+      const firstLead = state.contract?.type === 'hokm' && state.tricks === 0 && state.trick.length === 0 && state.level < RULES.maxLevel.hokm;
+      const wait = firstLead ? FIRST_LEAD_WAIT_MS + Math.floor(rng() * 1000) : 1000 + Math.floor(rng() * 1000);
+      if (level === 'easy') { if (rng() < 0.7) { const legal = legalCards(state, pi); const c = legal[Math.floor(rng() * legal.length)]; return { action: { type: 'play', s: c.s, r: c.r }, delayMs: wait + 600 }; } return null; }
+      const c = proPlay(state, pi); return { action: { type: 'play', s: c.s, r: c.r }, delayMs: wait };
+    },
     init(players: PlayerRef[], now: number, opts?: EngineOpts): BalootState {
       if (players.length !== 4) throw new Error('baloot needs 4 players');
       const ids = shuffle(players.map((p) => p.id), rng);

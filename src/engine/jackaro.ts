@@ -468,6 +468,24 @@ export function createJackaroEngine(rng: Rng = Math.random): Engine<JkState, JkA
         ...eventsView(state),
       };
     },
+    botLevelAction(state, botId, _now, level): BotPlan<JkAction> | null {
+      const pi = state.players.indexOf(botId);
+      if (state.phase !== 'playing' || state.turn !== pi) return null;
+      const moves = legalMoves(state, pi); if (!moves.length) return null;
+      const act = (m: Move): JkAction => ({ type: 'play', card: m.card, owner: m.owner, marble: m.marble, to: m.to, ...(m.target ? { target: m.target } : {}) });
+      if (level === 'easy') { if (rng() < 0.3) return { action: act(moves[Math.floor(rng() * moves.length)]), delayMs: 1800 + Math.floor(rng() * 1500) }; return null; }
+      // المحترف: نفس التقييم + يحمي كراته من الأكل ويهرب من الخطر ويحفظ الأوراق المميزة
+      const danger = (s: JkState, owner: number, prog: number) => { const a = absOf(s, owner, prog); if (a === null) return 0; let d = 0;
+        for (let o = 0; o < s.players.length; o++) { if (sameTeam(s, o, owner)) continue; for (const mp of s.marbles[o]) { const oa = absOf(s, o, mp); if (oa === null) continue; const gap = (a - oa + RING) % RING; if (gap >= 1 && gap <= 13) d += gap <= 6 ? 1.4 : 1; } } return d; };
+      let best = moves[0], bv = -Infinity;
+      for (const m of moves) {
+        let v = rate(state, pi, m) - rng() + 0.5;
+        if (sameTeam(state, m.owner, pi) && m.kind !== 'swap') { const from = state.marbles[m.owner][m.marble]; v += (danger(state, m.owner, from) - danger(state, m.owner, m.to)) * 9; }
+        const r = m.card >= 0 ? state.hands[pi][m.card] : 0; if ((r === 11 || r === 4 || r === 5) && m.kind === 'move' && !(m.captures ?? []).length && moves.some((x) => x.card !== m.card)) v -= 6;
+        if (v > bv) { bv = v; best = m; }
+      }
+      return { action: act(best), delayMs: 1100 + Math.floor(rng() * 1200) };
+    },
     botAction(state, botId): BotPlan<JkAction> | null {
       const pi = state.players.indexOf(botId);
       if (state.phase !== 'playing' || state.turn !== pi) return null;

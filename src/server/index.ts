@@ -2504,7 +2504,7 @@ export async function createApp(
       case 'room:create':
         if (typeof m.key!=='string' || !/^[A-Za-z0-9_-]{8,128}$/.test(m.key)) return {ok:false,error:'مفتاح إنشاء الغرفة مطلوب. حدّث الصفحة.'};
         if(m.voice!==undefined&&typeof m.voice!=='boolean')return {ok:false,error:'خيار الصوت غير صالح.'};
-        return variantBlock(m) ?? withGameVoice(user,await service.createRoom(user, { gameId: m.gameId, mode: m.mode, seats: m.seats, key:m.key, visibility:m.visibility, password:m.password }),m.voice!==false);
+        return variantBlock(m) ?? withGameVoice(user,await service.createRoom(user, { gameId: m.gameId, mode: m.mode, seats: m.seats, key:m.key, visibility:m.visibility, password:m.password, botLevel: m.botLevel }),m.voice!==false);
       case 'room:join':
         if(m.voice!==undefined&&typeof m.voice!=='boolean')return {ok:false,error:'خيار الصوت غير صالح.'};
         return withGameVoice(user,await service.joinRoom(user, m.code, m.password),m.voice!==false);

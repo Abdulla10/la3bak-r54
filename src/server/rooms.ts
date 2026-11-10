@@ -58,6 +58,7 @@ export interface Snapshot {
   code: string;
   hostId: string;
   mode: Room['mode'];
+  botLevel?: 'easy' | 'normal' | 'pro' | null;
   gameId: string;
   seats: number;
   status: Room['status'];
@@ -391,6 +392,7 @@ export class RoomService {
       requiresPassword: !!room.access,
       hostId: room.hostId,
       mode: room.mode,
+      botLevel: room.mode === 'bots' ? room.botLevel ?? 'normal' : null,
       gameId: room.gameId,
       seats: room.seats,
       status: room.status,
@@ -526,7 +528,7 @@ export class RoomService {
 
   // ---------- الغرف ----------
 
-  createRoom(user: User, p: { gameId: unknown; mode: unknown; seats: unknown; key?: unknown; visibility?: unknown; password?: unknown }): Promise<Res<{ room: Snapshot }>> {
+  createRoom(user: User, p: { gameId: unknown; mode: unknown; seats: unknown; key?: unknown; visibility?: unknown; password?: unknown; botLevel?: unknown }): Promise<Res<{ room: Snapshot }>> {
     return this.guard(() => this.lock('create:' + user.id, async () => {
       const engine = typeof p.gameId === 'string' ? this.registry.get(p.gameId) : undefined;
       if (!engine || engine.info.status !== 'available') return fail('هذي اللعبة مو متاحة الحين.');
@@ -550,6 +552,7 @@ export class RoomService {
       const room: Room = { code: await this.newCode(), hostId: user.id, mode, gameId: engine.info.id, seats, status:'lobby',
         players:[{id:user.id,name:user.name,bot:false,ready:true,left:false}],state:null,revision:1,createdAt:now,updatedAt:now,
         creation:{key,fingerprint} };
+      if (mode === 'bots' && (p.botLevel === 'easy' || p.botLevel === 'pro')) room.botLevel = p.botLevel;
       if (privateRoom) {
         const salt = randomBytes(16).toString('hex');
         room.access = { visibility:'private',salt,passwordHash:((await scrypt(password as string,salt,64)) as Buffer).toString('hex') };
@@ -896,7 +899,8 @@ export class RoomService {
           let plan = this.botPlans.get(key);
           if (plan && plan.ver !== ver) plan = undefined;
           if (!plan) {
-            const next = engine.botAction(state, bot.id, now);
+            const lvl = room.botLevel === 'easy' || room.botLevel === 'pro' ? room.botLevel : null;
+            const next = (lvl && engine.botLevelAction ? engine.botLevelAction(state, bot.id, now, lvl) : null) ?? engine.botAction(state, bot.id, now);
             if (!next) {
               this.botPlans.delete(key);
               continue;
