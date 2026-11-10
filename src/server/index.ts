@@ -98,6 +98,7 @@ import { OwnerOps, OwnerError, dayKey as gulfDay } from './owner-r69.js';
 import { AiMod } from './ai-mod-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
 import { BombGames, BombError, BOMB_PRIZE, BOMB_PRIZE_MIN_PLAYERS } from './bomb-r69.js';
+import { SpyGames, SpyError } from './spy-r69.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
@@ -1684,6 +1685,29 @@ export async function createApp(
       });
       for (const id of acc.members) if (id !== user.id) sendToUser(id, { t: 'bomb', room });
       return { ok: true, now: Date.now(), ...bomb.view(room, user.id, acc.mod) };
+    });
+    /* R69v: لعبة الجاسوس داخل الغرفة */
+    const spy = new SpyGames({ name: (id) => accounts.nameOf(id) || 'لاعب', avatar: (id) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); }, notify: (ids, room) => { for (const id of new Set(ids)) sendToUser(id, { t: 'spy', room }); } });
+    { const st = setInterval(() => { try { spy.tick(); } catch (e) { log('spy_tick_failed', { error: String(e).slice(0, 100) }); } }, 500); st.unref?.(); }
+    functionalHttp.add('GET', '/api/room-spy', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false, game: null, can: {} }; return { ok: true, member: true, ...spy.view(room, user.id, acc.mod) }; });
+    functionalHttp.add('POST', '/api/room-spy/:act', ({ user, body, params }) => {
+      noGuest(user.id); const room = String(body.room ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) throw new FunctionalHttpError(403, 'لازم تكون داخل الغرفة.');
+      try {
+        const a = String(params.act);
+        if (a === 'create') spy.create(room, user.id, acc.members, acc.mod);
+        else if (a === 'join') spy.join(room, user.id);
+        else if (a === 'leave') spy.leave(room, user.id);
+        else if (a === 'settings') spy.settings(room, user.id, body);
+        else if (a === 'start') spy.start(room, user.id, acc.members);
+        else if (a === 'skip') spy.skip(room, user.id, acc.mod);
+        else if (a === 'vote') spy.vote(room, user.id, body.target);
+        else if (a === 'guess') spy.guess(room, user.id, body.word);
+        else if (a === 'cancel') spy.cancel(room, user.id, acc.mod);
+        else if (a === 'again') spy.again(room, user.id, acc.mod, acc.members);
+        else throw new SpyError('إجراء غير معروف.', 404);
+      } catch (e) { if (e instanceof SpyError) throw new FunctionalHttpError(e.status, e.message); throw e; }
+      for (const id of acc.members) if (id !== user.id) sendToUser(id, { t: 'spy', room });
+      return { ok: true, ...spy.view(room, user.id, acc.mod) };
     });
     functionalHttp.add('POST', '/api/room-quiz/cancel', ({ user, body }) => {
       const roomId = String(body.room ?? ''); const acc = socialRooms.quizAccess(user.id, roomId); adminNeed(!!acc && acc.mod, 'للمشرفين بس.');
