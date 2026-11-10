@@ -81,14 +81,3 @@
 img.lr-pliers{width:130px;height:auto;filter:drop-shadow(0 8px 12px #000b)}
 .lr-seat{z-index:2}.lr-table{top:36%}
 .lr-ov img.lr-pliers{position:absolute;left:auto;right:4%;top:auto;bottom:34%;width:120px}
-/* R68z17: الطاولة بالطول (طلب المالك) */
-.lr-room{min-height:560px}
-.lr-table,.lr-table{left:50%;right:auto;top:17%;width:46%;max-width:210px;height:auto;aspect-ratio:319/894;transform:translateX(-50%);background-image:url(/assets/games68/liars-table-v.webp);z-index:1}
-.lr-felt{width:70%;height:84%;margin:0 auto;position:absolute;left:15%;top:8%;border-radius:40%}
-.lr-seat{width:104px}.lr-seat .lr-ch{width:104px;height:104px}
-.lr-seat[style*="top:0%"]{width:130px}.lr-seat[style*="top:0%"] .lr-ch{width:120px;height:120px}
-.lr-me{left:50%;bottom:0;transform:translateX(-50%);z-index:3}.lr-me .lr-ch{width:118px;height:118px}
-.lr-reveal{position:relative;z-index:5}.lr-rv-cards .lr-rc{width:40px}
-@media (min-aspect-ratio:6/5){.lr-table{left:50%;right:auto}.lr-me{left:50%}}
-.lr-seat .lr-cnt{top:4px;bottom:auto;left:4px}
-.lr-felt{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding-top:16%}.lr-reveal{background:#0000008c;border-radius:12px;padding:6px 8px;max-width:150%}
