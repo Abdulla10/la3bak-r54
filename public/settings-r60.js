@@ -52,6 +52,7 @@ export function settingsHTML(ctx) {
     ${link('ألوان الموقع 🎨', '#/themes')}
     <!-- R69zc: توثيق الجوال (واتساب) مخفي لين نفعّله مستقبلاً، والكود جاهز -->
     ${link('الأجهزة اللي سجّلت الدخول منها', '#/devices')}
+    ${link('الدخول بـ Face ID / البصمة 🔐', '#/passkeys')}
     ${link('التحقق بخطوتين 🔐', '#/twofa')}
     ${row('الوضع الداكن', `<button type="button" class="s60-switch${document.documentElement.classList.contains('lb-dark') ? ' is-on' : ''}" role="switch" aria-checked="${document.documentElement.classList.contains('lb-dark')}" data-s60-dark><i></i></button>`)}
   </ul>
@@ -195,7 +196,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r69zo'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r69zp'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;

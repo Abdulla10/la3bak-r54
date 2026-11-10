@@ -1,7 +1,9 @@
+import * as PK from '../passkey-r69.js?v=r69zp';
+let PKLOADED = false;
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69zo';
+import * as UNIFIED from '../unified/shell.js?v=r69zp';
 import * as REF from '../unified/home.js?v=r69z8';
 import * as SOCIAL from '../unified/social.js?v=r69zj';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -44,7 +46,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69zo';
+import * as PWA from '../pwa.js?v=r69zp';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -355,12 +357,12 @@ function parseRoute() {
   return { name, a: dec(parts[1]), b: dec(parts[2]), c: dec(parts[3]) };
 }
 
-const NAV_OF = { slot: 'games', foodwheel: 'games', tournaments: 'games', league: 'games', watch: 'games', twofa: 'profile', themes: 'profile', lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', 'hidden-posts': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
+const NAV_OF = { slot: 'games', foodwheel: 'games', tournaments: 'games', league: 'games', watch: 'games', twofa: 'profile', passkeys: 'profile', themes: 'profile', lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', 'hidden-posts': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
 /* R51: الأب المنطقي يُستخدم فقط لو فُتحت الصفحة مباشرة (ما فيه صفحة سابقة داخل الموقع)؛ غير كذا زر الرجوع يرجع للصفحة السابقة الفعلية.
    صفحات قائمة «ملفي» (VIP، نوبل، المحفظة…) أبوها الملف الشخصي، مو الرئيسية. */
 const PROFILE_CHILDREN = new Set(['vip','ranks','rank-rewards','missions','wallet','settings','family','visitors','invite']);
 /* R53b: توثيق الحساب والمساعدة والخصوصية والشروط صارت داخل الإعدادات */
-const SETTINGS_CHILDREN = new Set(['twofa','verification','support','privacy','terms','privacy-settings','account-info','devices','hidden-posts','about']);
+const SETTINGS_CHILDREN = new Set(['twofa','passkeys','verification','support','privacy','terms','privacy-settings','account-info','devices','hidden-posts','about']);
 const BACK_OF = (r) => (r.name === 'social-room' ? '#/social-rooms' : ['game','hub','city'].includes(r.name) ? '#/games' : r.name === 'room' ? '#/rooms' : PROFILE_CHILDREN.has(r.name) ? '#/profile' : SETTINGS_CHILDREN.has(r.name) ? '#/settings' : '#/');
 
 function needUser(nextHash) {
@@ -413,7 +415,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69zo');
+  const M = await import('../settings-r60.js?v=r69zp');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -679,6 +681,11 @@ async function render() {
     case 'twofa':
       if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,r.name,AR69.arenaHTML(r.name, r.name === 'watch' ? r.a : ''));
+      break;
+    case 'passkeys':
+      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      unifiedPage(view,r.name,PK.pageHTML());
+      if (!PKLOADED) { PKLOADED = true; PK.load(() => { if (parseRoute().name === 'passkeys') render(); }); }
       break;
     case 'slot':
     case 'foodwheel':
@@ -1293,6 +1300,12 @@ async function loadAcct(redraw = true) {
 }
 
 function googleCard(linked) {
+  if (linked) {
+    return googleCardInner(linked) + (PK.supported() ? `<section class="card"><h2>🔐 الدخول بـ ${PK.bioName()}</h2><p class="muted">ادخل حسابك بوجهك أو بصمتك بدون Google.</p><a class="btn block ghost" href="#/passkeys">فعّلها / الأجهزة</a></section>` : '');
+  }
+  return googleCardInner(linked).replace('</section>', (S.user ? '' : PK.loginButton()) + '</section>') + (S.user && PK.supported() ? `<section class="card"><h2>🔐 احمِ حسابك بـ ${PK.bioName()}</h2><p class="muted">فعّلها عشان ترجع لحسابك بوجهك أو بصمتك حتى لو طلعت أو غيّرت الجهاز (على نفس حساب Apple/Google).</p><a class="btn block ghost" href="#/passkeys">فعّلها</a></section>` : '');
+}
+function googleCardInner(linked) {
   if (linked) {
     return `<section class="card g-card g-ok"><h2>🔗 حسابك مربوط بـ Google</h2><p class="muted">تقدمك وصورتك ورصيدك محفوظة على حسابك، وتدخلها من أي جهاز بنفس حساب Google.</p>
       <button class="btn ghost block" type="button" data-act="auth-logout">تسجيل الخروج</button></section>`;
@@ -1956,6 +1969,9 @@ const ACTIONS = {
     $$(`.filters .chip-btn[data-k="${k}"]`).forEach((b) => { b.classList.toggle('on', b === el); b.setAttribute('aria-pressed', String(b === el)); });
     applyGameFilter();
   },
+  async 'pk-enable'(el) { await PK.act('pk-enable', el, render); },
+  async 'pk-remove'(el) { await PK.act('pk-remove', el, render); },
+  async 'pk-login'(el) { el.disabled = true; try { const j = await PK.login(); const to = S.next || '#/profile'; S.next = null; await adoptPreviewSession(j, to); toast('أهلاً فيك 👋'); } catch (e) { toast(e.message, true); } finally { el.disabled = false; } },
   async 'auth-logout'() {
     return previewLogout();
   },

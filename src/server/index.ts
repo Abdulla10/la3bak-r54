@@ -108,6 +108,7 @@ import { Shield } from './shield-r69.js';
 import { OwnerSecrets, checkAnthropicKey } from './secrets-r69.js';
 import { AntiCheat, CHEAT_NAMES } from './anticheat-r69.js';
 import { Ratings } from './rating-r69.js';
+import { Passkeys, PasskeyError } from './passkeys-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -849,6 +850,7 @@ export async function createApp(
     } catch { /* التنبيه شكلي، ما يوقف شي */ }
   };
   /* R69: المباريات الحية للمشاهدة */
+  const passkeys = new Passkeys(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'passkeys.json') : '', Date.now, storage);
   const ratings = new Ratings(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'ratings.json') : '', Date.now, storage);
   const TEAM_GAMES = new Set(['baloot', 'jackaro']);
   const liveGames = new Map<string, Room>();
@@ -2381,6 +2383,34 @@ export async function createApp(
           else { if (!arena.tfEnabled(a.id)) return json(res, 403, { error: 'فعّل التحقق بخطوتين بحسابك من الإعدادات أول، بعدين ادخل اللوحة.' }); if (!arena.tfLogin(a.id, code)) return json(res, 401, { error: 'الرمز غلط.' }); session = ownerOps.panelLoginStaff(a.id); }
           return json(res, 200, { ok: true, session });
         } catch (e) { if (e instanceof OwnerError || e instanceof ArenaError) return json(res, e.status, { error: e.message }); throw e; }
+      }
+      /* R69zo: الدخول بـ Face ID / البصمة */
+      if (url.pathname.startsWith('/api/passkey/') && req.method === 'POST') {
+        if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' });
+        const host = String(req.headers.host ?? '').toLowerCase(), rpId = host.replace(/:\d+$/, '');
+        const origins = [...cfg.allowedOrigins, 'https://' + host, ...(/^(localhost)$/.test(rpId) ? ['http://' + host] : [])];
+        const label = (() => { const ua = String(req.headers['user-agent'] ?? ''); return /iPhone/.test(ua) ? 'آيفون' : /iPad/.test(ua) ? 'آيباد' : /Android/.test(ua) ? 'أندرويد' : /Mac OS/.test(ua) ? 'ماك' : /Windows/.test(ua) ? 'ويندوز' : 'جهاز'; })();
+        let body: Record<string, unknown> = {}; try { body = JSON.parse((await appReadBody(req, 24_000)) || '{}'); } catch { return json(res, 400, { error: 'الطلب غير صالح.' }); }
+        const act = url.pathname.slice('/api/passkey/'.length);
+        try {
+          if (act === 'login/options') { if (!authLimiter.allow('pk:' + ipOf(req))) return json(res, 429, { error: 'محاولات كثيرة، جرّب بعد شوي.' }); return json(res, 200, passkeys.loginOptions(rpId), { 'Cache-Control': 'no-store' }); }
+          if (act === 'login') {
+            if (!authLimiter.allow('pk:' + ipOf(req))) return json(res, 429, { error: 'محاولات كثيرة، جرّب بعد شوي.' });
+            const uid = passkeys.login(body, rpId, origins);
+            if (!accounts.has(uid) || platform.isBanned(uid)) return json(res, 403, { error: 'هالحساب مو متاح.' });
+            const next: User = { id: uid, name: accounts.nameOf(uid) || 'لاعب' };
+            accounts.noteActivity(uid); log('passkey_login', {});
+            const cookie = issueSession(next);
+            if (user && user.id !== uid) { sessions.revokeCookie(req.headers.cookie); closeSessionSockets(req.headers.cookie); }
+            return json(res, 200, { user: next, google: identities.linked(uid) }, { 'Set-Cookie': cookie });
+          }
+          if (!user) return json(res, 401, { error: 'سجّل دخولك أول.' });
+          if (act === 'register/options') return json(res, 200, passkeys.regOptions(user.id, user.name, rpId), { 'Cache-Control': 'no-store' });
+          if (act === 'register') return json(res, 200, passkeys.register(user.id, body, rpId, origins, label));
+          if (act === 'list') return json(res, 200, { ok: true, list: passkeys.list(user.id).map(({ id, label, at, used }) => ({ id, label, at, used })) });
+          if (act === 'remove') return json(res, 200, { ok: passkeys.remove(user.id, String(body.id ?? '')) });
+          return json(res, 404, { error: 'غير موجود.' });
+        } catch (e) { if (e instanceof PasskeyError) return json(res, 400, { error: e.message }); if (e instanceof StorageError) return json(res, 503, { error: 'تعذّر الحفظ الحين، جرّب بعد شوي.' }); throw e; }
       }
       if (url.pathname === '/api/auth/config' && req.method === 'GET') return json(res, 200, { google: cfg.googleClientId || null });
       if (url.pathname === '/api/auth/google' && req.method === 'POST') {
