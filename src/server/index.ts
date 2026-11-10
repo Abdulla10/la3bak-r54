@@ -1600,6 +1600,7 @@ export async function createApp(
     functionalHttp.add('GET', '/api/slot', ({ user }) => ({ ok: true, ...casino.slotState(user.id) }));
     functionalHttp.add('POST', '/api/slot/spin', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.spin(user.id, accounts.nameOf(user.id) || 'لاعب', (body as any)?.bet)) }; });
     functionalHttp.add('GET', '/api/foodwheel', ({ user }) => ({ ok: true, ...casino.wheelState(user.id) }));
+    functionalHttp.add('POST', '/api/foodwheel/chest', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.claimChest(user.id, (body as any)?.i)) }; });
     functionalHttp.add('POST', '/api/foodwheel/bet', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.bet(user.id, accounts.nameOf(user.id) || 'لاعب', (body as any)?.item, (body as any)?.chip)) }; });
     functionalHttp.add('GET', '/api/wheel', ({ user }) => ({ ok: true, ...wheel.state(user.id), coins: wallet.balance(user.id) }));
     functionalHttp.add('POST', '/api/wheel/spin', ({ user, body }) => {

@@ -49,12 +49,15 @@ export const FOODS = [
   { id: 'shrimp', name: 'روبيان', mult: 25 }, { id: 'carrot', name: 'جزر', mult: 5 }, { id: 'steak', name: 'لحم', mult: 10 }, { id: 'corn', name: 'ذرة', mult: 5 },
 ] as const;
 export const CHIPS = [10, 500, 6000, 30000, 100000] as const;
+/** صناديق اليوم: توصل مجموع فوزك اليومي للحد وتفتح الصندوق (المكافأة 1% من الحد). */
+export const CHESTS = [1_200_000, 1_800_000, 6_000_000, 18_000_000, 36_000_000] as const;
+const CHEST_PCT = 0.01;
 const BET_MS = 30_000, SHOW_MS = 7_000;
 /** احتمال كل أكلة ∝ 1/مضاعفها (العائد المتوقع ~97%) */
 const FOOD_W = FOODS.map((f) => 1000 / f.mult);
 type Bet = { u: string; name: string; item: number; amt: number };
 type Round = { n: number; start: number; bets: Bet[]; result: number | null; settled: boolean };
-type Data = { v: 1; jackpot: number; free: Record<string, { left: number; bet: number }>; slotFeed: { at: number; name: string; win: number; kind: string }[]; round: Round; history: number[]; lastTop: { name: string; win: number }[]; daily: Record<string, { d: string; win: number }> };
+type Data = { v: 1; jackpot: number; free: Record<string, { left: number; bet: number }>; slotFeed: { at: number; name: string; win: number; kind: string }[]; round: Round; history: number[]; lastTop: { name: string; win: number }[]; daily: Record<string, { d: string; win: number; got?: number[] }> };
 const valid = (x: Record<string, unknown>) => x.v === 1 && Number.isSafeInteger(x.jackpot) && isObj(x.free) && isObj(x.round) && Array.isArray(x.history);
 const day = (t: number) => new Date(t + 4 * 3_600_000).toISOString().slice(0, 10);
 
@@ -74,7 +77,18 @@ export class Casino {
     this.disk = new Persister('casino', file, () => this.d, now, mon, valid);
   }
   private save() { this.disk.save(); }
-  private addDaily(id: string, win: number) { const t = day(this.now()); const c = this.d.daily[id]; this.d.daily[id] = { d: t, win: (c?.d === t ? c.win : 0) + win }; }
+  private addDaily(id: string, win: number) { const t = day(this.now()); const c = this.d.daily[id]; this.d.daily[id] = c?.d === t ? { d: t, win: c.win + win, got: c.got ?? [] } : { d: t, win, got: [] }; }
+  private todayOf(id: string) { const c = this.d.daily[id]; return c?.d === day(this.now()) ? c : { d: day(this.now()), win: 0, got: [] as number[] }; }
+  claimChest(id: string, i: unknown) {
+    const k = Number(i); if (!Number.isInteger(k) || k < 0 || k >= CHESTS.length) throw new Error('صندوق غير معروف.');
+    const c = this.todayOf(id); const got = c.got ?? [];
+    if (got.includes(k)) throw new Error('فتحت هالصندوق اليوم.');
+    if (c.win < CHESTS[k]) throw new Error('لازم يوصل فوزك اليوم ' + CHESTS[k].toLocaleString('en-US') + '.');
+    const reward = Math.round(CHESTS[k] * CHEST_PCT);
+    if (!this.w.grant(id, reward, 'عجلة الأكل — صندوق اليوم', `fwchest:${c.d}:${id}:${k}`)) throw new Error('تعذّر تسليم المكافأة.');
+    this.d.daily[id] = { d: c.d, win: c.win, got: [...got, k] }; this.save();
+    return { reward, ...this.wheelState(id) };
+  }
 
   /* ---------- السلوت ---------- */
   slotState(id: string) { return { jackpot: this.d.jackpot, bets: SLOT_BETS, lines: LINES.length, free: this.d.free[id] ?? null, feed: this.d.slotFeed.slice(-8).reverse(), coins: this.w.balance(id), lineMap: LINES }; }
@@ -129,8 +143,8 @@ export class Casino {
     const totals = FOODS.map((_, i) => r.bets.filter((b) => b.item === i).reduce((a, b) => a + b.amt, 0));
     const mine = FOODS.map((_, i) => r.bets.filter((b) => b.item === i && b.u === id).reduce((a, b) => a + b.amt, 0));
     const myWin = r.result !== null ? mine[r.result] * FOODS[r.result].mult : 0;
-    const dd = this.d.daily[id]; const today = dd?.d === day(t) ? dd.win : 0;
+    const dd = this.todayOf(id); const today = dd.win;
     return { round: r.n, phase: r.result === null ? 'bet' : 'show', left: Math.max(0, (r.result === null ? r.start + BET_MS : r.start + BET_MS + SHOW_MS) - t), result: r.result, totals, mine, myWin,
-      foods: FOODS, chips: CHIPS, history: this.d.history.slice(-10).reverse(), top: r.result !== null ? this.d.lastTop : [], coins: this.w.balance(id), today, serverNow: t };
+      foods: FOODS, chips: CHIPS, history: this.d.history.slice(-10).reverse(), top: r.result !== null ? this.d.lastTop : [], coins: this.w.balance(id), today, chests: CHESTS.map((need) => ({ need, reward: Math.round(need * CHEST_PCT) })), chestsGot: dd.got ?? [], serverNow: t };
   }
 }

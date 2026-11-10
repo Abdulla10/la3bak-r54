@@ -72,9 +72,9 @@ function banner(root, a, b) { const el = document.createElement('div'); el.class
 /* ======================= عجلة الأكل ======================= */
 const FIMG = (id, c = '') => `<img class="fw-img ${c}" src="${ART}food-${id}.webp" alt="" draggable="false">`;
 const FW = { st: null, chip: 0, poll: 0, shownRound: 0, spinning: false, msg: '', auto: false, cur: { round: 0, list: [] }, prev: [], placing: false };
-const FW_H = 1.12; // نسبة ارتفاع المسرح إلى عرضه
-const FW_C = [50, 46]; // مركز العجلة (٪ من العرض/الارتفاع)
-const fwPos = (i, N) => { const a = (i / N) * Math.PI * 2; return [FW_C[0] + Math.sin(a) * 35, FW_C[1] - (Math.cos(a) * 35) / FW_H]; };
+const FW_POS = [[61.9, 22.1], [75.1, 39.0], [74.5, 60.0], [61.0, 74.2], [37.7, 74.2], [24.7, 59.9], [24.0, 39.0], [37.0, 22.2]]; // مراكز دواير رسمة العجلة (٪)
+const FW_HUB = [49.5, 48.2];
+const fwPos = (i, N) => FW_POS[i] || [50 + Math.sin((i / N) * Math.PI * 2) * 30, 50 - Math.cos((i / N) * Math.PI * 2) * 30];
 const stackHTML = (n) => `<span class="fw-stack">${Array.from({ length: n }, (_, k) => `<i style="--k:${k}"></i>`).join('')}</span>`;
 function foodHTML() {
   const s = FW.st; if (!s) return '<p class="cz-load">جاري التحميل…</p>';
@@ -83,8 +83,8 @@ function foodHTML() {
   const res = s.phase === 'show' && !FW.spinning ? s.result : null;
   const items = s.foods.map((f, i) => { const [x, y] = fwPos(i, N);
     return `<button type="button" class="fw-it${res === i ? ' win' : ''}" data-fw-item="${i}" style="left:${x}%;top:${y}%" ${s.phase !== 'bet' ? 'disabled' : ''} aria-label="${esc(f.name)} ${f.mult} أضعاف">${FIMG(f.id, 'fw-food')}<span class="fw-m">${f.mult} اضعاف</span><span class="fw-v"><b>${kf(s.totals[i])}</b>${COIN}</span>${s.mine[i] ? `<em>${kf(s.mine[i])}</em>` : ''}${hot === i && Math.max(...cnt) > 1 ? '<i class="fw-hot">Hot</i>' : ''}</button>`; }).join('');
-  const spokes = s.foods.map((_, i) => { const [x, y] = fwPos(i, N); return `<line x1="${FW_C[0]}" y1="${FW_C[1] * FW_H}" x2="${x}" y2="${y * FW_H}"/>`; }).join('');
-  const dots = s.foods.map((_, i) => { const [x, y] = fwPos(i, N); const mx = FW_C[0] + (x - FW_C[0]) * 0.62, my = (FW_C[1] + (y - FW_C[1]) * 0.62) * FW_H; return `<circle cx="${mx}" cy="${my}" r="1"/>`; }).join('');
+
+
   const hubLbl = s.phase === 'bet' ? 'حدد الوقت' : FW.spinning ? 'النتيجة قادمة' : 'وقت العرض';
   const veg = s.foods.map((f, i) => f.mult === 5 ? i : -1).filter((i) => i >= 0), meat = s.foods.map((f, i) => f.mult !== 5 ? i : -1).filter((i) => i >= 0);
   const mineSum = s.mine.reduce((a, b) => a + b, 0);
@@ -92,16 +92,17 @@ function foodHTML() {
   const modal = res !== null ? `<div class="fw-modal" role="dialog" aria-label="نتيجة الجولة"><span class="fw-mt">(${sec}) ثانية</span><div class="fw-mrow"><div class="fw-mtx"><h3>${FIMG(s.foods[res].id, 'fw-mi')} نتيجة الجولة <bdi>${nf(s.round)}</bdi></h3><p>رهانك في هذه الجولة: <b>${nf(mineSum)}</b></p><p>الفائز في هذه الجولة: <b>${nf(s.myWin || 0)}</b></p></div><img class="fw-mcat" src="${ART}fw-cat.webp" alt=""></div><h4>الفائز الأكبر لهذه الجولة</h4><div class="fw-pod">${pod}</div></div>` : '';
   return `<div class="cz cz-food" dir="rtl">
   <header class="fw-head"><button type="button" class="fw-ic" data-cz="fwhelp" aria-label="الشرح">?</button><h1 class="fw-ttl">عجلة الأكل</h1><span class="fw-rnd"><small>جولة</small><b>${nf(s.round)}</b></span><button type="button" class="fw-ic fw-x" data-cz="close" aria-label="إغلاق">✕</button></header>
-  <section class="fw-stage"><i class="fw-cloud c1"></i><i class="fw-cloud c2"></i><i class="fw-hill h1"></i><i class="fw-hill h2"></i>
-   <svg class="fw-frame" viewBox="0 0 100 ${100 * FW_H}" aria-hidden="true"><g class="fw-legs"><polygon points="47,${FW_C[1] * FW_H} 53,${FW_C[1] * FW_H} 33,${97 * FW_H} 23,${97 * FW_H}"/><polygon points="47,${FW_C[1] * FW_H} 53,${FW_C[1] * FW_H} 77,${97 * FW_H} 67,${97 * FW_H}"/><rect x="31" y="${80 * FW_H}" width="38" height="2.6" rx="1"/><rect x="12" y="${96.4 * FW_H}" width="26" height="3.2" rx="1.2"/><rect x="62" y="${96.4 * FW_H}" width="26" height="3.2" rx="1.2"/></g><g class="fw-spk">${spokes}</g><g class="fw-dots">${dots}</g></svg>
+  <section class="fw-stage" style="background-image:url(${ART}fw-wheel2.webp)">
+
    ${items}
-   <div class="fw-hub"><img class="fw-cat" src="${ART}fw-cat.webp" alt="" draggable="false"><small>${hubLbl}</small><b data-fw-sec>${s.phase === 'bet' || !FW.spinning ? sec + 's' : '…'}</b></div>
-   <button type="button" class="fw-side fw-salad" data-fw-group="${veg.join(',')}" ${s.phase !== 'bet' ? 'disabled' : ''}><span class="fw-bowl">${veg.slice(0, 3).map((i) => FIMG(s.foods[i].id)).join('')}</span><b>السلطة</b></button>
-   <button type="button" class="fw-side fw-pizza" data-fw-group="${meat.join(',')}" ${s.phase !== 'bet' ? 'disabled' : ''}><span class="fw-bowl">${meat.slice(0, 3).map((i) => FIMG(s.foods[i].id)).join('')}</span><b>البيتزا</b></button>
+   <div class="fw-hub" style="left:${FW_HUB[0]}%;top:${FW_HUB[1]}%"><img class="fw-cat" src="${ART}fw-cat.webp" alt="" draggable="false"><small>${hubLbl}</small><b data-fw-sec>${s.phase === 'bet' || !FW.spinning ? sec + 's' : '…'}</b></div>
+   <button type="button" class="fw-side fw-salad" data-fw-group="${veg.join(',')}" ${s.phase !== 'bet' ? 'disabled' : ''}><img class="fw-sideimg" src="${ART}fw-salad.webp" alt=""><b>السلطة</b></button>
+   <button type="button" class="fw-side fw-pizza" data-fw-group="${meat.join(',')}" ${s.phase !== 'bet' ? 'disabled' : ''}><img class="fw-sideimg" src="${ART}fw-pizza.webp" alt=""><b>البيتزا</b></button>
    </section>
   ${modal}<section class="fw-panel"><div class="fw-autot"><button type="button" role="switch" aria-checked="${FW.auto}" class="fw-sw${FW.auto ? ' on' : ''}" data-fw-auto aria-label="الرهان التلقائي"></button><span>وضع الرهان التلقائي (متابعة الجولة السابقة)</span></div>
    <div class="fw-chips" role="radiogroup" aria-label="قيمة الرهان">${s.chips.map((c, i) => `<button type="button" role="radio" aria-checked="${FW.chip === i}" class="fw-chip${FW.chip === i ? ' on' : ''}" data-fw-chip="${i}">${stackHTML(i + 1)}<b>${nf(c)}</b></button>`).join('')}<button type="button" class="fw-chip fw-rep" data-fw-repeat ${!FW.prev.length || s.phase !== 'bet' ? 'disabled' : ''}><span class="fw-repi">↻</span><b>وضع رهان</b></button></div></section>
   <section class="fw-red"><div class="fw-pills"><span><small>فائز اليوم</small><b>${nf(s.today)}</b></span><span><small>رهانك بالجولة</small><b>${nf(mineSum)}</b></span><span><small>العملات المتبقية</small><b>${COIN}${nf(s.coins)}</b></span></div>
+   <div class="fw-chests">${(s.chests || []).map((c, i) => { const got = (s.chestsGot || []).includes(i), ready = !got && s.today >= c.need; return `<button type="button" class="fw-chest${ready ? ' ready' : ''}${got ? ' got' : ''}" data-fw-chest="${i}" ${ready ? '' : 'disabled'} aria-label="صندوق ${kf(c.need)} مكافأته ${nf(c.reward)}"><img src="${ART}chest-${i + 1}.webp" alt="">${got ? '<i>✓</i>' : ''}<b>${kf(c.need)}</b></button>`; }).join('')}<span class="fw-cbar"><i style="width:${Math.min(100, Math.round((s.chests?.length ? (() => { const n = s.chests.map((c) => c.need); let k = n.findIndex((v) => s.today < v); if (k < 0) return 1; const lo = k ? n[k - 1] : 0; return (k + (s.today - lo) / (n[k] - lo)) / n.length; })() : 0) * 100))}%"></i></span></div>
    <p class="cz-msg" role="status">${esc(FW.msg)}</p>
    <div class="fw-hist"><small>النتيجة:</small><div>${s.history.map((h, k) => `<span class="${k === 0 ? 'new' : ''}">${FIMG(s.foods[h].id)}${k === 0 ? '<i>NEW</i>' : ''}</span>`).join('')}</div></div></section>
   <p class="cz-note">كل جولة 30 ثانية رهان. اختار قيمة الرهان واضغط على الأكلة. احتمال الأكلة أقل كل ما كان مضاعفها أكبر.</p></div>`;
@@ -135,7 +136,7 @@ function mount(root) {
   if (kind === 'slot') { root.innerHTML = slotHTML(); api('/api/slot').then((s) => { if (s.ok && root.isConnected) { SL.st = s; root.innerHTML = slotHTML(); } }); }
   if (kind === 'food') { root.innerHTML = foodHTML(); foodLoad(root); clearInterval(FW.poll); FW.poll = setInterval(() => { if (!root.isConnected) return clearInterval(FW.poll); if (FW.spinning || FW.placing) return; if (FW.st?.phase === 'bet' && FW.st.left > 1500) { FW.st.left -= 1000; const el = root.querySelector('[data-fw-sec]'); if (el) el.textContent = Math.ceil(FW.st.left / 1000) + 's'; if (Math.ceil(FW.st.left / 1000) % 5 === 0) foodLoad(root); return; } foodLoad(root); }, 1000); }
   root.addEventListener('click', async (e) => {
-    const b = e.target.closest('[data-cz],[data-fw-item],[data-fw-chip],[data-fw-auto],[data-fw-repeat],[data-fw-group]'); if (!b || b.disabled) return;
+    const b = e.target.closest('[data-cz],[data-fw-item],[data-fw-chip],[data-fw-auto],[data-fw-repeat],[data-fw-group],[data-fw-chest]'); if (!b || b.disabled) return;
     const a = b.dataset.cz;
     if (a === 'close') { SL.auto = false; history.length > 1 ? history.back() : ((globalThis.__LA3BAK_NAV__ || location).hash = '#/games'); return; }
     if (a === 'help') { const m = root.querySelector('[data-cz-msg]'); if (m) m.textContent = `50 خط. 3 رموز FREE = 8 لفات مجانية. 5 رموز JACKPOT = ${TIER_PCT[SL.bet]}% من الجاكبوت.`; return; }
@@ -146,6 +147,7 @@ function mount(root) {
     if (b.dataset.fwChip !== undefined) { FW.chip = Number(b.dataset.fwChip); root.innerHTML = foodHTML(); return; }
     if (b.dataset.fwAuto !== undefined) { FW.auto = !FW.auto; root.innerHTML = foodHTML(); return; }
     if (b.dataset.fwRepeat !== undefined) return placeBets(root, FW.prev);
+    if (b.dataset.fwChest !== undefined) { const r = await api('/api/foodwheel/chest', { i: Number(b.dataset.fwChest) }); if (r.ok) { FW.st = r; FW.msg = `فتحت الصندوق وأخذت ${nf(r.reward)} عملة 🎉`; } else FW.msg = r.error || 'تعذّر.'; if (!FW.spinning) root.innerHTML = foodHTML(); return; }
     if (b.dataset.fwGroup !== undefined) { const c = FW.st.chips[FW.chip]; return placeBets(root, b.dataset.fwGroup.split(',').map((i) => ({ item: Number(i), chip: c }))); }
     if (b.dataset.fwItem !== undefined) return placeBets(root, [{ item: Number(b.dataset.fwItem), chip: FW.st.chips[FW.chip] }]);
   });
@@ -219,28 +221,29 @@ html:has(.cz-ov[data-casino=food]) .cz-ov{background:#c3122f}
 .fw-ic{width:34px;height:34px;border-radius:50%;border:2px solid #ffffffcc;background:#ffffff26;color:#fff;font:900 17px/1 Arial,sans-serif;cursor:pointer}.fw-x{border:0;background:none;font-size:24px}
 .fw-ttl{margin:0;justify-self:center;padding:6px 26px;border-radius:99px;background:#1e3a8a;border:2px solid #9cc4ff;font:900 17px/1 Cairo,Tahoma,sans-serif;color:#fff;box-shadow:inset 0 0 0 2px #2f5bd6}
 .fw-rnd{display:flex;flex-direction:column;align-items:center;padding:3px 12px;border-radius:12px;background:#1e3a8a;border:1.5px solid #9cc4ff;line-height:1.1}.fw-rnd small{font-size:10px;opacity:.85}.fw-rnd b{font:900 13px/1 Arial,sans-serif}
-.fw-stage{position:relative;width:100%;aspect-ratio:1/1.12;container-type:inline-size;overflow:hidden;background:linear-gradient(180deg,#2f7fe0,#5fb2f5 35%,#a8dcff 70%,#d4f0ff)}
-.fw-cloud{position:absolute;width:30%;height:9%;border-radius:99px;background:#fff;opacity:.85;box-shadow:12cqw -3cqw 0 -1cqw #fff,-8cqw 1cqw 0 -1.5cqw #fff}.fw-cloud.c1{left:4%;top:56%}.fw-cloud.c2{right:-6%;top:44%;opacity:.7}
+.fw-stage{position:relative;width:100%;aspect-ratio:811/756;container-type:inline-size;overflow:hidden;background:#5fb2f5 center/100% 100% no-repeat}
+
 .fw-hill{position:absolute;bottom:-10%;width:90%;height:34%;border-radius:50% 50% 0 0;background:linear-gradient(180deg,#7fd36a,#3f9e3a)}.fw-hill.h1{left:-30%}.fw-hill.h2{right:-35%;height:30%;background:linear-gradient(180deg,#9be27c,#4fae45)}
-.fw-frame{position:absolute;inset:0;width:100%;height:100%}.fw-legs polygon,.fw-legs rect{fill:#b8763f;stroke:#7a4318;stroke-width:.6}.fw-spk line{stroke:#8b4a1f;stroke-width:2.4;stroke-linecap:round}.fw-dots circle{fill:#ffd34d;stroke:#a8650e;stroke-width:.3}
-.fw-it{position:absolute;width:24cqw;height:24cqw;min-height:0;transform:translate(-50%,-50%);border-radius:50%;border:1.1cqw solid #8b4a1f;padding:0;cursor:pointer;color:#5a2a00;background:linear-gradient(180deg,#fff6d8 0 46%,#ffe96b 46%,#ffde3d);box-shadow:0 1cqw 0 #6e3612,inset 0 -1cqw 0 #f6c823;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:4.2cqw;gap:1.6cqw;overflow:visible;transition:box-shadow .1s}
+
+.fw-it{position:absolute;width:14cqw;height:14cqw;min-height:0;transform:translate(-50%,-50%);border-radius:50%;border:0;padding:1cqw 0 0;cursor:pointer;color:#5a2a00;background:none;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.5cqw;overflow:visible;transition:box-shadow .1s}
 .fw-it:disabled{cursor:default;opacity:1!important;color:#5a2a00}
-.fw-food{position:absolute;left:50%;top:-22%;width:38%;transform:translateX(-50%);filter:drop-shadow(0 .6cqw .6cqw #0005);pointer-events:none}
-.fw-m{font-size:3.3cqw;font-weight:800;line-height:1;color:#5a2a00!important}.fw-it.win .fw-m{color:#fff!important}.fw-v{direction:ltr;display:flex;align-items:center;gap:.8cqw}.fw-v b{font:900 4.3cqw/1 Arial,sans-serif;color:#3a1800}.fw-v .cz-coin{width:3.6cqw;height:3.6cqw}
-.fw-it em{position:absolute;bottom:-3.2cqw;left:50%;transform:translateX(-50%);font-style:normal;font-size:2.8cqw;font-weight:900;background:#16a314;color:#fff;border-radius:99px;padding:.3cqw 1.4cqw;border:.4cqw solid #fff;direction:ltr}
-.fw-hot{position:absolute;top:-2%;right:-14%;transform:rotate(-8deg);font:italic 900 3.4cqw/1 Arial,sans-serif;color:#fff;background:#e0182d;padding:.8cqw 1.6cqw;border-radius:1cqw 1cqw 1cqw 0;box-shadow:0 .5cqw 0 #8a0010}
-.fw-it.lit{border-color:#ff2440;box-shadow:0 0 0 1.2cqw #ff2440aa,0 0 5cqw #ff2440}
-.fw-it.win{border-color:#b80018;background:linear-gradient(180deg,#ff6b78 0 46%,#ff3045 46%,#e0182d);color:#fff;box-shadow:0 0 0 1.2cqw #ffe14d,0 0 6cqw #ff2440;animation:fwwin .5s ease-in-out infinite alternate}.fw-it.win .fw-v b{color:#fff}@keyframes fwwin{to{transform:translate(-50%,-50%) scale(1.07)}}
-.fw-hub{position:absolute;left:50%;top:46%;width:23cqw;height:23cqw;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 50% 70%,#a0582a,#6e3612);border:1cqw solid #5a2a0c;box-shadow:0 0 0 .8cqw #c98a3a,inset 0 0 0 1cqw #0000;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:3cqw;color:#ffe9b0;z-index:1}
-.fw-hub::before{content:"";position:absolute;inset:-.4cqw;border-radius:50%;border:1.2cqw dotted #ffe14d;pointer-events:none}
-.fw-cat{position:absolute;left:50%;bottom:47%;width:46%;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 .6cqw .6cqw #0006)}
+.fw-food{position:static;width:6.4cqw;height:6.4cqw;object-fit:contain;filter:drop-shadow(0 .4cqw .4cqw #0005);pointer-events:none}
+.fw-v{direction:ltr;display:flex;align-items:center;gap:.6cqw}.fw-v b{font:900 2.9cqw/1 Arial,sans-serif;color:#3a1800}.fw-v .cz-coin{width:2.5cqw;height:2.5cqw}.fw-m{font-size:2.15cqw;font-weight:900;line-height:1;color:#6a3208!important;white-space:nowrap}.fw-it.win .fw-m{color:#fff!important}
+.fw-it em{position:absolute;top:-1cqw;left:-3cqw;font-style:normal;font-size:2.4cqw;font-weight:900;background:#16a314;color:#fff;border-radius:99px;padding:.2cqw 1.2cqw;border:.3cqw solid #fff;direction:ltr;z-index:1}
+.fw-hot{position:absolute;top:-8%;right:-22%;transform:rotate(-8deg);font:italic 900 2.8cqw/1 Arial,sans-serif;color:#fff;background:#e0182d;padding:.8cqw 1.6cqw;border-radius:1cqw 1cqw 1cqw 0;box-shadow:0 .5cqw 0 #8a0010}
+.fw-it.lit{box-shadow:0 0 0 1.4cqw #ff2440,0 0 6cqw #ff2440}
+.fw-it.win{background:radial-gradient(circle,#ff4d5ecc 0 60%,#e0182dcc 61%);color:#fff;box-shadow:0 0 0 1.4cqw #ffe14d,0 0 7cqw #ff2440;animation:fwwin .5s ease-in-out infinite alternate}.fw-it.win .fw-v b{color:#fff}@keyframes fwwin{to{transform:translate(-50%,-50%) scale(1.07)}}
+.fw-hub{position:absolute;width:23cqw;height:23cqw;transform:translate(-50%,-50%);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:2.6cqw;color:#ffe9b0;z-index:1}
+
+.fw-cat{position:absolute;left:50%;bottom:42%;width:52%;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 .6cqw .6cqw #0006)}
 .fw-hub small{position:relative;font-size:2.9cqw;font-weight:800;line-height:1.2;color:#ffe9b0!important}.fw-hub b{position:relative;font:900 4.6cqw/1 Arial,sans-serif;color:#fff!important}
-.fw-side{position:absolute;bottom:1.5%;width:23%;display:flex;flex-direction:column;align-items:center;gap:0;border:0;background:none;padding:0;cursor:pointer}.fw-side:disabled{cursor:default;filter:saturate(.8)}.fw-salad{left:2%}.fw-pizza{right:2%}
-.fw-bowl{position:relative;width:76%;aspect-ratio:1.3;border-radius:0 0 50% 50%/0 0 70% 70%;background:linear-gradient(180deg,#e8a24a,#b8651d);border-top:1.2cqw solid #ffd08a;display:flex;justify-content:center;align-items:flex-start}
-.fw-pizza .fw-bowl{border-radius:50%;aspect-ratio:1.15;background:radial-gradient(circle,#ffdb6b 0 55%,#e6a23a 56%,#c47a2c);border:0}
-.fw-bowl .fw-img{width:44%;margin:-14% -6% 0;filter:drop-shadow(0 .4cqw .4cqw #0005)}
+.fw-side{position:absolute;bottom:1%;width:22%;display:flex;flex-direction:column;align-items:center;border:0;background:none;padding:0;cursor:pointer;z-index:1}.fw-side:disabled{cursor:default}.fw-salad{left:1%}.fw-pizza{right:1%}.fw-sideimg{width:100%;filter:drop-shadow(0 1cqw 1cqw #0006);pointer-events:none}
+
+
+.fw-chests{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px;padding-bottom:4px}.fw-cbar{position:absolute;left:8%;right:8%;bottom:26px;height:6px;border-radius:9px;background:#5a0614;z-index:0}.fw-cbar i{position:absolute;top:0;bottom:0;right:0;border-radius:9px;background:linear-gradient(270deg,#ffe14d,#ff9a3c)}
+.fw-chest{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;padding:0;cursor:default}.fw-chest img{width:78%;height:54px;object-fit:contain;filter:drop-shadow(0 3px 3px #0006)}.fw-chest b{font:900 13px/1 Arial,sans-serif;color:#fff!important;direction:ltr}.fw-chest.ready{cursor:pointer;animation:fwch .7s ease-in-out infinite alternate}.fw-chest.ready img{filter:drop-shadow(0 0 8px #ffe14d)}@keyframes fwch{to{transform:translateY(-4px) scale(1.05)}}.fw-chest.got img{filter:grayscale(.6) brightness(.8)}.fw-chest i{position:absolute;top:18%;font:normal 900 20px/1 Arial,sans-serif;color:#7dff6b;text-shadow:0 1px 3px #000}.fw-chest:disabled{opacity:1}
 .fw-side b{position:relative;margin-top:-1cqw;padding:.8cqw 3cqw;border-radius:2cqw;background:#fff7e6;border:.5cqw solid #8b4a1f;color:#4a2200!important;font-size:3.8cqw;font-weight:900}
-.cz-food{container-type:inline-size}.fw-modal{position:absolute;left:3%;right:3%;top:calc(env(safe-area-inset-top) + 56px + 60cqw);z-index:3;padding:2cqw 4cqw 3cqw;border-radius:5cqw 5cqw 0 0;background:linear-gradient(180deg,#3d6bff,#2a3fd6 60%,#2234b8);border:.6cqw solid #8fb0ff;color:#fff;animation:fwm .3s ease both}@keyframes fwm{from{transform:translateY(30%);opacity:0}}
+.cz-food{container-type:inline-size}.fw-modal{position:absolute;left:3%;right:3%;top:calc(env(safe-area-inset-top) + 56px + 50cqw);z-index:3;padding:2cqw 4cqw 3cqw;border-radius:5cqw 5cqw 0 0;background:linear-gradient(180deg,#3d6bff,#2a3fd6 60%,#2234b8);border:.6cqw solid #8fb0ff;color:#fff;animation:fwm .3s ease both}@keyframes fwm{from{transform:translateY(30%);opacity:0}}
 .fw-mt{font-size:3.6cqw;font-weight:800}
 .fw-mrow{display:flex;align-items:center;gap:2cqw}.fw-mtx{flex:1}.fw-mtx h3{display:flex;align-items:center;gap:1.5cqw;margin:0 0 1cqw;font-size:4.4cqw}.fw-mi{width:7cqw}.fw-mtx p{margin:.4cqw 0;font-size:3.6cqw}.fw-mtx b{color:#ffe14d}
 .fw-mcat{width:20cqw;filter:drop-shadow(0 1cqw 1cqw #0005)}
