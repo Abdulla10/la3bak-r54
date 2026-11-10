@@ -158,11 +158,35 @@ export async function create(canvas) {
   resetBallSpin(st);
   return st;
 }
-function resetBallSpin(st) { st.q.setFromAxisAngle(new T.Vector3(1, 0, 0), 0.55).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 1, 0), -Math.PI / 2)); st.lastB = null; }
+function resetBallSpin(st) {
+  // كرة المتجر: وجه الصورة قدام الكاميرا. الكرة العادية: الفتحات فوق
+  if (st.curArt) st.q.setFromAxisAngle(new T.Vector3(1, 0, 0), 0.2); else st.q.setFromAxisAngle(new T.Vector3(1, 0, 0), 0.55).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 1, 0), -Math.PI / 2));
+  st.lastB = null;
+}
+/* صورة كرة المتجر (نص الكرة من قدام) → قوام كروي كامل: الوجه قدام، والخلف نفس الصورة مقلوبة */
+const ART = new Map();
+function artMaterial(st, art) {
+  let m = ART.get(art); if (m) return m.ready ? m.mat : null;
+  m = { ready: false, mat: null }; ART.set(art, m);
+  loadImg(art).then((im) => {
+    if (!im) return;
+    const S = 320, src = document.createElement('canvas'); src.width = src.height = S; const sg = src.getContext('2d', { willReadFrequently: true }); sg.drawImage(im, 0, 0, S, S); const sd = sg.getImageData(0, 0, S, S).data;
+    const W = 1024, H = 512, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); const out = g.createImageData(W, H); const od = out.data;
+    for (let r = 0; r < H; r++) { const th = Math.PI * (r + 0.5) / H, st_ = Math.sin(th), y = Math.cos(th);
+      for (let k = 0; k < W; k++) { const ph = 2 * Math.PI * (k + 0.5) / W; let x = -Math.cos(ph) * st_, yy = y; const z = Math.sin(ph) * st_;
+        if (z < 0) { x = -x; yy = -yy; }
+        const sx = Math.min(S - 1, Math.max(0, Math.round((x * 0.97 + 1) / 2 * (S - 1)))), sy = Math.min(S - 1, Math.max(0, Math.round((1 - yy * 0.97) / 2 * (S - 1))));
+        const si = (sy * S + sx) * 4, oi = (r * W + k) * 4; od[oi] = sd[si]; od[oi + 1] = sd[si + 1]; od[oi + 2] = sd[si + 2]; od[oi + 3] = 255; } }
+    g.putImageData(out, 0, 0);
+    const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4;
+    m.mat = new T.MeshPhysicalMaterial({ map: t, roughness: 0.25, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.04 }); m.ready = true; st.onReady?.();
+  });
+  return null;
+}
 
 let ax = null, qd = null;
 /** حالة وحدة للرسم. pins: [{x,y,st,tilt,fx,fy,z,rot}] (سم)، ball: {x,y,gutter,on} */
-export function draw(st, { pins, ball, ci, follow, guide }) {
+export function draw(st, { pins, ball, ci, follow, guide, art }) {
   if (!ax) { ax = new T.Vector3(); qd = new T.Quaternion(); }
   const { camera } = st;
   // الدبابيس
@@ -181,7 +205,9 @@ export function draw(st, { pins, ball, ci, follow, guide }) {
   });
   // الكرة: تتدحرج فعلياً (الفتحات تلف)
   const b = st.ball;
-  b.material = st.ballMats[ci % 4]; st.ballM.material = b.material;
+  const am = art ? artMaterial(st, art) : null; const want = am ? art : '';
+  if (want !== st.curArt) { st.curArt = want; resetBallSpin(st); }
+  b.material = am || st.ballMats[ci % 4]; st.ballM.material = b.material;
   b.visible = !!ball?.on; st.ballM.visible = b.visible && !ball.gutter;
   if (ball?.on) {
     const yc = ball.gutter ? BR * M - 0.07 : BR * M;

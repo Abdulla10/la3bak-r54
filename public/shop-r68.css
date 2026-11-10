@@ -113,3 +113,7 @@ html body .ids-card,html body .ids-card:hover{background:linear-gradient(180deg,
 .cue68-thumb img{width:150%;max-width:none;transform:rotate(-32deg);filter:drop-shadow(0 6px 8px #000a)}
 .r23-lux-preview .cue68-thumb,.r23-preview-sheet .cue68-thumb{min-height:130px}.r23-preview-sheet .cue68-thumb img{width:100%;transform:rotate(-10deg)}
 .cue68-thumb img{width:200%}.r23-lux-preview:has(.cue68-thumb)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}
+.bb68-thumb{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:90px;background:radial-gradient(circle at 50% 45%,#3a2a7a,#120a30 72%);border-radius:12px}
+.bb68-thumb img{width:78%;height:auto;filter:drop-shadow(0 8px 10px #000b)}
+.r23-lux-preview .bb68-thumb{min-height:170px}.r23-lux-preview .bb68-thumb img{width:150px}
+.r23-lux-preview:has(.bb68-thumb)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}

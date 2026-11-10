@@ -3,7 +3,7 @@
 import type { ShopItem, Rarity } from './catalog.js';
 const X = (id: string, slot: ShopItem['slot'], name: string, icon: string, price: number, currency: 'coins' | 'gems', rarity: Rarity, desc: string, css: string): ShopItem =>
   ({ id, slot, name, icon, price, currency, desc, css, permanent: true, rarity, set: 'lux' });
-export const LUX_SET = { lux: 'مجموعة الفخامة', cues: 'عصي البلياردو' };
+export const LUX_SET = { lux: 'مجموعة الفخامة', cues: 'عصي البلياردو', balls: 'كور البولينغ' };
 export const LUX_ITEMS: ShopItem[] = [
   // إطارات
   X('lux-f-rose', 'frame', 'إطار الوردة الكريستالية', '💍', 800, 'gems', 'rare', 'كريستال وردي بفصوص لامعة.', 'lux-rose'),
@@ -389,4 +389,19 @@ export const CUE_ITEMS: ShopItem[] = [
   CUE('10', 'عصا النيون', 550_000, 'ultra', 'كربون أسود بخطوط نيون بنفسجية.'),
   CUE('08', 'عصا التنين الذهبي', 1_500_000, 'ultra', 'تنين ذهبي ملتف على خشب أحمر وياقوتة.'),
   CUE('12', 'عصا المجرة', 2_000_000, 'ultra', 'مجرة بنفسجية بنجوم ذهبية وكريستالة.'),
+];
+
+/* R68z24: كور البولينغ (صور المالك). تطلع بلعبة البولينغ بدال الكرة العادية، والخصم يشوفها. */
+const BALL = (n: string, name: string, coins: number, rarity: Rarity, desc: string): ShopItem => ({ id: `bball-${n}`, slot: 'bball', name, icon: '🎳', price: Math.round(coins / 20), currency: 'gems', desc, css: n, art: `/assets/games68/balls/ball${n}.webp`, permanent: true, rarity, set: 'balls' });
+export const BALL_ITEMS: ShopItem[] = [
+  BALL('07', 'كرة زهر الساكورا', 20_000, 'rare', 'وردي لامع بزهر الساكورا.'),
+  BALL('06', 'كرة الكريستال الثلجي', 30_000, 'rare', 'كريستال أزرق بندفة ثلج.'),
+  BALL('05', 'كرة الزمرد', 120_000, 'legendary', 'زمرد أخضر بعروق ذهبية.'),
+  BALL('03', 'كرة المجرة الزرقا', 150_000, 'legendary', 'مجرة زرقا ونجوم لامعة.'),
+  BALL('10', 'كرة الكوكب', 200_000, 'legendary', 'فضاء بنفسجي وكوكب بحلقات.'),
+  BALL('02', 'كرة العنقاء', 400_000, 'ultra', 'أحمر ناري وطائر العنقاء.'),
+  BALL('08', 'كرة النمر الأسود', 450_000, 'ultra', 'أسود لامع ونمر ذهبي.'),
+  BALL('01', 'كرة التاج الملكي', 550_000, 'ultra', 'رخام أسود وتاج ذهبي بأغصان الغار.'),
+  BALL('04', 'كرة التنين البنفسجي', 1_500_000, 'ultra', 'تنين بنفسجي ملتف بالبرق.'),
+  BALL('09', 'كرة الألماس الذهبي', 2_000_000, 'ultra', 'ألماس ذهبي مقطّع يلمع.'),
 ];

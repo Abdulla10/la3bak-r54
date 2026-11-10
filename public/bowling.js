@@ -4,7 +4,7 @@ import { faceHtml } from './characters.js?v=shell-r6';
 import { avatarArt } from './avatars.js?v=r67ac';
 import { isOn as soundOn } from './sfx.js?v=shell-r6';
 import { simulate, PINS, HALF, HP, BR, normShot, BALL_Y0, ballPath } from './bowling-physics.js?v=r68z23';
-import * as R3 from './bowling3d.js?v=r68z23';
+import * as R3 from './bowling3d.js?v=r68z24';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const BW = { room: '', x0: 0, anim: null, shown: -1, busy: false, send: null, hold: 0, drag: null, mark: '' };
@@ -12,6 +12,8 @@ export const uiKey = () => [BW.busy].join('|');
 const nm = (room, id) => room.players.find((p) => p.id === id)?.name ?? 'لاعب';
 const faceOf = (room, id, i, size) => { const rp = room.players.find((q) => q.id === id); return rp?.av ? avatarArt(rp.av, size) : rp?.avatar ? `<img src="/api/room-avatar?code=${esc(room.code)}&id=${encodeURIComponent(id)}&v=${rp.avatar}" alt="" decoding="async">` : faceHtml(i, size); };
 const BALL_COL = ['#1f5fe0', '#e0262f', '#16a34a', '#8b2ff0'];
+/** كرة اللاعب من المتجر (لو مجهّز وحدة) */
+const artOf = (room, id) => { const a = room?.players?.find((p) => p.id === id)?.equipped?.bball?.art; return typeof a === 'string' && /^\/assets\/games68\/balls\/ball\d{2}\.webp$/.test(a) ? a : ''; };
 const CW = 720, CH = 1220;
 
 /* بطاقة النقاط: لكل إطار خانات الرميات والمجموع */
@@ -61,9 +63,10 @@ const VPX = 366, HOR = 85.75, F = 1826, CAMH = 135.4, CAMY = 71;
 const A = '/assets/games68/';
 const BALL_IMG = ['bowl-ball-blue', 'bowl-ball-red', 'bowl-ball-green', 'bowl-ball-purple'];
 function P3(x, y, z) { const d = Math.max(30, y - CAMY); return { x: VPX + F * x / d, y: HOR + F * (CAMH - z) / d, s: F / d }; }
+const imgAbs = (src) => { let i = IMG[src]; if (!i) { i = IMG[src] = new Image(); i.decoding = 'async'; i.src = src; i.onload = () => BW.repaint?.(); } return i.complete && i.naturalWidth ? i : null; };
 const IMG = {}; const img = (n) => { const src = A + n + '.webp'; let i = IMG[src]; if (!i) { i = IMG[src] = new Image(); i.decoding = 'async'; i.src = src; i.onload = () => BW.repaint?.(); } return i.complete && i.naturalWidth ? i : null; };
 
-function drawScene(ctx, zoom, pins, ball, ci) {
+function drawScene(ctx, zoom, pins, ball, ci, art) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = '#0b0d22'; ctx.fillRect(0, 0, CW, CH);
   ctx.translate(VPX, HOR); ctx.scale(zoom, zoom); ctx.translate(-VPX, -HOR);
@@ -73,8 +76,8 @@ function drawScene(ctx, zoom, pins, ball, ci) {
   const items = pins.filter((p) => p.st !== 2 || (p.y < HP + 140 && Math.abs(p.x) < HALF + 26)).map((p) => ({ y: p.y, draw: () => drawPin(ctx, p) }));
   // الانعكاس على الخشب اللامع
   for (const p of pins) if (p.st === 0 && Math.abs(p.x) < HALF) reflectPin(ctx, p);
-  if (ball && ball.on && !ball.gutter) reflectBall(ctx, ball, ci);
-  if (ball && ball.on) items.push({ y: ball.y, draw: () => drawBall(ctx, ball, ci) });
+  if (ball && ball.on && !ball.gutter) reflectBall(ctx, ball, ci, art);
+  if (ball && ball.on) items.push({ y: ball.y, draw: () => drawBall(ctx, ball, ci, art) });
   items.sort((a, b) => b.y - a.y).forEach((it) => it.draw());
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
@@ -115,15 +118,15 @@ function reflectPin(ctx, p) {
   const b = P3(p.x, p.y, 0); const h = 38 * b.s; const w = h * up.naturalWidth / up.naturalHeight;
   ctx.save(); ctx.globalAlpha = 0.16; ctx.translate(b.x, b.y); ctx.scale(1, -0.55); ctx.drawImage(up, -w / 2, -h, w, h); ctx.restore();
 }
-function reflectBall(ctx, b, ci) {
-  const im = img(BALL_IMG[ci % 4]); if (!im) return;
+function reflectBall(ctx, b, ci, art) {
+  const im = (art && imgAbs(art)) || img(BALL_IMG[ci % 4]); if (!im) return;
   const g = P3(b.x, b.y, 0), c = P3(b.x, b.y, BR); const r = BR * c.s;
   ctx.save(); ctx.globalAlpha = 0.2; ctx.translate(c.x, g.y + (g.y - c.y) * 0.55); ctx.scale(1, -0.55); ctx.drawImage(im, -r, -r, 2 * r, 2 * r); ctx.restore();
 }
-function drawBall(ctx, b, ci) {
+function drawBall(ctx, b, ci, art) {
   const g = P3(b.x, b.y, 0), c = P3(b.x, b.y, b.gutter ? BR * 0.45 : BR); const r = BR * c.s;
   ctx.fillStyle = '#0007'; ctx.beginPath(); ctx.ellipse(c.x, g.y, r * 0.9, r * 0.25, 0, 0, 7); ctx.fill();
-  const im = img(BALL_IMG[ci % 4]);
+  const im = (art && imgAbs(art)) || img(BALL_IMG[ci % 4]);
   if (!im) { ctx.fillStyle = BALL_COL[ci % 4]; ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, 7); ctx.fill(); return; }
   ctx.save(); ctx.translate(c.x, c.y); ctx.rotate((b.y - BALL_Y0) / (2 * Math.PI * BR) * 0.22); ctx.drawImage(im, -r, -r, 2 * r, 2 * r); ctx.restore();
 }
@@ -136,17 +139,17 @@ function ensure3D() {
   if (BW.r3 || BW.r3load || BW.no3d) return;
   if (!R3.supported()) { BW.no3d = true; return; }
   const c = document.createElement('canvas'); c.className = 'bw-cv bw-3d'; c.setAttribute('aria-label', 'مسار البولينغ');
-  BW.r3load = R3.create(c).then((st) => { BW.r3 = st; BW.r3load = null; R3.snapCamera(st); BW.mount?.(); }).catch(() => { BW.no3d = true; BW.r3load = null; });
+  BW.r3load = R3.create(c).then((st) => { BW.r3 = st; st.onReady = () => BW.repaint?.(); BW.r3load = null; R3.snapCamera(st); BW.mount?.(); }).catch(() => { BW.no3d = true; BW.r3load = null; });
 }
 const toPins3 = (fr) => fr.p.map(([x, y, st, tilt, fx, fy, z, rot]) => ({ x, y, st, tilt, fx, fy, dir: fx, z, rot }));
 function present(c, o) {
   if (BW.r3 && c === BW.r3.canvas) { R3.draw(BW.r3, o); return; }
   const zoom = o.follow && o.ball?.on ? 1 + 1.25 * Math.min(1, Math.max(0, (o.ball.y - 700) / 1000)) ** 1.4 : 1;
-  drawScene(c.getContext('2d'), zoom, o.pins, o.ball, o.ci);
+  drawScene(c.getContext('2d'), zoom, o.pins, o.ball, o.ci, o.art);
 }
 function idleState(g, room) {
   const myTurn = g.phase === 'aim' && g.turnId === room.you; const ti = Math.max(0, g.players.indexOf(g.turnId));
-  return { pins: restPins(g.standing), ball: { x: myTurn ? BW.x0 : 0, y: BALL_Y0, on: g.phase === 'aim' }, ci: ti, follow: false, guide: BW.guide };
+  return { pins: restPins(g.standing), ball: { x: myTurn ? BW.x0 : 0, y: BALL_Y0, on: g.phase === 'aim' }, ci: ti, art: artOf(room, g.turnId), follow: false, guide: BW.guide };
 }
 function paintIdle(cv, g, room) { present(cv, idleState(g, room)); }
 
@@ -167,7 +170,7 @@ export function afterRender(view, room, send) {
     const first = BW.shown < 0; BW.shown = g.shotNo;
     if (!first && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const r = simulate(g.last.before, g.last.shot, true);
-      BW.anim = { frames: r.frames, t0: performance.now(), kmh: Math.round((560 + g.last.shot.power * 380) * 0.036), ci: Math.max(0, g.players.indexOf(g.last.by)), mark: g.last.mark, n: g.last.knocked.length, by: g.last.by };
+      BW.anim = { frames: r.frames, t0: performance.now(), kmh: Math.round((560 + g.last.shot.power * 380) * 0.036), ci: Math.max(0, g.players.indexOf(g.last.by)), art: artOf(room, g.last.by), mark: g.last.mark, n: g.last.knocked.length, by: g.last.by };
       BW.guide = null; if (BW.r3) R3.newThrow(BW.r3);
     }
   } else if (!g.last) BW.shown = g.shotNo;
@@ -185,7 +188,7 @@ export function afterRender(view, room, send) {
       const k = Math.floor((performance.now() - A.t0) / (1000 / 60)); const fr = A.frames[Math.min(k, A.frames.length - 1)];
       const b = { x: fr.b[0], y: fr.b[1], gutter: !!fr.b[2], on: !!fr.b[3] };
       sound(A, fr, k);
-      present(c, { pins: toPins3(fr), ball: b, ci: A.ci, follow: true, guide: null });
+      present(c, { pins: toPins3(fr), ball: b, ci: A.ci, art: A.art, follow: true, guide: null });
       if (A.shakeAt) { const e = performance.now() - A.shakeAt; if (e < 450) { const m = 9 * (1 - e / 450); c.style.transform = `translate(${(Math.random() - .5) * m}px,${(Math.random() - .5) * m}px)`; } else c.style.transform = ''; }
       if (k >= A.frames.length - 1) {
         if (!A.endAt) { A.endAt = performance.now(); if (A.mark === 'strike') A.shakeAt = performance.now(); A.banT = A.mark === 'strike' ? 'STRIKE!' : A.mark === 'spare' ? 'SPARE' : A.mark === 'gutter' ? 'مجرى 😬' : `${A.n} ${A.n === 1 ? 'دبوس' : 'دبابيس'}`; showBan(A.banT, A.mark || 'n'); }
