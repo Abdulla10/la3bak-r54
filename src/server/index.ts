@@ -82,7 +82,7 @@ import { ProfileSocial, validProfileSocial, wireProfileSocialRoutes } from './pr
 import { OwnerPlayerTools } from './owner-player-tools.js';
 import { SocialRooms, validSocialRooms } from './social-rooms.js';
 import { SocialVoice } from './social-voice.js';
-import { Backups } from './backup-r61.js';
+import { Backups, tarGz } from './backup-r61.js';
 import { WebPush } from './webpush-r62.js';
 import { DailyStreak } from './daily-streak-r62.js';
 import { TribeWar, WAR_FUEL } from './tribe-war-r62.js';
@@ -109,6 +109,7 @@ import { OwnerSecrets, checkAnthropicKey } from './secrets-r69.js';
 import { AntiCheat, CHEAT_NAMES } from './anticheat-r69.js';
 import { Ratings } from './rating-r69.js';
 import { Passkeys, PasskeyError } from './passkeys-r69.js';
+import { Offsite, applyPendingRestore, stageRestore, checkArchive } from './offsite-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -1202,6 +1203,9 @@ export async function createApp(
   });
   /* R61: نسخة احتياطية يومية (داخل مجلد البيانات/backups) — BACKUP_ENABLED=0 يطفيها، BACKUP_KEEP عدد النسخ، BACKUP_MEDIA=1 يضيف الصور */
   const backups = cfg.walletFile && process.env.BACKUP_ENABLED !== '0' ? new Backups({ dir: path.dirname(cfg.walletFile), keep: Number(process.env.BACKUP_KEEP) || 14, media: process.env.BACKUP_MEDIA === '1', log, extraFiles: () => [cfg.walletFile, boardFile, accFile, platFile, economyFile, progressionFile, shopFile, idFile, giftFile, cityFile, comFile, accountToolsFile, socialFile, socialRoomsFile, profileSocialFile, missionsFile, rankRewardsFile, supportFile, outboxFile, sessionsFile, paymentsFile, vipMembershipFile, cpFile].filter((v): v is string => !!v) }) : null;
+  /* R69zp: نسخة مشفّرة خارج السيرفر بعد كل نسخة */
+  const offsite = new Offsite(() => { const g = (n: Parameters<typeof ownerSecrets.get>[0]) => ownerSecrets.get(n); const endpoint = g('BACKUP_S3_ENDPOINT'), bucket = g('BACKUP_S3_BUCKET'), keyId = g('BACKUP_S3_KEY_ID'), secret = g('BACKUP_S3_SECRET'), password = g('BACKUP_PASSWORD'); return endpoint && bucket && keyId && secret && password ? { endpoint, bucket, keyId, secret, password, region: g('BACKUP_S3_REGION') || 'auto' } : null; });
+  if (backups) { const orig = backups.run.bind(backups); (backups as { run: typeof orig }).run = (reason = 'schedule') => { const info = orig(reason); if (offsite.configured()) { const file = path.join(backups.out, info.name); void offsite.upload(info.name, readFileSync(file)).then(() => log('offsite_done', { name: info.name })).catch((e) => { log('offsite_failed', { error: String((e as Error).message).slice(0, 120) }); try { arena.alert('big', '☁️ النسخة السحابية فشلت', String((e as Error).message).slice(0, 160), 'offsite-' + new Date().toISOString().slice(0, 10)); } catch { /* */ } }); } return info; }; }
   backups?.start(Number(process.env.BACKUP_FIRST_DELAY_MS) || 120_000);
   /* R63: عملة وحدة — الجواهر تتحول لعملات (جوهرة = 20 عملة). أول مرة: نسخة احتياطية قبل التحويل. وبعدها كل دقيقة أي جواهر جديدة (جوايز قديمة) تتحول. */
   const SINGLE = process.env.SINGLE_CURRENCY !== '0';
@@ -1792,6 +1796,35 @@ export async function createApp(
     functionalHttp.add('GET', '/api/admin/cheats', () => ({ ok: true, held: antiCheat.heldCount(), list: antiCheat.list().map((x) => ({ ...x, name: accounts.nameOf(x.id) || 'لاعب', displayId: accounts.displayPlayerId(x.id) ?? '' })) }), 'owner');
     functionalHttp.add('POST', '/api/admin/cheats/clear', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(antiCheat.clear(id, actor?.name ?? 'المالك'), 'اللاعب مو بالقائمة.'); if (actor) admin.audit(actor, 'cheat.clear', id, 'شال إيقاف الجوائز'); return { ok: true }; }, 'owner');
     functionalHttp.add('GET', '/api/rating', ({ user, url }) => { const g = String(url.searchParams.get('game') ?? ''); adminNeed(!!registry.get(g), 'لعبة غير معروفة.'); return { ok: true, me: ratings.view(g, user.id), top: ratings.top(g, 10).map((x) => ({ name: accounts.nameOf(x.id) || 'لاعب', rating: x.rating, games: x.games, tier: x.name, icon: x.icon, me: x.id === user.id })) }; });
+    /* R69zp: النسخ السحابية والاسترجاع */
+    functionalHttp.add('GET', '/api/admin/offsite', async () => { let remote: { key: string; size: number; at: number }[] = [], remoteErr = ''; if (offsite.configured()) { try { remote = (await offsite.list()).slice(0, 30); } catch (e) { remoteErr = String((e as Error).message).slice(0, 160); } }
+      const host = (() => { try { return new URL(ownerSecrets.get('BACKUP_S3_ENDPOINT')).host; } catch { return ''; } })();
+      return { ok: true, configured: offsite.configured(), host, bucket: ownerSecrets.get('BACKUP_S3_BUCKET'), lastUpload: offsite.lastUpload, lastError: offsite.lastError, uploading: offsite.uploading, remote: remote.map((x) => ({ key: x.key, name: x.key.split('/').pop(), size: x.size, at: x.at })), remoteErr, local: (backups?.list() ?? []).slice(0, 14), hasPassword: !!ownerSecrets.get('BACKUP_PASSWORD') }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/offsite/config', async ({ actor, body }) => {
+      const b = body as Record<string, unknown>; const str = (k: string, max = 300) => String(b[k] ?? '').trim().slice(0, max);
+      const endpoint = str('endpoint'), bucket = str('bucket', 63), keyId = str('keyId', 200), secret = str('secret', 300), region = str('region', 40) || 'auto';
+      adminNeed(/^https:\/\/[a-z0-9.-]+(:\d+)?\/?$/i.test(endpoint) || (process.env.OFFSITE_ALLOW_LOCAL === '1' && /^http:\/\/127\.0\.0\.1:\d+$/.test(endpoint)), 'رابط التخزين لازم يبدأ بـ https:// (مثل https://xxxx.r2.cloudflarestorage.com)'); adminNeed(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucket), 'اسم الـ Bucket غير صالح (حروف إنجليزية صغيرة وأرقام).'); adminNeed(keyId.length >= 8 && secret.length >= 16, 'حط Access Key ID و Secret كاملين.');
+      const test = new Offsite(() => ({ endpoint, bucket, keyId, secret, region, password: 'x' })); try { await test.list(); } catch (e) { adminNeed(false, 'ما قدرنا نتصل: ' + String((e as Error).message).slice(0, 140)); }
+      ownerSecrets.set('BACKUP_S3_ENDPOINT', endpoint.replace(/\/$/, '')); ownerSecrets.set('BACKUP_S3_BUCKET', bucket); ownerSecrets.set('BACKUP_S3_KEY_ID', keyId); ownerSecrets.set('BACKUP_S3_SECRET', secret); ownerSecrets.set('BACKUP_S3_REGION', region);
+      if (!ownerSecrets.get('BACKUP_PASSWORD')) ownerSecrets.set('BACKUP_PASSWORD', rb69(18).toString('base64url'));
+      if (actor) admin.audit(actor, 'offsite.config', 'backup', 'ربط التخزين السحابي ' + bucket); return { ok: true };
+    }, 'owner');
+    functionalHttp.add('POST', '/api/admin/offsite/now', async ({ actor }) => { adminNeed(!!backups, 'النسخ الاحتياطية مو مفعّلة على السيرفر.'); adminNeed(offsite.configured(), 'اربط التخزين السحابي أول.'); const info = backups!.run('owner-offsite'); const up = await offsite.upload(info.name, readFileSync(path.join(backups!.out, info.name))).catch((e) => { adminNeed(false, String((e as Error).message)); return null; }); if (actor) admin.audit(actor, 'offsite.now', 'backup', info.name); return { ok: true, upload: up }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/offsite/password', ({ actor }) => { const pw = ownerSecrets.get('BACKUP_PASSWORD'); adminNeed(!!pw, 'ما فيه رمز للحين.'); if (actor) admin.audit(actor, 'offsite.password', 'backup', 'عرض رمز فك النسخ'); return { ok: true, password: pw }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/backup/restore', async ({ actor, body }) => {
+      const b = body as Record<string, unknown>; adminNeed(b.confirm === 'استرجع', 'اكتب «استرجع» للتأكيد.'); adminNeed(!!backups, 'النسخ الاحتياطية مو مفعّلة.');
+      let gz: Buffer | null = null; const name = String(b.name ?? '');
+      if (b.source === 'remote') gz = await offsite.download(name).catch((e) => { adminNeed(false, String((e as Error).message)); return null; });
+      else { adminNeed(/^la3bak-\d{4}-\d{2}-\d{2}-\d{4}\.tar\.gz$/.test(name), 'اسم النسخة غير صالح.'); try { gz = readFileSync(path.join(backups!.out, name)); } catch { adminNeed(false, 'النسخة مو موجودة.'); } }
+      let meta: { files: number; createdAt: string }; try { meta = checkArchive(gz!); } catch (e) { adminNeed(false, String((e as Error).message)); throw e; }
+      /* نسخة أمان من الوضع الحالي باسم مستقل (ما تنكتب فوق نسخ ثانية) */
+      try { const root = backups!.root, ents = backups!.collect().map((r) => { const f = path.join(root, r); return { name: 'la3bak-data/' + r, data: readFileSync(f), mtime: Date.now() }; }); ents.unshift({ name: 'la3bak-data/BACKUP-INFO.json', data: Buffer.from(JSON.stringify({ createdAt: new Date().toISOString(), reason: 'before-restore', files: ents.length })), mtime: Date.now() }); writeFileSync(path.join(backups!.out, 'before-restore-' + new Date().toISOString().replace(/[:.]/g, '-') + '.tar.gz'), tarGz(ents), { mode: 0o600 }); } catch (e) { log('restore_safety_backup_failed', { error: String(e).slice(0, 80) }); }
+      stageRestore(backups!.root, gz!);
+      if (actor) admin.audit(actor, 'backup.restore', 'backup', `${b.source === 'remote' ? 'سحابية' : 'محلية'} ${name} (${meta.files} ملف)`);
+      log('restore_staged', { name, files: meta.files });
+      setTimeout(() => { (process as unknown as { emit: (e: string) => void }).emit('la3bak-restart'); }, 1500);
+      return { ok: true, files: meta.files, createdAt: meta.createdAt };
+    }, 'owner');
     functionalHttp.add('GET', '/api/admin/shield', () => ({ ok: true, ...shield.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/monitor', () => ({ ok: true, ...monitor.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');
@@ -2780,6 +2813,8 @@ export async function createApp(
 
 async function main() {
   const cfg = loadConfig();
+  /* R69zp: لو المالك طلب استرجاع نسخة، نرجّع الملفات قبل لا نحمّل أي بيانات */
+  if (cfg.walletFile) { try { applyPendingRestore(path.dirname(cfg.walletFile)); } catch (e) { console.error('[la3bak] restore failed', e); } }
   const app = await createApp(cfg);
   let stopping = false;
   const stop = async () => {
@@ -2792,6 +2827,8 @@ async function main() {
   };
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);
+  /* إعادة تشغيل بعد الاسترجاع: نطلع برمز غير صفر عشان systemd (Restart=on-failure) يشغّله من جديد */
+  process.on('la3bak-restart' as never, async () => { if (stopping) return; stopping = true; setTimeout(() => process.exit(75), cfg.shutdownTimeoutMs + 5000).unref(); try { await app.shutdown(); } finally { process.exit(75); } });
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {

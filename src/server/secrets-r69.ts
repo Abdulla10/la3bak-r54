@@ -3,7 +3,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 
-const NAMES = ['ANTHROPIC_API_KEY'] as const;
+const NAMES = ['ANTHROPIC_API_KEY', 'BACKUP_S3_ENDPOINT', 'BACKUP_S3_BUCKET', 'BACKUP_S3_KEY_ID', 'BACKUP_S3_SECRET', 'BACKUP_S3_REGION', 'BACKUP_PASSWORD'] as const;
 export type SecretName = typeof NAMES[number];
 export class OwnerSecrets {
   private k: Buffer; private d: Record<string, string> = {};
