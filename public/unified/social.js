@@ -4,7 +4,7 @@ import {createRoomToolsR33} from '../social-room-tools-r33.js?v=r58p';
 import {SOCIAL_GAME_LABELS_R47,renderSocialGame,normalizeSocialGameActionR47,createSocialGamesR47} from '../social-games-r47.js?v=r58p';
 import {renderUpgradePanel,roomUpgradeConfirmationR47,roomUpgradeErrorR47} from '../room-upgrade-r47.js?v=build-all-r47';
 import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room-photo-r31';
-import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r69a';
+import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r69t';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
 import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r67al';
 import {framed as frameOwnedPortrait} from '../shop.js?v=r68z40e';
@@ -224,8 +224,9 @@ async function command(c,commandName,fields={},retry=false) {
     const {owner,requiresPassword,...body}=payload;
     const result=await c.api('/api/social/command','POST',body);
     if(!result?.ok) {c.pending=null;storage.remove(c.storageKey);throw Error(payload.command==='room:upgrade'?roomUpgradeErrorR47(result?.error):friendly(result?.error||'لم يقبل الخادم الطلب.'));}
+    c.pending=null;storage.remove(c.storageKey);/* R69j: الخادم قبل الطلب، فنمسحه حتى لو انتقلنا لصفحة ثانية */
     if(c!==live || epoch!==c.epoch) return null;
-    c.pending=null;storage.remove(c.storageKey);c.notice='تم حفظ الإجراء في الخادم.';
+    c.notice='تم حفظ الإجراء في الخادم.';
     await read(c);if(c!==live||epoch!==c.epoch)return null;return result;
   } catch(e) { if(Number(e.status)>=400 && Number(e.status)<500){c.pending=null;storage.remove(c.storageKey);} if(c===live && epoch===c.epoch) {c.error=e.message || 'تعذر إكمال الطلب.';c.notice=c.pending?'قد يكون الطلب وصل للخادم. حدّث الحالة، ثم أعد المحاولة بنفس المفتاح إن لزم.':'';} throw e; }
   finally {c.busy=false;if(c===live)c.notify();}
@@ -810,8 +811,10 @@ export function mount(root,ctx={}) {
     if(el?.disabled&&dialog)el=dialog.querySelector('[data-so-action="dialog-close"]');
     if(el&&!el.disabled)el.focus?.({preventScroll:true});
   };
+  /* R69j: تحديثات كثيرة ورا بعض = رسم واحد بكل إطار (يخفف التعليق بالدخول والخروج) */
+  let paintFrame=0,paintTimer=0,lastPaint=0;const schedulePaint=()=>{if(paintFrame||paintTimer)return;const wait=Math.max(0,80-(performance.now()-lastPaint));const go=()=>{paintTimer=0;paintFrame=requestAnimationFrame(()=>{paintFrame=0;paint();});};if(wait>0)paintTimer=setTimeout(go,wait);else go();};
   const paint=()=>{
-    if(!alive)return;
+    if(!alive)return;if(paintFrame){cancelAnimationFrame(paintFrame);paintFrame=0;}if(paintTimer){clearTimeout(paintTimer);paintTimer=0;}lastPaint=performance.now();
     // R58c: ترحيب حصري (امتياز الرتبة الملكية فما فوق) لما يدخل عضو جديد الغرفة
     try{const room=c.snapshot?.room,ids=arr(room?.members).map(m=>String(m.id));if(room&&c.routeRoom===room.id){const prevSeen=ui.seenMembers&&ui.seenMembers.room===room.id?ui.seenMembers.ids:null;ui.seenMembers={room:room.id,ids:new Set(ids)};const rankWelcome=!!(room.rank?.tier&&perkActive(room.rank.tier,'welcome'));if(prevSeen&&(rankWelcome||(room.level||1)>=70)){const fresh=arr(room.members).find(m=>!prevSeen.has(String(m.id))&&String(m.id)!==String(c.uid)&&m.stealth!==true);if(fresh){const t=Date.now();ui.welcome={t,html:rankWelcome?welcomeHTML(room.rank.tier,fresh.name||''):roomLevelWelcomeHTML(room.level,fresh.name||'',room.name||'')};setTimeout(()=>{if(ui.welcome?.t===t){ui.welcome=null;paint();}},3600);}}}}catch{/* ترحيب شكلي فقط */}
     const active=document.activeElement,mark=focusMark(active),selection=[active?.selectionStart,active?.selectionEnd,active?.selectionDirection],inDialog=dialog?.contains(active);
@@ -895,7 +898,7 @@ export function mount(root,ctx={}) {
     const nextSettingsScroll=host.querySelector('[data-so-settings-scroll]');if(nextSettingsScroll)nextSettingsScroll.scrollTop=ui.settingsScroll;
     if(c.busy||c.loading)host.querySelectorAll('button:not([data-so-action="select-mode"]):not([data-so-action="panel-close"]):not([data-so-action="open-panel"]):not([data-so-action="dialog-close"]):not([data-so-action="settings-back"])').forEach(b=>{if(dialog?.contains(b)||b.closest('[data-so-gifts]')||b.dataset.soAction==='game-voice-retry')return;b.disabled=true;b.setAttribute('aria-busy','true');});
     if(ui.settings)host.querySelectorAll('[data-so-room-detail] > :not([data-so-room-settings])').forEach(el=>el.inert=true);
-    observeDock();fitViewport();
+    observeDock();fitViewport('nodock');
     applyRoomTheme(host.querySelector('[data-so-room-detail]'),c.snapshot?.room?.settings?.theme,ctx.gameRoom);
     c.entranceHost=host.querySelector('[data-so-room-detail]');c.entranceFX?.restore();
     c.challengeHost=host;c.challengeUI?.restore();
@@ -1183,7 +1186,7 @@ export function mount(root,ctx={}) {
       if(action==='cinema-seek'){await command(c,'video:control',{roomId:c.routeRoom,action:'seek',position:Math.max(0,Math.round((cinemaPosition()+Number(target.dataset.delta||0))*10)/10)});return;}
       if(action==='cinema-off'){await command(c,'video:off',{roomId:c.routeRoom});ui.cinemaOpen=false;return;}
       if(action==='exit-pop-close'){ui.exitPop=false;paint();return;}
-      if(action==='room-leave-now'){ui.exitPop=false;closeDialog(false);clearMinimized();await command(c,'room:leave',{roomId:c.routeRoom});if(alive)(globalThis.__LA3BAK_NAV__ || location).hash='#/social-rooms';return;}
+      if(action==='room-leave-now'){ui.exitPop=false;closeDialog(false);clearMinimized();/* R69j: نطلع على طول والخادم يكمل الخروج ورانا */const leaving=command(c,'room:leave',{roomId:c.routeRoom});if(alive)(globalThis.__LA3BAK_NAV__ || location).hash='#/social-rooms';await leaving;return;}
       if(action==='room-minimize'){ui.exitPop=false;const room=c.snapshot?.room;if(!room)return;closeDialog(false);minimizedRoom={uid:c.uid,roomId:room.id,name:room.name,photo:room.photo||null};const nav=globalThis.__LA3BAK_NAV__;if(nav?.back)nav.back('#/');else location.hash='#/';minimizeBubble();return;}
       if(action==='room-heart'){const room=c.snapshot?.room;if(!room)return;const on=!roomFollowed(c);await command(c,'room:follow',{roomId:room.id,enabled:on});c.notice=on?'انحفظت الغرفة بالقلب، وتلقاها في ملفك الشخصي.':'انشالت الغرفة من المحفوظة.';c.notify();return;}
       if(action==='room-background'){closePanel(false);openSettings(target);return openSettingsEditor('theme');}
@@ -1211,7 +1214,7 @@ export function mount(root,ctx={}) {
       if(action==='create-room')return requireAdult(openOwnerCreation);
       if(action==='enter'){
         const room=arr(c.list?.rooms).find(item=>item.id===id);if(!room)throw Error('الغرفة لم تعد متاحة؛ حدّث القائمة.');
-        const enter=async(password)=>{const result=await command(c,'room:join',{roomId:id,...(password?{password}:{})});if(result&&alive)(globalThis.__LA3BAK_NAV__ || location).hash=roomURL(id);};
+        const enter=async(password)=>{if(password||room.joined){const result=await command(c,'room:join',{roomId:id,...(password?{password}:{})});if(result&&alive)(globalThis.__LA3BAK_NAV__ || location).hash=roomURL(id);return;}/* R69j: ندخل الغرفة على طول والانضمام يكمل ورانا */const joining=command(c,'room:join',{roomId:id});if(alive)(globalThis.__LA3BAK_NAV__ || location).hash=roomURL(id);await joining;if(live&&live.routeRoom===id)await read(live).catch(()=>{});};
         return requireAdult(()=>room.hasPassword&&!room.joined?openDialog('دخول الغرفة',field('password','كلمة مرور الغرفة','password','',64),form=>enter(form.elements.password.value),'دخول'):enter());
       }
       if(action==='join-room')return requireAdult(()=>c.snapshot?.room?.hasPassword?openDialog('دخول الغرفة',field('password','كلمة مرور الغرفة','password','',64),form=>command(c,'room:join',{roomId:c.routeRoom,password:form.elements.password.value}),'دخول'):command(c,'room:join',{roomId:c.routeRoom}));
@@ -1298,27 +1301,31 @@ export function mount(root,ctx={}) {
     return true;
   };
   if(typeof gifts?.onChange==='function'){try{giftsUnsubscribe=gifts.onChange(reason=>{if(!alive)return;if(reason==='gift-sent'&&!ctx.gameRoom){showCombo(live);if(ui.panel==='gifts'){closePanel(false);return;}}if(!(reason==='quantity-inline'&&paintGiftQuantity()))paint();});}catch(e){reportError(e);}}
-  const viewport=window.visualViewport,fitViewport=()=>{
-    if(!alive)return;
-    const currentViewport=window.visualViewport||viewport;
-    const height=currentViewport?.height||window.innerHeight;
-    page.style.setProperty('--so-viewport-height',height+'px');
+  let vpCache=null;
+  const sv=(el,k,v)=>{if(el.style.getPropertyValue(k)!==v)el.style.setProperty(k,v);};
+  const viewport=window.visualViewport,fitViewport=(entries)=>{
+    if(!alive)return;const skipDock=entries==='nodock';if(!Array.isArray(entries))entries=null;
+    // R69j: قراءة مقاس الشاشة تجبر المتصفح يعيد الحساب، فنقرأها بس لما الشاشة تتغير ونستعمل المحفوظ وقت الرسم
+    if(!skipDock||!vpCache){const v=window.visualViewport||viewport;vpCache={height:v?.height||window.innerHeight,width:v?.width||window.innerWidth,offsetTop:v?.offsetTop||0,offsetLeft:v?.offsetLeft||0};}
+    const currentViewport=vpCache;
+    const height=currentViewport.height;
+    sv(page,'--so-viewport-height',height+'px');
     if(shell&&page.dataset.soViewportRoom==='true'){
-      shell.style.setProperty('--so-viewport-height',height+'px');
-      shell.style.setProperty('--so-viewport-width',(currentViewport?.width||window.innerWidth)+'px');
-      shell.style.setProperty('--so-viewport-top',(currentViewport?.offsetTop||0)+'px');
-      shell.style.setProperty('--so-viewport-left',(currentViewport?.offsetLeft||0)+'px');
+      sv(shell,'--so-viewport-height',height+'px');
+      sv(shell,'--so-viewport-width',(currentViewport?.width||window.innerWidth)+'px');
+      sv(shell,'--so-viewport-top',(currentViewport?.offsetTop||0)+'px');
+      sv(shell,'--so-viewport-left',(currentViewport?.offsetLeft||0)+'px');
     }
-    page.dataset.soCompactViewport=String(height<520);
+    {const cv=String(height<520);if(page.dataset.soCompactViewport!==cv)page.dataset.soCompactViewport=cv;}
     const stage=host.querySelector('[data-so-room-detail]'),dock=stage?.querySelector('[data-so-room-dock]');
-    if(dock)stage.style.setProperty('--so-dock-height',Math.ceil(dock.getBoundingClientRect().height)+'px');
+    if(dock&&!skipDock){const h=Math.ceil((entries&&entries[0]?.borderBoxSize?.[0]?.blockSize)||dock.offsetHeight)+'px';if(stage.style.getPropertyValue('--so-dock-height')!==h)stage.style.setProperty('--so-dock-height',h);}
   };
   let measuredDock=null;
   const dockObserver=typeof ResizeObserver==='function'?new ResizeObserver(fitViewport):null;
   const observeDock=()=>{const dock=host.querySelector('[data-so-room-dock]');if(dock!==measuredDock){dockObserver?.disconnect();measuredDock=dock;if(dock)dockObserver?.observe(dock);}};
   fitViewport();viewport?.addEventListener('resize',fitViewport);viewport?.addEventListener('scroll',fitViewport);window.addEventListener('resize',fitViewport);
   page.addEventListener('pointerdown',preserveGiftPress,true);page.addEventListener('mousedown',preserveGiftPress,true);
-  page.addEventListener('scroll',onChatScroll,true);page.addEventListener('click',onClick);page.addEventListener('submit',onSubmit);page.addEventListener('input',onInput);page.addEventListener('change',onChange);page.addEventListener('keydown',onKey);c.listeners.add(paint);paint();void read(c);
+  page.addEventListener('scroll',onChatScroll,true);page.addEventListener('click',onClick);page.addEventListener('submit',onSubmit);page.addEventListener('input',onInput);page.addEventListener('change',onChange);page.addEventListener('keydown',onKey);c.listeners.add(schedulePaint);paint();void read(c);
   // Bounded visible-only fallback. Parent can call refreshSocial on social:update.
   const poll=setInterval(()=>{if(alive&&document.visibilityState==='visible'&&!c.busy&&!c.loading&&!dialog&&!document.activeElement?.closest?.('form'))void read(c);},20000);
   return {updateGameContext(next){if(!alive)return;ctx.gameRoom=next.gameRoom||ctx.gameRoom;const previous=JSON.stringify(ctx.gameVoice);if(next.gameVoice)ctx.gameVoice=next.gameVoice;c.ctx=ctx;if(previous===JSON.stringify(ctx.gameVoice))return;const id=ctx.gameVoice?.status==='ready'?String(ctx.gameVoice.roomId):'';if(id!==c.routeRoom){c.challengeUI?.reset();c.challengeUpdates?.clear();c.challengeModel={available:false};c.routeRoom=id;c.readSeq++;c.loading=false;c.error='';c.snapshot=null;autoVoiceAttempt='';void read(c);}paint();},destroy(){saveDrafts();dismissEditableFocus();alive=false;cinemaUnmount();/* // room-tools-r33: destroy */roomToolsR33.destroy();if(c.roomTools===roomToolsR33)c.roomTools=null;gamesR47.destroy();if(c.gamesR47===gamesR47)c.gamesR47=null;c.cannonFX?.destroy();c.cannonFX=null;clearGiftRuntime(c);c.entranceFX?.cancel();c.entranceHost=null;c.challengeHost=null;c.challengeUI?.reset();c.challengeUpdates?.clear();dockObserver?.disconnect();viewport?.removeEventListener('resize',fitViewport);viewport?.removeEventListener('scroll',fitViewport);window.removeEventListener('resize',fitViewport);shell?.classList.remove('lb-social-entered','lb-social-directory-r30');document.documentElement.classList.remove('lb-social-viewport-r27');delete page.dataset.soViewportRoom;if(shell){delete shell.dataset.soViewportRoom;for(const name of ['--so-viewport-height','--so-viewport-width','--so-viewport-top','--so-viewport-left'])shell.style.removeProperty(name);}clearInterval(poll);c.listeners.delete(paint);if(typeof giftsUnsubscribe==='function')giftsUnsubscribe();closeGifts();page.removeEventListener('pointerdown',preserveGiftPress,true);page.removeEventListener('mousedown',preserveGiftPress,true);page.removeEventListener('scroll',onChatScroll,true);page.removeEventListener('click',onClick);page.removeEventListener('submit',onSubmit);page.removeEventListener('input',onInput);page.removeEventListener('change',onChange);page.removeEventListener('keydown',onKey);dialogBusy=false;closeDialog();}};

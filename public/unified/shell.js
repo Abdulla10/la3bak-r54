@@ -1,7 +1,7 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
 import { nav68HTML } from '../nav-r68.js?v=r68z27';
-import { headerHTML as head68 } from './home-r68.js?v=r69a';
-import * as home from './home.js?v=r69a';
+import { headerHTML as head68 } from './home-r68.js?v=r69t';
+import * as home from './home.js?v=r69t';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import {giftArt} from '../giftart.js?v=r68i-r14';
 import * as rooms from './rooms.js?v=r58p';
@@ -17,7 +17,7 @@ import * as store from './store.js?v=r68z40e';
 import * as payments from './payments.js?v=r68i';
 import * as ranks from './ranks.js?v=r68z40e';
 import * as vip from './vip.js?v=r68z40e';
-import * as social from './social.js?v=r69s';
+import * as social from './social.js?v=r69t';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
 export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','wheel','phone','ids','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','devices','hidden-posts','community','post','u','not-found']);
 export const hasRoute=name=>routes.includes(name);

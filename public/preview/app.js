@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69s';
-import * as REF from '../unified/home.js?v=r69a';
-import * as SOCIAL from '../unified/social.js?v=r69s';
+import * as UNIFIED from '../unified/shell.js?v=r69t';
+import * as REF from '../unified/home.js?v=r69t';
+import * as SOCIAL from '../unified/social.js?v=r69t';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
@@ -42,7 +42,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69s';
+import * as PWA from '../pwa.js?v=r69t';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -397,7 +397,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69s');
+  const M = await import('../settings-r60.js?v=r69t');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -1078,6 +1078,7 @@ function gamesView() {
   return `<div class="stack">
     <h1 class="section-title" style="margin-top:0">الألعاب</h1>
     ${statusStrip()}
+    <section class="gcat" aria-label="ألعاب الحظ والتحدي"><h2 class="gcat-h"><span aria-hidden="true">🎰</span>الحظ والتحدي<small>5</small></h2><div class="g69x">${[['#/slot','tile-slot','جاكبوت لعبك'],['#/foodwheel','tile-foodwheel','عجلة الأكل'],['#/tournaments','tile-tournaments','البطولات'],['#/league','tile-league','الدوري'],['#/watch','tile-watch','مباشر']].map(([h,i,n])=>`<a href="${h}" aria-label="${n}"><img src="/assets/art68/${i}.webp?v=r69s" alt="" loading="lazy" decoding="async"><b>${n}</b></a>`).join('')}</div></section>
     <input class="input" id="gq" type="search" inputmode="search" placeholder="🔎 ابحث باسم اللعبة" aria-label="بحث باسم اللعبة" autocomplete="off" value="${esc(S.fQ || '')}">
     <div class="chips filters scroll-row" role="group" aria-label="تصنيفات الألعاب">
       ${chip('all', 'جميع الألعاب', live.length)}
