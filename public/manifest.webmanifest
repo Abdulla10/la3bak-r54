@@ -7,8 +7,8 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f4eee6",
-  "theme_color": "#f4eee6",
+  "background_color": "#1a0536",
+  "theme_color": "#1a0536",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -27,6 +27,59 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "id": "/",
+  "orientation": "portrait",
+  "categories": [
+    "games",
+    "entertainment",
+    "social"
+  ],
+  "shortcuts": [
+    {
+      "name": "الألعاب",
+      "short_name": "الألعاب",
+      "url": "/#/games",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "الغرف الصوتية",
+      "short_name": "الغرف",
+      "url": "/#/social-rooms",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "جاكبوت لعبك",
+      "short_name": "جاكبوت",
+      "url": "/#/slot",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "الرسائل",
+      "short_name": "الرسائل",
+      "url": "/#/messages",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

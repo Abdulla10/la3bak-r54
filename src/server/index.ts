@@ -100,6 +100,8 @@ import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from '.
 import { BombGames, BombError, BOMB_PRIZE, BOMB_PRIZE_MIN_PLAYERS } from './bomb-r69.js';
 import { SpyGames, SpyError, SPY_PRIZE } from './spy-r69.js';
 import { GoldChests, ChestError } from './gold-chest-r69.js';
+import { DeviceGuard } from './device-guard-r69.js';
+import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
@@ -914,6 +916,10 @@ export async function createApp(
   });
   /* رسائل قصيرة جداً أو بدون حروف (ضحك، إيموجي، أرقام) ما تستاهل فحص */
   const aiWorth = (t: string) => { const x = t.replace(/[\s\p{Extended_Pictographic}\p{P}\d]/gu, ''); return x.length >= 3 && !/^(ه|ھ|h|a|خ|ك)+$/i.test(x); };
+  /* R69za: كشف الحسابات الوهمية على نفس الجهاز */
+  const devGuard = new DeviceGuard(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'device-guard.json') : '', {
+    alert: (_did, ids) => arena.alert('collusion', '📱 حسابات كثيرة على جهاز واحد', `${ids.length} حسابات دخلت من نفس الجهاز: ${ids.slice(0, 6).map((i) => accounts.nameOf(i) || 'لاعب').join('، ')}. الحسابات الزايدة ما تاخذ جوائز مجانية لين تسمح لها من لوحة المالك.`, `dev:${_did}`),
+  }, storage);
   { const rt = setInterval(() => { try { if (!aiMod.ready()) return; for (const r of socialRooms.liveRooms().slice(0, 100)) if (aiMod.roomNeedsCheck(r.id, r.name)) { aiMod.markRoom(r.id, r.name); aiMod.enqueue({ kind: 'room-name', id: r.id, by: '', text: r.name }); } } catch (e) { log('ai_room_scan_failed', { message: String(e).slice(0, 120) }); } }, 10 * 60_000); rt.unref?.(); }
   /* R69: التقرير الصباحي للمالك (9 الصبح بتوقيت الإمارات) */
   const morningText = () => {
@@ -1660,7 +1666,7 @@ export async function createApp(
     const bombWins = new Map<string, { day: string; n: number }>();
     const bomb = new BombGames({ prize: (winner, players, gameId) => {
       // الجائزة: 5000 عملة للفايز، إذا كانوا 3 لاعبين أو أكثر، وحد أقصى 5 جوائز باليوم لنفس اللاعب (عشان ما ينحلب)
-      if (players < BOMB_PRIZE_MIN_PLAYERS || isGuest(winner)) return 0;
+      if (players < BOMB_PRIZE_MIN_PLAYERS || isGuest(winner) || !devGuard.rewardOk(winner)) return 0;
       const day = new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10), w = bombWins.get(winner);
       const n = w && w.day === day ? w.n : 0; if (n >= 5) return 0;
       if (!wallet.grant(winner, 'coins', BOMB_PRIZE, 'فوز بلعبة القنبلة 💣', `bomb:${gameId}:${winner}`)) return 0;
@@ -1691,7 +1697,7 @@ export async function createApp(
     const spyWins = new Map<string, { day: string; n: number }>();
     const spy = new SpyGames({ prize: (winner, amount, gameId) => {
       // الجائزة توصل للفايز تلقائياً. حد أقصى 5 جوائز باليوم لنفس اللاعب عشان ما تنحلب بحسابات وهمية
-      if (isGuest(winner) || amount <= 0 || amount > SPY_PRIZE) return 0;
+      if (isGuest(winner) || amount <= 0 || amount > SPY_PRIZE || !devGuard.rewardOk(winner)) return 0;
       const day = new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10), w = spyWins.get(winner); const n = w && w.day === day ? w.n : 0; if (n >= 5) return 0;
       if (!wallet.grant(winner, 'coins', amount, 'فوز بلعبة الجاسوس 🕵️', `spy:${gameId}:${winner}`)) return 0;
       spyWins.set(winner, { day, n: n + 1 }); return amount;
@@ -1727,10 +1733,12 @@ export async function createApp(
     { const ct = setInterval(() => { try { chests.tick(); } catch (e) { log('chest_tick_failed', { error: String(e).slice(0, 100) }); } }, 2000); ct.unref?.(); }
     functionalHttp.add('GET', '/api/chest', ({ user }) => ({ ok: true, ...chests.view(user.id) }));
     functionalHttp.add('POST', '/api/chest/claim', ({ user, body }) => {
-      noGuest(user.id);
+      noGuest(user.id); if (!devGuard.rewardOk(user.id)) throw new FunctionalHttpError(403, 'هالحساب ما ياخذ صناديق: فيه حسابات كثيرة على نفس الجهاز. تواصل مع الدعم لو هذا خطأ.');
       try { const w = chests.claim(user.id, String(body.id ?? '')); return { ok: true, coins: w.coins, itemName: w.itemName, balance: wallet.balance(user.id) }; }
       catch (e) { if (e instanceof ChestError) throw new FunctionalHttpError(e.status, e.message); throw e; }
     });
+    functionalHttp.add('GET', '/api/admin/devices', () => ({ ok: true, ...devGuard.stats(), list: devGuard.clusters().map((c) => ({ ...c, players: c.ids.map((id, i) => ({ name: accounts.nameOf(id) || 'لاعب', displayId: accounts.displayPlayerId?.(id) ?? '', extra: i >= 2 })) , ids: undefined })) }), 'owner');
+    functionalHttp.add('POST', '/api/admin/devices/allow', ({ actor, body }) => { adminNeed(devGuard.allow(String(body.did ?? ''), !!body.on), 'الجهاز مو موجود.'); admin.audit(actor!, 'device.allow', String(body.did).slice(0, 12), body.on ? 'سماح' : 'منع'); return { ok: true }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');
     functionalHttp.add('POST', '/api/admin/chest/drop', ({ actor }) => { try { chests.dropNow(); } catch (e) { if (e instanceof ChestError) throw new FunctionalHttpError(409, e.message); throw e; } admin.audit(actor!, 'chest.drop', 'gold-chest', 'إطلاق صندوق ذهبي يدوي'); return { ok: true, ...chests.adminView() }; }, 'owner');
     functionalHttp.add('POST', '/api/room-quiz/cancel', ({ user, body }) => {
@@ -1754,7 +1762,7 @@ export async function createApp(
     const roomAcc = (uid: string, room: unknown) => { const acc = socialRooms.quizAccess(uid, String(room ?? '')); if (!acc) throw new FunctionalHttpError(403, 'لازم تكون داخل الغرفة.'); return acc; };
     functionalHttp.add('GET', '/api/room-env', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false, envs: [] }; return { ok: true, member: true, amounts: ENV_AMOUNTS, counts: ENV_COUNTS, envs: arena.envView(room, user.id) }; });
     functionalHttp.add('POST', '/api/room-env/throw', ({ user, body }) => { noGuest(user.id); roomAcc(user.id, body.room); return arenaRun(() => { const e = arena.envThrow(String(body.room), user.id, Number(body.total), Number(body.count)); const acc = socialRooms.quizAccess(user.id, String(body.room)); for (const m of acc?.members ?? []) if (m !== user.id) sendToUser(m, { t: 'room:env', room: body.room, by: e.byName, total: e.total }); return { ok: true, envs: arena.envView(String(body.room), user.id) }; }); });
-    functionalHttp.add('POST', '/api/room-env/grab', ({ user, body }) => { noGuest(user.id); roomAcc(user.id, body.room); return arenaRun(() => { const r = arena.envGrab(String(body.room), String(body.id ?? ''), user.id); return { ok: true, amt: r.amt, envs: arena.envView(String(body.room), user.id) }; }); });
+    functionalHttp.add('POST', '/api/room-env/grab', ({ user, body }) => { noGuest(user.id); if (!devGuard.rewardOk(user.id)) throw new FunctionalHttpError(403, 'هالحساب ما ياخذ من الظرف: فيه حسابات كثيرة على نفس الجهاز.'); roomAcc(user.id, body.room); return arenaRun(() => { const r = arena.envGrab(String(body.room), String(body.id ?? ''), user.id); return { ok: true, amt: r.amt, envs: arena.envView(String(body.room), user.id) }; }); });
     functionalHttp.add('GET', '/api/room-music', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false }; return { ok: true, member: true, mod: acc.mod, ...arena.musicView(room) }; });
     functionalHttp.add('POST', '/api/room-music/add', ({ user, body }) => { roomAcc(user.id, body.room); return arenaRun(() => { const vid = String(body.vid ?? ''); if (!ARENA_YT.test(vid)) throw new ArenaError('رابط يوتيوب غير صالح.', 400); arena.musicAdd(String(body.room), user.id, vid); return { ok: true, ...arena.musicView(String(body.room)) }; }); });
     functionalHttp.add('POST', '/api/room-music/skip', ({ user, body }) => { const acc = roomAcc(user.id, body.room); return arenaRun(() => { arena.musicSkip(String(body.room), user.id, acc.mod); return { ok: true, ...arena.musicView(String(body.room)) }; }); });
@@ -2113,6 +2121,15 @@ export async function createApp(
         if (!a) return json(res, 404, {error:'ما فيه صورة.'}, {'Cache-Control':'private, no-store',Vary:'Cookie'});
         res.writeHead(200, {...securityHeaders,'Content-Type':a.type,'Content-Length':a.buf.length,'Cache-Control':'private, no-store',Vary:'Cookie'});
         return res.end(req.method === 'HEAD' ? undefined : a.buf);
+      }
+      if (url.pathname === '/api/device' && req.method === 'POST') {
+        if (!user) return json(res, 401, { error: 'ما فيه جلسة.' });
+        const ck = String(req.headers.cookie ?? '').match(/(?:^|;\s*)la3_did=([A-Za-z0-9_-]{20,64})/)?.[1];
+        const hd = String(req.headers['x-la3-did'] ?? '');
+        const did = ck || (DeviceGuard.valid(hd) ? hd : rb69(18).toString('base64url'));
+        if (!isGuest(user.id)) devGuard.see(did, user.id);
+        const cookie = [`la3_did=${did}`, 'Path=/', 'Max-Age=63072000', 'HttpOnly', 'SameSite=Lax', ...(cfg.cookieSecure ? ['Secure'] : [])].join('; ');
+        return json(res, 200, { ok: true, did }, { 'Set-Cookie': cookie, 'Cache-Control': 'no-store' });
       }
       if (await functionalHttp.handle(req, res, url, user)) return;
       if (await admin.handle(req, res, url, user)) return;
