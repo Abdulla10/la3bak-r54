@@ -2,7 +2,7 @@
  * (bowling-physics.js) عشان يحرّك الكرة والدبابيس. المسار والدبابيس رسم أصلي (Canvas) بمنظور ثلاثي الأبعاد. */
 import { faceHtml } from './characters.js?v=shell-r6';
 import { avatarArt } from './avatars.js?v=r67ac';
-import { simulate, PINS, HALF, HP, BR, normShot } from './bowling-physics.js?v=r68z20b';
+import { simulate, PINS, HALF, HP, BR, normShot, BALL_Y0 } from './bowling-physics.js?v=r68z21';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const BW = { room: '', x0: 0, anim: null, shown: -1, busy: false, send: null, hold: 0, drag: null, mark: '' };
@@ -10,7 +10,7 @@ export const uiKey = () => [BW.busy].join('|');
 const nm = (room, id) => room.players.find((p) => p.id === id)?.name ?? 'لاعب';
 const faceOf = (room, id, i, size) => { const rp = room.players.find((q) => q.id === id); return rp?.av ? avatarArt(rp.av, size) : rp?.avatar ? `<img src="/api/room-avatar?code=${esc(room.code)}&id=${encodeURIComponent(id)}&v=${rp.avatar}" alt="" decoding="async">` : faceHtml(i, size); };
 const BALL_COL = ['#1f5fe0', '#e0262f', '#16a34a', '#8b2ff0'];
-const CW = 720, CH = 1120;
+const CW = 720, CH = 1220;
 
 /* بطاقة النقاط: لكل إطار خانات الرميات والمجموع */
 function cardHTML(g, pi) {
@@ -44,8 +44,8 @@ export function bowling(room) {
   const rollNo = ti >= 0 ? ((g.rolls[ti]?.[g.frame]?.length ?? 0) + 1) : 1;
   const final = g.phase === 'final' ? `<div class="bw-final"><div>${g.winners.includes(room.you) ? '🏆' : '🎳'}</div><b>${g.winners.length > 1 ? 'تعادل!' : g.winners[0] ? `${esc(g.winners[0] === room.you ? 'فزت' : nm(room, g.winners[0]) + ' فاز')}!` : 'انتهت'}</b><small>${esc(g.msg)}</small><div class="bw-cards">${g.players.map((id, i) => `<div class="bw-cr"><span>${esc(nm(room, id))}</span>${cardHTML(g, i)}</div>`).join('')}</div></div>` : '';
   return `<div class="bw" dir="rtl"><div class="bw-head">${head}</div>
+    <div class="bw-score">${g.players.map((id, i) => `<div class="bw-cr${g.turnId === id ? ' on' : ''}"><span class="bw-cn" style="--bc:${BALL_COL[i % 4]}">${esc(id === room.you ? 'أنت' : nm(room, id))}</span>${cardHTML(g, i)}</div>`).join('')}</div>
     <div class="bw-stage"><canvas class="bw-cv" width="${CW}" height="${CH}" aria-label="مسار البولينغ"></canvas>
-      <div class="bw-score">${g.players.map((id, i) => `<div class="bw-cr${g.turnId === id ? ' on' : ''}"><span class="bw-cn" style="--bc:${BALL_COL[i % 4]}">${esc(id === room.you ? 'أنت' : nm(room, id))}</span>${cardHTML(g, i)}</div>`).join('')}</div>
       <div class="bw-ban" hidden></div>
       ${g.phase === 'aim' ? `<div class="bw-turn"><span class="bw-tav">${faceOf(room, g.turnId, ti, 30)}</span><b>${g.turnId === room.you ? 'دورك' : esc(nm(room, g.turnId))}</b><small>الإطار ${g.frame + 1} - التسديدة ${rollNo}</small></div>` : ''}
       <span class="bw-fr">الإطار ${Math.min(g.frame + 1, g.frames)}/${g.frames}</span>
@@ -53,126 +53,69 @@ export function bowling(room) {
     </div>${final}</div>`;
 }
 
-/* ---------- الرسم بمنظور ---------- */
-const F = 1560, CAMH = 125, HOR = 250, END = HP + 3 * 26.4 + 60;
-function cam(y0) { return { y: y0 }; }
-function P3(c, x, y, z) { const d = Math.max(30, y - c.y); return { x: CW / 2 + F * x / d, y: HOR + F * (CAMH - z) / d, s: F / d }; }
-function quad(ctx, c, x1, x2, y1, y2, z = 0) { const a = P3(c, x1, y1, z), b = P3(c, x2, y1, z), d = P3(c, x2, y2, z), e = P3(c, x1, y2, z); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(d.x, d.y); ctx.lineTo(e.x, e.y); ctx.closePath(); }
-const IMG = {}; const img = (src) => { let i = IMG[src]; if (!i) { i = IMG[src] = new Image(); i.src = src; i.onload = () => BW.repaint?.(); } return i.complete && i.naturalWidth ? i : null; };
+/* ---------- الرسم: صور المالك (المسار، الدبابيس، الكور) + منظور مضبوط على صورة المسار ---------- */
+// القيم مقاسة من صورة المسار: نقطة التلاشي، ارتفاع الكاميرا، والبعد البؤري
+const VPX = 366, HOR = 85.75, F = 1826, CAMH = 135.4, CAMY = 71;
+const A = '/assets/games68/';
+const BALL_IMG = ['bowl-ball-blue', 'bowl-ball-red', 'bowl-ball-green', 'bowl-ball-purple'];
+function P3(x, y, z) { const d = Math.max(30, y - CAMY); return { x: VPX + F * x / d, y: HOR + F * (CAMH - z) / d, s: F / d }; }
+const IMG = {}; const img = (n) => { const src = A + n + '.webp'; let i = IMG[src]; if (!i) { i = IMG[src] = new Image(); i.decoding = 'async'; i.src = src; i.onload = () => BW.repaint?.(); } return i.complete && i.naturalWidth ? i : null; };
 
-function drawScene(ctx, c, pins, ball, ballCol) {
-  ctx.clearRect(0, 0, CW, CH);
-  // الخلفية
-  const bg = ctx.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, '#0b0f24'); bg.addColorStop(.35, '#141a3a'); bg.addColorStop(1, '#05060c');
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
-  const near = c.y + 40;
-  // الجوانب (الحواف المرتفعة)
-  for (const sgn of [-1, 1]) {
-    quad(ctx, c, sgn * (HALF + 24), sgn * (HALF + 90), near, END + 40, 0);
-    const gr = ctx.createLinearGradient(sgn > 0 ? CW : 0, 0, CW / 2, 0); gr.addColorStop(0, '#0d1230'); gr.addColorStop(1, '#2b3a7a'); ctx.fillStyle = gr; ctx.fill();
-    // خط أزرق مضيء على الحافة
-    const a = P3(c, sgn * (HALF + 24), near, 0), b = P3(c, sgn * (HALF + 24), END + 40, 0);
-    ctx.strokeStyle = '#6fb8ff'; ctx.lineWidth = Math.max(1.5, a.s * 3); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-    // المجرى
-    quad(ctx, c, sgn * HALF, sgn * (HALF + 24), near, END, 0);
-    const gu = ctx.createLinearGradient(P3(c, sgn * HALF, near, 0).x, 0, P3(c, sgn * (HALF + 24), near, 0).x, 0); gu.addColorStop(0, '#1a1a1f'); gu.addColorStop(.5, '#4a4f5c'); gu.addColorStop(1, '#16161a'); ctx.fillStyle = gu; ctx.fill();
-  }
-  // المسار الخشبي
-  quad(ctx, c, -HALF, HALF, near, END, 0);
-  const wood = ctx.createLinearGradient(0, P3(c, 0, END, 0).y, 0, CH); wood.addColorStop(0, '#c98b4a'); wood.addColorStop(.5, '#e2b277'); wood.addColorStop(1, '#d49a5a');
-  ctx.fillStyle = wood; ctx.fill();
-  ctx.save(); quad(ctx, c, -HALF, HALF, near, END, 0); ctx.clip();
-  // الألواح
-  for (let k = 0; k <= 39; k++) {
-    const x = -HALF + k * (LWB); const a = P3(c, x, near, 0), b = P3(c, x, END, 0);
-    if (k % 2) { quad(ctx, c, x, x + LWB, near, END, 0); ctx.fillStyle = k % 4 === 1 ? '#00000010' : '#ffffff0c'; ctx.fill(); }
-    ctx.strokeStyle = '#7a4a1c30'; ctx.lineWidth = Math.max(0.6, a.s * 0.25); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-  }
-  // لمعة
-  const sh = ctx.createLinearGradient(CW * 0.3, 0, CW * 0.7, 0); sh.addColorStop(0, '#fff0'); sh.addColorStop(.5, '#ffffff26'); sh.addColorStop(1, '#fff0'); ctx.fillStyle = sh; ctx.fillRect(0, 0, CW, CH);
-  // أرضية الدبابيس
-  quad(ctx, c, -HALF, HALF, HP - 30, END, 0); ctx.fillStyle = '#ffffff18'; ctx.fill();
-  ctx.restore();
-  // خط الرمي
-  if (c.y < -20) { quad(ctx, c, -HALF - 24, HALF + 24, -1.5, 1.5, 0); ctx.fillStyle = '#5a1010'; ctx.fill(); }
-  // الأسهم والنقاط
-  for (let k = 1; k <= 7; k++) { const x = -HALF + LWB * (k * 5 - 0.5); const yy = 457 + Math.abs(4 - k) * 30; tri(ctx, c, x, yy, '#9b1a1a'); }
-  for (let k = 1; k <= 7; k++) { const x = -HALF + LWB * (k * 5 - 0.5); dotG(ctx, c, x, 213); }
-  // الجدار الخلفي (لوحة لعبك)
-  backWall(ctx, c);
-  // الدبابيس والكرة حسب العمق
-  const items = pins.filter((p) => p.st !== 2).map((p) => ({ y: p.y, draw: () => drawPin(ctx, c, p) }));
-  if (ball && ball.on) items.push({ y: ball.y, draw: () => drawBall(ctx, c, ball, ballCol) });
+function drawScene(ctx, zoom, pins, ball, ci) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#0b0d22'; ctx.fillRect(0, 0, CW, CH);
+  ctx.translate(VPX, HOR); ctx.scale(zoom, zoom); ctx.translate(-VPX, -HOR);
+  const lane = img('bowl-lane');
+  if (lane) ctx.drawImage(lane, 0, 0, CW, CH);
+  logo(ctx);
+  const items = pins.filter((p) => p.st !== 2).map((p) => ({ y: p.y, draw: () => drawPin(ctx, p) }));
+  if (ball && ball.on) items.push({ y: ball.y, draw: () => drawBall(ctx, ball, ci) });
   items.sort((a, b) => b.y - a.y).forEach((it) => it.draw());
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
-const LWB = 106 / 39;
-function tri(ctx, c, x, y, col) { const a = P3(c, x, y + 30, 0), b = P3(c, x - 2.6, y, 0), d = P3(c, x + 2.6, y, 0); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.fill(); }
-function dotG(ctx, c, x, y) { const a = P3(c, x, y, 0); ctx.fillStyle = '#7a2a1a'; ctx.beginPath(); ctx.ellipse(a.x, a.y, Math.max(1, a.s * 1.2), Math.max(0.6, a.s * 0.5), 0, 0, 7); ctx.fill(); }
-function backWall(ctx, c) {
-  const y = END + 30, top = 105;
-  const a = P3(c, -HALF - 90, y, top), b = P3(c, HALF + 90, y, 0);
-  const w = b.x - a.x, h = b.y - a.y;
-  const g = ctx.createLinearGradient(0, a.y, 0, b.y); g.addColorStop(0, '#1b2a6b'); g.addColorStop(.7, '#0b1236'); g.addColorStop(1, '#05070f');
-  ctx.fillStyle = g; ctx.fillRect(a.x, a.y, w, h);
-  // اللوحة الذهبية بالنص
-  const pw = w * 0.5, ph = h * 0.62, px = a.x + (w - pw) / 2, py = a.y + h * 0.06;
-  const gg = ctx.createLinearGradient(px, py, px, py + ph); gg.addColorStop(0, '#f6d27a'); gg.addColorStop(.5, '#c99a3a'); gg.addColorStop(1, '#8a6420');
-  ctx.fillStyle = gg; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + pw, py); ctx.lineTo(px + pw * 0.62, py + ph); ctx.lineTo(px + pw * 0.38, py + ph); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#3a6fd8'; ctx.lineWidth = Math.max(2, w * 0.012); ctx.stroke();
-  // شعار لعبك
-  const fs = Math.max(8, pw * 0.2);
-  ctx.textAlign = 'center'; ctx.font = `900 ${fs}px Tahoma, sans-serif`;
-  const tg = ctx.createLinearGradient(0, py + ph * 0.2, 0, py + ph * 0.6); tg.addColorStop(0, '#f3d4ff'); tg.addColorStop(1, '#8b2ff0');
-  ctx.fillStyle = '#3d0b78'; ctx.fillText('لعبك', px + pw / 2, py + ph * 0.52 + 2); ctx.fillStyle = tg; ctx.fillText('لعبك', px + pw / 2, py + ph * 0.52);
-  ctx.font = `${fs * 0.55}px serif`; ctx.fillText('👑', px + pw / 2, py + ph * 0.22);
-  ctx.font = `900 ${fs * 0.32}px Arial, sans-serif`; ctx.fillStyle = '#3a2a00'; ctx.fillText('LA3BAK', px + pw / 2, py + ph * 0.72);
-  // إضاءة فوق
-  ctx.fillStyle = '#9fd0ff'; for (let k = 0; k < 9; k++) { ctx.beginPath(); ctx.arc(a.x + w * (0.06 + k * 0.11), a.y + 3, Math.max(1.5, w * 0.008), 0, 7); ctx.fill(); }
-}
-/* الدبوس: شكل أصلي (أبيض بخطين أحمر) */
-function pinPath(ctx, h) {
-  // نص العرض حسب الارتفاع (نسب دبوس حقيقي)
-  const prof = [[0, .155], [.08, .2], [.2, .25], [.32, .235], [.45, .17], [.56, .1], [.64, .085], [.72, .1], [.82, .13], [.9, .12], [.97, .07], [1, 0]];
-  ctx.beginPath(); ctx.moveTo(-prof[0][1] * h, 0);
-  for (const [t, r] of prof) ctx.lineTo(-r * h, -t * h);
-  for (let i = prof.length - 1; i >= 0; i--) ctx.lineTo(prof[i][1] * h, -prof[i][0] * h);
-  ctx.closePath();
-}
-function drawPin(ctx, c, p) {
-  const base = P3(c, p.x, p.y, 0); const h = 38 * base.s;
-  if (h < 1) return;
-  ctx.save(); ctx.translate(base.x, base.y);
-  // ظل
-  ctx.fillStyle = '#0005'; ctx.beginPath(); ctx.ellipse(0, 0, h * 0.24, h * 0.07, 0, 0, 7); ctx.fill();
-  if (p.st === 1) { const ang = (p.dir >= 0 ? 1 : -1) * (0.5 + Math.abs(p.dir) * 0.5) * p.tilt * Math.PI / 2; ctx.rotate(ang); ctx.scale(1, 1 - p.tilt * 0.45); }
-  pinPath(ctx, h);
-  const g = ctx.createLinearGradient(-h * 0.25, 0, h * 0.25, 0); g.addColorStop(0, '#c9ccd4'); g.addColorStop(.35, '#ffffff'); g.addColorStop(1, '#9aa0ab');
-  ctx.fillStyle = g; ctx.fill();
-  ctx.save(); pinPath(ctx, h); ctx.clip(); ctx.fillStyle = '#d4202a'; ctx.fillRect(-h, -h * 0.7, 2 * h, h * 0.035); ctx.fillRect(-h, -h * 0.655, 2 * h, h * 0.035); ctx.restore();
-  ctx.strokeStyle = '#0003'; ctx.lineWidth = Math.max(0.5, h * 0.012); ctx.stroke();
+/* شعار لعبك على المثلث الذهبي اللي فوق الدبابيس */
+function logo(ctx) {
+  const cx = 371, cy = 98;
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '900 34px Tahoma, sans-serif';
+  const tg = ctx.createLinearGradient(0, cy - 16, 0, cy + 16); tg.addColorStop(0, '#f3d4ff'); tg.addColorStop(.5, '#c46bff'); tg.addColorStop(1, '#7a22e0');
+  ctx.fillStyle = '#3d0b78'; ctx.fillText('لعبك', cx, cy + 2); ctx.fillStyle = tg; ctx.fillText('لعبك', cx, cy);
+  ctx.font = '16px serif'; ctx.fillText('👑', cx, cy - 25);
+  ctx.font = '900 10px Arial, sans-serif'; ctx.fillStyle = '#4a3200'; ctx.fillText('LA3BAK', cx, cy + 22);
   ctx.restore();
 }
-function drawBall(ctx, c, b, col) {
-  const p = P3(c, b.x, b.y, b.gutter ? BR * 0.4 : BR); const r = BR * p.s;
-  ctx.fillStyle = '#0006'; ctx.beginPath(); ctx.ellipse(p.x, P3(c, b.x, b.y, 0).y, r * 0.95, r * 0.28, 0, 0, 7); ctx.fill();
-  const g = ctx.createRadialGradient(p.x - r * 0.35, p.y - r * 0.4, r * 0.08, p.x, p.y, r);
-  g.addColorStop(0, '#ffffffcc'); g.addColorStop(.18, col); g.addColorStop(1, '#000a');
-  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.fill();
-  ctx.fillStyle = g; ctx.fill();
-  // الفتحات تدور مع المشي
-  const ph = (b.y / (2 * Math.PI * BR)) % 1; const hy = p.y - r * 0.35 + ph * r * 1.6;
-  if (hy < p.y + r * 0.7) { ctx.fillStyle = '#0b0b14'; const k = r * 0.12; for (const [dx, dy] of [[-0.22, 0], [0.22, 0], [0, 0.32]]) { ctx.beginPath(); ctx.ellipse(p.x + dx * r, hy + dy * r, k, k * 0.8, 0, 0, 7); ctx.fill(); } }
+function drawPin(ctx, p) {
+  const b = P3(p.x, p.y, 0); const h = 38 * b.s; if (h < 1) return;
+  const up = img('bowl-pin'), dn = img('bowl-pin-down'); if (!up) return;
+  ctx.save(); ctx.translate(b.x, b.y);
+  ctx.fillStyle = '#0006'; ctx.beginPath(); ctx.ellipse(0, 0, h * 0.2, h * 0.06, 0, 0, 7); ctx.fill();
+  const w = h * up.naturalWidth / up.naturalHeight;
+  if (p.st === 1 && p.tilt >= 0.99 && dn) {
+    const L = h * 1.02, H = L * dn.naturalHeight / dn.naturalWidth;
+    if (p.dir < 0) ctx.scale(-1, 1);
+    ctx.drawImage(dn, -L * 0.15, -H * 0.9, L, H);
+  } else {
+    if (p.st === 1) ctx.rotate((p.dir >= 0 ? 1 : -1) * (0.55 + Math.abs(p.dir) * 0.45) * p.tilt * Math.PI / 2);
+    ctx.drawImage(up, -w / 2, -h, w, h);
+  }
+  ctx.restore();
+}
+function drawBall(ctx, b, ci) {
+  const g = P3(b.x, b.y, 0), c = P3(b.x, b.y, b.gutter ? BR * 0.45 : BR); const r = BR * c.s;
+  ctx.fillStyle = '#0007'; ctx.beginPath(); ctx.ellipse(c.x, g.y, r * 0.9, r * 0.25, 0, 0, 7); ctx.fill();
+  const im = img(BALL_IMG[ci % 4]);
+  if (!im) { ctx.fillStyle = BALL_COL[ci % 4]; ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, 7); ctx.fill(); return; }
+  ctx.save(); ctx.translate(c.x, c.y); ctx.rotate((b.y - BALL_Y0) / (2 * Math.PI * BR) * 0.9 + (b.spin || 0) * 0.3); ctx.drawImage(im, -r, -r, 2 * r, 2 * r); ctx.restore();
 }
 
 /* ---------- الحالة الحالية (بدون حركة) ---------- */
 const restPins = (standing) => PINS.map((q, i) => ({ x: q.x, y: q.y, st: standing[i] ? 0 : 2, tilt: 0, dir: 0 }));
-function idleCam() { return cam(-260); }
 function paintIdle(cv, g, room) {
-  const ctx = cv.getContext('2d'); const c = idleCam();
+  const ctx = cv.getContext('2d');
   const myTurn = g.phase === 'aim' && g.turnId === room.you;
   const ti = Math.max(0, g.players.indexOf(g.turnId));
-  const ball = { x: myTurn ? BW.x0 : 0, y: -10, on: g.phase === 'aim' };
-  drawScene(ctx, c, restPins(g.standing), ball, BALL_COL[ti % 4]);
+  const ball = { x: myTurn ? BW.x0 : 0, y: BALL_Y0, on: g.phase === 'aim' };
+  drawScene(ctx, 1, restPins(g.standing), ball, ti);
 }
 
 let clockT = 0;
@@ -188,7 +131,7 @@ export function afterRender(view, room, send) {
     const first = BW.shown < 0; BW.shown = g.shotNo;
     if (!first && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const r = simulate(g.last.before, g.last.shot, true);
-      BW.anim = { frames: r.frames, t0: performance.now(), col: BALL_COL[Math.max(0, g.players.indexOf(g.last.by)) % 4], mark: g.last.mark, n: g.last.knocked.length, by: g.last.by };
+      BW.anim = { frames: r.frames, t0: performance.now(), ci: Math.max(0, g.players.indexOf(g.last.by)), mark: g.last.mark, n: g.last.knocked.length, by: g.last.by };
     }
   } else if (!g.last) BW.shown = g.shotNo;
   BW.repaint = () => { if (!BW.anim) { const c = document.querySelector('.bw-cv'); if (c) paintIdle(c, room.game, room); } };
@@ -203,9 +146,9 @@ export function afterRender(view, room, send) {
       { const t2 = document.querySelector('.bw-turn'); if (t2 && !t2.hidden) t2.hidden = true; }
       const k = Math.floor((performance.now() - A.t0) / (1000 / 60)); const fr = A.frames[Math.min(k, A.frames.length - 1)];
       const b = { x: fr.b[0], y: fr.b[1], gutter: !!fr.b[2], on: !!fr.b[3] };
-      const camY = Math.min(HP - 640, -260 + Math.max(0, b.y - 200) * 0.8);
+      const zoom = 1 + 1.25 * Math.min(1, Math.max(0, (b.y - 700) / 1000)) ** 1.4;
       const pins = fr.p.map(([x, y, st, tilt, dir]) => ({ x, y, st, tilt, dir }));
-      drawScene(c.getContext('2d'), cam(camY), pins, b, A.col);
+      drawScene(c.getContext('2d'), zoom, pins, b, A.ci);
       if (k >= A.frames.length - 1) {
         if (!A.endAt) { A.endAt = performance.now(); A.banT = A.mark === 'strike' ? 'STRIKE!' : A.mark === 'spare' ? 'SPARE' : A.mark === 'gutter' ? 'مجرى 😬' : `${A.n} ${A.n === 1 ? 'دبوس' : 'دبابيس'}`; showBan(A.banT, A.mark || 'n'); }
         else if (document.querySelector('.bw-ban')?.hidden) showBan(A.banT, A.mark || 'n');
@@ -223,7 +166,7 @@ export function afterRender(view, room, send) {
   cv.onpointermove = (e) => {
     const D = BW.drag; if (!D) return; const p = toCanvas(e); D.pts.push(p); if (D.pts.length > 80) D.pts.splice(1, 1);
     const s0 = D.pts[0]; const dy = p.y - s0.y, dx = p.x - s0.x;
-    if (dy > -40) { const sc = P3(idleCam(), 0, -10, BR).s; BW.x0 = Math.max(-HALF + BR, Math.min(HALF - BR, D.x0 + dx / sc)); paintIdle(cv, g, room); }
+    if (dy > -40) { const sc = P3(0, BALL_Y0, BR).s; BW.x0 = Math.max(-HALF + BR, Math.min(HALF - BR, D.x0 + dx / sc)); paintIdle(cv, g, room); }
   };
   cv.onpointerup = (e) => {
     const D = BW.drag; BW.drag = null; if (!D) return; const p = toCanvas(e); D.pts.push(p);

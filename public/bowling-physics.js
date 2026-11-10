@@ -7,6 +7,7 @@ export const HP = 1829;           // مكان الدبوس الأول
 export const BR = 10.9;           // نص قطر الكرة
 export const PR = 6.1;            // نص قطر الدبوس (من البطن)
 export const DT = 1 / 120;
+export const BALL_Y0 = 330;     // الكرة تبدأ من هنا (أول المسار اللي يبين بالصورة)
 const SP = 30.48, ROW = 26.4;     // المسافة بين الدبابيس
 export const PINS = [
   [0, 0],
@@ -36,7 +37,7 @@ export function normShot(s) {
 export function simulate(standing, shot, record = false) {
   const s = normShot(shot);
   const v0 = 560 + s.power * 380; // سم/ث
-  const ball = { x: s.x0, y: 0, vx: v0 * s.aim, vy: v0, gutter: false, on: true };
+  const ball = { x: s.x0, y: BALL_Y0, vx: v0 * s.aim, vy: v0, gutter: false, on: true };
   const pins = PINS.map((p, i) => ({ i, x: p.x, y: p.y, vx: 0, vy: 0, up: !!standing[i], down: false, gone: !standing[i], tilt: 0, dir: 0 }));
   const frames = record ? [] : null;
   const hook = s.spin * 95; // تسارع جانبي بعد ما تمسك الكرة

@@ -33,3 +33,5 @@
 .bw-turn{animation:bwin .4s,bwout .5s 2.2s forwards}@keyframes bwout{to{opacity:0;visibility:hidden}}
 .bw-turn[hidden]{display:none}
 .bw-ban{direction:ltr;unicode-bidi:isolate}
+.bw{background:#0b0d22 url(/assets/games68/bowl-bg.webp) center/cover no-repeat}
+.bw-score{position:static;display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 0 6px;direction:rtl}.bw-score .bw-cr{flex-direction:column;align-items:stretch;gap:2px}.bw-score .bw-card{width:100%}.bw-score .bw-f{flex:1;width:auto}.bw-score .bw-f.last{flex:1.35}.bw-score .bw-cn{align-self:flex-start;max-width:100%}
