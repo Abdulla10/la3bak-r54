@@ -1,3 +1,4 @@
+import { Casino } from './casino-r68.js';
 import { Bonds, BondError } from './bonds-r68.js';
 import { recordQuit, quitBlock } from './quit-guard-r68.js';
 import { moderateText, maskBanned, profanityOnly, setExtraBannedWords, BANNED_WORDS_MAX } from './moderation-r58.js';
@@ -418,6 +419,24 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         const replays = new Replays(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'replays') : '', Date.now);
         const phoneVerify = new PhoneVerify(functionalFile(undefined, 'phone-verify'), cfg.cookieSecret, process.env, log, Date.now, storage);
         const wheel = new LuckyWheel(functionalFile(undefined, 'lucky-wheel'), Date.now, storage);
+        // R68z42: جاكبوت لعبك + عجلة الأكل
+        const casino = new Casino(functionalFile(undefined, 'casino'), {
+            spend: (id, amount, label, op) => wallet.spendService(id, amount, label, op),
+            grant: (id, amount, label, op) => { try {
+                return wallet.grant(id, 'coins', amount, label, op);
+            }
+            catch (e) {
+                log('casino_grant_failed', { error: String(e).slice(0, 100) });
+                return false;
+            } },
+            balance: (id) => wallet.balance(id),
+        }, Date.now, storage);
+        setInterval(() => { try {
+            casino.tick();
+        }
+        catch (e) {
+            log('casino_tick_failed', { error: String(e).slice(0, 100) });
+        } }, 1000).unref?.();
         const activity = new PlayerActivity(functionalFile(undefined, 'player-activity'), Date.now, storage);
         // R68y: التحكم بالألعاب ورسوم الدخول من اللوحة
         const GAME_STATUS0 = new Map(registry.list().map((g) => [g.id, g.status]));
@@ -2511,6 +2530,20 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             } });
             functionalHttp.add('POST', '/api/admin/phone-reset', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(accounts.has(id), 'اللاعب غير موجود.'); adminNeed(phoneVerify.reset(id), 'اللاعب مو موثّق بالجوال.'); admin.audit(actor, 'phone.reset', id, 'فك توثيق الجوال'); return { ok: true }; }, 'owner');
             // R68z: عجلة الحظ
+            const casinoRun = (fn) => { try {
+                return fn();
+            }
+            catch (e) {
+                if (e instanceof StorageError)
+                    throw e;
+                throw new FunctionalHttpError(409, e.message);
+            } };
+            functionalHttp.add('GET', '/api/slot', ({ user }) => ({ ok: true, ...casino.slotState(user.id) }));
+            functionalHttp.add('POST', '/api/slot/spin', ({ user, body }) => { if (isGuest(user.id))
+                throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.spin(user.id, accounts.nameOf(user.id) || 'لاعب', body?.bet)) }; });
+            functionalHttp.add('GET', '/api/foodwheel', ({ user }) => ({ ok: true, ...casino.wheelState(user.id) }));
+            functionalHttp.add('POST', '/api/foodwheel/bet', ({ user, body }) => { if (isGuest(user.id))
+                throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.bet(user.id, accounts.nameOf(user.id) || 'لاعب', body?.item, body?.chip)) }; });
             functionalHttp.add('GET', '/api/wheel', ({ user }) => ({ ok: true, ...wheel.state(user.id), coins: wallet.balance(user.id) }));
             functionalHttp.add('POST', '/api/wheel/spin', ({ user, body }) => {
                 adminNeed(accounts.has(user.id) && !platform.isBanned(user.id), 'حسابك ما يقدر يلف العجلة.');

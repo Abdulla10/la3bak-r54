@@ -103,3 +103,7 @@ html body .h68 .h68-bcopy small{color:#f0e6ff!important}
 html body .h68 .h68-lv{color:#fff!important}
 html body .h68 .h68-room small{color:#e6d8fb!important}
 html body .h68 .h68-pinfo small{color:#c9b4ec!important}
+/* R68z42: ألعاب الحظ */
+.h68 .h68-luck{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
+.h68 .h68-lk{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 8px;border-radius:16px;color:#fff;text-decoration:none;font-weight:900;font-size:15px;box-shadow:0 4px 14px #0005}
+.h68 .h68-lk span{font-size:26px}.h68 .h68-lk.is-slot{background:linear-gradient(135deg,#a24cf5,#3d0b78);border:1.5px solid #ffd34d88}.h68 .h68-lk.is-food{background:linear-gradient(135deg,#ff8a2e,#c2185b);border:1.5px solid #fff6}
