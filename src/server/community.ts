@@ -80,6 +80,8 @@ export interface CommunityDeps {
   push(id: string, msg: unknown): void;
   /** R67ae: كلام مسيء بالمنشورات والتعليقات → رسالة الرفض */
   moderate?(text: string): string | null;
+  /** R69: محتوى يديد انكتب (للمشرف الذكي بالخلفية) */
+  onContent?(kind: 'post' | 'comment', id: number, by: string, text: string): void;
   /** R67ae: حساب إداري رسمي (نجمة ذهبية) */
   official?(id: string): boolean;
   /** R67ae: حساب مجدول للحذف أو محذوف */
@@ -249,13 +251,15 @@ export class Community {
     if (media) { const m = this.d.media[media]; if (!MEDIA_RE.test(media) || !m || m.by !== me || m.post !== null) throw new CommunityError(400, 'الصورة غير صالحة. ارفعها من جديد.'); }
     if (!text && !media) throw new CommunityError(400, 'اكتب شي أو أضف صورة.');
     { const bad = text ? this.dep.moderate?.(text) : null; if (bad) throw new CommunityError(422, bad); }
-    return this.tx(() => {
+    const out = this.tx(() => {
       if (text) this.dupCheck(me, text, 'post');
       const p: Post = { id: this.nextId(), by: me, text, media, at: this.now(), edited: null, likes: [] };
       this.d.posts.push(p);
       if (media) this.d.media[media].post = p.id;
       return this.postView(p, me);
     });
+    if (text) try { this.dep.onContent?.('post', (out as { id: number }).id, me, text); } catch { /* المراجعة ما توقف النشر */ }
+    return out;
   }
   editPost(me: string, id: unknown, b: { text?: unknown }) {
     this.rate('comment', me);
@@ -316,6 +320,7 @@ export class Community {
       return c;
     });
     this.afterNotify(notified.filter((x) => x !== me));
+    try { this.dep.onContent?.('comment', c.id, me, text); } catch { /* */ }
     return { comment: { id: c.id, author: this.who(me), text: c.text, at: c.at, parent: c.parent, mine: true, canDelete: true }, comments: this.d.comments.filter((x) => x.post === p.id).length };
   }
   /** حذف تعليق: كاتبه أو صاحب المنشور. حذف تعليق أصلي يحذف ردوده */
@@ -437,7 +442,7 @@ export class Community {
   /* ---------- الإدارة ---------- */
   reports(status: string) {
     const list = this.d.reports.filter((r) => status === 'all' || r.status === (status || 'open')).slice(-200).reverse();
-    return { list: list.map((r) => ({ id: r.id, kind: r.kind, target: r.target, reason: r.reason, note: r.note, at: r.at, status: r.status, by: this.dep.nameOf(r.by) || 'لاعب', author: this.dep.nameOf(r.snap.author) || 'لاعب', authorId: r.snap.author, text: r.snap.text, media: !!r.snap.media, decidedBy: r.decidedBy ?? null, decidedAt: r.decidedAt ?? null, decision: r.decision ?? null, exists: r.kind === 'post' ? this.d.posts.some((p) => p.id === r.target) : this.d.comments.some((c) => c.id === r.target) })), open: this.d.reports.filter((r) => r.status === 'open').length };
+    return { list: list.map((r) => ({ id: r.id, kind: r.kind, target: r.target, reason: r.reason, note: r.note, at: r.at, status: r.status, by: r.by === 'ai-moderator' ? '🤖 المشرف الذكي' : this.dep.nameOf(r.by) || 'لاعب', author: this.dep.nameOf(r.snap.author) || 'لاعب', authorId: r.snap.author, text: r.snap.text, media: !!r.snap.media, decidedBy: r.decidedBy ?? null, decidedAt: r.decidedAt ?? null, decision: r.decision ?? null, exists: r.kind === 'post' ? this.d.posts.some((p) => p.id === r.target) : this.d.comments.some((c) => c.id === r.target) })), open: this.d.reports.filter((r) => r.status === 'open').length };
   }
   /** قرار الإدارة: remove يحذف المحتوى (المنشور/التعليق) ويغلق كل البلاغات المفتوحة عليه؛ dismiss يغلق البلاغ بدون حذف */
   decide(rid: unknown, action: 'remove' | 'dismiss', actorName: string, why: string) {
@@ -457,6 +462,19 @@ export class Community {
     });
     this.dropMediaFile(media);
     return { ok: true, author: r.snap.author };
+  }
+  /** R69: المشرف الذكي — حذف تلقائي (يرجع كاتبه، أو null لو انحذف من قبل) */
+  systemRemove(kind: 'post' | 'comment', id: number): string | null {
+    if (kind === 'post') { const p = this.d.posts.find((x) => x.id === id); if (!p) return null; const media = p.media; this.tx(() => this.purgePost(p)); this.dropMediaFile(media); return p.by; }
+    const c = this.d.comments.find((x) => x.id === id); if (!c) return null; this.tx(() => this.purgeComment(c)); return c.by;
+  }
+  /** R69: المشرف الذكي — يحطه بطابور البلاغات للمراجعة */
+  systemReport(kind: 'post' | 'comment', id: number, note: string): boolean {
+    const t = kind === 'post' ? this.d.posts.find((x) => x.id === id) : this.d.comments.find((x) => x.id === id); if (!t) return false;
+    if (this.d.reports.some((r) => r.by === 'ai-moderator' && r.kind === kind && r.target === id)) return false;
+    const snap = { author: t.by, text: t.text, media: kind === 'post' ? (t as Post).media : null } as Report['snap'];
+    this.tx(() => { this.d.reports.push({ id: this.nextId(), kind, target: id, by: 'ai-moderator', reason: 'other', note: note.slice(0, 200), at: this.now(), status: 'open', snap }); });
+    return true;
   }
   /** R67ae: إدارة المنشورات — آخر المنشورات مع بحث، وحذف إداري */
   adminPosts(q: string, limit = 60) {

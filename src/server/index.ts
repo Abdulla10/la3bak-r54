@@ -95,6 +95,7 @@ import { monthStartOf, nextMonthStartOf } from './leaderboard.js';
 import { weekKeyOf } from './room-supporters-r58.js';
 import { BulkGrants } from './bulk-grants.js';
 import { OwnerOps, OwnerError, dayKey as gulfDay } from './owner-r69.js';
+import { AiMod } from './ai-mod-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -887,6 +888,19 @@ export async function createApp(
   }, storage);
   { const arenaTimer = setInterval(() => { try { arena.tick(); } catch (e) { log('arena_tick_failed', { message: String(e).slice(0, 120) }); } }, 5000); arenaTimer.unref?.(); }
   /* R69: تنبيهات الإدارة الفورية — الفوز الكبير، والبلاغات المتكررة على نفس اللاعب (3 أشخاص أو أكثر خلال 24 ساعة) */
+  /* R69: المشرف الذكي (Claude) للمنشورات والتعليقات وأسماء الغرف */
+  const aiMod = new AiMod(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'ai-mod.json') : '', {
+    key: () => process.env.ANTHROPIC_API_KEY || '', model: process.env.AI_MOD_MODEL || 'claude-haiku-5-5', dailyMax: Number(process.env.AI_MOD_DAILY_MAX) || 3000, mock: process.env.AI_MOD_MOCK === '1', mon: storage, log,
+    onDecision: (it, r) => {
+      const label = { profanity: 'شتم', sexual: 'محتوى غير لائق', harassment: 'تحرش أو تهديد', hate: 'كراهية', scam: 'احتيال', contact: 'طلب تواصل', self_harm: 'إيذاء النفس', spam: 'إزعاج', other: 'مخالفة' }[r.category] ?? 'مخالفة';
+      if (it.kind === 'room-name') { arena.alert('reports', '🏷️ اسم غرفة مخالف', `غرفة «${it.text.slice(0, 60)}» (${label}): ${r.reason}`, `roomname:${it.id}:${it.text.slice(0, 40)}`); return 'تنبيه للإدارة'; }
+      const kind = it.kind as 'post' | 'comment', id = Number(it.id);
+      if (r.category === 'self_harm') arena.alert('reports', '⚠️ محتاج انتباه', `${accounts.nameOf(it.by) || 'لاعب'} كتب ${kind === 'post' ? 'منشور' : 'تعليق'} فيه إشارة لإيذاء النفس. راجعه بسرعة من «بلاغات المجتمع».`, `selfharm:${it.kind}:${it.id}`);
+      if (r.verdict === 'block') { const author = community.systemRemove(kind, id); if (author) { try { support.announce([author], kind === 'post' ? 'انحذف منشورك' : 'انحذف تعليقك', `المشرف الآلي حذفه لأنه يخالف قواعد المجتمع (${label}). لو تشوف إنه خطأ، تواصل مع الدعم.`, 'المشرف', `aimod-${it.kind}-${it.id}`); } catch { /* */ } } return author ? 'انحذف' : 'محذوف من قبل'; }
+      return community.systemReport(kind, id, `🤖 المشرف الذكي: ${label} — ${r.reason}`) ? 'للمراجعة' : '';
+    },
+  });
+  { const rt = setInterval(() => { try { if (!aiMod.ready()) return; for (const r of socialRooms.liveRooms().slice(0, 100)) if (aiMod.roomNeedsCheck(r.id, r.name)) { aiMod.markRoom(r.id, r.name); aiMod.enqueue({ kind: 'room-name', id: r.id, by: '', text: r.name }); } } catch (e) { log('ai_room_scan_failed', { message: String(e).slice(0, 120) }); } }, 10 * 60_000); rt.unref?.(); }
   /* R69: التقرير الصباحي للمالك (9 الصبح بتوقيت الإمارات) */
   const morningText = () => {
     const y = gulfDay(Date.now() - 86_400_000); const all = accounts.all(); const newY = all.filter((a) => a.since && gulfDay(a.since) === y).length;
@@ -1015,7 +1029,7 @@ export async function createApp(
 
   /* المجتمع: نفس الجلسة والحسابات والحظر القائمة. معرّفات الحسابات ما تطلع للعميل (معرّف عام بالـHMAC) */
   const community = new Community(comFile, comMedia, {
-    secret: cfg.cookieSecret, moderate: (t) => profanityOnly(t), official: (id) => verificationView(id).verificationKind === 'administration', hidden: (id) => deletion.hidden(id), nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
+    secret: cfg.cookieSecret, onContent: (kind, id, by, text) => aiMod.enqueue({ kind, id: String(id), by, text }), moderate: (t) => profanityOnly(t), official: (id) => verificationView(id).verificationKind === 'administration', hidden: (id) => deletion.hidden(id), nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
     hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
     push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
     animTier: (id) => profileAnimTier(id),
@@ -1758,6 +1772,9 @@ export async function createApp(
     };
     functionalHttp.add('GET', '/api/admin/collusion', () => ({ ok: true, list: collusionScan(), rule: { minGames: 5, share: 85, days: 14 } }), 'owner');
     { const ct = setInterval(() => { try { const day = gulfDay(Date.now()); for (const c of collusionScan()) arena.alert('collusion', '🎯 تلاعب محتمل بالمباريات', `${c.winner} فاز على ${c.loser} ${c.wins} من ${c.n} مباريات خلال 14 يوم (${c.games.join('، ')})${c.stake ? ` برسوم ${c.stake.toLocaleString('en-US')}` : ''}. شيك عليهم.`, `collusion:${c.winnerId}:${c.loserId}:${day}`); } catch (e) { log('collusion_scan_failed', { message: String(e).slice(0, 120) }); } }, 60 * 60_000); ct.unref?.(); }
+    functionalHttp.add('GET', '/api/admin/ai-mod', () => ({ ok: true, ...aiMod.view(), log: aiMod.view().log.map((x) => ({ ...x, author: x.by ? accounts.nameOf(x.by) || '—' : '' })) }), 'owner');
+    functionalHttp.add('POST', '/api/admin/ai-mod/toggle', ({ actor, body }) => { aiMod.setOn(!!body.on); admin.audit(actor!, 'aimod.toggle', 'ai-mod', body.on ? 'تشغيل' : 'إيقاف'); return { ok: true, ...aiMod.view() }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/ai-mod/test', async ({ body }) => { const t = String(body.text ?? '').trim().slice(0, 500); adminNeed(t.length >= 2, 'اكتب نص.'); adminNeed(aiMod.ready(), 'المشرف الذكي مو مفعّل (يحتاج مفتاح).'); let r; try { r = await aiMod.classify(t); } catch (e) { throw new FunctionalHttpError(502, 'ما قدرنا نوصل للنموذج: ' + String((e as Error).message).slice(0, 80)); } adminNeed(!!r, 'وصلنا الحد اليومي.'); return { ok: true, result: r }; }, 'owner');
     functionalHttp.add('POST', '/api/admin/owner/report-now', () => ({ ok: true, text: morningText() }), 'owner');
     functionalHttp.add('POST', '/api/admin/2fa-reset', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(accounts.has(id), 'اللاعب غير موجود.'); adminNeed(arena.tfReset(id), 'التحقق بخطوتين مو مفعّل عند اللاعب.'); admin.audit(actor!, '2fa.reset', id, 'فك التحقق بخطوتين'); return { ok: true }; }, 'owner');
     functionalHttp.add('POST', '/api/foodwheel/chest', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.claimChest(user.id, (body as any)?.i)) }; });
