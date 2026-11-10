@@ -104,6 +104,8 @@ import { DeviceGuard } from './device-guard-r69.js';
 import { ImageGuard, compressImage } from './image-guard-r69.js';
 import { ServerMonitor } from './monitor-r69.js';
 import { E2EKeys } from './e2e-keys-r69.js';
+import { Shield } from './shield-r69.js';
+import { OwnerSecrets, checkAnthropicKey } from './secrets-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -897,8 +899,9 @@ export async function createApp(
   { const arenaTimer = setInterval(() => { try { arena.tick(); } catch (e) { log('arena_tick_failed', { message: String(e).slice(0, 120) }); } }, 5000); arenaTimer.unref?.(); }
   /* R69: تنبيهات الإدارة الفورية — الفوز الكبير، والبلاغات المتكررة على نفس اللاعب (3 أشخاص أو أكثر خلال 24 ساعة) */
   /* R69: المشرف الذكي (Claude) للمنشورات والتعليقات وأسماء الغرف */
+  const ownerSecrets = new OwnerSecrets(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'owner-secrets.json') : '', cfg.cookieSecret);
   const aiMod = new AiMod(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'ai-mod.json') : '', {
-    key: () => process.env.ANTHROPIC_API_KEY || '', model: process.env.AI_MOD_MODEL || 'claude-haiku-5-5', dailyMax: Number(process.env.AI_MOD_DAILY_MAX) || 3000, mock: process.env.AI_MOD_MOCK === '1', mon: storage, log,
+    key: () => ownerSecrets.get('ANTHROPIC_API_KEY'), model: process.env.AI_MOD_MODEL || 'claude-haiku-5-5', dailyMax: Number(process.env.AI_MOD_DAILY_MAX) || 3000, mock: process.env.AI_MOD_MOCK === '1', mon: storage, log,
     onDecision: (it, r) => {
       const label = { profanity: 'شتم', sexual: 'محتوى غير لائق', harassment: 'تحرش أو تهديد', hate: 'كراهية', scam: 'احتيال', contact: 'طلب تواصل', self_harm: 'إيذاء النفس', spam: 'إزعاج', other: 'مخالفة' }[r.category] ?? 'مخالفة';
       if (it.kind === 'room-name') { arena.alert('reports', '🏷️ اسم غرفة مخالف', `غرفة «${it.text.slice(0, 60)}» (${label}): ${r.reason}`, `roomname:${it.id}:${it.text.slice(0, 40)}`); return 'تنبيه للإدارة'; }
@@ -921,7 +924,7 @@ export async function createApp(
   const aiWorth = (t: string) => { const x = t.replace(/[\s\p{Extended_Pictographic}\p{P}\d]/gu, ''); return x.length >= 3 && !/^(ه|ھ|h|a|خ|ك)+$/i.test(x); };
   /* R69za: كشف الحسابات الوهمية على نفس الجهاز */
   /* R69ze: فحص الصور بالذكاء الاصطناعي (يصرف من حد المشرف الذكي اليومي) */
-  const imageGuard = new ImageGuard({ key: () => process.env.ANTHROPIC_API_KEY || '', model: process.env.AI_MOD_MODEL || 'claude-haiku-5-5', mock: process.env.AI_MOD_MOCK === '1', budget: () => aiMod.spend(), on: () => aiMod.isOn(), log });
+  const imageGuard = new ImageGuard({ key: () => ownerSecrets.get('ANTHROPIC_API_KEY'), model: process.env.AI_MOD_MODEL || 'claude-haiku-5-5', mock: process.env.AI_MOD_MOCK === '1', budget: () => aiMod.spend(), on: () => aiMod.isOn(), log });
   const imageBlocked = async (buf: Buffer, by: string, where: string): Promise<string | null> => {
     const v = await imageGuard.check(buf).catch(() => null); if (!v || v.verdict === 'ok') return null;
     if (v.verdict === 'review') { arena.alert('reports', '🖼️ صورة تحتاج مراجعة', `${accounts.nameOf(by) || 'لاعب'} رفع ${where}: ${v.reason}`, `img:${by}:${Date.now() >> 16}`); return null; }
@@ -1762,6 +1765,10 @@ export async function createApp(
     /* R69ze: مفاتيح التشفير العامة */
     functionalHttp.add('PUT', '/api/e2e/key', ({ user, body }) => { adminNeed(accounts.has(user.id), 'سجّل دخولك أول.'); const r = e2eKeys.put(user.id, body as any); adminNeed(r.ok, (r as any).error || 'مفتاح غير صالح.'); return r; });
     functionalHttp.add('GET', '/api/e2e/keys', ({ user, url }) => { adminNeed(accounts.has(user.id), 'سجّل دخولك أول.'); const other = community.resolvePublicId(url.searchParams.get('peer')); adminNeed(!!other && social.friendInternalIds(user.id).includes(other), 'صديقك غير متاح.'); return { ok: true, mine: e2eKeys.get(user.id), peer: e2eKeys.get(other!) }; });
+    /* R69zk: المالك يحط مفتاح الذكاء الاصطناعي من لوحته */
+    functionalHttp.add('GET', '/api/admin/ai-key', () => ({ ok: true, source: ownerSecrets.source('ANTHROPIC_API_KEY'), hint: ownerSecrets.hint('ANTHROPIC_API_KEY') }), 'owner');
+    functionalHttp.add('POST', '/api/admin/ai-key', async (ctx) => { const key = String((ctx.body as any).key ?? '').trim(); adminNeed(key === '' || /^sk-ant-[A-Za-z0-9_-]{20,200}$/.test(key), 'هذا مو مفتاح Anthropic. المفتاح يبدأ بـ sk-ant-'); if (key) { const c = await checkAnthropicKey(key); adminNeed(c !== 'bad', 'المفتاح مرفوض من Anthropic. تأكد إنك نسخته كامل أو سوّ واحد جديد.'); ownerSecrets.set('ANTHROPIC_API_KEY', key); try { if (ctx.actor) admin.audit(ctx.actor, 'ai.key', 'ai', 'حط مفتاح الذكاء الاصطناعي'); } catch { /* */ } return { ok: true, checked: c, source: ownerSecrets.source('ANTHROPIC_API_KEY'), hint: ownerSecrets.hint('ANTHROPIC_API_KEY') }; } ownerSecrets.set('ANTHROPIC_API_KEY', ''); return { ok: true, source: ownerSecrets.source('ANTHROPIC_API_KEY'), hint: '' }; }, 'owner');
+    functionalHttp.add('GET', '/api/admin/shield', () => ({ ok: true, ...shield.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/monitor', () => ({ ok: true, ...monitor.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');
     functionalHttp.add('POST', '/api/admin/chest/drop', ({ actor }) => { try { chests.dropNow(); } catch (e) { if (e instanceof ChestError) throw new FunctionalHttpError(409, e.message); throw e; } admin.audit(actor!, 'chest.drop', 'gold-chest', 'إطلاق صندوق ذهبي يدوي'); return { ok: true, ...chests.adminView() }; }, 'owner');
@@ -2058,12 +2065,16 @@ export async function createApp(
   /* R69ze: مراقبة السيرفر — تنبيهات للمالك على الجوال */
   const monitor = new ServerMonitor({ online: () => { let n = 0; for (const set of sockets.values()) if (set.size) n++; return n; }, storage: () => storage.status(),
     alert: (title, text) => { let to: string[] = []; try { to = platform.staff().filter((x) => x.role === 'owner').map((x) => x.id).filter((id) => accounts.has(id)); if (to.length) support.announce(to, title, text, 'مراقبة السيرفر', 'mon-' + Date.now()); } catch { /* */ } if (!to.length) adminPush(title, text, 'server'); }, log });
+  /* R69zk: درع الحماية */
+  const shield = new Shield(cfg.cookieSecret, { onBan: (_k, why) => { try { arena.alert('big', '🛡️ صدّينا هجوم', `جهاز/شبكة انحظرت 10 دقايق: ${why}.`, 'shield-' + Math.floor(Date.now() / 600_000)); } catch { /* */ } } });
   const server = http.createServer(async (req, res) => {
     requestResponses.set(req, res);
     { const t0 = performance.now(); res.once('finish', () => { if (!String(req.url).startsWith('/ws')) monitor.request(performance.now() - t0, res.statusCode); }); }
     const finish = pendingWrites.begin('http-requests');
     try {
       const url = new URL(req.url ?? '/', 'http://x');
+      if (url.pathname !== '/healthz') { const sk = shield.key(ipOf(req)); const isApi = url.pathname.startsWith('/api/'); if (shield.isBanned(sk) || (isApi && !shield.allow(sk))) { res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60' }); res.end(JSON.stringify({ error: 'طلبات كثيرة. انتظر دقيقة وجرّب.' })); return; } }
+      if (url.pathname === '/api/pow' && req.method === 'GET') return json(res, 200, shield.challenge(shield.key(ipOf(req))), { 'Cache-Control': 'no-store' });
       if (await webhook(req,res,url)) return;
       if (await socialVoice!.handleHttp(req,res)) return;
       const session = sessions.cookieUser(req.headers.cookie);
@@ -2395,12 +2406,14 @@ export async function createApp(
         }
         if (!sessionLimiter.allow(ipOf(req))) return json(res, 429, { error: 'طلبات كثيرة، جرّب بعد شوي.' });
         // لا حد على إنشاء الحسابات بحسب الشبكة: شبكات الجوال والواي فاي المشتركة تجمع لاعبين حقيقيين. النشاط المرتفع يظهر للإدارة كإشارة فقط (platform.netBursts).
-        let name = '';
+        let name = '', powIn: any = null, hp = '';
         try {
-          name = cleanName(JSON.parse(await appReadBody(req)).name);
+          const bd = JSON.parse(await appReadBody(req)); name = cleanName(bd.name); powIn = bd.pow; hp = typeof bd.website === 'string' ? bd.website : '';
         } catch {
           return json(res, 400, { error: 'الطلب غير صالح.' });
         }
+        /* R69zk: حساب جديد يحتاج إثبات عمل (يحسبه الجوال بروحه) + فخ للبوتات */
+        if (!user) { const sk = shield.key(ipOf(req)); if (hp) return json(res, 400, { error: 'الطلب غير صالح.' }); if (!shield.verify(sk, powIn?.c, powIn?.n)) return json(res, 428, { error: 'حدّث الصفحة وجرّب مرة ثانية.', pow: true }); shield.noteSignup(sk); }
         if (name.length < 2) return json(res, 400, { error: 'اكتب اسم من حرفين على الأقل.' });
         const problem = nameProblem(name);
         if (problem) return json(res, 400, { error: problem });
@@ -2439,7 +2452,8 @@ export async function createApp(
     if (admin.maintenanceBlock(user)) return reject('503 Service Unavailable');
     if (admin.banBlock(user)) return reject('403 Forbidden');
     if ((sockets.get(user.id)?.size ?? 0) >= cfg.maxConnectionsPerUser) return reject('429 Too Many Requests');
-    wss.handleUpgrade(req, socket, head, (ws) => onConnection(ws, user, req.headers.cookie ?? ''));
+    const wk = shield.key(ipOf(req)); if (!shield.wsOpenOk(wk)) return reject('429 Too Many Requests');
+    wss.handleUpgrade(req, socket, head, (ws) => { ws.once('close', () => shield.wsClosed(wk)); onConnection(ws, user, req.headers.cookie ?? ''); });
   });
 
   const ERR_RATE = 'بطيء شوي، رسائل كثيرة.';
@@ -2643,6 +2657,8 @@ export async function createApp(
     mm.sweep();
   }, 60_000);
 
+  /* R69zk: نسكّر الاتصالات البطيئة المتعمدة (هجوم slowloris) */
+  server.headersTimeout = 20_000; server.requestTimeout = 60_000;
   await new Promise<void>((resolve) => server.listen(cfg.port, cfg.host, resolve));
   const addr = server.address();
   const port = typeof addr === 'object' && addr ? addr.port : cfg.port;
