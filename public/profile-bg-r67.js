@@ -25,7 +25,7 @@ const on = (src) => {
 };
 async function fillVisitor(el) {
   if (el.dataset.done) return; el.dataset.done = '1';
-  try { const { bgLayer } = await import('/shop.js?v=r68z40'); el.innerHTML = bgLayer({ id: el.dataset.id, css: el.dataset.css || undefined, art: el.dataset.art || undefined }); } catch {}
+  try { const { bgLayer } = await import('/shop.js?v=r68z40c'); el.innerHTML = bgLayer({ id: el.dataset.id, css: el.dataset.css || undefined, art: el.dataset.art || undefined }); } catch {}
 }
 async function check() {
   if (busy) return; busy = true;
