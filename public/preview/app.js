@@ -1,8 +1,8 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r68z42';
-import * as REF from '../unified/home.js?v=r68z42';
-import * as SOCIAL from '../unified/social.js?v=r68z42';
+import * as UNIFIED from '../unified/shell.js?v=r69b';
+import * as REF from '../unified/home.js?v=r69a';
+import * as SOCIAL from '../unified/social.js?v=r69a';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
@@ -17,7 +17,7 @@ import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
 import { initStatus, checkStatusNow } from '../status.js?v=r68x-navigation-r50';
 import * as LOB from '../lobby.js?v=r68z31';
 import * as AVT from '../avatar.js?v=shell-r6';
-import * as AUTH from '../auth.js?v=shell-r6';
+import * as AUTH from '../auth.js?v=r69a-r6';
 import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
@@ -33,6 +33,7 @@ import * as LRV from '../liars.js?v=r68z31';
 import * as PLV from '../pool.js?v=r68z31';
 import { showQuitBan } from '../quit-ban-r68.js?v=r68z28';
 import * as CZ68 from '../casino-r68.js?v=r68z48';
+import * as AR69 from '../arena-r69.js?v=r69d';
 import * as THEME68 from '../theme-r68.js?v=r68z39d';
 import * as BWV from '../bowling.js?v=r68z31';
 import * as CRV from '../carrom.js?v=r68z31';
@@ -41,7 +42,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68z48';
+import * as PWA from '../pwa.js?v=r69f';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -338,12 +339,12 @@ function parseRoute() {
   return { name, a: dec(parts[1]), b: dec(parts[2]), c: dec(parts[3]) };
 }
 
-const NAV_OF = { slot: 'games', foodwheel: 'games', themes: 'profile', lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', 'hidden-posts': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
+const NAV_OF = { slot: 'games', foodwheel: 'games', tournaments: 'games', league: 'games', watch: 'games', twofa: 'profile', themes: 'profile', lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', 'hidden-posts': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
 /* R51: الأب المنطقي يُستخدم فقط لو فُتحت الصفحة مباشرة (ما فيه صفحة سابقة داخل الموقع)؛ غير كذا زر الرجوع يرجع للصفحة السابقة الفعلية.
    صفحات قائمة «ملفي» (VIP، نوبل، المحفظة…) أبوها الملف الشخصي، مو الرئيسية. */
 const PROFILE_CHILDREN = new Set(['vip','ranks','rank-rewards','missions','wallet','settings','family','visitors','invite']);
 /* R53b: توثيق الحساب والمساعدة والخصوصية والشروط صارت داخل الإعدادات */
-const SETTINGS_CHILDREN = new Set(['verification','support','privacy','terms','privacy-settings','account-info','devices','hidden-posts','about']);
+const SETTINGS_CHILDREN = new Set(['twofa','verification','support','privacy','terms','privacy-settings','account-info','devices','hidden-posts','about']);
 const BACK_OF = (r) => (r.name === 'social-room' ? '#/social-rooms' : ['game','hub','city'].includes(r.name) ? '#/games' : r.name === 'room' ? '#/rooms' : PROFILE_CHILDREN.has(r.name) ? '#/profile' : SETTINGS_CHILDREN.has(r.name) ? '#/settings' : '#/');
 
 function needUser(nextHash) {
@@ -396,7 +397,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68z48');
+  const M = await import('../settings-r60.js?v=r69f');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -589,7 +590,6 @@ async function render() {
       import('../wheel-r68.js?v=r68z').then(({mountWheel})=>{const el=view.querySelector('[data-wheel68]');if(el&&parseRoute().name==='wheel')mountWheel(el,{api:functionalApi});}).catch(()=>{});
       break;
     case 'events':
-    case 'tournaments':
       unifiedPage(view,r.name,referenceInfoPage(r.name));
       break;
     case 'friends':
@@ -655,6 +655,13 @@ async function render() {
     case 'agreement':
       unifiedPage(view,r.name,agreementView());
       break;
+    case 'tournaments':
+    case 'league':
+    case 'watch':
+    case 'twofa':
+      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      unifiedPage(view,r.name,AR69.arenaHTML(r.name, r.name === 'watch' ? r.a : ''));
+      break;
     case 'slot':
     case 'foodwheel':
       if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
@@ -692,6 +699,7 @@ async function render() {
       if (needUser((globalThis.__LA3BAK_NAV__ || location).hash)) return;
       if (!keepLiveSocial) unifiedPage(view,r.name);
       import('../room-quiz-r68.js?v=r68z').then(({startRoomQuiz})=>startRoomQuiz({api:functionalApi})).catch(()=>{});
+      import('../room-luck-r69.js?v=r69f').then(({startRoomLuck})=>startRoomLuck()).catch(()=>{});
       break;
     case 'community':
       if (changed) { COM.CM.menu = null; COM.CM.edit = null; COM.CM.report = null; if (S.user) COM.loadMe().then(updateTop); COM.loadFeed().then(() => { if (parseRoute().name === 'community') render(); }); }
@@ -773,7 +781,7 @@ async function render() {
   CHAT.sync(null, S.user?.id);
   if (r.name !== 'room' && GIFT.G.open) GIFT.closeRoom();
   FS.sync(r.name === 'room' && gameVoiceUI?.mode==='game' && S.rooms.get(r.a)?.status === 'playing' && !isRetiredGame(S.rooms.get(r.a)?.gameId));
-  if (r.name!=='admin' && !UNIFIED.hasRoute(r.name) && ((FOOTED.has(r.name) && !['profile','account','shop','notifications','notifications-internal'].includes(r.name)) || ['events','tournaments','support','contact'].includes(r.name))) view.insertAdjacentHTML('beforeend', `<div class="lb-unified lb-standalone-footer">${REF.footerHTML(referenceContext())}</div>`);
+  if (r.name!=='admin' && !UNIFIED.hasRoute(r.name) && ((FOOTED.has(r.name) && !['profile','account','shop','notifications','notifications-internal'].includes(r.name)) || ['events','support','contact'].includes(r.name))) view.insertAdjacentHTML('beforeend', `<div class="lb-unified lb-standalone-footer">${REF.footerHTML(referenceContext())}</div>`);
   if(r.name!=='admin'&&!UNIFIED.hasRoute(r.name))REF.mountHome(view, referenceContext());
   if (!UNIFIED.hasRoute(r.name) && ['profile','account','settings','wallet','shop','notifications','notifications-internal'].includes(r.name)) PR.mountProfile(view, profileContext());
   document.body.dataset.page = r.name;

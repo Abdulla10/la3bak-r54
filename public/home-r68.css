@@ -107,3 +107,4 @@ html body .h68 .h68-pinfo small{color:#c9b4ec!important}
 .h68 .h68-luck{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
 .h68 .h68-lk{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 8px;border-radius:16px;color:#fff;text-decoration:none;font-weight:900;font-size:15px;box-shadow:0 4px 14px #0005}
 .h68 .h68-lk span{font-size:26px}.h68 .h68-lk.is-slot{background:linear-gradient(135deg,#a24cf5,#3d0b78);border:1.5px solid #ffd34d88}.h68 .h68-lk.is-food{background:linear-gradient(135deg,#ff8a2e,#c2185b);border:1.5px solid #fff6}
+.h68 .h68-arena{grid-template-columns:1fr 1fr 1fr}.h68 .h68-arena .h68-lk{font-size:13.5px;padding:10px 4px;gap:5px}.h68 .h68-arena .h68-lk span{font-size:20px}.h68 .h68-lk.is-tour{background:linear-gradient(135deg,#ffb020,#8a3b00)}.h68 .h68-lk.is-league{background:linear-gradient(135deg,#5b4cff,#1a0a56)}.h68 .h68-lk.is-watch{background:linear-gradient(135deg,#ff2e4d,#5a0a2a)}

@@ -22,6 +22,22 @@ function loadGsi() {
 export async function enabled() { return !!(await config()); }
 
 /** يعرض زر Google داخل el. onLogin(user) بعد نجاح الخادم، onError(msg) عند الفشل */
+/** R69: نافذة رمز التحقق بخطوتين (ترجع الرمز أو null لو ألغى) */
+function askTotp(msg) {
+  return new Promise((done) => {
+    const ov = document.createElement('div'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'رمز التحقق');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:300;background:#000a;display:flex;align-items:center;justify-content:center;direction:rtl;padding:16px';
+    ov.innerHTML = `<form style="width:min(100%,360px);background:linear-gradient(160deg,#3a1060,#170830);border:1px solid #a86bff66;border-radius:20px;padding:18px;color:#fff;font-family:inherit;text-align:center">
+      <b style="font-size:18px">🔐 التحقق بخطوتين</b><p style="font-size:14px;opacity:.85;line-height:1.6;margin:8px 0 12px"></p>
+      <input inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="الرمز" style="width:100%;box-sizing:border-box;border-radius:12px;border:1px solid #9b5cff;background:#0f0520;color:#fff;padding:12px;font:inherit;font-size:24px;letter-spacing:8px;text-align:center;direction:ltr">
+      <div style="display:flex;gap:8px;margin-top:12px"><button type="submit" style="flex:1;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:900;background:linear-gradient(90deg,#ffb020,#ffd76b);color:#3a1a00">دخول</button><button type="button" data-x style="border:0;border-radius:12px;padding:12px 16px;font:inherit;background:#ffffff1a;color:#fff">إلغاء</button></div></form>`;
+    ov.querySelector('p').textContent = msg || 'اكتب الرمز من تطبيق المصادقة.';
+    const inp = ov.querySelector('input'); const end = (v) => { ov.remove(); done(v); };
+    ov.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); const v = inp.value.replace(/\D/g, ''); if (v.length === 6) end(v); });
+    ov.querySelector('[data-x]').addEventListener('click', () => end(null));
+    document.body.append(ov); setTimeout(() => inp.focus(), 50);
+  });
+}
 export async function mount(el, { onLogin, onError, beforeLogin }) {
   const id = await config();
   if (!el || !id) { if (el) el.closest('.g-card')?.setAttribute('hidden', ''); return; }
@@ -40,8 +56,16 @@ export async function mount(el, { onLogin, onError, beforeLogin }) {
     callback: async (resp) => {
       try {
         if (beforeLogin && !await beforeLogin()) return;
-        const r = await fetch('/api/auth/google', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ credential: resp.credential }) });
-        const j = await r.json().catch(() => ({}));
+        let body = { credential: resp.credential };
+        let r = await fetch('/api/auth/google', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        let j = await r.json().catch(() => ({}));
+        // R69: الحساب محمي بالتحقق بخطوتين
+        while (!r.ok && j.need2fa) {
+          const code = await askTotp(j.error); if (!code) throw new Error('ألغيت تسجيل الدخول.');
+          body = { credential: resp.credential, totp: code };
+          r = await fetch('/api/auth/google', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          j = await r.json().catch(() => ({}));
+        }
         if (!r.ok) throw new Error(j.error || 'فشل تسجيل الدخول.');
         onLogin(j);
       } catch (e) {

@@ -18,7 +18,8 @@ import { createRegistry, GAME_CATEGORIES } from '../engine/registry.js';
 import { VipMembership, validVipMembership } from './vip-membership.js';
 import { wireRankVipRoutes } from './rank-vip-http.js';
 import { loadConfig, type Config } from './config.js';
-import { RoomService, type User } from './rooms.js';
+import { RoomService, REACTIONS, type User } from './rooms.js';
+import type { Room } from './store.js';
 import { MemoryStore, type RoomStore } from './store.js';
 import { Leaderboard, validBoard } from './leaderboard.js';
 import { Matchmaker } from './matchmaker.js';
@@ -93,6 +94,7 @@ import { Devices } from './devices-r62.js';
 import { monthStartOf, nextMonthStartOf } from './leaderboard.js';
 import { weekKeyOf } from './room-supporters-r58.js';
 import { BulkGrants } from './bulk-grants.js';
+import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
@@ -471,6 +473,7 @@ export async function createApp(
   let avatarDecodes = 0;
   const avatarLimiter = new KeyedLimiter(6, 6 / 60);
   const roomAvatarLimiter = new KeyedLimiter(120, 2);
+  const watchLimiter = new KeyedLimiter(8, 1);
   const identities = new Identities(idFile, Date.now, storage);
   /* R60 (قرار المالك): الضيف (بدون Google) يتصفح بس، ويلعب ضد الكمبيوتر بدون جوايز. القفل هنا بالخادم.
    * يشتغل بس إذا الدخول بـGoogle مفعّل بالخادم (وإلا الضيف ما يقدر يربط حسابه أصلًا). GUEST_READONLY=0 يطفيه. */
@@ -822,6 +825,9 @@ export async function createApp(
       for (const f of social.friendInternalIds(userId)) { if (!sockets.has(f)) { if (webPush?.count(f)) { const msg = build(f) as { t?: string; name?: string; room?: { id?: string; name?: string } } | null; if (msg?.t === 'friend:room' && msg.room?.id) pushTo([f], { title: `صاحبك ${msg.name || ''} دخل غرفة`, body: `«${msg.room.name || ''}» — تعال سولف وياه`, url: `#/social-room/${msg.room.id}`, tag: 'friend-room-' + userId.slice(0, 8) }); } continue; } const msg = build(f); if (msg) sendToUser(f, msg); }
     } catch { /* التنبيه شكلي، ما يوقف شي */ }
   };
+  /* R69: المباريات الحية للمشاهدة */
+  const liveGames = new Map<string, Room>();
+  const spectators = new Map<string, Map<string, number>>();
   const service: RoomService = new RoomService(store, registry, cfg, {
     onBeforeGameFinished(room, players, winners, ref, ts) {
       return reserveGame(ref, players, winners, ts);
@@ -829,9 +835,12 @@ export async function createApp(
     noRewards: (id: string) => isGuest(id),
     onGameFinished(room, players, winners, ref) {
       deliverIntent('game:' + ref);
+      try { const out = registry.historyEngine(room.gameId)?.outcome(room.state as never); arena.tourGameFinished(room.code, winners, out?.scores); if (players.length >= 2) arena.leagueGame(players, winners); } catch (e) { if (e instanceof StorageError) throw e; log('arena_game_hook_failed', { message: String(e).slice(0, 120) }); }
       { const gn = registry.historyEngine(room.gameId)?.info.name ?? room.gameId; for (const p of players) activity.note(p.id, 'game', room.code, `${gn}${winners.includes(p.id) ? ' — فاز 🏆' : ''}${room.stake ? ` · رسم ${room.stake}` : ''}`); }
     },
     onRoom(room) {
+      if (room.status === 'playing' && !room.access) liveGames.set(room.code, room); else liveGames.delete(room.code);
+      { const sp = spectators.get(room.code); if (sp) { const t = Date.now(); for (const [uid, at] of sp) { if (t - at > 20_000) sp.delete(uid); else sendToUser(uid, { t: 'watch', code: room.code }); } } }
       if (room.status !== 'lobby' && room.gameNo) { try { const ref = `${room.code}:${room.gameNo}`; if (!(room.status === 'finished' && replays.meta(ref))) { const humans = room.players.filter((p) => !p.bot); const viewer = replays.viewerOf(ref) ?? humans[0]?.id; if (viewer) { replays.frame(ref, room.gameId, viewer, humans.map((p) => ({ id: p.id, name: p.name })), service.snapshot(room, viewer)); if (room.status === 'finished') replays.finish(ref); } } } catch (e) { log('replay_frame_failed', { error: String(e).slice(0, 100) }); } }
       for (const p of room.players) {
         if (p.bot || p.left) continue;
@@ -845,6 +854,7 @@ export async function createApp(
     },
     onGone(code, ids, reason) {
       if (reason !== 'left') roomChat.delete(code);
+      if (reason === 'left') { try { for (const id of ids) arena.tourForfeit(code, id); } catch (e) { if (e instanceof StorageError) throw e; } }
       for (const id of ids) sendToUser(id, { t: 'gone', code, reason });
     },
     onWallet(id, coins, won) {
@@ -856,6 +866,15 @@ export async function createApp(
     const equipped = Object.fromEntries(Object.entries(equippedView(id)).filter(([slot]) => slot !== 'avatar').map(([slot, item]) => [slot, { ...item, art: typeof item.art === 'string' ? (item.art.startsWith('/') ? item.art : '/assets/' + item.art) : undefined }]));
     return { ...verificationView(id), progression: progression.view(id), equipped };
   });
+  /* R69: الساحة — البطولات، الدوري، ظرف الحظ، المشاهدة، أغاني الغرفة، التحقق بخطوتين */
+  const arena = new Arena(functionalFile(undefined, 'arena'), {
+    wallet: { spend: (id, amount, label, op) => wallet.spendService(id, amount, label, op), grant: (id, amount, label, op) => { try { const ok = wallet.grant(id, 'coins', amount, label, op); if (ok) sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }); return ok; } catch (e) { log('arena_grant_failed', { error: String(e).slice(0, 100) }); return false; } }, balance: (id) => wallet.balance(id) },
+    name: (id) => accounts.nameOf(id) || '',
+    notify: (id, msg) => sendToUser(id, msg),
+    lastActivity: (code) => liveGames.get(code)?.updatedAt ?? null,
+    createMatch: async (players, game) => { const r = await service.createMatchRoom(players.map((p) => ({ id: p.id, name: p.name })), game, 2, false, 0).catch(() => null); return r && r.ok ? r.room.code : null; },
+  }, storage);
+  { const arenaTimer = setInterval(() => { try { arena.tick(); } catch (e) { log('arena_tick_failed', { message: String(e).slice(0, 120) }); } }, 5000); arenaTimer.unref?.(); }
 
   let financialReconcilePending = true;
   const reconcileFinished = async () => {
@@ -1600,6 +1619,65 @@ export async function createApp(
     functionalHttp.add('GET', '/api/slot', ({ user }) => ({ ok: true, ...casino.slotState(user.id) }));
     functionalHttp.add('POST', '/api/slot/spin', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.spin(user.id, accounts.nameOf(user.id) || 'لاعب', (body as any)?.bet)) }; });
     functionalHttp.add('GET', '/api/foodwheel', ({ user }) => ({ ok: true, ...casino.wheelState(user.id) }));
+    // R69: الساحة
+    const arenaRun = <T,>(fn: () => T): T => { try { return fn(); } catch (e) { if (e instanceof ArenaError) throw new FunctionalHttpError(e.status, e.message); throw e; } };
+    const noGuest = (id: string) => { if (isGuest(id)) throw new FunctionalHttpError(403, GUEST_MSG); };
+    const roomAcc = (uid: string, room: unknown) => { const acc = socialRooms.quizAccess(uid, String(room ?? '')); if (!acc) throw new FunctionalHttpError(403, 'لازم تكون داخل الغرفة.'); return acc; };
+    functionalHttp.add('GET', '/api/room-env', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false, envs: [] }; return { ok: true, member: true, amounts: ENV_AMOUNTS, counts: ENV_COUNTS, envs: arena.envView(room, user.id) }; });
+    functionalHttp.add('POST', '/api/room-env/throw', ({ user, body }) => { noGuest(user.id); roomAcc(user.id, body.room); return arenaRun(() => { const e = arena.envThrow(String(body.room), user.id, Number(body.total), Number(body.count)); const acc = socialRooms.quizAccess(user.id, String(body.room)); for (const m of acc?.members ?? []) if (m !== user.id) sendToUser(m, { t: 'room:env', room: body.room, by: e.byName, total: e.total }); return { ok: true, envs: arena.envView(String(body.room), user.id) }; }); });
+    functionalHttp.add('POST', '/api/room-env/grab', ({ user, body }) => { noGuest(user.id); roomAcc(user.id, body.room); return arenaRun(() => { const r = arena.envGrab(String(body.room), String(body.id ?? ''), user.id); return { ok: true, amt: r.amt, envs: arena.envView(String(body.room), user.id) }; }); });
+    functionalHttp.add('GET', '/api/room-music', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false }; return { ok: true, member: true, mod: acc.mod, ...arena.musicView(room) }; });
+    functionalHttp.add('POST', '/api/room-music/add', ({ user, body }) => { roomAcc(user.id, body.room); return arenaRun(() => { const vid = String(body.vid ?? ''); if (!ARENA_YT.test(vid)) throw new ArenaError('رابط يوتيوب غير صالح.', 400); arena.musicAdd(String(body.room), user.id, vid); return { ok: true, ...arena.musicView(String(body.room)) }; }); });
+    functionalHttp.add('POST', '/api/room-music/skip', ({ user, body }) => { const acc = roomAcc(user.id, body.room); return arenaRun(() => { arena.musicSkip(String(body.room), user.id, acc.mod); return { ok: true, ...arena.musicView(String(body.room)) }; }); });
+    functionalHttp.add('POST', '/api/room-music/ended', ({ user, body }) => { roomAcc(user.id, body.room); arena.musicEnded(String(body.room), String(body.vid ?? '')); return { ok: true, ...arena.musicView(String(body.room)) }; });
+    functionalHttp.add('POST', '/api/room-music/pause', ({ user, body }) => { const acc = roomAcc(user.id, body.room); return arenaRun(() => { arena.musicPause(String(body.room), acc.mod, !!body.pause); return { ok: true, ...arena.musicView(String(body.room)) }; }); });
+    functionalHttp.add('POST', '/api/room-music/clear', ({ user, body }) => { const acc = roomAcc(user.id, body.room); return arenaRun(() => { arena.musicClear(String(body.room), acc.mod); return { ok: true, ...arena.musicView(String(body.room)) }; }); });
+    const tourGames = () => registry.list().filter((g) => g.status === 'available' && g.minPlayers <= 2 && g.maxPlayers >= 2 && !siteFlags.get().gamesOff.includes(g.id)).map((g) => ({ id: g.id, name: g.name }));
+    functionalHttp.add('GET', '/api/tours', ({ user }) => ({ ok: true, games: tourGames(), ...arena.tourList(user.id) }));
+    functionalHttp.add('POST', '/api/tours/create', ({ user, body }) => { noGuest(user.id); const g = tourGames().find((x) => x.id === body.game); if (!g) throw new FunctionalHttpError(400, 'اختر لعبة.'); return arenaRun(() => { arena.tourCreate(user.id, g.id, g.name, Number(body.size), Number(body.fee)); return { ok: true, games: tourGames(), ...arena.tourList(user.id) }; }); });
+    functionalHttp.add('POST', '/api/tours/join', ({ user, body }) => { noGuest(user.id); return arenaRun(() => { arena.tourJoin(user.id, String(body.id ?? '')); return { ok: true, games: tourGames(), ...arena.tourList(user.id) }; }); });
+    functionalHttp.add('POST', '/api/tours/leave', ({ user, body }) => arenaRun(() => { arena.tourLeave(user.id, String(body.id ?? '')); return { ok: true, games: tourGames(), ...arena.tourList(user.id) }; }));
+    functionalHttp.add('GET', '/api/league', ({ user }) => ({ ok: true, ...arena.leagueView(user.id) }));
+    const gameName = (id: string) => registry.historyEngine(id)?.info.name ?? id;
+    functionalHttp.add('GET', '/api/watch', () => {
+      const t = Date.now(); const list = [...liveGames.values()].filter((r) => r.status === 'playing' && t - r.updatedAt < 15 * 60_000 && r.players.some((p) => !p.bot && !p.left))
+        .sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 40).map((r) => ({ code: r.code, game: r.gameId, gameName: gameName(r.gameId), players: r.players.map((p) => ({ name: p.name, bot: p.bot })), watchers: spectators.get(r.code)?.size ?? 0, since: r.createdAt }));
+      return { ok: true, list };
+    });
+    functionalHttp.add('GET', '/api/watch/room', ({ user, url }) => {
+      const code = String(url.searchParams.get('code') ?? ''); const r = liveGames.get(code);
+      if (!r || r.status !== 'playing') return { ok: true, live: false };
+      if (r.players.some((p) => p.id === user.id)) return { ok: true, live: true, player: true };
+      let sp = spectators.get(code); if (!sp) { sp = new Map(); spectators.set(code, sp); } sp.set(user.id, Date.now());
+      const snap = service.snapshot(r, 'spectator:' + user.id);
+      return { ok: true, live: true, gameName: gameName(r.gameId), watchers: sp.size, room: snap, players: r.players.map((p, i) => ({ i, name: p.name, bot: p.bot })), reactions: REACTIONS };
+    });
+    functionalHttp.add('POST', '/api/watch/react', ({ user, body }) => {
+      const code = String(body.code ?? ''); const r = liveGames.get(code); if (!r) throw new FunctionalHttpError(404, 'المباراة خلصت.');
+      const text = String(body.text ?? ''); if (!REACTIONS.includes(text)) throw new FunctionalHttpError(400, 'تشجيع غير صالح.');
+      if (!watchLimiter.allow(user.id)) throw new FunctionalHttpError(429, 'شوي شوي على التشجيع 😄');
+      const name = '👀 ' + (accounts.nameOf(user.id) || 'مشجع'); const eventId = randomUUID(), ts = Date.now();
+      pushChat(r.code, { k: 'react', eventId, ts, from: { id: user.id, name }, text });
+      for (const p of r.players) if (!p.bot && !p.left) sendToUser(p.id, { t: 'react', code: r.code, eventId, ts, from: user.id, name, text });
+      return { ok: true };
+    });
+    functionalHttp.add('POST', '/api/watch/cheer', ({ user, body }) => {
+      noGuest(user.id); const code = String(body.code ?? ''); const r = liveGames.get(code); if (!r) throw new FunctionalHttpError(404, 'المباراة خلصت.');
+      const p = r.players[Number(body.to)]; if (!p || p.bot || p.left) throw new FunctionalHttpError(400, 'اختر لاعب.');
+      if (r.players.some((x) => x.id === user.id)) throw new FunctionalHttpError(400, 'أنت لاعب بهالمباراة.');
+      const amount = Number(body.amount); const ref = `${code}:${user.id}:${randomUUID().slice(0, 8)}`;
+      arenaRun(() => arena.cheer(user.id, p.id, amount, ref));
+      const name = '👀 ' + (accounts.nameOf(user.id) || 'مشجع'); const eventId = randomUUID(), ts = Date.now(); const text = `شجّع ${p.name} بـ ${amount} 🪙`;
+      pushChat(r.code, { k: 'react', eventId, ts, from: { id: user.id, name }, text });
+      for (const x of r.players) if (!x.bot && !x.left) sendToUser(x.id, { t: 'react', code: r.code, eventId, ts, from: user.id, name, text });
+      sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
+      return { ok: true, coins: wallet.balance(user.id) };
+    });
+    functionalHttp.add('GET', '/api/2fa', ({ user }) => ({ ok: true, ...arena.tfStatus(user.id) }));
+    functionalHttp.add('POST', '/api/2fa/setup', ({ user }) => { noGuest(user.id); return arenaRun(() => ({ ok: true, ...arena.tfSetup(user.id, accounts.nameOf(user.id) || 'حسابي') })); });
+    functionalHttp.add('POST', '/api/2fa/enable', ({ user, body }) => arenaRun(() => { arena.tfEnable(user.id, body.code); return { ok: true, ...arena.tfStatus(user.id) }; }));
+    functionalHttp.add('POST', '/api/2fa/disable', ({ user, body }) => arenaRun(() => { arena.tfDisable(user.id, body.code); return { ok: true, ...arena.tfStatus(user.id) }; }));
+    functionalHttp.add('POST', '/api/admin/2fa-reset', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(accounts.has(id), 'اللاعب غير موجود.'); adminNeed(arena.tfReset(id), 'التحقق بخطوتين مو مفعّل عند اللاعب.'); admin.audit(actor!, '2fa.reset', id, 'فك التحقق بخطوتين'); return { ok: true }; }, 'owner');
     functionalHttp.add('POST', '/api/foodwheel/chest', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.claimChest(user.id, (body as any)?.i)) }; });
     functionalHttp.add('POST', '/api/foodwheel/bet', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.bet(user.id, accounts.nameOf(user.id) || 'لاعب', (body as any)?.item, (body as any)?.chip)) }; });
     functionalHttp.add('GET', '/api/wheel', ({ user }) => ({ ok: true, ...wheel.state(user.id), coins: wallet.balance(user.id) }));
@@ -2019,8 +2097,8 @@ export async function createApp(
         if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' });
         if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) return json(res, 415, { error: 'نوع الطلب غير مدعوم.' });
         if (!authLimiter.allow(ipOf(req))) return json(res, 429, { error: 'محاولات كثيرة، جرّب بعد شوي.' });
-        let credential: unknown;
-        try { credential = JSON.parse(await appReadBody(req, 8192)).credential; } catch { return json(res, 400, { error: 'الطلب غير صالح.' }); }
+        let credential: unknown; let totpCode: unknown;
+        try { const gb = JSON.parse(await appReadBody(req, 8192)); credential = gb.credential; totpCode = gb.totp; } catch { return json(res, 400, { error: 'الطلب غير صالح.' }); }
         let g;
         try {
           g = await verifyGoogleToken(credential, cfg.googleClientId, googleKeys);
@@ -2040,6 +2118,10 @@ export async function createApp(
         }); } catch (e) {
           if (e instanceof StorageError) { log('google_link_unsaved', { store: e.store, code: e.code }); return json(res, 503, { error: 'تعذّر حفظ ربط الحساب الآن. جرّب بعد شوي.' }); }
           throw e;
+        }
+        if (!r.created && arena.tfEnabled(r.id)) {
+          let pass = false; try { pass = arena.tfLogin(r.id, totpCode); } catch (e) { if (e instanceof ArenaError) return json(res, e.status, { need2fa: true, error: e.message }); throw e; }
+          if (!pass) return json(res, 401, { need2fa: true, error: totpCode ? 'رمز التحقق غلط. جرّب الرمز الجديد.' : 'حسابك محمي بالتحقق بخطوتين. اكتب الرمز من تطبيق المصادقة.' });
         }
         if (r.created) noteNet(r.id, req);
         const next: User = { id: r.id, name };
