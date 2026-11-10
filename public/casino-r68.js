@@ -7,14 +7,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const COIN = '<i class="cz-coin" aria-hidden="true"></i>';
 
 /* ======================= السلوت ======================= */
-const SYM = {
-  ten: '<b class="cz-l" style="--c1:#ff7ad9;--c2:#b0179a">10</b>', j: '<b class="cz-l" style="--c1:#7ad7ff;--c2:#1565c0">J</b>', q: '<b class="cz-l" style="--c1:#8dff8a;--c2:#13892b">Q</b>',
-  k: '<b class="cz-l" style="--c1:#ffd36b;--c2:#d0660f">K</b>', a: '<b class="cz-l" style="--c1:#ff8a8a;--c2:#b3121e">A</b>',
-  gem: '<span class="cz-e">💎</span>', crown: '<span class="cz-e">👑</span>', falcon: '<span class="cz-e cz-gold">🦅</span>', lion: '<span class="cz-e cz-gold">🦁</span>',
-  wild: '<span class="cz-sp cz-wild"><span class="cz-e">🦁</span><b>WILD</b></span>', free: '<span class="cz-sp cz-free"><b>FREE</b></span>', jack: '<span class="cz-sp cz-jack"><span class="cz-e">👑</span><b>JACKPOT</b></span>',
-};
+const ART = '/assets/art68/casino/';
+const SYM = { ten: 'ten', j: 'j', q: 'q', k: 'k', a: 'a', gem: 'gem', crown: 'crown', falcon: 'falcon', lion: 'lion', wild: 'wild', free: 'free', jack: 'jack' };
 const KEYS = Object.keys(SYM);
-const tile = (s) => `<div class="cz-t cz-t-${s}">${SYM[s] || ''}</div>`;
+const tile = (s) => `<div class="cz-t cz-t-${s}"><img src="${ART}sym-${SYM[s] || 'ten'}.webp" alt="" draggable="false"></div>`;
 const SL = { st: null, bet: 0, busy: false, last: null, auto: false };
 function slotHTML() {
   const st = SL.st; if (!st) return '<p class="cz-load">جاري التحميل…</p>';
@@ -22,14 +18,17 @@ function slotHTML() {
   const grid = SL.last?.grid || [0, 1, 2, 3, 4].map((r) => [0, 1, 2].map((i) => KEYS[(r * 3 + i * 5) % 9]));
   return `<div class="cz cz-slot" dir="rtl"><header class="cz-top"><button type="button" class="cz-x" data-cz="close" aria-label="إغلاق">✕</button><h1 class="cz-title">جاكبوت <span>لعبك</span></h1><span class="cz-bal">${COIN}<b data-cz-bal>${nf(st.coins)}</b></span></header>
   <section class="cz-jp"><div class="cz-feed">${st.feed.length ? st.feed.map((f) => `<p><b>${esc(f.name)}</b> فاز بـ <em>${nf(f.win)}</em>${COIN}${f.kind === 'jack' ? ' 🏆' : ''}</p>`).join('') : '<p class="cz-dim">أول فائز كبير يطلع هنا</p>'}</div>
-   <div class="cz-jpbox"><small>${['MINI', 'MAJOR', 'GRAND', 'MEGA'][SL.bet]}</small><b class="cz-jpv" data-cz-jp>${nf(st.jackpot)}</b><i>JACKPOT</i></div>
    <p class="cz-jphint">5 رموز «JACKPOT» بأي مكان = تفوز بـ ${[5, 15, 40, 100][SL.bet]}% من الجاكبوت</p></section>
-  <section class="cz-reels-wrap"><div class="cz-reels">${grid.map((col, r) => `<div class="cz-reel" data-reel="${r}"><div class="cz-strip">${col.map(tile).join('')}</div></div>`).join('')}<svg class="cz-lines" viewBox="0 0 500 300" preserveAspectRatio="none" aria-hidden="true"></svg></div>
-   ${free ? `<p class="cz-freeb">🎁 لفات مجانية باقية: <b>${free.left}</b></p>` : ''}<p class="cz-msg" role="status" data-cz-msg></p></section>
-  <footer class="cz-bar"><div class="cz-cells"><span><small>الخطوط</small><b>${st.lines}</b></span><span><small>إجمالي الرهان</small><b>${nf(free ? 0 : total)}</b></span><span><small>فوز</small><b data-cz-win>${nf(SL.last?.win || 0)}</b></span></div>
-   <div class="cz-ctrl"><div class="cz-betsel"><button type="button" data-cz="bet-" ${free ? 'disabled' : ''}>−</button><b>${nf(lineBet)}</b><button type="button" data-cz="bet+" ${free ? 'disabled' : ''}>+</button></div>
-   <button type="button" class="cz-auto${SL.auto ? ' on' : ''}" data-cz="auto">تلقائي</button><button type="button" class="cz-spin" data-cz="spin" ${SL.busy ? 'disabled' : ''}>${free ? 'مجاني' : 'دوّر'}</button></div>
-   <p class="cz-note">العب بعملات الموقع بس. النتيجة يحددها الخادم.</p></footer></div>`;
+  <section class="cz-machine" style="background-image:url(${ART}slot-frame.webp)"><div class="cz-mjp"><small>${['MINI', 'MAJOR', 'GRAND', 'MEGA'][SL.bet]} JACKPOT</small><b data-cz-jp>${nf(st.jackpot)}</b></div>
+   <div class="cz-reels">${grid.map((col, r) => `<div class="cz-reel" data-reel="${r}"><div class="cz-strip">${col.map(tile).join('')}</div></div>`).join('')}<svg class="cz-lines" viewBox="0 0 500 300" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+   <div class="cz-mwin"><small>فوز</small><b data-cz-win>${nf(SL.last?.win || 0)}</b></div>
+   <button type="button" class="cz-mbtn cz-mminus" data-cz="bet-" aria-label="أقل" ${free ? 'disabled' : ''}></button>
+   <button type="button" class="cz-spin" data-cz="spin" ${SL.busy ? 'disabled' : ''}>${free ? 'مجاني' : 'دوّر'}</button>
+   <button type="button" class="cz-mbtn cz-mplus" data-cz="bet+" aria-label="أكثر" ${free ? 'disabled' : ''}></button>
+   <div class="cz-mtot"><small>الرهان</small><b>${nf(free ? 0 : total)}</b></div></section>
+  ${free ? `<p class="cz-freeb">🎁 لفات مجانية باقية: <b>${free.left}</b></p>` : ''}<p class="cz-msg" role="status" data-cz-msg></p>
+  <footer class="cz-bar2"><span>${st.lines} خط × <b>${nf(lineBet)}</b></span><button type="button" class="cz-auto${SL.auto ? ' on' : ''}" data-cz="auto">تلقائي</button></footer>
+   <p class="cz-note">العب بعملات الموقع بس. النتيجة يحددها الخادم.</p></div>`;
 }
 async function slotSpin(root) {
   if (SL.busy) return; SL.busy = true;
@@ -51,7 +50,7 @@ async function slotSpin(root) {
   SL.last = r; SL.st = { ...SL.st, jackpot: r.jackpot, coins: r.coins, free: r.free };
   // الخطوط الفايزة
   const svg = root.querySelector('.cz-lines'); const cols = ['#ffe14d', '#4dffb8', '#ff6bd5', '#6bc8ff', '#ff9a4d'];
-  svg.innerHTML = r.wins.slice(0, 12).map((w, k) => `<polyline points="${SL.st.lineMap[w.line].map((row, c) => `${50 + c * 100},${50 + row * 100}`).join(' ')}" fill="none" stroke="${cols[k % 5]}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`).join('');
+  svg.innerHTML = r.wins.slice(0, 12).map((w, k) => `<polyline points="${SL.st.lineMap[w.line].map((row, c) => `${50 + c * 100},${50 + row * 100}`).join(' ')}" fill="none" stroke="${cols[k % 5]}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`).join('');
   const hit = new Set(); r.wins.forEach((w) => SL.st.lineMap[w.line].slice(0, w.count).forEach((row, c) => hit.add(c + ':' + row)));
   reels.forEach((rl, c) => rl.querySelectorAll('.cz-t').forEach((t, row) => t.classList.toggle('hit', hit.has(c + ':' + row))));
   const bal = root.querySelector('[data-cz-bal]'); if (bal) bal.textContent = nf(r.coins);
@@ -73,22 +72,24 @@ function paintSlot(root, keepGrid) { root.innerHTML = slotHTML(); if (!keepGrid)
 
 /* ======================= عجلة الأكل ======================= */
 const FOOD_EMOJI = { chicken: '🍗', tomato: '🍅', fish: '🐟', apple: '🍎', shrimp: '🦐', carrot: '🥕', steak: '🥩', corn: '🌽' };
+const FIMG = (id, c = '') => `<img class="fw-img ${c}" src="${ART}food-${id}.webp" alt="" draggable="false">`;
+const FW_POS = [[61.9, 21.4], [75.8, 37.1], [75.2, 57.3], [61.9, 71.5], [41.1, 71.4], [27.6, 57.4], [26.9, 37.2], [40.9, 21.4]];
 const FW = { st: null, chip: 0, timer: 0, poll: 0, shownRound: 0, spinning: false, msg: '' };
 function foodHTML() {
   const s = FW.st; if (!s) return '<p class="cz-load">جاري التحميل…</p>';
   const N = s.foods.length;
-  const items = s.foods.map((f, i) => { const a = (i / N) * Math.PI * 2 - Math.PI / 2; const x = 50 + Math.cos(a) * 37, y = 50 + Math.sin(a) * 37;
-    return `<button type="button" class="fw-it${s.phase === 'show' && s.result === i && !FW.spinning ? ' win' : ''}" data-fw-item="${i}" style="left:${x}%;top:${y}%" ${s.phase !== 'bet' ? 'disabled' : ''}><span class="fw-e">${FOOD_EMOJI[f.id] || '🍽️'}</span><small>${f.mult} أضعاف</small><b>${kf(s.totals[i])}</b>${s.mine[i] ? `<em>${kf(s.mine[i])}</em>` : ''}</button>`; }).join('');
+  const items = s.foods.map((f, i) => { const a = (i / N) * Math.PI * 2 - Math.PI / 2; const [x, y] = FW_POS[i] || [50 + Math.cos(a) * 30, 50 + Math.sin(a) * 30];
+    return `<button type="button" class="fw-it${s.phase === 'show' && s.result === i && !FW.spinning ? ' win' : ''}" data-fw-item="${i}" style="left:${x}%;top:${y}%" ${s.phase !== 'bet' ? 'disabled' : ''}>${FIMG(f.id)}<small>×${f.mult}</small><b>${kf(s.totals[i])}</b>${s.mine[i] ? `<em>${kf(s.mine[i])}</em>` : ''}</button>`; }).join('');
   const sec = Math.ceil(s.left / 1000);
   return `<div class="cz cz-food" dir="rtl"><header class="cz-top"><button type="button" class="cz-x" data-cz="close" aria-label="إغلاق">✕</button><h1 class="cz-title fw-t">عجلة <span>الأكل</span></h1><span class="cz-bal">${COIN}<b>${nf(s.coins)}</b></span></header>
   <p class="fw-round">الجولة ${nf(s.round)}</p>
-  <section class="fw-wheel"><div class="fw-spokes" aria-hidden="true">${s.foods.map((_, i) => `<i style="transform:rotate(${(i / N) * 360}deg)"></i>`).join('')}</div>${items}
-   <div class="fw-hub"><span class="fw-chef" aria-hidden="true">🧑‍🍳</span><small>${s.phase === 'bet' ? 'وقت الرهان' : 'النتيجة'}</small><b data-fw-sec>${s.phase === 'bet' ? sec + 's' : s.result !== null && !FW.spinning ? FOOD_EMOJI[s.foods[s.result].id] : '…'}</b></div></section>
+  <section class="fw-wheel" style="background-image:url(${ART}fw-wheel.webp)">${items}
+   <div class="fw-hub"><small>${s.phase === 'bet' ? 'وقت الرهان' : 'النتيجة'}</small><b data-fw-sec>${s.phase === 'bet' ? sec + 's' : s.result !== null && !FW.spinning ? FIMG(s.foods[s.result].id, 'fw-himg') : '…'}</b></div><img class="fw-cat" src="${ART}fw-cat.webp" alt="" draggable="false"></section>
   <p class="cz-msg" role="status">${esc(FW.msg)}</p>
   <section class="fw-chips" role="radiogroup" aria-label="قيمة الرهان">${s.chips.map((c, i) => `<button type="button" role="radio" aria-checked="${FW.chip === i}" class="fw-chip${FW.chip === i ? ' on' : ''}" data-fw-chip="${i}"><b>${kf(c)}</b></button>`).join('')}</section>
   <section class="fw-info"><span><small>عملاتك</small><b>${nf(s.coins)}</b></span><span><small>رهانك بالجولة</small><b>${nf(s.mine.reduce((a, b) => a + b, 0))}</b></span><span><small>فايز اليوم</small><b>${nf(s.today)}</b></span></section>
-  <section class="fw-hist"><small>آخر النتايج:</small>${s.history.map((h, k) => `<span class="${k === 0 ? 'new' : ''}">${FOOD_EMOJI[s.foods[h].id]}</span>`).join('')}</section>
-  ${s.phase === 'show' && !FW.spinning ? `<div class="fw-res"><h3>نتيجة الجولة ${nf(s.round)}: ${FOOD_EMOJI[s.foods[s.result].id]} ×${s.foods[s.result].mult}</h3><p>${s.myWin ? `فزت <b>${nf(s.myWin)}</b> عملة 🎉` : s.mine.some(Boolean) ? 'ما حالفك الحظ هالمرة' : 'ما راهنت بهالجولة'}</p>${s.top.length ? `<ol class="fw-top">${s.top.map((t, k) => `<li><span>${['🥇', '🥈', '🥉'][k]}</span><b>${esc(t.name)}</b><em>${nf(t.win)}</em></li>`).join('')}</ol>` : ''}</div>` : ''}
+  <section class="fw-hist"><small>آخر النتايج:</small>${s.history.map((h, k) => `<span class="${k === 0 ? 'new' : ''}">${FIMG(s.foods[h].id)}</span>`).join('')}</section>
+  ${s.phase === 'show' && !FW.spinning ? `<div class="fw-res"><h3>نتيجة الجولة ${nf(s.round)}: ${FIMG(s.foods[s.result].id, 'fw-rimg')} ×${s.foods[s.result].mult}</h3><p>${s.myWin ? `فزت <b>${nf(s.myWin)}</b> عملة 🎉` : s.mine.some(Boolean) ? 'ما حالفك الحظ هالمرة' : 'ما راهنت بهالجولة'}</p>${s.top.length ? `<ol class="fw-top">${s.top.map((t, k) => `<li><span>${['🥇', '🥈', '🥉'][k]}</span><b>${esc(t.name)}</b><em>${nf(t.win)}</em></li>`).join('')}</ol>` : ''}</div>` : ''}
   <p class="cz-note">كل جولة 30 ثانية رهان. اختار قيمة الرهان واضغط على الأكلة. احتمال الأكلة أقل كل ما كان مضاعفها أكبر.</p></div>`;
 }
 async function foodLoad(root) { const s = await api('/api/foodwheel'); if (!root.isConnected) return; if (s.ok) { const prev = FW.st; FW.st = s; if (s.phase === 'show' && FW.shownRound !== s.round && prev && prev.round === s.round && prev.phase === 'bet') { FW.shownRound = s.round; spinAnim(root); return; } if (s.phase === 'show') FW.shownRound = s.round; if (s.phase === 'bet' && prev?.phase === 'show') FW.msg = ''; } root.innerHTML = foodHTML(); }
@@ -196,6 +197,27 @@ function css() {
 .fw-hist{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:8px;padding:6px 10px;border-radius:99px;background:#7a1d3a;color:#fff;font-size:18px}.fw-hist small{font-size:11px;margin-inline-end:4px}.fw-hist .new{background:#ffe14d;border-radius:50%;padding:0 2px}
 .fw-res{margin:10px 0 0;padding:12px;border-radius:18px;background:linear-gradient(180deg,#3d6bff,#5b2fd6);color:#fff;text-align:center}.fw-res h3{margin:0 0 4px}.fw-res p{margin:0}
 .fw-top{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}.fw-top li{display:flex;align-items:center;gap:8px;padding:4px 10px;border-radius:12px;background:#0003}.fw-top b{flex:1;text-align:right}.fw-top em{font-style:normal;color:#ffe14d;font-weight:900}
-.cz-food .cz-note{color:#5a2a00;opacity:.8}.cz-food .cz-msg{color:#b3121e}`;
+.cz-food .cz-note{color:#5a2a00;opacity:.8}.cz-food .cz-msg{color:#b3121e}
+.cz-machine{position:relative;width:min(100%,560px);margin:6px auto 0;aspect-ratio:790/539;background:center/100% 100% no-repeat;container-type:inline-size;direction:ltr}
+.cz-machine .cz-reels{position:absolute;left:14.4%;top:27.6%;width:71.2%;height:48.4%;display:grid;grid-template-columns:repeat(5,1fr);gap:0;padding:0;background:none;border-radius:0}
+.cz-machine .cz-reel{height:100%;aspect-ratio:auto;container-type:size;background:none;border-radius:0}
+.cz-machine .cz-t{height:33.333cqh;aspect-ratio:auto;margin:0;padding:4%;border-radius:8px;background:none}.cz-t img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;filter:drop-shadow(0 2px 3px #0009)}
+.cz-machine .cz-lines{inset:0;width:100%;height:100%}
+.cz-mjp,.cz-mwin,.cz-mtot{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;text-align:center}
+.cz-mjp{left:30.4%;top:13.2%;width:39.9%;height:10.6%}.cz-mjp small{margin-top:.8cqw;font:900 1.8cqw/1 Arial,sans-serif;color:#ffb3f2;letter-spacing:.3cqw}.cz-mjp b{font:900 4.6cqw/1.05 Arial,sans-serif;color:#ffd34d;text-shadow:0 .3cqw 0 #8a4a00,0 0 2cqw #ffb800}
+.cz-mwin{left:10.8%;top:85%;width:17.1%;height:7.2%}.cz-mtot{left:72.8%;top:85%;width:17.3%;height:7.2%}
+.cz-mwin small,.cz-mtot small{font-size:1.7cqw;font-weight:800;opacity:.8}.cz-mwin b,.cz-mtot b{font:900 2.8cqw/1.1 Arial,sans-serif;color:#ffe14d}
+.cz-mbtn{position:absolute;top:85.2%;height:6.6%;border:0;background:none;cursor:pointer;border-radius:99px}.cz-mminus{left:32.9%;width:8.3%}.cz-mplus{left:59.2%;width:8.5%}.cz-mbtn:active{background:#fff3}.cz-mbtn:disabled{opacity:.4;background:#0006}
+.cz-machine .cz-spin{position:absolute;left:44.5%;top:80.4%;width:11.6%;height:17%;padding:0;border-radius:50%;background:none;box-shadow:none;font:900 3.4cqw/1 Cairo,Tahoma,sans-serif;color:#fff;text-shadow:0 .3cqw .6cqw #000}.cz-machine .cz-spin:active{transform:scale(.94)}.cz-machine .cz-spin:disabled{filter:none;opacity:.55}
+.cz-bar2{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding:8px 12px;border-radius:99px;background:#0005;font-size:13px}.cz-bar2 b{color:#ffe14d}
+.cz-slot .cz-freeb{color:#ffe14d}
+.fw-wheel{background:center/100% 100% no-repeat;aspect-ratio:493/482;container-type:inline-size}.fw-wheel::before{display:none}
+.fw-wheel .fw-it{width:13.8%;border:0;background:none;box-shadow:none;gap:0;justify-content:flex-start;padding-top:.6cqw;border-radius:50%}
+.fw-img{width:66%;height:auto;display:block;pointer-events:none;filter:drop-shadow(0 .4cqw .5cqw #0006)}
+.fw-wheel .fw-it small{direction:ltr;font:900 2.3cqw/1 Arial,sans-serif;color:#7a2e00!important}.fw-wheel .fw-it b{position:absolute;bottom:-3.4cqw;font:900 2.5cqw/1 Arial,sans-serif;padding:.3cqw 1.4cqw;border-radius:99px;background:#7a2e00;color:#ffe9b0!important;white-space:nowrap}
+.fw-wheel .fw-it.lit{box-shadow:0 0 0 1.2cqw #ffe14d,0 0 5cqw #ffb800;background:#fff7}.fw-wheel .fw-it.win{box-shadow:0 0 0 1.2cqw #ff2e4d,0 0 6cqw #ff2e4d;background:#fff8}
+.fw-wheel .fw-hub{left:51.4%;top:46.7%;width:22.4%;border:0;background:none;box-shadow:none;color:#7a2e00}.fw-wheel .fw-hub small{font-size:2.8cqw;font-weight:900;color:#9a4a10!important;opacity:1}.fw-wheel .fw-hub b{font:900 7cqw/1 Arial,sans-serif;color:#c2410c;text-shadow:0 .3cqw 0 #fff}
+.fw-himg{width:11cqw}.fw-cat{position:absolute;right:-2%;bottom:3%;width:22%;pointer-events:none;filter:drop-shadow(0 1cqw 1cqw #0005)}
+.fw-hist span{display:inline-flex}.fw-hist .fw-img{width:24px}.fw-hist .new{background:#ffe14d;border-radius:50%;padding:2px}.fw-rimg{width:30px;display:inline-block;vertical-align:middle}`;
   document.head.appendChild(st);
 }

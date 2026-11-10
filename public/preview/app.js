@@ -32,7 +32,7 @@ import * as UNV from '../uno.js?v=r68z31';
 import * as LRV from '../liars.js?v=r68z31';
 import * as PLV from '../pool.js?v=r68z31';
 import { showQuitBan } from '../quit-ban-r68.js?v=r68z28';
-import * as CZ68 from '../casino-r68.js?v=r68z42c';
+import * as CZ68 from '../casino-r68.js?v=r68z43b';
 import * as THEME68 from '../theme-r68.js?v=r68z39d';
 import * as BWV from '../bowling.js?v=r68z31';
 import * as CRV from '../carrom.js?v=r68z31';
@@ -41,7 +41,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68z42c';
+import * as PWA from '../pwa.js?v=r68z43b';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -396,7 +396,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68z42c');
+  const M = await import('../settings-r60.js?v=r68z43b');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
