@@ -42,7 +42,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69zg';
+import * as PWA from '../pwa.js?v=r69zh';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -403,7 +403,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69zg');
+  const M = await import('../settings-r60.js?v=r69zh');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -579,10 +579,9 @@ async function render() {
       if(openRoyalMenuOnHome){openRoyalMenuOnHome=false;view.querySelector('[data-lb-shell=menu]')?.click();}
       break;
     case 'phone':
-      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
-      unifiedPage(view,'phone','<div data-phone68></div>');
-      import('../phone-r68.js?v=r69ze').then(({mountPhone})=>{const el=view.querySelector('[data-phone68]');if(el&&parseRoute().name==='phone')mountPhone(el,{api:functionalApi});}).catch(()=>{});
-      break;
+      /* R69zd: صفحة التوثيق بالجوال مخفية لين نفعّل الواتساب مستقبلاً (الكود بالخادم و phone-r68.js جاهز) */
+      (globalThis.__LA3BAK_NAV__ || location).replace('#/settings');
+      return;
     case 'ids':
       if (needUser('#/ids')) return;
       if (!SHOP.SH.data && S.helloDone && !SHOP.SH.idsLoading) { SHOP.SH.idsLoading = true; SHOP.load(req).then(() => { SHOP.SH.idsLoading = false; if (parseRoute().name === 'ids') render(); }); }
