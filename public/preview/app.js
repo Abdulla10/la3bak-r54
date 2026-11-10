@@ -32,6 +32,7 @@ import * as UNV from '../uno.js?v=r68z31';
 import * as LRV from '../liars.js?v=r68z31';
 import * as PLV from '../pool.js?v=r68z31';
 import { showQuitBan } from '../quit-ban-r68.js?v=r68z28';
+import * as THEME68 from '../theme-r68.js?v=r68z39d';
 import * as BWV from '../bowling.js?v=r68z31';
 import * as CRV from '../carrom.js?v=r68z31';
 import * as MNV from '../minaboli-r47.js?v=r57';
@@ -39,7 +40,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z35';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68z38e';
+import * as PWA from '../pwa.js?v=r68z39d';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z38e';
@@ -336,7 +337,7 @@ function parseRoute() {
   return { name, a: dec(parts[1]), b: dec(parts[2]), c: dec(parts[3]) };
 }
 
-const NAV_OF = { lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', 'hidden-posts': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
+const NAV_OF = { themes: 'profile', lobby: 'games', hub: 'games', challenge: 'games', daily: 'home', play: 'games', offline: 'games', leaderboard: 'home', about: 'home', privacy: 'home', terms: 'home', agreement: 'home', settings: 'account', 'privacy-settings': 'account', 'account-info': 'account', devices: 'account', 'hidden-posts': 'account', admin: 'home', home: 'home', games: 'games', game: 'games', city: 'games', rooms: 'home', room: 'games', join: 'games', profile: 'account', account: 'account', wallet: 'account', shop: 'shop', voice: 'community', vroom: 'community', community: 'community', post: 'community', u: 'community', notifications: 'home' };
 /* R51: الأب المنطقي يُستخدم فقط لو فُتحت الصفحة مباشرة (ما فيه صفحة سابقة داخل الموقع)؛ غير كذا زر الرجوع يرجع للصفحة السابقة الفعلية.
    صفحات قائمة «ملفي» (VIP، نوبل، المحفظة…) أبوها الملف الشخصي، مو الرئيسية. */
 const PROFILE_CHILDREN = new Set(['vip','ranks','rank-rewards','missions','wallet','settings','family','visitors','invite']);
@@ -394,7 +395,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68z38e');
+  const M = await import('../settings-r60.js?v=r68z39d');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -652,6 +653,9 @@ async function render() {
       break;
     case 'agreement':
       unifiedPage(view,r.name,agreementView());
+      break;
+    case 'themes':
+      unifiedPage(view,r.name,THEME68.themePickerHTML());
       break;
     case 'settings':
     case 'privacy-settings':
