@@ -81,3 +81,10 @@
 img.lr-pliers{width:130px;height:auto;filter:drop-shadow(0 8px 12px #000b)}
 .lr-seat{z-index:2}.lr-table{top:36%}
 .lr-ov img.lr-pliers{position:absolute;left:auto;right:4%;top:auto;bottom:34%;width:120px}
+/* R68z19: شعار لعبك على الطاولة */
+.lr-felt{position:relative}
+.lr-tlogo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;line-height:1;pointer-events:none;opacity:.5;padding-top:12px;z-index:0}
+.lr-tlogo i{position:absolute;top:-6px;font-style:normal;font-size:22px}
+.lr-tlogo b{font-size:44px;font-weight:900;background:linear-gradient(180deg,#f3d4ff,#c46bff 45%,#8b2ff0);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 #3d0b78)}
+.lr-tlogo small{font:900 13px/1 Arial,sans-serif;letter-spacing:2px;color:#ffcb47;margin-top:3px}
+.lr-felt>.lr-pile,.lr-felt>.lr-reveal{position:relative;z-index:1}
