@@ -185,7 +185,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r68z29'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r68z31'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;

@@ -1,8 +1,8 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r67ac';
-import { avatarArt } from './avatars.js?v=r67ac';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r68z31';
+import { avatarArt } from './avatars.js?v=r68z31';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r67ac';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r68z31';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=r68i-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
@@ -196,7 +196,7 @@ function filtersHTML(d, tab) {
 const priceOrder = (a, b) => a.currency === b.currency ? (a.price ?? 0) - (b.price ?? 0) : String(a.currency || '').localeCompare(String(b.currency || ''));
 // Featured order is presentation only: no products or prices are fabricated.
 // R58h: إطارات المالك أولًا (الأفخم فوق)
-const featuredFrames = [...Array.from({ length: 42 }, (_, i) => `art-f3-${String(i + 1).padStart(2, '0')}`), ...Array.from({ length: 12 }, (_, i) => `art-f2-${String(12 - i).padStart(2, '0')}`), 'art-f-29', 'art-f-28', 'art-f-24', 'art-f-23', 'art-f-22', 'art-f-21', 'art-f-20', 'art-f-18', 'art-f-16', 'art-f-15', 'art-f-14', 'art-f-11', 'art-f-10', 'art-f-09', 'art-f-08', 'art-f-07', 'art-f-06', 'art-f-03', 'art-f-02', 'art-f-01', 'ref-p-frame-08', 'ref-p-frame-02', 'ref-p-frame-06'];
+const featuredFrames = [...Array.from({ length: 10 }, (_, i) => `art-f4-${String(10 - i).padStart(2, '0')}`), ...Array.from({ length: 42 }, (_, i) => `art-f3-${String(i + 1).padStart(2, '0')}`), ...Array.from({ length: 12 }, (_, i) => `art-f2-${String(12 - i).padStart(2, '0')}`), 'art-f-29', 'art-f-28', 'art-f-24', 'art-f-23', 'art-f-22', 'art-f-21', 'art-f-20', 'art-f-18', 'art-f-16', 'art-f-15', 'art-f-14', 'art-f-11', 'art-f-10', 'art-f-09', 'art-f-08', 'art-f-07', 'art-f-06', 'art-f-03', 'art-f-02', 'art-f-01', 'ref-p-frame-08', 'ref-p-frame-02', 'ref-p-frame-06'];
 const featuredOrder = (i) => { const n = featuredFrames.indexOf(i.id); return n < 0 ? featuredFrames.length : n; };
 function gridFor(d, tab) {
   const f = SH.f;

@@ -2,9 +2,9 @@
  * All mutations target an explicitly selected canonical UUID; never infer an owner account.
  * The server remains authoritative for policy, ownership, permissions and idempotency.
  */
-import { framed, bgLayer } from './shop.js?v=r68z29';
-import { avatarArt } from './avatars.js?v=r67ac';
-import { referenceOf, referenceImage } from './reference-assets.js?v=r67ac';
+import { framed, bgLayer } from './shop.js?v=r68z31';
+import { avatarArt } from './avatars.js?v=r68z31';
+import { referenceOf, referenceImage } from './reference-assets.js?v=r68z31';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const list = value => Array.isArray(value) ? value : [];

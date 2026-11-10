@@ -1,4 +1,4 @@
-import { mini } from '../avatars.js?v=r67ac';
+import { mini } from '../avatars.js?v=r68z31';
 
 // Read-only ranking UI. Scoring and ordering belong exclusively to the server.
 const GAME_NAMES = Object.freeze({ jackaro: 'جاكارو', baloot: 'بلوت', ludo: 'لودو' });
