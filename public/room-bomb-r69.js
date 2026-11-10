@@ -97,22 +97,49 @@ const CSS = `
 .bm69-pill[hidden]{display:none}
 @keyframes bm69pill{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.05)}}
 body:has(.so-room-panel[data-so-open-panel]) .bm69-pill{display:none!important}
+
+/* R69t: شكل واقعي — قنبلة مرسومة، شاشة LED، إطارات ذهبية، وخلفية القصر */
+.bm69-ov{background:linear-gradient(180deg,#12041fcc,#12041fee),url(/assets/art67/roombg/cosmic-palace.jpg) center/cover no-repeat,#12041f}
+.bm69-bomb{position:relative;width:100%;aspect-ratio:300/333}
+.bm69-bomb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 14px 22px #000c)}
+.bm69-led{position:absolute;left:21.8%;top:47.1%;width:53.5%;height:18.6%;display:grid;place-items:center;font-family:'DS-Digital','Segment7','Courier New',ui-monospace,monospace;font-weight:900;letter-spacing:.06em;direction:ltr;overflow:hidden}
+.bm69-led>*{grid-area:1/1;font-size:clamp(18px,7.2vw,34px);line-height:1}
+.bm69-led s{text-decoration:none;color:#ff2a1a14}
+.bm69-led .bm69-digits{color:#ff3b26;text-shadow:0 0 6px #ff2a1a,0 0 14px #ff2a1acc,0 0 26px #ff2a1a77}
+.bm69-hero .bm69-led>*{font-size:16px}
+.bm69-fusefx{position:absolute;left:72.5%;top:11.5%;width:16%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fffbe0 0,#ffe27a 22%,#ff9a1a 45%,#ff3b1a00 70%);mix-blend-mode:screen;animation:bm69spark .16s linear infinite alternate}
+.bm69-core{width:52%}
+.bm69-core.is-danger .bm69-bomb{animation:bm69shake .12s linear infinite}
+.bm69-core.is-pass .bm69-bomb{animation:bm69pop .35s ease}
+.bm69-core.is-danger .bm69-led .bm69-digits{animation:bm69blink .5s steps(1) infinite}
+@keyframes bm69blink{50%{opacity:.35}}
+.bm69-arena{background:radial-gradient(circle at 50% 50%,#ff2a1a26 0,transparent 45%),linear-gradient(180deg,#2a0c52e6,#160630f0);border:2px solid transparent;background-clip:padding-box;box-shadow:0 0 0 2px #e9b44c,0 0 0 4px #7a4a0a,0 0 30px #b06bff55,inset 0 0 50px #000a}
+.bm69-arena::after{border:2.5px solid #ff3b2e88;box-shadow:0 0 22px #ff3b2e66,inset 0 0 22px #ff3b2e33}
+.bm69-av{background:radial-gradient(circle at 35% 30%,#a07aff,#4a1fa6);border:3px solid transparent;background-clip:padding-box;box-shadow:0 0 0 2.5px #f2c14e,0 0 0 4px #8a5a12,0 6px 14px #000a}
+.bm69-p b,.bm69-slot b{padding:2px 10px;border-radius:99px;background:linear-gradient(180deg,#2a0c52,#14052a);border:1.5px solid #e9b44c;color:#fff;font-weight:800;box-shadow:0 2px 6px #0008}
+.bm69-p.is-hold .bm69-av{box-shadow:0 0 0 3px #ff5a2e,0 0 0 5px #ffd24a,0 0 26px #ff3b1a}
+.bm69-round{background:linear-gradient(180deg,#2a0c52,#14052a);border:2px solid #e9b44c;box-shadow:0 0 14px #e9b44c55;padding:6px 20px}
+.bm69-card{background:linear-gradient(180deg,#2c0f55f2,#170632f2);border:2px solid transparent;background-clip:padding-box;box-shadow:0 0 0 1.5px #e9b44c,0 0 0 3px #6a3d08,0 10px 26px #000a}
+.bm69-card h3{font-size:16px;color:#ffd76a;text-shadow:0 2px 6px #0008}
+.bm69-pass{border:2.5px solid #ffd24a;background:linear-gradient(180deg,#ff5d4a,#d4142e 55%,#8f0820);box-shadow:inset 0 2px 0 #ffffff66,0 6px 0 #5a0410,0 0 26px #ff3b2e99}
+.bm69-pass::before,.bm69-pass::after{color:#ffb21f;text-shadow:0 0 8px #ff8a1a;font-weight:900}
+.bm69-ch{border:2px solid #b06bff;box-shadow:0 0 0 1px #5a2a9a,0 0 22px #b06bff55}
+.bm69-ch .dice{width:44px;height:44px;font-size:0;background:url(/assets/art69/bomb-dice.webp?v=r69z3) center/contain no-repeat}
+.bm69-ch .dice.zap{background:none;font-size:30px;width:auto;height:auto}
+.bm69-p .bm69-av{width:62px;height:62px;font-size:23px}
+.bm69-p{width:86px}.bm69-p b{max-width:86px;font-size:12.5px}
+.bm69-core{width:56%}
+.bm69-in{justify-content:flex-start}
+.bm69-wait{background:linear-gradient(180deg,#2a0c52,#14052a);border:2px solid #e9b44c;color:#fff;font-size:16px;box-shadow:0 0 16px #e9b44c33}
+.bm69-ch p{font-size:18px}
+.bm69-ic{border:1.5px solid #e9b44c99;background:linear-gradient(180deg,#3a1470,#1c0838)}
+.bm69-btn{border:2px solid #fff3b0}
+
 @media (prefers-reduced-motion:reduce){.bm69-ov *,.bm69-boom,.bm69-pill{animation-duration:0s!important;animation-iteration-count:1!important}}
 `;
 
-const BOMB_SVG = `<svg viewBox="0 0 200 210" aria-hidden="true"><defs>
-<radialGradient id="bm69g" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#7a6a96"/><stop offset=".35" stop-color="#2d2440"/><stop offset="1" stop-color="#0c0814"/></radialGradient>
-<linearGradient id="bm69c" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c9a24a"/><stop offset="1" stop-color="#6a4a14"/></linearGradient>
-<radialGradient id="bm69s"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#ffe27a"/><stop offset=".65" stop-color="#ff8a1a"/><stop offset="1" stop-color="#ff3b1a00"/></radialGradient></defs>
-<path d="M122 52 C140 28 160 30 170 16" fill="none" stroke="#8a6a3a" stroke-width="7" stroke-linecap="round"/>
-<path d="M122 52 C140 28 160 30 170 16" fill="none" stroke="#d8b27a" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 5"/>
-<g class="bm69-spark" style="transform-origin:170px 16px"><circle cx="170" cy="16" r="20" fill="url(#bm69s)"/><path d="M170 -2v10M170 24v10M152 16h10M178 16h10M158 4l6 6M176 22l6 6M182 4l-6 6M164 22l-6 6" stroke="#fff3b0" stroke-width="2.5" stroke-linecap="round"/></g>
-<rect x="100" y="44" width="40" height="26" rx="6" transform="rotate(-28 120 57)" fill="url(#bm69c)" stroke="#3a2608" stroke-width="2"/>
-<circle cx="96" cy="128" r="76" fill="url(#bm69g)" stroke="#05030a" stroke-width="3"/>
-<ellipse cx="68" cy="92" rx="22" ry="13" transform="rotate(-30 68 92)" fill="#fff" opacity=".22"/>
-<rect x="44" y="110" width="104" height="44" rx="10" fill="#120606" stroke="#3a0b0b" stroke-width="3"/>
-<text class="bm69-digits" x="96" y="143" text-anchor="middle" font-family="'DS-Digital','Courier New',monospace" font-weight="900" font-size="30" fill="#ff3b2e" style="filter:drop-shadow(0 0 4px #ff3b2e)">00:30</text>
-</svg>`;
+const ART = '/assets/art69/';
+const BOMB_SVG = `<div class="bm69-bomb"><img src="${ART}bomb-core.webp?v=r69z3" alt="" decoding="async"><i class="bm69-fusefx" aria-hidden="true"></i><div class="bm69-led"><s aria-hidden="true">88:88</s><span class="bm69-digits">00:30</span></div></div>`;
 
 export function startRoomBomb() {
   if (globalThis.__bm69) return; globalThis.__bm69 = true;
@@ -141,7 +168,7 @@ export function startRoomBomb() {
     const ed = can.settings ? '' : 'disabled';
     const idea = '<section class="bm69-card"><h3>💣 فكرة اللعبة</h3><p class="bm69-idea">قنبلة تتنقل بين اللاعبين، واللي معاه القنبلة ينفّذ التحدي بسرعة ويمرّرها قبل لا تنفجر عنده!</p></section>';
     const how = `<section class="bm69-card"><h3>🎮 كيف ألعب؟</h3><ol class="bm69-steps"><li><i>1</i>تبدأ القنبلة مع لاعب عشوائي.</li><li><i>2</i>${x.mode === 'questions' ? 'يقرأ التحدي ويجاوبه بصوته.' : 'يمرّرها بأسرع وقت.'}</li><li><i>3</i>يضغط «مرّر القنبلة» عشان تنتقل للي بعده.</li><li><i>4</i>إذا خلص الوقت وانفجرت عنده، يطلع من اللعبة. وآخر واحد يبقى هو الفايز 🏆</li></ol></section>`;
-    return `<div class="bm69-hero"><div style="width:84px">${BOMB_SVG}</div></div>
+    return `<div class="bm69-hero"><div style="width:118px">${BOMB_SVG}</div></div>
     <section class="bm69-card"><h3>👥 اللاعبين <small style="color:#cdb8f2;font-weight:700">(${x.players.length} من 8)</small></h3><div class="bm69-players">${slots.join('')}</div></section>
     <section class="bm69-card"><h3>⚙️ إعدادات الغرفة</h3><div class="bm69-set">
       <div class="bm69-row"><span>🎮 وضع اللعبة</span><div class="bm69-chips"><button type="button" class="bm69-chip ${x.mode === 'questions' ? 'on' : ''}" data-bm="mode" data-v="questions" ${ed}>الأسئلة</button><button type="button" class="bm69-chip ${x.mode === 'speed' ? 'on' : ''}" data-bm="mode" data-v="speed" ${ed}>السرعة</button></div></div>
@@ -162,7 +189,7 @@ export function startRoomBomb() {
     const ps = x.players.map((p, i) => { const a = -Math.PI / 2 + (i / n) * Math.PI * 2, r = 41; const left = 50 + r * Math.cos(a), top = 50 + r * Math.sin(a) * 0.97; const hold = x.holder === p.id;
       return `<div class="bm69-p${hold ? ' is-hold' : ''}${p.out ? ' is-out' : ''}${p.me ? ' is-me' : ''}" style="left:${left}%;top:${top}%">${avatar(p, hold ? '' : '')}${hold ? '<i class="bm69-mini" aria-hidden="true">💣</i>' : ''}${p.id === x.host && !p.out ? '<i class="bm69-crown" aria-hidden="true">👑</i>' : ''}<b>${p.me ? 'أنت' : esc(p.name)}</b></div>`; }).join('');
     const passBtn = me.holding ? `<button type="button" class="bm69-pass" data-bm="pass" ${can.pass && !S.busy ? '' : 'disabled'}>${can.pass ? 'مرّر القنبلة' : '<span data-bm69-passin>جاوب أول…</span>'}</button>` : `<div class="bm69-wait">${x.phase === 'boom' ? '💥 بووم!' : `💣 القنبلة عند <b>${esc(x.holderName)}</b>`}</div>`;
-    const ch = x.mode === 'questions' && x.challenge ? `<div class="bm69-ch"><span class="dice" aria-hidden="true">🎲</span><div><small>${me.holding ? 'تحدّيك السريع:' : `تحدّي ${esc(x.holderName)}:`}</small><p>${esc(x.challenge)}</p></div></div>` : x.mode === 'speed' && x.phase === 'playing' ? '<div class="bm69-ch"><span class="dice" aria-hidden="true">⚡</span><div><small>وضع السرعة</small><p>الوقت مخفي… مرّرها بسرعة!</p></div></div>' : '';
+    const ch = x.mode === 'questions' && x.challenge ? `<div class="bm69-ch"><span class="dice" aria-hidden="true"></span><div><small>${me.holding ? 'تحدّيك السريع:' : `تحدّي ${esc(x.holderName)}:`}</small><p>${esc(x.challenge)}</p></div></div>` : x.mode === 'speed' && x.phase === 'playing' ? '<div class="bm69-ch"><span class="dice zap" aria-hidden="true">⚡</span><div><small>وضع السرعة</small><p>الوقت مخفي… مرّرها بسرعة!</p></div></div>' : '';
     return `<div class="bm69-arena">${ps}<div class="bm69-core${x.danger ? ' is-danger' : ''}" data-bm69-core>${BOMB_SVG}</div><i class="bm69-wave" aria-hidden="true"></i><i class="bm69-wave w2" aria-hidden="true"></i></div>
     ${S.err ? `<p class="bm69-err" role="alert">${esc(S.err)}</p>` : ''}${passBtn}${ch}
     ${can.cancel ? '<button type="button" class="bm69-btn ghost" data-bm="cancel" style="margin-top:2px">إيقاف اللعبة</button>' : ''}`;

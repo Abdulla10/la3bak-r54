@@ -42,7 +42,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69z2';
+import * as PWA from '../pwa.js?v=r69z3';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -399,7 +399,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69z2');
+  const M = await import('../settings-r60.js?v=r69z3');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -702,7 +702,7 @@ async function render() {
       if (!keepLiveSocial) unifiedPage(view,r.name);
       import('../room-quiz-r68.js?v=r69s').then(({startRoomQuiz})=>startRoomQuiz({api:functionalApi})).catch(()=>{});
       import('../room-luck-r69.js?v=r69s').then(({startRoomLuck})=>startRoomLuck()).catch(()=>{});
-      import('../room-bomb-r69.js?v=r69z2').then(({startRoomBomb})=>startRoomBomb()).catch(()=>{});
+      import('../room-bomb-r69.js?v=r69z3').then(({startRoomBomb})=>startRoomBomb()).catch(()=>{});
       break;
     case 'community':
       if (changed) { COM.CM.menu = null; COM.CM.edit = null; COM.CM.report = null; if (S.user) COM.loadMe().then(updateTop); COM.loadFeed().then(() => { if (parseRoute().name === 'community') render(); }); }
