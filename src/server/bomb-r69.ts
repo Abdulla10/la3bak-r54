@@ -7,11 +7,11 @@ import { randomUUID, randomInt } from 'node:crypto';
 export type BombMode = 'questions' | 'speed';
 type Player = { id: string; name: string; out: boolean; outRound: number };
 type Game = {
-  id: string; room: string; host: string; hostName: string; mode: BombMode; roundMs: number;
+  id: string; room: string; host: string; hostName: string; mode: BombMode; roundMs: number; hard: boolean; prized: boolean;
   phase: 'lobby' | 'playing' | 'boom' | 'done'; players: Player[];
   round: number; holder: string | null; fuseEnd: number; heldAt: number; passes: number;
   challenge: string; used: number[]; lastBoom: { id: string; name: string; at: number } | null;
-  winner: { id: string; name: string } | null; createdAt: number; updatedAt: number; boomUntil: number;
+  winner: { id: string; name: string } | null; prize: number; createdAt: number; updatedAt: number; boomUntil: number;
 };
 
 export const BOMB_CHALLENGES: readonly string[] = [
@@ -31,8 +31,16 @@ export const BOMB_CHALLENGES: readonly string[] = [
   'اذكر 3 أشياء نستخدمها في المطر', 'اذكر 3 دول في أوروبا', 'اذكر 3 أشياء مربعة', 'سمّ 3 حشرات',
   'اذكر 3 أشياء تلقاها في السيارة', 'اذكر 3 أشياء تحبها في الصيف', 'اذكر 3 مسلسلات', 'سمّ 3 أشياء من ذهب',
 ];
+/** تحديات أصعب (يختارها المضيف من «نوع التحديات») */
+export const BOMB_HARD: readonly string[] = [
+  'اذكر 5 عواصم أفريقية', 'اذكر 4 عناصر من الجدول الدوري', 'سمّ 3 دول ما لها بحر', 'اذكر 4 كواكب بالترتيب من الشمس',
+  'اذكر 3 أنبياء ذكروا في القرآن غير محمد ﷺ', 'سمّ 4 دول حدودها مع السعودية', 'اذكر 3 لغات رسمية في الأمم المتحدة غير العربية',
+  'اذكر 4 عملات عربية', 'سمّ 3 مخترعين وشو اخترعوا', 'اذكر 5 دول تبدأ بحرف الألف',
+];
 const ROUND_CHOICES = [15000, 20000, 30000, 45000];
 const MAX_PLAYERS = 8;
+export const BOMB_PRIZE = 5000;
+export const BOMB_PRIZE_MIN_PLAYERS = 3;
 const BOOM_MS = 3500;
 const MIN_HOLD_Q = 2500; // وضع الأسئلة: لازم تمسك القنبلة شوي (تجاوب) قبل لا تمررها
 const MIN_HOLD_S = 400;
@@ -45,15 +53,21 @@ const need = (c: unknown, msg: string): void => { if (!c) throw new BombError(ms
 export class BombGames {
   private games = new Map<string, Game>();
   private now: () => number;
-  constructor(private deps: { name: (id: string) => string; avatar?: (id: string) => string | null; notify: (ids: string[], room: string) => void; now?: () => number }) { this.now = deps.now ?? Date.now; }
+  constructor(private deps: { name: (id: string) => string; avatar?: (id: string) => string | null; prize?: (winner: string, players: number, gameId: string) => number; notify: (ids: string[], room: string) => void; now?: () => number }) { this.now = deps.now ?? Date.now; }
 
   private av(id: string) { try { const a = this.deps.avatar?.(id); return typeof a === 'string' && a ? a : null; } catch { return null; } }
   private alive(g: Game) { return g.players.filter((p) => !p.out); }
   private pickChallenge(g: Game) {
-    if (g.used.length >= BOMB_CHALLENGES.length - 1) g.used = [];
-    let i = randomInt(BOMB_CHALLENGES.length); let guard = 0;
-    while (g.used.includes(i) && guard++ < 50) i = randomInt(BOMB_CHALLENGES.length);
-    g.used.push(i); g.challenge = BOMB_CHALLENGES[i];
+    const list = g.hard ? BOMB_HARD : BOMB_CHALLENGES;
+    if (g.used.length >= list.length - 1) g.used = [];
+    let i = randomInt(list.length); let guard = 0;
+    while (g.used.includes(i) && guard++ < 50) i = randomInt(list.length);
+    g.used.push(i); g.challenge = list[i];
+  }
+  /** الفايز ياخذ الجائزة مرة وحدة لكل لعبة (الخادم يتحقق من الشروط) */
+  private finish(g: Game) {
+    g.phase = 'done'; g.holder = null;
+    if (g.winner && !g.prized) { g.prized = true; try { g.prize = this.deps.prize?.(g.winner.id, g.players.length, g.id) ?? 0; } catch { g.prize = 0; } }
   }
   private fuse(g: Game) { return g.mode === 'speed' ? Math.round(g.roundMs * (0.55 + Math.random() * 0.9)) : g.roundMs; }
   private startRound(g: Game, t: number) {
@@ -69,7 +83,7 @@ export class BombGames {
       if (g.phase === 'playing' && t >= g.fuseEnd && g.holder) {
         const p = g.players.find((x) => x.id === g.holder)!; p.out = true; p.outRound = g.round;
         g.lastBoom = { id: p.id, name: p.name, at: g.fuseEnd }; g.holder = null; g.phase = 'boom'; g.boomUntil = t + BOOM_MS;
-        const live = this.alive(g); if (live.length <= 1) { g.phase = 'done'; g.winner = live[0] ? { id: live[0].id, name: live[0].name } : null; }
+        const live = this.alive(g); if (live.length <= 1) { g.winner = live[0] ? { id: live[0].id, name: live[0].name } : null; this.finish(g); }
         this.ping(g);
       } else if (g.phase === 'boom' && t >= g.boomUntil) { this.startRound(g, t); this.ping(g); }
       else if ((g.phase === 'lobby' && t - g.updatedAt > LOBBY_TTL) || (g.phase === 'done' && t - g.updatedAt > DONE_TTL)) this.games.delete(g.room);
@@ -78,7 +92,7 @@ export class BombGames {
 
   view(roomId: string, uid: string, mod: boolean) {
     this.tick(roomId); const g = this.games.get(roomId); const t = this.now();
-    if (!g) return { game: null, can: { create: true } };
+    if (!g) return { game: null, can: { create: mod } };
     const isHost = g.host === uid, joined = g.players.some((p) => p.id === uid);
     const holding = g.phase === 'playing' && g.holder === uid;
     const minHold = g.mode === 'questions' ? MIN_HOLD_Q : MIN_HOLD_S;
@@ -93,7 +107,7 @@ export class BombGames {
         danger: g.phase === 'playing' && g.fuseEnd - t <= 4000,
         challenge: g.phase === 'playing' && g.mode === 'questions' ? g.challenge : '',
         passIn: holding ? Math.max(0, g.heldAt + minHold - t) : null,
-        lastBoom: g.lastBoom, boomLeft: g.phase === 'boom' ? Math.max(0, g.boomUntil - t) : 0, winner: g.winner, passes: g.passes,
+        hard: g.hard, prize: g.prize, prizeAmount: BOMB_PRIZE, lastBoom: g.lastBoom, boomLeft: g.phase === 'boom' ? Math.max(0, g.boomUntil - t) : 0, winner: g.winner, passes: g.passes,
       },
       me: { joined, host: isHost, holding },
       can: {
@@ -105,11 +119,12 @@ export class BombGames {
     };
   }
 
-  create(roomId: string, uid: string, members: string[]) {
+  create(roomId: string, uid: string, members: string[], mod: boolean) {
+    need(mod, 'لعبة القنبلة يسويها صاحب الغرفة أو المشرفين بس.');
     this.tick(roomId); const cur = this.games.get(roomId);
     need(!cur || cur.phase === 'done', 'فيه لعبة قنبلة شغالة بالغرفة.'); need(members.includes(uid), 'لازم تكون داخل الغرفة.');
     const t = this.now(), name = this.deps.name(uid) || 'لاعب';
-    const g: Game = { id: randomUUID().slice(0, 10), room: roomId, host: uid, hostName: name, mode: 'questions', roundMs: 30000, phase: 'lobby',
+    const g: Game = { id: randomUUID().slice(0, 10), room: roomId, host: uid, hostName: name, mode: 'questions', roundMs: 30000, hard: false, prized: false, prize: 0, phase: 'lobby',
       players: [{ id: uid, name, out: false, outRound: 0 }], round: 0, holder: null, fuseEnd: 0, heldAt: 0, passes: 0, challenge: '', used: [],
       lastBoom: null, winner: null, createdAt: t, updatedAt: t, boomUntil: 0 };
     this.games.set(roomId, g); this.ping(g);
@@ -124,9 +139,10 @@ export class BombGames {
     const g = this.game(roomId); need(g.phase === 'lobby', 'ما تقدر تطلع بنص اللعبة.'); need(g.host !== uid, 'أنت المضيف، الغِ اللعبة بدال.');
     g.players = g.players.filter((p) => p.id !== uid); this.ping(g);
   }
-  settings(roomId: string, uid: string, body: { mode?: unknown; roundMs?: unknown }) {
+  settings(roomId: string, uid: string, body: { mode?: unknown; roundMs?: unknown; hard?: unknown }) {
     const g = this.game(roomId); need(g.host === uid, 'الإعدادات للمضيف بس.'); need(g.phase === 'lobby', 'اللعبة بدت.');
     if (body.mode !== undefined) { need(body.mode === 'questions' || body.mode === 'speed', 'وضع غير صالح.'); g.mode = body.mode as BombMode; }
+    if (body.hard !== undefined) { need(typeof body.hard === 'boolean', 'نوع غير صالح.'); g.hard = body.hard as boolean; }
     if (body.roundMs !== undefined) { const ms = Number(body.roundMs); need(ROUND_CHOICES.includes(ms), 'مدة غير صالحة.'); g.roundMs = ms; }
     this.ping(g);
   }
@@ -142,7 +158,7 @@ export class BombGames {
     // اللاعب اللي طلع من الغرفة ينشال من الدور
     for (const p of g.players) if (!p.out && !members.includes(p.id) && p.id !== uid) { p.out = true; p.outRound = g.round; }
     const live = this.alive(g); const i = live.findIndex((p) => p.id === uid);
-    if (live.length <= 1) { g.phase = 'done'; g.winner = { id: uid, name: live[0]?.name ?? '' }; g.holder = null; this.ping(g); return; }
+    if (live.length <= 1) { g.winner = { id: uid, name: live[0]?.name ?? '' }; this.finish(g); this.ping(g); return; }
     g.holder = live[(i + 1) % live.length].id; g.heldAt = t; g.passes++; if (g.mode === 'questions') this.pickChallenge(g);
     this.ping(g);
   }
@@ -152,7 +168,7 @@ export class BombGames {
   }
   again(roomId: string, uid: string, mod: boolean, members: string[]) {
     const g = this.game(roomId); need(g.phase === 'done', 'اللعبة ما خلصت.'); need(g.host === uid || mod, 'للمضيف بس.');
-    g.phase = 'lobby'; g.round = 0; g.holder = null; g.winner = null; g.lastBoom = null; g.passes = 0;
+    g.phase = 'lobby'; g.round = 0; g.holder = null; g.winner = null; g.lastBoom = null; g.passes = 0; g.prized = false; g.prize = 0; g.used = [];
     g.players = g.players.filter((p) => members.includes(p.id)).map((p) => ({ ...p, out: false, outRound: 0 })); this.ping(g);
   }
   active(): number { return [...this.games.values()].filter((g) => g.phase === 'playing' || g.phase === 'boom').length; }

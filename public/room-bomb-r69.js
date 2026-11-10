@@ -132,6 +132,9 @@ body:has(.so-room-panel[data-so-open-panel]) .bm69-pill{display:none!important}
 .bm69-in{justify-content:flex-start}
 .bm69-wait{background:linear-gradient(180deg,#2a0c52,#14052a);border:2px solid #e9b44c;color:#fff;font-size:16px;box-shadow:0 0 16px #e9b44c33}
 .bm69-ch p{font-size:18px}
+.bm69-prize{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.bm69-prize>span{font-size:30px}.bm69-prize b{display:block;font-size:17px;color:#ffd76a}.bm69-prize small{color:#e2d4ff;font-size:12.5px}
+.bm69-won{font-size:28px!important;font-weight:900;color:#ffd76a!important;text-shadow:0 0 14px #ffb21f;margin:6px 0 10px!important}
 .bm69-ic{border:1.5px solid #e9b44c99;background:linear-gradient(180deg,#3a1470,#1c0838)}
 .bm69-btn{border:2px solid #fff3b0}
 
@@ -170,11 +173,12 @@ export function startRoomBomb() {
     const how = `<section class="bm69-card"><h3>🎮 كيف ألعب؟</h3><ol class="bm69-steps"><li><i>1</i>تبدأ القنبلة مع لاعب عشوائي.</li><li><i>2</i>${x.mode === 'questions' ? 'يقرأ التحدي ويجاوبه بصوته.' : 'يمرّرها بأسرع وقت.'}</li><li><i>3</i>يضغط «مرّر القنبلة» عشان تنتقل للي بعده.</li><li><i>4</i>إذا خلص الوقت وانفجرت عنده، يطلع من اللعبة. وآخر واحد يبقى هو الفايز 🏆</li></ol></section>`;
     return `<div class="bm69-hero"><div style="width:118px">${BOMB_SVG}</div></div>
     <section class="bm69-card"><h3>👥 اللاعبين <small style="color:#cdb8f2;font-weight:700">(${x.players.length} من 8)</small></h3><div class="bm69-players">${slots.join('')}</div></section>
+    <section class="bm69-card bm69-prize"><span aria-hidden="true">🏆</span><div><b>الفايز ياخذ ${Number(x.prizeAmount || 5000).toLocaleString('en-US')} 🪙</b><small>${x.players.length >= 3 ? 'الجائزة شغالة ✓' : 'الجائزة تشتغل لما يكونون 3 لاعبين أو أكثر'}</small></div></section>
     <section class="bm69-card"><h3>⚙️ إعدادات الغرفة</h3><div class="bm69-set">
       <div class="bm69-row"><span>🎮 وضع اللعبة</span><div class="bm69-chips"><button type="button" class="bm69-chip ${x.mode === 'questions' ? 'on' : ''}" data-bm="mode" data-v="questions" ${ed}>الأسئلة</button><button type="button" class="bm69-chip ${x.mode === 'speed' ? 'on' : ''}" data-bm="mode" data-v="speed" ${ed}>السرعة</button></div></div>
       <p class="bm69-note">${x.mode === 'questions' ? '❓ الأسئلة: اللي معاه القنبلة يجاوب التحدي بصوته، وبعدين يمرّرها.' : '⚡ السرعة: مرّر على طول بدون أسئلة. الوقت مخفي والقنبلة تنفجر فجأة!'}</p>
       <div class="bm69-row"><span>⏱️ مدة الجولة</span><div class="bm69-chips">${[15000, 20000, 30000, 45000].map((v) => `<button type="button" class="bm69-chip ${x.roundMs === v ? 'on' : ''}" data-bm="ms" data-v="${v}" ${ed}>${v / 1000} ث</button>`).join('')}</div></div>
-      <div class="bm69-row"><span>📋 نوع التحديات</span><div class="bm69-chips"><button type="button" class="bm69-chip on" disabled>مقترحة</button></div></div>
+      <div class="bm69-row"><span>📋 نوع التحديات</span><div class="bm69-chips"><button type="button" class="bm69-chip ${!x.hard ? 'on' : ''}" data-bm="hard" data-v="0" ${ed}>مقترحة</button><button type="button" class="bm69-chip ${x.hard ? 'on' : ''}" data-bm="hard" data-v="1" ${ed}>صعبة 🔥</button></div></div>
     </div></section>
     ${S.err ? `<p class="bm69-err" role="alert">${esc(S.err)}</p>` : ''}
     ${can.start ? `<button type="button" class="bm69-btn" data-bm="start" ${S.busy ? 'disabled' : ''}>ابدأ اللعب</button>` : me.host ? '<button type="button" class="bm69-btn" disabled>ينتظر لاعب ثاني على الأقل…</button>' : ''}
@@ -196,7 +200,7 @@ export function startRoomBomb() {
   }
   function winHTML(x) {
     const w = x.players.find((p) => p.id === x.winner?.id) || { name: x.winner?.name || '—' };
-    return `<section class="bm69-card bm69-win"><h3>🏆 الفايز</h3>${avatar(w, '<i class="bm69-crown" aria-hidden="true" style="top:-4px;font-size:26px">👑</i>')}<h3 style="color:#fff">${esc(w.me ? 'أنت! مبروك 🎉' : w.name)}</h3><p>آخر واحد ما انفجرت عنده القنبلة</p>
+    return `<section class="bm69-card bm69-win"><h3>🏆 الفايز</h3>${avatar(w, '<i class="bm69-crown" aria-hidden="true" style="top:-4px;font-size:26px">👑</i>')}<h3 style="color:#fff">${esc(w.me ? 'أنت! مبروك 🎉' : w.name)}</h3><p>آخر واحد ما انفجرت عنده القنبلة</p>${x.prize ? `<p class="bm69-won">+${Number(x.prize).toLocaleString('en-US')} 🪙</p>` : ''}
       <ol class="bm69-steps" style="text-align:right;margin:10px 0">${[...x.players].filter((p) => p.out).sort((a, b) => b.outRound - a.outRound).map((p, i) => `<li><i>${i + 2}</i>${esc(p.name)} <span style="color:#cdb8f2">· انفجرت عنده بالجولة ${p.outRound}</span></li>`).join('')}</ol>
       ${S.d.can.again ? '<button type="button" class="bm69-btn" data-bm="again">جولة جديدة</button>' : ''}<button type="button" class="bm69-btn ghost" data-bm="close" style="margin-top:8px">رجوع للغرفة</button></section>`;
   }
@@ -209,7 +213,7 @@ export function startRoomBomb() {
     const title = !x ? 'لعبة القنبلة' : x.phase === 'lobby' ? 'لعبة القنبلة' : x.phase === 'done' ? 'خلصت اللعبة' : '';
     const top = `<header class="bm69-top"><button type="button" class="bm69-ic" data-bm="close" aria-label="رجوع للغرفة">✕</button>${x && (x.phase === 'playing' || x.phase === 'boom') ? `<h2><span class="bm69-round">الجولة ${x.round} / ${x.rounds}</span></h2>` : `<h2>${title}</h2>`}<span class="bm69-ic" aria-hidden="true">💣</span></header>`;
     let body;
-    if (!x) body = `<div class="bm69-hero"><div style="width:150px">${BOMB_SVG}</div></div><section class="bm69-card"><h3>💣 لعبة القنبلة</h3><p class="bm69-idea">قنبلة تتنقل بين اللاعبين وعليكم تنفيذ التحدي بسرعة قبل لا تنفجر! آخر واحد يبقى هو الفايز. من 2 إلى 8 لاعبين.</p></section>${S.err ? `<p class="bm69-err" role="alert">${esc(S.err)}</p>` : ''}<button type="button" class="bm69-btn" data-bm="create" ${S.busy ? 'disabled' : ''}>سوّ لعبة جديدة</button>`;
+    if (!x) body = `<div class="bm69-hero"><div style="width:150px">${BOMB_SVG}</div></div><section class="bm69-card"><h3>💣 لعبة القنبلة</h3><p class="bm69-idea">قنبلة تتنقل بين اللاعبين وعليكم تنفيذ التحدي بسرعة قبل لا تنفجر! آخر واحد يبقى هو الفايز وياخذ 5,000 🪙. من 2 إلى 8 لاعبين.</p></section>${S.err ? `<p class="bm69-err" role="alert">${esc(S.err)}</p>` : ''}${S.d?.can?.create ? `<button type="button" class="bm69-btn" data-bm="create" ${S.busy ? 'disabled' : ''}>سوّ لعبة جديدة</button>` : '<p class="bm69-wait">لعبة القنبلة يسويها صاحب الغرفة أو المشرفين، وأنت تقدر تنضم لها.</p>'}`;
     else if (x.phase === 'lobby') body = lobbyHTML(x);
     else if (x.phase === 'done') body = winHTML(x);
     else body = arenaHTML(x);
@@ -269,6 +273,7 @@ export function startRoomBomb() {
     if (a === 'close') { S.open = false; S.err = ''; paint(); return; }
     if (a === 'mode') return run('settings', { mode: b.dataset.v });
     if (a === 'ms') return run('settings', { roundMs: Number(b.dataset.v) });
+    if (a === 'hard') return run('settings', { hard: b.dataset.v === '1' });
     if (a === 'cancel') { if (!confirm('توقف لعبة القنبلة؟')) return; return run('cancel'); }
     if (['create', 'join', 'leave', 'start', 'pass', 'again'].includes(a)) return run(a);
   });

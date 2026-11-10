@@ -97,7 +97,7 @@ import { BulkGrants } from './bulk-grants.js';
 import { OwnerOps, OwnerError, dayKey as gulfDay } from './owner-r69.js';
 import { AiMod } from './ai-mod-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
-import { BombGames, BombError } from './bomb-r69.js';
+import { BombGames, BombError, BOMB_PRIZE, BOMB_PRIZE_MIN_PLAYERS } from './bomb-r69.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
@@ -1655,7 +1655,15 @@ export async function createApp(
       return { ok: true, correct: pick === z!.correct, quiz: quizView(z!, user.id, acc!.mod) };
     });
     /* R69s: لعبة القنبلة داخل الغرفة */
-    const bomb = new BombGames({ name: (id) => accounts.nameOf(id) || 'لاعب', avatar: (id) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); }, notify: (ids, room) => { for (const id of new Set(ids)) sendToUser(id, { t: 'bomb', room }); } });
+    const bombWins = new Map<string, { day: string; n: number }>();
+    const bomb = new BombGames({ prize: (winner, players, gameId) => {
+      // الجائزة: 5000 عملة للفايز، إذا كانوا 3 لاعبين أو أكثر، وحد أقصى 5 جوائز باليوم لنفس اللاعب (عشان ما ينحلب)
+      if (players < BOMB_PRIZE_MIN_PLAYERS || isGuest(winner)) return 0;
+      const day = new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10), w = bombWins.get(winner);
+      const n = w && w.day === day ? w.n : 0; if (n >= 5) return 0;
+      if (!wallet.grant(winner, 'coins', BOMB_PRIZE, 'فوز بلعبة القنبلة 💣', `bomb:${gameId}:${winner}`)) return 0;
+      bombWins.set(winner, { day, n: n + 1 }); return BOMB_PRIZE;
+    }, name: (id) => accounts.nameOf(id) || 'لاعب', avatar: (id) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); }, notify: (ids, room) => { for (const id of new Set(ids)) sendToUser(id, { t: 'bomb', room }); } });
     { const bt = setInterval(() => { try { bomb.tick(); } catch (e) { log('bomb_tick_failed', { error: String(e).slice(0, 100) }); } }, 300); bt.unref?.(); }
     const bombRun = <T,>(fn: () => T): T => { try { return fn(); } catch (e) { if (e instanceof BombError) throw new FunctionalHttpError(e.status, e.message); throw e; } };
     const bombAcc = (uid: string, room: unknown) => { const acc = socialRooms.quizAccess(uid, String(room ?? '')); if (!acc) throw new FunctionalHttpError(403, 'لازم تكون داخل الغرفة.'); return acc; };
@@ -1664,7 +1672,7 @@ export async function createApp(
       noGuest(user.id); const room = String(body.room ?? ''); const acc = bombAcc(user.id, room);
       bombRun(() => {
         const a = String(params.act);
-        if (a === 'create') bomb.create(room, user.id, acc.members);
+        if (a === 'create') bomb.create(room, user.id, acc.members, acc.mod);
         else if (a === 'join') bomb.join(room, user.id);
         else if (a === 'leave') bomb.leave(room, user.id);
         else if (a === 'settings') bomb.settings(room, user.id, body);

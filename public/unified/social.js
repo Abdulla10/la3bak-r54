@@ -422,7 +422,7 @@ function roomMenuGridHTML(c,ui,council){
     tile('share','share','مشاركة'),
     tile('broadcast-open','bell','برقية للكل','data-bc67-open'),
     joined&&!c.ctx.gameRoom?tile('broadcast-open','volume','أغاني الغرفة','data-rl69-music'):'',
-    joined&&!c.ctx.gameRoom?tile('broadcast-open','star','لعبة القنبلة 💣','data-bm69-open'):'',
+    joined&&!c.ctx.gameRoom&&(mine||can('chat'))?tile('broadcast-open','star','لعبة القنبلة 💣','data-bm69-open'):'',
     joined&&!c.ctx.gameRoom?tile('broadcast-open','gift','ظرف الحظ 🧧','data-rl69-env'):'',
     joined&&!c.ctx.gameRoom&&(mine||can('chat'))?tile('broadcast-open','star','مسابقة 🧠','data-rq68-open'):'',
     canInvite(c)?tile('invite','invite','دعوة صديق'):'',
