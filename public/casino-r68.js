@@ -195,7 +195,7 @@ html:has(.cz-ov[data-casino=slot]) .cz-ov{background:#1a0638}
 
 .sl-jpbar{direction:ltr;display:flex;align-items:center;gap:10px;justify-content:center;height:36px;padding:0 14px;border-radius:12px;background:linear-gradient(180deg,#1e1452,#2d1b6d);border:2px solid #5c46b8;box-shadow:inset 0 2px 6px #0008}
 .sl-jpbar small{font:900 12px/1 Arial,sans-serif;color:#ff8ae6;letter-spacing:.5px}.sl-jpbar b{font:900 22px/1 Arial,sans-serif;color:#ffcf4a;text-shadow:0 2px 0 #8a4a00,0 0 10px #ffb80088;letter-spacing:1px}
-.sl-machine{position:relative;margin:8px -8px 0;container-type:inline-size;display:flex;flex-direction:column}.sl-ft,.sl-fb{display:block;width:100%;height:auto}.sl-fm{height:58cqw;background:center/100% 100% no-repeat}
+.sl-machine{position:relative;margin:8px -8px 0;container-type:inline-size;display:flex;flex-direction:column}.sl-ft,.sl-fb{display:block;width:100%;height:auto}.sl-fm{height:72cqw;background:center/100% 100% no-repeat}
 .sl-machine .cz-reels{position:absolute;left:6.4%;right:7.1%;top:14.9cqw;bottom:14.6cqw;display:grid;grid-template-columns:repeat(5,1fr);gap:1.3cqw;background:none;padding:0}
 .sl-machine .cz-reel{aspect-ratio:auto;height:100%;background:none}
 .sl-tpill{position:absolute;left:17%;right:17%;top:5.6cqw;height:8.4cqw;margin:0;display:grid;place-items:center;font:900 3.6cqw/1 Arial,sans-serif;color:#ffd6fb;letter-spacing:.3cqw;direction:ltr}
