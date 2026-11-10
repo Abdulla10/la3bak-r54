@@ -1,3 +1,4 @@
+import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
 import * as UNIFIED from '../unified/shell.js?v=r69zj';
@@ -43,7 +44,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69zk';
+import * as PWA from '../pwa.js?v=r69zl';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -136,6 +137,10 @@ function scheduleShopWallet() {
   }, 100);
 }
 
+/* R69zk: رجوع للعبة بعد انقطاع */
+RESUME.init({ rooms: () => [...S.rooms.values()], me: () => S.user?.id, now: () => Date.now() + (S.offset || 0), gameName: (id) => S.games?.find((g) => g.id === id)?.name || '',
+  go: (code) => { (globalThis.__LA3BAK_NAV__ || location).hash = '#/room/' + code; },
+  reconnect: (force) => { if (!S.user) return; if (S.ws && S.ws.readyState === 1) { if (force) { S.retry = 0; try { S.ws.close(); } catch { /* */ } } return; } if (S.ws && S.ws.readyState === 0) return; S.retry = 0; connect(); } });
 function connect() {
   if (!S.user) return;
   if (S.ws && S.ws.readyState <= 1) return;
@@ -178,6 +183,7 @@ function connect() {
       curFx = fxs;
       try { render(); } finally { curFx = null; }
       refreshSocial();
+      try { RESUME.sync(); RESUME.connectionChanged(true); } catch { /* */ }
     } else if (m.t === 'friend:online' || m.t === 'friend:room') {
       // R58f: تنبيه دخول صديق للموقع أو لغرفة
       if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:friend', { detail: m }));
@@ -220,6 +226,7 @@ function connect() {
       if (fx.mode === 'stale') return; // لقطة أقدم من اللي عرضناه: ما تغيّر حالة أحدث
       S.rooms.set(m.room.code, m.room);
       trackRoom(m.room);
+      try { RESUME.sync(); } catch { /* */ }
       S.offset = m.room.serverNow - Date.now();
       CLOCK.observe(m.room.serverNow);
       curFx = new Map([[m.room.code, fx]]);
@@ -404,7 +411,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69zk');
+  const M = await import('../settings-r60.js?v=r69zl');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

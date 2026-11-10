@@ -2066,15 +2066,17 @@ export async function createApp(
   const monitor = new ServerMonitor({ online: () => { let n = 0; for (const set of sockets.values()) if (set.size) n++; return n; }, storage: () => storage.status(),
     alert: (title, text) => { let to: string[] = []; try { to = platform.staff().filter((x) => x.role === 'owner').map((x) => x.id).filter((id) => accounts.has(id)); if (to.length) support.announce(to, title, text, 'مراقبة السيرفر', 'mon-' + Date.now()); } catch { /* */ } if (!to.length) adminPush(title, text, 'server'); }, log });
   /* R69zk: درع الحماية */
-  const shield = new Shield(cfg.cookieSecret, { onBan: (_k, why) => { try { arena.alert('big', '🛡️ صدّينا هجوم', `جهاز/شبكة انحظرت 10 دقايق: ${why}.`, 'shield-' + Math.floor(Date.now() / 600_000)); } catch { /* */ } } });
+  /* لو السيرفر ورا nginx بدون TRUST_PROXY، كل الناس يطلعون بنفس العنوان (127.0.0.1) — وقتها ما نحظر أحد بالعنوان */
+  const shieldIp = (req: http.IncomingMessage): string | null => { const ip = ipOf(req); if (!trustProxy && /^(127\.|::1$|::ffff:127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|unknown)/.test(ip)) return null; return ip; };
+  const shield = new Shield(cfg.cookieSecret, { burst: 1500, perSec: 50, strikes: 150, onBan: (_k, why) => { try { arena.alert('big', '🛡️ صدّينا هجوم', `جهاز/شبكة انحظرت 10 دقايق: ${why}.`, 'shield-' + Math.floor(Date.now() / 600_000)); } catch { /* */ } } });
   const server = http.createServer(async (req, res) => {
     requestResponses.set(req, res);
     { const t0 = performance.now(); res.once('finish', () => { if (!String(req.url).startsWith('/ws')) monitor.request(performance.now() - t0, res.statusCode); }); }
     const finish = pendingWrites.begin('http-requests');
     try {
       const url = new URL(req.url ?? '/', 'http://x');
-      if (url.pathname !== '/healthz') { const sk = shield.key(ipOf(req)); const isApi = url.pathname.startsWith('/api/'); if (shield.isBanned(sk) || (isApi && !shield.allow(sk))) { res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60' }); res.end(JSON.stringify({ error: 'طلبات كثيرة. انتظر دقيقة وجرّب.' })); return; } }
-      if (url.pathname === '/api/pow' && req.method === 'GET') return json(res, 200, shield.challenge(shield.key(ipOf(req))), { 'Cache-Control': 'no-store' });
+      if (url.pathname !== '/healthz' && shieldIp(req)) { const sk = shield.key(shieldIp(req)!); const isApi = url.pathname.startsWith('/api/'); if (shield.isBanned(sk) || (isApi && !shield.allow(sk))) { res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60' }); res.end(JSON.stringify({ error: 'طلبات كثيرة. انتظر دقيقة وجرّب.' })); return; } }
+      if (url.pathname === '/api/pow' && req.method === 'GET') return json(res, 200, shield.challenge(shield.key(shieldIp(req) ?? 'shared'), !shieldIp(req)), { 'Cache-Control': 'no-store' });
       if (await webhook(req,res,url)) return;
       if (await socialVoice!.handleHttp(req,res)) return;
       const session = sessions.cookieUser(req.headers.cookie);
@@ -2413,7 +2415,7 @@ export async function createApp(
           return json(res, 400, { error: 'الطلب غير صالح.' });
         }
         /* R69zk: حساب جديد يحتاج إثبات عمل (يحسبه الجوال بروحه) + فخ للبوتات */
-        if (!user) { const sk = shield.key(ipOf(req)); if (hp) return json(res, 400, { error: 'الطلب غير صالح.' }); if (!shield.verify(sk, powIn?.c, powIn?.n)) return json(res, 428, { error: 'حدّث الصفحة وجرّب مرة ثانية.', pow: true }); shield.noteSignup(sk); }
+        if (!user) { const sk = shield.key(shieldIp(req) ?? 'shared'); if (hp) return json(res, 400, { error: 'الطلب غير صالح.' }); if (!shield.verify(sk, powIn?.c, powIn?.n)) return json(res, 428, { error: 'حدّث الصفحة وجرّب مرة ثانية.', pow: true }); shield.noteSignup(sk); }
         if (name.length < 2) return json(res, 400, { error: 'اكتب اسم من حرفين على الأقل.' });
         const problem = nameProblem(name);
         if (problem) return json(res, 400, { error: problem });
@@ -2452,8 +2454,8 @@ export async function createApp(
     if (admin.maintenanceBlock(user)) return reject('503 Service Unavailable');
     if (admin.banBlock(user)) return reject('403 Forbidden');
     if ((sockets.get(user.id)?.size ?? 0) >= cfg.maxConnectionsPerUser) return reject('429 Too Many Requests');
-    const wk = shield.key(ipOf(req)); if (!shield.wsOpenOk(wk)) return reject('429 Too Many Requests');
-    wss.handleUpgrade(req, socket, head, (ws) => { ws.once('close', () => shield.wsClosed(wk)); onConnection(ws, user, req.headers.cookie ?? ''); });
+    const wip = shieldIp(req), wk = wip ? shield.key(wip) : ''; if (wk && !shield.wsOpenOk(wk)) return reject('429 Too Many Requests');
+    wss.handleUpgrade(req, socket, head, (ws) => { if (wk) ws.once('close', () => shield.wsClosed(wk)); onConnection(ws, user, req.headers.cookie ?? ''); });
   });
 
   const ERR_RATE = 'بطيء شوي، رسائل كثيرة.';

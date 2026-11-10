@@ -48,7 +48,7 @@ export class Shield {
   wsClosed(k: string) { const n = (this.wsOpen.get(k) ?? 1) - 1; if (n <= 0) this.wsOpen.delete(k); else this.wsOpen.set(k, n); }
   /** صعوبة إثبات العمل: تزيد لو الشبكة فتحت حسابات كثيرة (ما نمنع: البيوت والكافيهات يتشاركون نت) */
   powBits(k: string) { const n = (this.signups.get(k) ?? []).filter((t) => this.now - t < 3600_000).length; return n < 5 ? 14 : n < 20 ? 17 : n < 60 ? 19 : 21; }
-  challenge(k: string) { const bits = this.powBits(k); const ts = this.now; const sig = createHmac('sha256', this.secret).update(`pow|${k}|${ts}|${bits}`).digest('base64url').slice(0, 22); return { c: `${ts}.${bits}.${sig}`, bits }; }
+  challenge(k: string, shared = false) { const bits = shared ? 15 : this.powBits(k); const ts = this.now; const sig = createHmac('sha256', this.secret).update(`pow|${k}|${ts}|${bits}`).digest('base64url').slice(0, 22); return { c: `${ts}.${bits}.${sig}`, bits }; }
   /** يتحقق: sha256(c + ':' + nonce) يبدأ بعدد bits أصفار */
   verify(k: string, c: unknown, nonce: unknown): boolean {
     const bad = () => { this.stats.powFail++; return false; };
