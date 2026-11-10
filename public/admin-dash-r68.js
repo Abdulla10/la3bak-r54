@@ -21,7 +21,7 @@ export const GROUPS68 = [
   ['ann', 'الإعلانات والإشعارات', '📢', ['notices', 'reports']],
   ['staff', 'المشرفون والصلاحيات', '🛡️', ['staff']],
   ['audit', 'سجل العمليات', '📋', ['audit']],
-  ['security', 'الأمان والحماية', '🔒', ['suspicious', 'maintenance']],
+  ['security', 'الأمان والحماية', '🔒', ['owner', 'suspicious', 'maintenance']],
   ['settings', 'إعدادات النظام', '⚙️', ['settings', 'system']],
 ];
 const DOWN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9 12 15 18 9"/></svg>';

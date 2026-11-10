@@ -1274,6 +1274,7 @@ export class Wallet {
     return {
       days: [...byDay.values()], balances, accounts: Object.keys(this.d.acc).length,
       topSpenders: [...spend.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15).map(([id, v]) => ({ id, spent: v })),
+      spenders: spend.size, spentTotal: [...spend.values()].reduce((x, y) => x + y, 0),
       topGifts: [...giftCount.values()].sort((a, b) => b.value - a.value).slice(0, 10),
       house: { coins: this.d.house?.coins ?? 0, gems: this.d.house?.gems ?? 0 },
     };

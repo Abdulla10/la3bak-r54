@@ -94,6 +94,7 @@ import { Devices } from './devices-r62.js';
 import { monthStartOf, nextMonthStartOf } from './leaderboard.js';
 import { weekKeyOf } from './room-supporters-r58.js';
 import { BulkGrants } from './bulk-grants.js';
+import { OwnerOps, OwnerError, dayKey as gulfDay } from './owner-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -332,6 +333,12 @@ export async function createApp(
   const progressionEvents = progression.frozenEvents();
   const wallet = new Wallet(cfg.walletFile ?? '', Date.now, storage);
   const platform = new Platform(platFile, Date.now, storage);
+  /* R69: أدوات المالك */
+  const ownerOps = new OwnerOps(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'owner-ops.json') : '', Date.now, storage);
+  if (process.env.ADMIN_2FA_OFF === '1') ownerOps.panelForceOff();
+  const FREEZE_MSG = 'صرف العملات موقف مؤقتاً للصيانة. جرّب بعد شوي.';
+  const FROZEN_PATH = /^\/api\/(slot\/spin|foodwheel\/(bet|chest)|room-env\/|watch\/cheer|tours\/(create|join)|auction|store|shop|gift|lucky|wheel\/spin|social\/.*(gift|lucky|reward|cannon|support|treasure|rocket))/;
+
   const shopcat = new ShopCatalog(shopFile, Date.now, storage);
   const giftcat = new GiftCatalog(giftFile, Date.now, storage);
   const accountTools = new AccountTools(accountToolsFile, Date.now, storage);
@@ -877,6 +884,15 @@ export async function createApp(
   }, storage);
   { const arenaTimer = setInterval(() => { try { arena.tick(); } catch (e) { log('arena_tick_failed', { message: String(e).slice(0, 120) }); } }, 5000); arenaTimer.unref?.(); }
   /* R69: تنبيهات الإدارة الفورية — الفوز الكبير، والبلاغات المتكررة على نفس اللاعب (3 أشخاص أو أكثر خلال 24 ساعة) */
+  /* R69: التقرير الصباحي للمالك (9 الصبح بتوقيت الإمارات) */
+  const morningText = () => {
+    const y = gulfDay(Date.now() - 86_400_000); const all = accounts.all(); const newY = all.filter((a) => a.since && gulfDay(a.since) === y).length;
+    const eco = wallet.adminEconomy(3); const row = eco.days.find((d) => d.day === y); const sales = row ? Math.round(row.kinds['-purchase'] ?? 0) : 0;
+    const cz = casino.adminView(); const cd = cz.days.find((d) => d.d === y); const luck = cd ? (cd.slot.in - cd.slot.out) + (cd.food.in - cd.food.out) - cd.chest : 0;
+    const al = arena.alertsView().filter((a) => gulfDay(a.at) === y); const k = ownerOps.kpis((id) => all.find((a) => a.id === id)?.since ?? null);
+    return [`📊 تقرير أمس (${y})`, `👥 لاعبين يدد: ${newY} · النشطين: ${ownerOps.activeOn(y)} (هالشهر ${k.mau})`, `🛒 مبيعات المتجر: ${sales.toLocaleString('en-US')} عملة`, `🪙 دخل العملات ${(row?.in ?? 0).toLocaleString('en-US')} · طلع ${(row?.out ?? 0).toLocaleString('en-US')}`, `🎰 ربح ألعاب الحظ: ${luck.toLocaleString('en-US')}`, `🔔 تنبيهات: ${al.length}${al.length ? ' (' + [...new Set(al.map((a) => a.title))].join('، ') + ')' : ''}`, `📈 رجوع بعد يوم: ${k.d1 ?? '—'}% · بعد أسبوع: ${k.d7 ?? '—'}%`, ownerOps.frozen() ? '⛔ تنبيه: صرف العملات موقف الحين' : ''].filter(Boolean).join('\n');
+  };
+  { const mt = setInterval(() => { try { if (!ownerOps.reportDue(9)) return; const text = morningText(); if (!ownerOps.addReport(text)) return; const to = platform.staff().filter((x) => x.role === 'owner').map((x) => x.id).filter((id) => accounts.has(id)); if (to.length) support.announce(to, '📊 التقرير الصباحي', text, 'التقارير', 'morning-' + gulfDay(Date.now())); } catch (e) { log('morning_report_failed', { message: String(e).slice(0, 120) }); } }, 5 * 60_000); mt.unref?.(); }
   casino.onBig = (e) => { const tm = Math.floor(e.at / 60_000); arena.alert('big', '🏆 فوز كبير', `${e.name} فاز بـ ${e.win.toLocaleString('en-US')} عملة في ${e.game === 'slot' ? 'جاكبوت لعبك' : 'عجلة الأكل'} (رهان ${e.bet.toLocaleString('en-US')}).`, `big:${e.game}:${e.name}:${e.win}:${tm}`); };
   { const repTimer = setInterval(() => { try { const day = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10); for (const r of community.reportsBurst(Date.now() - 86_400_000)) if (r.reporters >= 3) arena.alert('reports', '🚩 بلاغات متكررة', `${accounts.nameOf(r.author) || 'لاعب'} انبلّغ عليه من ${r.reporters} أشخاص خلال آخر 24 ساعة. شيك على «بلاغات المجتمع».`, `reports:${r.author}:${day}`); } catch (e) { log('report_alert_failed', { message: String(e).slice(0, 120) }); } }, 60_000); repTimer.unref?.(); }
 
@@ -1142,7 +1158,7 @@ export async function createApp(
     const players = sockets.size;
     return { ok: true, at: Date.now(), uptimeSec: Math.floor((Date.now() - bootAt) / 1000), players, rooms: (({ rooms, councils, members }) => ({ rooms, councils, members }))(socialRooms.health() as any), guests: { readOnly: GUEST_READONLY, lockAt: guestLockAt }, backups: b ?? null, checks, overall: checks.some((c) => c.state === 'bad') ? 'bad' : checks.some((c) => c.state === 'warn') ? 'warn' : 'ok' };
   }
-  const admin = createAdmin({ community, giftcat, economy, payments, offers, backups: backups ?? undefined, health: healthReport,
+  const admin = createAdmin({ panelGate: (req, a) => ownerOps.gate(a.token ? 'token' : a.id, String(req.headers['x-adm-2fa'] ?? '')), staffDayLimit: (id) => ownerOps.limitOf(id), community, giftcat, economy, payments, offers, backups: backups ?? undefined, health: healthReport,
     platform, shopcat, wallet, accounts, board, progression, accountTools, service, bulkGrants, store, storage, cfg, registry, sockets, log, json, readBody: appReadBody, sameOrigin, ipOf,
     kick: (id, why) => sockets.get(id)?.forEach((ws) => ws.close(why === 'banned' ? 4403 : 4503, why)),
     walletChanged: id => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }),
@@ -1159,6 +1175,7 @@ export async function createApp(
   const functionalHttp = wireFunctionalRoutes(new FunctionalHttp({ json, sameOrigin, actorOf: admin.actorOf, isBanned: (id) => platform.isBanned(id), log }), { unsearchable: (id: string) => privacyOn(id, 'unsearchable'),
     accounts, platform, community, accountTools, social, missions, rankRewards, support, online: () => [...sockets.keys()],
   });
+  functionalHttp.guard = (method, p) => (method !== 'GET' && ownerOps.frozen() && FROZEN_PATH.test(p) ? FREEZE_MSG : null);
   wireProfileSocialRoutes(functionalHttp, profileSocial, (id) => community.pub(id));
   // R58: أيديات الغرف المميزة اللي يملكها اللاعب (لاختيارها من إعدادات غرفته)
   // R58f: شريط الأصدقاء مثل انستغرام: صورة كل صديق، وإذا هو داخل غرفة ظاهرة تطلع عليه «في غرفة» وتدخل عليها مباشرة
@@ -1683,6 +1700,34 @@ export async function createApp(
     functionalHttp.add('POST', '/api/2fa/disable', ({ user, body }) => arenaRun(() => { arena.tfDisable(user.id, body.code); return { ok: true, ...arena.tfStatus(user.id) }; }));
     functionalHttp.add('GET', '/api/admin/luck', () => ({ ok: true, alerts: arena.alertsView(), casino: casino.adminView(), xfer: arena.xferAdmin((id) => accounts.nameOf(id) || id.slice(0, 8)) }), 'owner');
     functionalHttp.add('POST', '/api/admin/luck/toggle', ({ actor, body }) => { const g = body.game === 'slot' ? 'slot' : body.game === 'food' ? 'food' : null; adminNeed(!!g, 'لعبة غير معروفة.'); const off = !!body.off; const v = casino.setOff(g!, off); admin.audit(actor!, 'luck.toggle', g!, off ? 'إيقاف' : 'تشغيل'); return { ok: true, casino: v }; }, 'owner');
+    // R69: أدوات المالك
+    const ownerRun = <T,>(fn: () => T): T => { try { return fn(); } catch (e) { if (e instanceof OwnerError) throw new FunctionalHttpError(e.status, e.message); throw e; } };
+    const todayGulf = () => gulfDay(Date.now());
+    const staffView = () => { const t0 = Date.now() - ((Date.now() + 4 * 3_600_000) % 86_400_000); const au = platform.auditList(1500).filter((e) => e.ts >= t0);
+      return platform.staff().map((st) => { const mine = au.filter((e) => e.actorId === st.id); const coins = mine.filter((e) => e.action === 'wallet.adjust').reduce((n, e) => { const m = /^coins \+?(-?\d+)/.exec(e.detail); return n + (m ? Math.abs(Number(m[1])) : 0); }, 0);
+        return { id: st.id, name: accounts.nameOf(st.id) || (st as { name?: string }).name || '—', role: st.role, suspended: !!ownerOps.suspendedOf(st.id), limit: ownerOps.limitOf(st.id), today: { count: mine.length, coins, last: mine.slice(0, 8).map((e) => ({ at: e.ts, action: e.action, detail: e.detail.slice(0, 90) })) }, twofa: arena.tfEnabled(st.id) }; }); };
+    const undoable = (e: { action: string }) => e.action === 'wallet.adjust' || e.action === 'player.ban';
+    const ownerView = () => ({ ok: true, panel: ownerOps.panelStatus(), frozen: ownerOps.freezeView(), kpis: ownerOps.kpis((id) => accounts.all().find((a) => a.id === id)?.since ?? null), reports: ownerOps.reportsList(), staff: staffView(),
+      undo: platform.auditList(300).filter(undoable).slice(0, 15).map((e) => ({ id: e.id, at: e.ts, actor: e.actor, action: e.action, target: accounts.nameOf(e.target) || e.target.slice(0, 8), detail: e.detail.slice(0, 100), undone: ownerOps.isUndone(e.id) })) });
+    functionalHttp.add('GET', '/api/admin/owner', () => ownerView(), 'owner');
+    functionalHttp.add('POST', '/api/admin/owner/panel2fa/setup', () => ownerRun(() => ({ ok: true, ...ownerOps.panelSetup() })), 'owner');
+    functionalHttp.add('POST', '/api/admin/owner/panel2fa/enable', ({ actor, body }) => ownerRun(() => { const token = ownerOps.panelEnable(body.code, actor!.token ? 'token' : actor!.id); admin.audit(actor!, 'panel2fa.on', 'panel', 'تفعيل التحقق بخطوتين للوحة'); return { ...ownerView(), session: token }; }), 'owner');
+    functionalHttp.add('POST', '/api/admin/owner/panel2fa/disable', ({ actor, body }) => ownerRun(() => { ownerOps.panelDisable(body.code); admin.audit(actor!, 'panel2fa.off', 'panel', 'إيقاف التحقق بخطوتين للوحة'); return ownerView(); }), 'owner');
+    functionalHttp.add('POST', '/api/admin/owner/freeze', ({ actor, body }) => { const on = !!body.on; const reason = String(body.reason ?? '').trim().slice(0, 200); adminNeed(!on || reason.length >= 3, 'اكتب السبب.'); ownerOps.setFrozen(on, actor!.name, reason); admin.audit(actor!, on ? 'economy.freeze' : 'economy.unfreeze', 'economy', reason || 'تشغيل الاقتصاد'); return ownerView(); }, 'owner');
+    functionalHttp.add('POST', '/api/admin/owner/staff', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(platform.staff().some((x) => x.id === id), 'المشرف غير موجود.');
+      if (body.suspend !== undefined) { ownerOps.suspend(id, actor!.name, !!body.suspend); admin.audit(actor!, body.suspend ? 'staff.suspend' : 'staff.unsuspend', id, body.suspend ? 'إيقاف مشرف من اللوحة' : 'رجوع مشرف'); if (body.suspend) for (const ws of sockets.get(id) ?? []) send(ws, { t: 'admin:kicked' }); }
+      if (body.limit !== undefined) { const v = body.limit === null || body.limit === '' ? null : Number(body.limit); adminNeed(v === null || (Number.isInteger(v) && v >= 0 && v <= 100_000_000), 'الحد غير صالح.'); ownerOps.setLimit(id, v); admin.audit(actor!, 'staff.limit', id, v === null ? 'الحد الافتراضي' : `حد يومي ${v}`); }
+      return ownerView(); }, 'owner');
+    functionalHttp.add('POST', '/api/admin/owner/undo', ({ actor, body }) => {
+      const aid = Number(body.id); const e = platform.auditList(5000).find((x) => x.id === aid); adminNeed(!!e && undoable(e), 'العملية مو موجودة أو ما تنعكس.'); adminNeed(!ownerOps.isUndone(aid), 'تراجعت عنها من قبل.');
+      if (e!.action === 'wallet.adjust') {
+        const m = /^(coins|gems) \+?(-?\d+)/.exec(e!.detail); adminNeed(!!m, 'ما قدرت أقرأ العملية.'); const cur = m![1] as 'coins' | 'gems', delta = -Number(m![2]);
+        const r = wallet.adminAdjust(e!.target, cur, delta, `تراجع عن عملية #${aid} (${e!.actor})`, 'undo:' + aid); adminNeed(r.ok, r.ok ? '' : (r as { code?: string }).code === 'poor' ? 'رصيد اللاعب ما يكفي للتراجع (صرفها).' : 'تعذّر التراجع.');
+        sendToUser(e!.target, { t: 'wallet', coins: wallet.balance(e!.target), gems: wallet.gems(e!.target), won: 0 });
+      } else { adminNeed(platform.isBanned(e!.target), 'اللاعب مو محظور الحين.'); platform.unban(e!.target); }
+      ownerOps.markUndone(aid); admin.audit(actor!, 'undo', e!.target, `تراجع عن #${aid}: ${e!.action} · ${e!.detail.slice(0, 120)}`); return ownerView();
+    }, 'owner');
+    functionalHttp.add('POST', '/api/admin/owner/report-now', () => ({ ok: true, text: morningText() }), 'owner');
     functionalHttp.add('POST', '/api/admin/2fa-reset', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(accounts.has(id), 'اللاعب غير موجود.'); adminNeed(arena.tfReset(id), 'التحقق بخطوتين مو مفعّل عند اللاعب.'); admin.audit(actor!, '2fa.reset', id, 'فك التحقق بخطوتين'); return { ok: true }; }, 'owner');
     functionalHttp.add('POST', '/api/foodwheel/chest', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.claimChest(user.id, (body as any)?.i)) }; });
     functionalHttp.add('POST', '/api/foodwheel/bet', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.bet(user.id, accounts.nameOf(user.id) || 'لاعب', (body as any)?.item, (body as any)?.chip)) }; });
@@ -1937,7 +1982,7 @@ export async function createApp(
       if (url.pathname === '/api/account' && req.method === 'GET') {
         if (!user) return json(res, 401, { error: 'ما فيه جلسة.' });
         accounts.ensure(user.id, user.name);
-        accounts.noteActivity(user.id);
+        accounts.noteActivity(user.id); ownerOps.seen(user.id);
         const profile = canonicalProfile(user.id, wallet.balance(user.id));
         return json(res, 200, { ...profile, ...community.followCounts(user.id), ...verificationView(user.id), settings: accountTools.settings(user.id), friendsCount: social.friendsCount(user.id), internalNotifications: support.inbox(user.id).unread, progression: progression.view(user.id), canClaim: wallet.canClaim(user.id), stakes: availableStakes, avatar: avatars.version(user.id), gems: wallet.gems(user.id), equipped: equippedView(user.id), txs: wallet.ledgerOf(user.id, 100), achievements: achView(achInput(user.id)), allGames: accounts.achStats(user.id).games, giftCounts: wallet.giftCounts(user.id), ownedCount: wallet.owned(user.id).length });
       }
@@ -2097,6 +2142,18 @@ export async function createApp(
         return json(res, 200, { ok: true, devices: webPush.count(user.id) });
       }
       if (url.pathname === '/api/me' && req.method === 'GET') return json(res, 200, { deletion: user ? deletion.pending(user.id) : null, user, google: !!user && identities.linked(user.id), guestReadOnly: !!user && isGuest(user.id), ...(user && unlinkedGuest(user.id) && inGrace(user.id) ? { guestLockAt } : {}) });
+      if (url.pathname === '/api/panel-2fa/login' && req.method === 'POST') {
+        if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' });
+        if (!authLimiter.allow('p2fa:' + ipOf(req))) return json(res, 429, { error: 'محاولات كثيرة، جرّب بعد شوي.' });
+        const a = admin.rawActorOf(req, user); if (!a) return json(res, 401, { error: 'ما عندك صلاحية دخول الإدارة.' });
+        let code: unknown; try { code = JSON.parse(await appReadBody(req, 1024)).code; } catch { return json(res, 400, { error: 'الطلب غير صالح.' }); }
+        try {
+          let session: string;
+          if (a.token) session = ownerOps.panelLoginOwner(code);
+          else { if (!arena.tfEnabled(a.id)) return json(res, 403, { error: 'فعّل التحقق بخطوتين بحسابك من الإعدادات أول، بعدين ادخل اللوحة.' }); if (!arena.tfLogin(a.id, code)) return json(res, 401, { error: 'الرمز غلط.' }); session = ownerOps.panelLoginStaff(a.id); }
+          return json(res, 200, { ok: true, session });
+        } catch (e) { if (e instanceof OwnerError || e instanceof ArenaError) return json(res, e.status, { error: e.message }); throw e; }
+      }
       if (url.pathname === '/api/auth/config' && req.method === 'GET') return json(res, 200, { google: cfg.googleClientId || null });
       if (url.pathname === '/api/auth/google' && req.method === 'POST') {
         if (!cfg.googleClientId) return json(res, 404, { error: 'الدخول بـ Google غير مفعّل.' });
@@ -2215,6 +2272,7 @@ export async function createApp(
   async function dispatch(user: User, t: string, m: any) {
     const blocked = admin.maintenanceBlock(user) ?? admin.banBlock(user);
     if (blocked) return { ok: false, error: blocked };
+    if (ownerOps.frozen() && (['gift:send', 'shop:buy', 'shop:checkout', 'shop:convert', 'shop:gems', 'city:up', 'city:roll'].includes(t) || (t === 'mm:join' && Number(m?.stake) > 0))) return { ok: false, error: FREEZE_MSG };
     if (isGuest(user.id) && (GUEST_WS_BLOCK.has(t) || (t === 'room:create' && m?.mode !== 'bots'))) return { ok: false, code: 'guest', error: GUEST_MSG };
     // R68z28: الخروج المتكرر يمنع دخول أي لعبة 5 دقايق
     if (QUIT_GATED.has(t)) { const qb = quitBlock(user.id); if (qb) return qb; }
@@ -2343,7 +2401,7 @@ export async function createApp(
       ws.ping();
     }, 25_000);
 
-    const connectionReady=pendingWrites.track('room-connect', async () => {const rooms=await service.connect(user.id);await socialRooms.connect(user.id);accounts.noteActivity(user.id);return rooms;});
+    const connectionReady=pendingWrites.track('room-connect', async () => {const rooms=await service.connect(user.id);await socialRooms.connect(user.id);accounts.noteActivity(user.id);ownerOps.seen(user.id);return rooms;});
     connectionReady
       .then((rooms) => (activity.note(user.id, 'login'), send(ws, { t: 'hello', user, rooms, coins: wallet.balance(user.id), canClaim: wallet.canClaim(user.id), stakes: availableStakes })))
       .catch((e) => { log('connect_error', { message: (e as Error).message });ws.close(4503,'room storage unavailable'); });

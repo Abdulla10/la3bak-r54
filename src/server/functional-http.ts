@@ -27,6 +27,8 @@ export class FunctionalHttp {
   private fallbackPrefixes = new Set<string>();
   private readLimiter = new KeyedLimiter(180, 3);
   private writeLimiter = new KeyedLimiter(30, 0.5);
+  /** R69: حارس عام (زر الطوارئ) — يرجع رسالة لو الطلب لازم ينرفض */
+  guard: ((method: string, path: string) => string | null) | null = null;
   constructor(private deps: Deps) {}
   allowFallback(prefix: string) { this.fallbackPrefixes.add(prefix); return this; }
   add(method: string, path: string, handler: Handler, staff: 'owner' | 'support' | null = null, maxBody = 32768) {
@@ -65,10 +67,14 @@ export class FunctionalHttp {
       if (!route) throw new FunctionalHttpError(405, 'الطريقة غير مسموحة.');
       const actor = route.staff ? this.deps.actorOf(req, user) : null;
       if (route.staff) {
-        if (!actor) throw new FunctionalHttpError(401, 'تسجيل الإدارة مطلوب.');
+        if (!actor) { const g = (req as unknown as { __admGate?: string }).__admGate;
+          if (g === 'need2fa') { this.deps.json(res, 401, { error: 'اكتب رمز التحقق من تطبيق المصادقة عشان تدخل اللوحة.', need2fa: true }); return true; }
+          if (g === 'suspended') { this.deps.json(res, 403, { error: 'حسابك موقوف من لوحة التحكم. تواصل مع المالك.', suspended: true }); return true; }
+          throw new FunctionalHttpError(401, 'تسجيل الإدارة مطلوب.'); }
         if (route.staff === 'owner' && actor.role !== 'owner') throw new FunctionalHttpError(403, 'الصلاحية للمالك فقط.');
       } else if (!user) throw new FunctionalHttpError(401, 'سجّل دخولك أول.');
       if (user && this.deps.isBanned(user.id)) throw new FunctionalHttpError(403, 'هذا الحساب موقوف.');
+      if (!route.staff && this.guard) { const g = this.guard(req.method ?? 'GET', url.pathname); if (g) throw new FunctionalHttpError(423, g); }
       const who = user ?? (actor ? { id: actor.id, name: actor.name } : null);
       if (!who) throw new FunctionalHttpError(401, 'تسجيل الدخول مطلوب.');
       const mut = req.method !== 'GET';

@@ -1,0 +1,56 @@
+// R69: أدوات المالك — حماية اللوحة بخطوتين، زر الطوارئ، مؤشرات النمو، التقرير الصباحي، المشرفين، والتراجع عن العمليات.
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nf = (n) => Number(n || 0).toLocaleString('en-US');
+const p2 = (n) => String(n).padStart(2, '0');
+const dt = (ms) => { if (!ms) return ''; const d = new Date(Number(ms) + 4 * 3600_000); return `<span dir="ltr">${p2(d.getUTCMonth() + 1)}-${p2(d.getUTCDate())} ${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}</span>`; };
+const ACT = { 'wallet.adjust': 'تعديل رصيد', 'player.ban': 'حظر لاعب', 'player.unban': 'فك حظر', 'staff.set': 'تعيين مشرف', 'wallet.request': 'طلب تعديل' };
+export function mountOwnerAdmin(root, { call }) {
+  if (!document.querySelector('style[data-ow69]')) { const st = document.createElement('style'); st.dataset.ow69 = '1'; st.textContent = '[data-owner-admin]{min-width:0;max-width:100%;overflow-wrap:anywhere}.ow-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.ow-k{border:1px solid #a86bff44;border-radius:12px;padding:10px;text-align:center;background:#ffffff08}.ow-k b{display:block;font-size:22px;color:#ffd34d}.ow-k small{opacity:.8;font-size:12px}.ow-bars{display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:10px;direction:ltr}.ow-bars i{flex:1;background:linear-gradient(#b58cff,#6a2fd6);border-radius:4px 4px 0 0;min-height:2px;position:relative}.ow-row{padding:9px 10px;border-bottom:1px solid #ffffff14;font-size:13px;display:grid;gap:4px}.ow-row b{font-size:14px}.ow-on{color:#4be38a;font-weight:900}.ow-off{color:#ff6b85;font-weight:900}.ow-frz{border:2px solid #ff6b85;background:#ff6b8514}.ow-key{display:inline-block;background:#0007;border-radius:8px;padding:6px 10px;letter-spacing:1px;direction:ltr;word-break:break-all}.ow-pre{white-space:pre-wrap;font-size:13px;line-height:1.8;background:#0004;border-radius:10px;padding:10px;margin:6px 0}.ow-flex{display:flex;gap:6px;flex-wrap:wrap;align-items:center}'; document.head.append(st); }
+  const S = { d: null, err: '', msg: '', busy: false, setup: null, preview: '' };
+  const load = async () => { try { S.d = await call('owner'); S.err = ''; } catch (e) { S.err = e.message || 'تعذّر التحميل.'; } paint(); };
+  function paint() {
+    if (!root.isConnected) return; const d = S.d;
+    if (!d) { root.innerHTML = `${S.err ? `<div class="ad-note bad">${esc(S.err)}</div>` : ''}<p class="ad-muted">جاري التحميل…</p>`; return; }
+    const k = d.kpis, max = Math.max(1, ...k.daily.map((x) => x.n));
+    root.innerHTML = `${S.err ? `<div class="ad-note bad" role="alert">${esc(S.err)}</div>` : ''}${S.msg ? `<div class="ad-note ok" role="status">${esc(S.msg)}</div>` : ''}
+    <section class="ad-card ${d.frozen.on ? 'ow-frz' : ''}"><h2>🚨 زر الطوارئ للاقتصاد</h2>
+      <p class="ad-muted">يوقف كل صرف للعملات من اللاعبين: الهدايا، المتجر، ظرف الحظ، التشجيع، ألعاب الحظ، البطولات المدفوعة، والمزادات. الموقع يظل شغال، واللعب المجاني والدردشة عادي.</p>
+      ${d.frozen.on ? `<p class="ow-off">⛔ الصرف موقف من ${dt(d.frozen.at)} — بواسطة ${esc(d.frozen.by)} · السبب: ${esc(d.frozen.reason)}</p><button class="ad-btn" type="button" data-ow="unfreeze">شغّل الصرف من جديد</button>`
+        : `<p class="ow-on">🟢 الصرف شغال</p><div class="ow-flex"><input class="ad-in" data-ow-in="reason" placeholder="السبب (إلزامي)" maxlength="200" style="flex:1;min-width:160px"><button class="ad-btn danger" type="button" data-ow="freeze">⛔ أوقف الصرف الحين</button></div>`}</section>
+    <section class="ad-card"><h2>🔐 حماية اللوحة بخطوتين</h2>
+      <p class="ad-muted">لما تفعّلها، أي أحد يدخل اللوحة لازم يكتب رمز من جوال: أنت (رمز الإدارة) بتطبيق المصادقة، والمشرفين بتحققهم الشخصي من إعدادات حساباتهم. الجهاز يظل داخل 12 ساعة.<br>ضيّعت جوالك؟ ماينوس يقدر يطفيها بمتغير <code dir="ltr">ADMIN_2FA_OFF=1</code>.</p>
+      ${d.panel.on ? `<p class="ow-on">✅ مفعّلة</p><div class="ow-flex"><input class="ad-in" data-ow-in="code" inputmode="numeric" maxlength="6" placeholder="الرمز للإيقاف" style="max-width:160px;direction:ltr"><button class="ad-btn ghost" type="button" data-ow="2fa-off">إيقاف الحماية</button></div>`
+        : S.setup ? `<ol style="line-height:1.9"><li>افتح تطبيق المصادقة وأضف حساب. أو اضغط: <a class="ad-btn ghost" href="${esc(S.setup.uri)}">افتح التطبيق</a></li><li>أو حط المفتاح يدوي: <span class="ow-key">${esc(S.setup.secret.replace(/(.{4})/g, '$1 ').trim())}</span></li><li>اكتب الرمز:</li></ol><div class="ow-flex"><input class="ad-in" data-ow-in="code" inputmode="numeric" maxlength="6" placeholder="123456" style="max-width:160px;direction:ltr"><button class="ad-btn" type="button" data-ow="2fa-on">تفعيل</button></div>`
+        : `<p class="ow-off">غير مفعّلة</p><button class="ad-btn" type="button" data-ow="2fa-setup">فعّل الحماية</button>`}</section>
+    <section class="ad-card"><h2>📈 مؤشرات النمو</h2>
+      <div class="ow-g"><div class="ow-k"><b>${nf(k.dau)}</b><small>نشطين اليوم</small></div><div class="ow-k"><b>${nf(k.wau)}</b><small>نشطين هالأسبوع</small></div><div class="ow-k"><b>${nf(k.mau)}</b><small>نشطين هالشهر</small></div><div class="ow-k"><b>${k.stickiness === null ? '—' : k.stickiness + '%'}</b><small>اليومي من الشهري</small></div>
+      <div class="ow-k"><b>${k.d1 === null ? '—' : k.d1 + '%'}</b><small>رجعوا بعد يوم (${nf(k.d1n)})</small></div><div class="ow-k"><b>${k.d7 === null ? '—' : k.d7 + '%'}</b><small>رجعوا بعد أسبوع (${nf(k.d7n)})</small></div></div>
+      <div class="ow-bars" aria-label="النشطين آخر 14 يوم">${k.daily.map((x) => `<i style="height:${Math.max(2, (x.n / max) * 100)}%" title="${esc(x.d)}: ${x.n}"></i>`).join('')}</div><p class="ad-muted">النشطين آخر 14 يوم. الأرقام تبدأ من يوم هالتحديث.</p></section>
+    <section class="ad-card"><h2>📊 التقرير الصباحي</h2><p class="ad-muted">يوصلك إشعار كل يوم الساعة 9 الصبح (توقيت الإمارات) بأرقام أمس.</p>
+      <button class="ad-btn ghost" type="button" data-ow="preview">شوف تقرير الحين</button>${S.preview ? `<div class="ow-pre">${esc(S.preview)}</div>` : ''}
+      ${d.reports.length ? d.reports.map((r) => `<details><summary>${esc(r.day)}</summary><div class="ow-pre">${esc(r.text)}</div></details>`).join('') : '<p class="ad-empty">أول تقرير يوصل بكرة الصبح.</p>'}</section>
+    <section class="ad-card"><h2>🛡️ المشرفين</h2>${d.staff.length ? d.staff.map((s) => `<div class="ow-row"><b>${esc(s.name)} · ${esc(s.role)} ${s.suspended ? '<span class="ow-off">⛔ موقوف</span>' : '<span class="ow-on">🟢 شغال</span>'} ${s.twofa ? '🔐' : ''}</b>
+        <small>اليوم: ${nf(s.today.count)} عملية · منح ${nf(s.today.coins)} عملة · الحد اليومي: ${s.limit === null ? 'الافتراضي' : nf(s.limit)}</small>
+        ${s.today.last.length ? `<small>${s.today.last.map((a) => `${dt(a.at)} ${esc(ACT[a.action] || a.action)} — ${esc(a.detail)}`).join('<br>')}</small>` : ''}
+        <div class="ow-flex"><button class="ad-btn ${s.suspended ? '' : 'danger'}" type="button" data-ow="suspend" data-id="${esc(s.id)}" data-on="${s.suspended ? '0' : '1'}">${s.suspended ? 'رجّعه' : 'طلّعه وأوقفه'}</button>
+        <input class="ad-in" data-ow-lim="${esc(s.id)}" type="number" min="0" step="1000" placeholder="حد يومي (عملات)" value="${s.limit ?? ''}" style="max-width:150px;direction:ltr"><button class="ad-btn ghost" type="button" data-ow="limit" data-id="${esc(s.id)}">حفظ الحد</button></div></div>`).join('') : '<p class="ad-empty">ما فيه مشرفين.</p>'}
+      <p class="ad-muted">«طلّعه» يقفل عليه اللوحة على طول لين ترجعه. فوق حده اليومي، أي منحة تصير طلب ينتظر موافقتك.</p></section>
+    <section class="ad-card"><h2>↩️ التراجع عن عملية</h2><p class="ad-muted">تعديلات الرصيد والحظر. التراجع يعكس العملية وينسجل بالتدقيق.</p>
+      ${d.undo.length ? d.undo.map((u) => `<div class="ow-row"><b>${esc(ACT[u.action] || u.action)} · ${esc(u.target)}</b><small>${dt(u.at)} · بواسطة ${esc(u.actor)} · ${esc(u.detail)}</small>${u.undone ? '<small class="ow-on">✓ تراجعت عنها</small>' : `<div><button class="ad-btn ghost" type="button" data-ow="undo" data-id="${u.id}">تراجع</button></div>`}</div>`).join('') : '<p class="ad-empty">ما فيه عمليات.</p>'}</section>`;
+  }
+  const run = async (fn, ok) => { if (S.busy) return; S.busy = true; S.err = ''; S.msg = ''; try { const j = await fn(); if (j?.panel) S.d = j; S.msg = ok; } catch (e) { S.err = e.message || 'فشل.'; } S.busy = false; paint(); };
+  const val = (sel) => root.querySelector(sel)?.value ?? '';
+  root.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ow]'); if (!b) return; const a = b.dataset.ow;
+    if (a === 'freeze') { const reason = val('[data-ow-in="reason"]').trim(); if (reason.length < 3) { S.err = 'اكتب السبب.'; return paint(); } if (!window.confirm('توقف كل صرف العملات الحين؟')) return; return run(() => call('owner/freeze', { method: 'POST', body: { on: true, reason } }), 'وقفنا الصرف ⛔'); }
+    if (a === 'unfreeze') return run(() => call('owner/freeze', { method: 'POST', body: { on: false } }), 'رجع الصرف شغال 🟢');
+    if (a === '2fa-setup') return run(async () => { S.setup = await call('owner/panel2fa/setup', { method: 'POST', body: {} }); return null; }, '');
+    if (a === '2fa-on') return run(async () => { const j = await call('owner/panel2fa/enable', { method: 'POST', body: { code: val('[data-ow-in="code"]') } }); S.setup = null; return j; }, 'تفعّلت الحماية ✅ هالجهاز داخل 12 ساعة.');
+    if (a === '2fa-off') return run(() => call('owner/panel2fa/disable', { method: 'POST', body: { code: val('[data-ow-in="code"]') } }), 'وقفنا الحماية.');
+    if (a === 'preview') return run(async () => { S.preview = (await call('owner/report-now', { method: 'POST', body: {} })).text; return null; }, '');
+    if (a === 'suspend') { const on = b.dataset.on === '1'; if (on && !window.confirm('تطلّعه من اللوحة وتوقفه؟')) return; return run(() => call('owner/staff', { method: 'POST', body: { id: b.dataset.id, suspend: on } }), on ? 'طلّعناه وأوقفناه ⛔' : 'رجّعناه 🟢'); }
+    if (a === 'limit') { const v = val(`[data-ow-lim="${CSS.escape(b.dataset.id)}"]`).trim(); return run(() => call('owner/staff', { method: 'POST', body: { id: b.dataset.id, limit: v === '' ? null : Number(v) } }), 'حفظنا الحد ✅'); }
+    if (a === 'undo') { if (!window.confirm('تتراجع عن هالعملية؟')) return; return run(() => call('owner/undo', { method: 'POST', body: { id: Number(b.dataset.id) } }), 'تراجعنا ✅'); }
+  });
+  paint(); load();
+}

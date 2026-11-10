@@ -67,6 +67,10 @@ export class AdminBulkStore {
   retry() { this.disk.retry(); }
 }
 export interface AdminDeps {
+  /** R69: بوابة اللوحة — التحقق بخطوتين وإيقاف المشرفين (null = مسموح) */
+  panelGate?: (req: http.IncomingMessage, actor: Actor) => null | 'need2fa' | 'suspended';
+  /** R69: حد يومي خاص لمشرف (عملات) */
+  staffDayLimit?: (id: string) => number | null;
   community: Community;
   economy?: Economy;
   accountTools?: AdminAccountTools;
@@ -127,6 +131,11 @@ export function createAdmin(d: AdminDeps) {
     return a;
   }
   function actorOf(req: http.IncomingMessage, user: { id: string; name: string } | null): Actor | null {
+    const a = rawActorOf(req, user); if (!a) return null;
+    const g = d.panelGate?.(req, a) ?? null; if (g) { (req as unknown as { __admGate?: string }).__admGate = g; return null; }
+    return a;
+  }
+  function rawActorOf(req: http.IncomingMessage, user: { id: string; name: string } | null): Actor | null {
     const tok = d.token();
     const bearer = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
     if (bearer) return tok && safeEq(bearer, tok) ? seenLogin(req, { id: 'token', name: 'رمز الإدارة', role: 'owner', token: true }) : null;
@@ -337,6 +346,9 @@ export function createAdmin(d: AdminDeps) {
       const ip = d.ipOf(req);
       const actor = actorOf(req, user);
       if (!actor) {
+        const gate = (req as unknown as { __admGate?: string }).__admGate;
+        if (gate === 'need2fa') { d.json(res, 401, { error: 'اكتب رمز التحقق من تطبيق المصادقة عشان تدخل اللوحة.', need2fa: true }); return true; }
+        if (gate === 'suspended') { d.json(res, 403, { error: 'حسابك موقوف من لوحة التحكم. تواصل مع المالك.', suspended: true }); return true; }
         if (!authLimiter.allow('a:' + ip)) throw new HttpErr(429, 'محاولات كثيرة، جرّب بعد شوي.');
         throw new HttpErr(401, req.headers.authorization ? 'الرمز غلط.' : 'ما عندك صلاحية دخول الإدارة.');
       }
@@ -477,7 +489,7 @@ export function createAdmin(d: AdminDeps) {
         if (seen?.state === 'done' && seen.out) return out({ ...seen.out, duplicate: true }, seen.out.pending ? 202 : 200), true; // نفس الطلب مرتين = نفس النتيجة بلا تنفيذ ثاني
         const resuming = seen?.state === 'reserved'; // حُجزت الحصة سابقاً ولم تكتمل (انقطاع): نكمل بنفس المفتاح بدون حجز ثانٍ
         if (!d.wallet.has(id) && delta < 0) throw new HttpErr(409, 'الرصيد ما يكفي للخصم (ما يصير رصيد سالب).');
-        const L = d.cfg.adminAdjust; const opMax = cur === 'coins' ? L.opCoins : L.opGems, dayMax = cur === 'coins' ? L.dayCoins : L.dayGems;
+        const L = d.cfg.adminAdjust; const opMax = cur === 'coins' ? L.opCoins : L.opGems, dayMax = cur === 'coins' ? (d.staffDayLimit?.(actor.id) ?? L.dayCoins) : L.dayGems;
         // المالك بلا حد، لكن المبالغ الكبيرة تحتاج تأكيداً صريحاً بالمبلغ نفسه (حماية من خطأ طباعة؛ ليس حداً مالياً)
         if (actor.role === 'owner' && !resuming && abs >= (cur === 'coins' ? L.confirmCoins : L.confirmGems) && Number(b.confirm) !== delta)
           throw new HttpErr(400, `مبلغ كبير (${abs.toLocaleString('en')}): أعد كتابة المبلغ نفسه (${delta}) في حقل التأكيد لإتمام العملية.`);
@@ -741,5 +753,5 @@ export function createAdmin(d: AdminDeps) {
   }
 
   const publicStatus = (user: { id: string } | null) => { const m = P.maintenance(); const ban = user ? P.banOf(user.id) : null; return { maintenance: { on: m.on, message: m.message, since: m.since }, staff: !!(user && P.roleOf(user.id)), ban: ban ? { reason: ban.reason } : null, notices: P.activeNotices() }; };
-  return { handle, actorOf, audit: safeAudit, loginLog: () => [...loginLog].reverse(), maintenanceBlock, banBlock, publicStatus, resumeApprovals, retryBulk: () => { bulkStore.retry(); d.bulkGrants?.runBatch(); }, stop: () => clearInterval(lagTimer) };
+  return { handle, actorOf, rawActorOf, audit: safeAudit, loginLog: () => [...loginLog].reverse(), maintenanceBlock, banBlock, publicStatus, resumeApprovals, retryBulk: () => { bulkStore.retry(); d.bulkGrants?.runBatch(); }, stop: () => clearInterval(lagTimer) };
 }
