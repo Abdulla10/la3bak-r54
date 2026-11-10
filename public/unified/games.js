@@ -3,15 +3,15 @@
 import { isRetiredGame, visibleGameCatalogue } from '../game-availability.js?v=games-royal-1';
 const ICON = '/preview/assets/profile/icon-game.svg';
 const ART = Object.freeze({
-  jackaro: '/preview/assets/game-jackaro.webp',
-  ludo: '/preview/assets/game-ludo.webp',
-  baloot: '/preview/assets/game-baloot.webp',
+  jackaro: '/assets/art69/g-jackaro.webp?v=r69z',
+  ludo: '/assets/art69/g-ludo.webp?v=r69z',
+  baloot: '/assets/art69/g-baloot.webp?v=r69z',
   domino: '/preview/assets/game-domino.webp',
   uno: '/preview/assets/game-uno.webp',
-  liars: '/preview/assets/game-liars.svg',
-  pool: '/preview/assets/game-pool.svg',
-  bowling: '/preview/assets/game-bowling.svg',
-  carrom: '/preview/assets/game-carrom.webp',
+  liars: '/assets/art69/g-liars.webp?v=r69z',
+  pool: '/assets/art69/g-pool.webp?v=r69z',
+  bowling: '/assets/art69/g-bowling.webp?v=r69z',
+  carrom: '/assets/art69/g-carrom.webp?v=r69z',
   codewords: '/preview/assets/game-codewords-3d-r45.webp',
   minaboli: '/preview/assets/game-minaboli-3d-r49.webp',
 });
