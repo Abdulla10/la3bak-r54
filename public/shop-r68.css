@@ -144,3 +144,5 @@ html body .ids-card,html body .ids-card:hover{background:linear-gradient(180deg,
 /* R68z37: الدخوليات */
 html body .r23-store .r23-product-art>.r23-entrance-art{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;transform:scale(1.25)}
 .r23-lux-preview:has(.e3d-slot)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}
+.r23-lux-preview .r23-souv-art{display:block;width:200px;height:200px;margin:8px auto;object-fit:contain;filter:drop-shadow(0 10px 18px #000a)}
+.r23-lux-preview:has(.r23-souv-art)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}

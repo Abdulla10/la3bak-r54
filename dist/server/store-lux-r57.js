@@ -371,6 +371,27 @@ export const SOUVENIR_ITEMS = [
     S('souv-26', 'الكريستالة', 'rare'),
     S('souv-27', 'فانوس رمضان', 'premium'),
     S('souv-28', 'البوابة السحرية', 'legendary'),
+    // R68z40: ساعات وخواتم وشنط وباقات ورد (صور المالك)
+    { ...S('souv-29', 'ساعة الذهب الملكية', 'legendary'), art: '/assets/art68/souv/v01.webp', price: 20000 },
+    { ...S('souv-30', 'ساعة الكرونو الزرقاء', 'epic'), art: '/assets/art68/souv/v02.webp', price: 9000 },
+    { ...S('souv-31', 'ساعة الوردي اللؤلؤي', 'epic'), art: '/assets/art68/souv/v03.webp', price: 11000 },
+    { ...S('souv-32', 'ساعة الأسود والذهب', 'legendary'), art: '/assets/art68/souv/v04.webp', price: 17500 },
+    { ...S('souv-33', 'ساعة الزهرة البنفسجية', 'ultra'), art: '/assets/art68/souv/v05.webp', price: 30000 },
+    { ...S('souv-34', 'خاتم الألماس', 'ultra'), art: '/assets/art68/souv/v06.webp', price: 40000 },
+    { ...S('souv-35', 'خاتم الياقوت الأحمر', 'legendary'), art: '/assets/art68/souv/v07.webp', price: 22500 },
+    { ...S('souv-36', 'خاتم الزمرد', 'legendary'), art: '/assets/art68/souv/v08.webp', price: 21000 },
+    { ...S('souv-37', 'خاتم قلب الياقوت الأزرق', 'ultra'), art: '/assets/art68/souv/v09.webp', price: 32500 },
+    { ...S('souv-38', 'خاتم الزهرة الوردية', 'epic'), art: '/assets/art68/souv/v10.webp', price: 12500 },
+    { ...S('souv-39', 'شنطة الكريمي المبطّنة', 'epic'), art: '/assets/art68/souv/v11.webp', price: 10000 },
+    { ...S('souv-40', 'شنطة التمساح السوداء', 'legendary'), art: '/assets/art68/souv/v12.webp', price: 19000 },
+    { ...S('souv-41', 'شنطة الفوشيا بالفيونكة', 'epic'), art: '/assets/art68/souv/v13.webp', price: 11000 },
+    { ...S('souv-42', 'شنطة اللؤلؤ البيضاء', 'rare'), art: '/assets/art68/souv/v14.webp', price: 6000 },
+    { ...S('souv-43', 'شنطة الفراشة اللامعة', 'legendary'), art: '/assets/art68/souv/v15.webp', price: 22500 },
+    { ...S('souv-44', 'باقة الورد الأحمر', 'rare'), art: '/assets/art68/souv/v16.webp', price: 3000 },
+    { ...S('souv-45', 'باقة الوردي والليلي', 'rare'), art: '/assets/art68/souv/v17.webp', price: 3500 },
+    { ...S('souv-46', 'باقة الورد البنفسجي', 'epic'), art: '/assets/art68/souv/v18.webp', price: 4500 },
+    { ...S('souv-47', 'باقة الورد الأبيض', 'rare'), art: '/assets/art68/souv/v19.webp', price: 3000 },
+    { ...S('souv-48', 'باقة الورد الوردي', 'premium'), art: '/assets/art68/souv/v20.webp', price: 2000 },
 ];
 /** R67: خلفيات غرف فخمة تنشرى من المتجر — بعد الشراء تختارها من «خلفية البث» بإعدادات غرفتك */
 const RBG = (k, name, price, rarity, desc) => ({ id: `rbg-${k}`, slot: 'room-bg', name, icon: '🏰', price, currency: 'gems', desc, css: k, art: `/assets/art67/roombg/${k}.jpg`, permanent: true, rarity, set: 'lux' });

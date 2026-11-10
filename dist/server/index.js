@@ -629,7 +629,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             return own; if (!slot || !price)
             return null; const ev = siteFlags.saleFor(slot); return ev ? { discount: ev.percent ?? 0, startsAt: ev.startsAt, endsAt: ev.endsAt, exclusive: false, live: true } : null; };
         /** R67au: تذكارات CP الجديدة اللي يرسلها المالك تنضاف هنا (فاضي لين توصل رسوماته) */
-        const SOUVENIR_R67 = new Set();
+        const SOUVENIR_R67 = new Set(Array.from({ length: 20 }, (_, i) => `souv-${i + 29}`)); // R68z40: ساعات وخواتم وشنط وورد
         /** R68z: مدة الأغراض بالمتجر — 7 / 15 / 30 يوم / دائم. السعر نسبة من سعر الدائم. */
         const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar', 'voice-fx', 'entrance']); // R68z32: مؤثرات الصوت بمدة. R68z30: العصي وكور البولينغ دائم بس
         const DURATIONS = [{ days: 7, pct: 25, label: '7 أيام' }, { days: 15, pct: 40, label: '15 يوم' }, { days: 30, pct: 60, label: '30 يوم' }, { days: 0, pct: 100, label: 'دائم' }]; // R68z29: مثل فيديو المالك
