@@ -1,5 +1,5 @@
 const X = (id, slot, name, icon, price, currency, rarity, desc, css) => ({ id, slot, name, icon, price, currency, desc, css, permanent: true, rarity, set: 'lux' });
-export const LUX_SET = { lux: 'مجموعة الفخامة', cues: 'عصي البلياردو', balls: 'كور البولينغ', vfx: 'مؤثرات الصوت' };
+export const LUX_SET = { lux: 'مجموعة الفخامة', cues: 'عصي البلياردو', balls: 'كور البولينغ', vfx: 'مؤثرات الصوت', pcard: 'بطاقات الملف' };
 export const LUX_ITEMS = [
     // إطارات
     X('lux-f-rose', 'frame', 'إطار الوردة الكريستالية', '💍', 800, 'gems', 'rare', 'كريستال وردي بفصوص لامعة.', 'lux-rose'),
@@ -423,4 +423,18 @@ export const VFX_ITEMS = [
     VFX('06', 'مؤثر المجري', 400_000, 'legendary'),
     VFX('09', 'مؤثر التنين', 600_000, 'ultra'),
     VFX('01', 'مؤثر الملكي', 800_000, 'ultra'),
+];
+/* R68z34: بطاقات الملف الشخصي (صور المالك) — تطلع فوق بملفك لأي أحد يفتحه، والملف تحتها ياخذ لونها */
+const PCARD = (n, name, coins, rarity) => ({ id: `pcard-${n}`, slot: 'pcard', name, icon: '🪪', price: Math.round(coins / 20), currency: 'gems', desc: 'تطلع فوق بملفك الشخصي لأي أحد يفتحه، داخل الغرف وبرّاها.', css: n, art: `/assets/art68/pcard/pc-${n}.webp`, permanent: true, rarity, set: 'pcard' });
+export const PCARD_ITEMS = [
+    PCARD('sakura', 'بطاقة الساكورا', 100_000, 'rare'),
+    PCARD('ice', 'بطاقة الجليد', 120_000, 'rare'),
+    PCARD('whale', 'بطاقة الحوت', 180_000, 'epic'),
+    PCARD('galaxy', 'بطاقة المجرة', 220_000, 'epic'),
+    PCARD('wings', 'بطاقة الأجنحة', 300_000, 'legendary'),
+    PCARD('castle', 'بطاقة القلعة', 350_000, 'legendary'),
+    PCARD('yacht', 'بطاقة اليخت', 500_000, 'legendary'),
+    PCARD('city', 'بطاقة المدينة', 650_000, 'ultra'),
+    PCARD('dragon', 'بطاقة التنين', 800_000, 'ultra'),
+    PCARD('lion', 'بطاقة الأسد الملكي', 1_000_000, 'ultra'),
 ];

@@ -627,7 +627,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         /** R67au: تذكارات CP الجديدة اللي يرسلها المالك تنضاف هنا (فاضي لين توصل رسوماته) */
         const SOUVENIR_R67 = new Set();
         /** R68z: مدة الأغراض بالمتجر — 7 / 15 / 30 يوم / دائم. السعر نسبة من سعر الدائم. */
-        const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar', 'voice-fx']); // R68z32: مؤثرات الصوت بمدة. R68z30: العصي وكور البولينغ دائم بس
+        const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar', 'voice-fx', 'pcard']); // R68z32: مؤثرات الصوت بمدة. R68z30: العصي وكور البولينغ دائم بس
         const DURATIONS = [{ days: 7, pct: 25, label: '7 أيام' }, { days: 15, pct: 40, label: '15 يوم' }, { days: 30, pct: 60, label: '30 يوم' }, { days: 0, pct: 100, label: 'دائم' }]; // R68z29: مثل فيديو المالك
         const durPrice = (price, days) => { const d = DURATIONS.find((x) => x.days === days); if (!d)
             return -1; if (!days || price <= 0)
@@ -1349,6 +1349,8 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
             animTier: (id) => profileAnimTier(id),
             phoneOk: (id) => phoneVerify.verified(id),
             adminIdOf: (id) => { const v = accounts.displayPlayerId(id); return v && /^[1-9]\d{2}$/.test(v) ? v : null; },
+            pcardOf: (id) => { const iid = wallet.equipped(id).pcard; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'pcard' || !wallet.owned(id).includes(it.id) || typeof it.css !== 'string')
+                return null; const pv = progression.view(id); return { css: it.css, level: pv.level.enabled ? pv.level.value : null, vip: pv.vip.enabled && pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0 }; },
             profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg')
                 return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
         }, Date.now, storage, opts.communityLimits);
