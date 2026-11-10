@@ -20,7 +20,9 @@ function slotHTML() {
   const st = SL.st; if (!st) return '<p class="cz-load">جاري التحميل…</p>';
   const lineBet = st.bets[SL.bet], total = lineBet * st.lines, free = st.free;
   const grid = SL.last?.grid || [0, 1, 2, 3, 4].map((r) => [0, 1, 2, 3].map((i) => KEYS[(r * 3 + i * 5) % 9]));
-  const feed = st.feed.length ? st.feed.slice(0, 5).map((f) => `<p><i class="sl-av">${esc([...String(f.name || '؟')][0])}</i><bdi>${esc(f.name)}</bdi> فاز بـ <em>${nf(f.win)}</em>${COIN}${f.kind === 'jack' ? ' 🏆' : ''}</p>`).join('') : '<p class="cz-dim">أول فائز كبير يطلع هنا</p>';
+  const feedRows = st.feed.slice(0, 10).map((f) => `<p><i class="sl-av">${esc([...String(f.name || '؟')][0])}</i><bdi>${esc(f.name)}</bdi> فاز بـ <em>${nf(f.win)}</em>${COIN}${f.kind === 'jack' ? ' 🏆' : ''}</p>`).join('');
+  /* R69m: بطاقة الفايزين أكبر وتتحرك لفوق بشكل مستمر */
+  const feed = !st.feed.length ? '<p class="cz-dim">أول فائز كبير يطلع هنا</p>' : st.feed.length < 3 ? feedRows : `<div class="sl-feedtrack" style="--n:${Math.min(10, st.feed.length)}">${feedRows}${feedRows}</div>`;
   return `<div class="cz cz-slot" dir="rtl">
   <header class="sl-head"><button type="button" class="sl-ic" data-cz="close" aria-label="إغلاق">✕</button><h1 class="sl-logo"><span>جاكبوت</span><span>لعبك</span></h1><button type="button" class="sl-ic sl-help" data-cz="help" aria-label="الشرح"><img src="${ART}sl-wheel.webp" alt=""></button></header>
   <section class="sl-feed">${feed}</section>
@@ -189,8 +191,11 @@ html:has(.cz-ov[data-casino=slot]) .cz-ov{background:#1a0638}
 .sl-help{padding:0;border:0;background:none;box-shadow:none;width:44px;height:44px}.sl-help img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px #0008)}
 .sl-logo{margin:0;display:flex;justify-content:center;gap:8px;font:italic 900 32px/1.25 Cairo,Tahoma,sans-serif;white-space:nowrap}
 .sl-logo span{background:linear-gradient(180deg,#fff 0,#e6c8ff 45%,#a66bff 55%,#e9d3ff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #4b0a8f) drop-shadow(0 0 1px #2a0060)}
-.sl-feed{margin:8px 4px 0;padding:6px 10px;min-height:44px;border-radius:14px;background:linear-gradient(180deg,#2a0c5c99,#1a063a99);border:1px solid #a86bff44;font-size:12.5px}
-.sl-feed p{display:flex;align-items:center;gap:6px;margin:3px 0;white-space:nowrap;overflow:hidden}.sl-feed bdi{color:#e9dcff;max-width:40%;overflow:hidden;text-overflow:ellipsis}.sl-feed em{font-style:normal;font-weight:900;color:#ff9a3c;direction:ltr}
+.sl-feed{position:relative;margin:8px 4px 0;padding:4px 12px;height:114px;overflow:hidden;border-radius:16px;background:linear-gradient(180deg,#2a0c5ccc,#1a063acc);border:1.5px solid #ffc83d66;box-shadow:0 0 18px #a86bff33 inset;font-size:15px;-webkit-mask-image:linear-gradient(180deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(180deg,transparent,#000 14%,#000 86%,transparent)}
+.sl-feedtrack{animation:slFeed calc(var(--n) * 2.2s) linear infinite}.sl-feed:hover .sl-feedtrack{animation-play-state:paused}
+@keyframes slFeed{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@media (prefers-reduced-motion:reduce){.sl-feedtrack{animation-duration:calc(var(--n) * 6s)}}
+.sl-feed p{display:flex;align-items:center;gap:8px;margin:0;height:36px;white-space:nowrap;overflow:hidden}.sl-feed p .sl-av{width:28px;height:28px;font-size:14px}.sl-feed em{font-size:17px}.sl-feed bdi{color:#e9dcff;max-width:40%;overflow:hidden;text-overflow:ellipsis}.sl-feed em{font-style:normal;font-weight:900;color:#ff9a3c;direction:ltr}
 .sl-av{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:900;background:linear-gradient(#8a5cff,#4a1fa6);border:1.5px solid #d6b8ff}
 .sl-jp{position:relative;margin:4px auto 0;width:88%;display:flex;flex-direction:column;align-items:center}.sl-jplogo{width:58%;margin-bottom:-14px;position:relative;z-index:1;filter:drop-shadow(0 3px 6px #0008)}
 
