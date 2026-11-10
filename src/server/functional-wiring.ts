@@ -1,3 +1,4 @@
+import { fuzzyScore } from './fuzzy-ar.js';
 import { randomUUID } from 'node:crypto';
 import { RANK_PERK_ITEMS } from './rank-perks-r56.js';
 const perkName = (id: string) => RANK_PERK_ITEMS.find((i) => i.id === id)?.name ?? 'مقتنى خاص';
@@ -43,8 +44,10 @@ export function wireFunctionalRoutes(http: FunctionalHttp, d: FunctionalServices
   http.add('DELETE', '/api/social-private/friends/:id', ({ user, params }) => d.social.remove(user.id, peer(params.id)));
   http.add('GET', '/api/social-private/search', ({ user, url }) => {
     const q = (url.searchParams.get('q') ?? '').trim().slice(0, 30); need(q.length >= 2 || /^[1-9][0-9]*$/.test(q), 'اكتب حرفين أو ID مميز.');
-    const list = d.accounts.all().filter((p) => p.id !== user.id && !d.platform.isBanned(p.id) && !d.community.pairBlocked(user.id, p.id) && !(d.unsearchable?.(p.id))
-      && (p.name.toLocaleLowerCase().includes(q.toLocaleLowerCase()) || d.accounts.publicPlayerId(p.id) === q || d.accounts.displayPlayerId(p.id) === q)).slice(0, 20)
+    // R69ze: بحث ذكي يتحمل الأخطاء ويوحّد الحروف
+    const list = d.accounts.all().filter((p) => p.id !== user.id && !d.platform.isBanned(p.id) && !d.community.pairBlocked(user.id, p.id) && !(d.unsearchable?.(p.id)))
+      .map((p) => ({ p, s: d.accounts.publicPlayerId(p.id) === q || d.accounts.displayPlayerId(p.id) === q ? 200 : fuzzyScore(q, p.name) })).filter((x) => x.s > 0)
+      .sort((a, b) => b.s - a.s).slice(0, 20).map((x) => x.p)
       .map((p) => ({ pub: d.community.pub(p.id), name: p.name, playerId: d.accounts.displayPlayerId(p.id), originalPlayerId: d.accounts.publicPlayerId(p.id) }));
     return { list };
   });

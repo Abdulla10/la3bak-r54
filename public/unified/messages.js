@@ -1,5 +1,6 @@
 /* Messages-only adaptation of ../social-private.js. No new backend or persistence.
  * Caller owns authenticated HTTP, routing and the common shell. */
+import * as E2E from '../e2e-r69.js?v=r69zj';
 const BASE = '/api/social-private/';
 const PUB = /^[A-Za-z0-9_-]{16}$/;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -71,9 +72,9 @@ export function mount(root, ctx = {}) {
   const conversationHTML = () => {
     if (!state.peer) return '<div class="lb-message-empty lb-message-pick"><span class="lb-message-empty-icon">' + icon('chat') + '</span><h2>اختَر محادثة</h2><p>اختَر محادثة من القائمة، أو صديق مقبول عشان تبدأ السوالف.</p></div>';
     const failure = state.errors.conversation ? `<p class="lb-message-error" role="alert">${esc(state.errors.conversation)}</p>` : '';
-    const messages = [...state.conversation.list].reverse().map(message => `<article class="chat-bubble${message.mine === true ? ' mine' : ''}"><b>${message.mine === true ? 'أنت' : esc(state.peerName || 'صديق')}</b><p>${esc(message.body)}</p><small>${esc(stamp(message.at))}${message.mine === true ? (message.read === true ? ' · مقروءة' : ' · مرسلة') : ''}</small></article>`).join('');
+    const messages = [...state.conversation.list].reverse().map(message => `<article class="chat-bubble${message.mine === true ? ' mine' : ''}"><b>${message.mine === true ? 'أنت' : esc(state.peerName || 'صديق')}</b><p>${esc(message.body)}</p><small>${message.e2e === 'ok' ? '🔒 ' : ''}${esc(stamp(message.at))}${message.mine === true ? (message.read === true ? ' · مقروءة' : ' · مرسلة') : ''}</small></article>`).join('');
     const canSend = state.canSend && state.loaded.conversation && !state.busy;
-    return `<h2 class="panel-title">المحادثة ويا ${esc(state.peerName || 'صديق')}</h2><a class="lb-message-profile" href="#/u/${esc(state.peer)}">الملف الشخصي</a>${failure}<div class="lb-message-history">${moreButton('conversation')}<div class="lb-message-stream" aria-label="رسائل المحادثة">${state.loaded.conversation ? (messages || '<p class="lb-message-empty">ما بينكم رسائل للحين.</p>') : (!failure ? '<p role="status" class="lb-message-empty">جاري تحميل المحادثة…</p>' : '')}</div></div><form class="chat-compose" data-lb-msg-form="message"><label class="lb-message-draft-label">رسالتك<textarea name="text" rows="3" maxlength="2000" placeholder="اكتب رسالة…" required ${canSend ? '' : 'disabled'}>${esc(state.draft)}</textarea></label><button type="submit" class="gold-btn" ${canSend ? '' : 'disabled'}>إرسال</button></form>${state.loaded.conversation && !state.canSend ? '<p class="lb-message-limit">الإرسال موقوف حسب إعداد الخصوصية عندك أو عند صديقك.</p>' : ''}`;
+    return `<h2 class="panel-title">المحادثة ويا ${esc(state.peerName || 'صديق')}</h2><a class="lb-message-profile" href="#/u/${esc(state.peer)}">الملف الشخصي</a>${failure}<p class="lb-e2e-note">🔒 رسايلكم مشفّرة من طرف لطرف. محد يقدر يقراها غيركم، حتى إدارة لعبك.</p><div class="lb-message-history">${moreButton('conversation')}<div class="lb-message-stream" aria-label="رسائل المحادثة">${state.loaded.conversation ? (messages || '<p class="lb-message-empty">ما بينكم رسائل للحين.</p>') : (!failure ? '<p role="status" class="lb-message-empty">جاري تحميل المحادثة…</p>' : '')}</div></div><form class="chat-compose" data-lb-msg-form="message"><label class="lb-message-draft-label">رسالتك<textarea name="text" rows="3" maxlength="2000" placeholder="اكتب رسالة…" required ${canSend ? '' : 'disabled'}>${esc(state.draft)}</textarea></label><button type="submit" class="gold-btn" ${canSend ? '' : 'disabled'}>إرسال</button></form>${state.loaded.conversation && !state.canSend ? '<p class="lb-message-limit">الإرسال موقوف حسب إعداد الخصوصية عندك أو عند صديقك.</p>' : ''}`;
   };
   const paint = () => {
     if (!active()) return;
@@ -86,6 +87,10 @@ export function mount(root, ctx = {}) {
     const result = await call(query + (cursor ? `${query.includes('?') ? '&' : '?'}before=${encodeURIComponent(cursor)}` : ''));
     if (!Array.isArray(result.list) || typeof result.more !== 'boolean' || (result.more && !positive(result.nextBefore))) throw new Error('رد القائمة مب صالح. جرّب التحديث.');
     if (kind === 'conversation' && (!result.user || !PUB.test(result.user.pub) || result.user.pub !== state.peer || typeof result.canSend !== 'boolean' || result.list.some(message => !positive(message?.id) || typeof message.body !== 'string' || typeof message.mine !== 'boolean' || typeof message.read !== 'boolean'))) throw new Error('رد المحادثة مب صالح.');
+    /* R69ze: فك تشفير الرسائل على الجهاز */
+    if (kind === 'conversation') { for (const m of result.list) if (E2E.isSealed(m.body)) { const o = await E2E.open(m.body); m.body = o.text; m.e2e = o.locked ? 'lock' : 'ok'; } }
+    else if (kind === 'inbox') { for (const it of result.list) if (it.last && E2E.isSealed(it.last.body)) { const o = await E2E.open(it.last.body); it.last.body = o.locked ? '🔒 رسالة مشفّرة' : o.text; } }
+    if (!active()) return;
     state[kind] = append ? { ...result, list: [...state[kind].list, ...result.list.filter(item => !state[kind].list.some(old => old.id === item.id))] } : result;
     state.loaded[kind] = true;
     state.errors[kind] = '';
@@ -194,15 +199,30 @@ export function mount(root, ctx = {}) {
         state.draftKey = globalThis.crypto.randomUUID();
       }
       // Preserve the same idempotency key and draft after an ambiguous send failure.
-      const result = await call('messages', 'POST', { to: state.peer, text, key: state.draftKey });
+      /* R69ze: نشفر الرسالة قبل لا تطلع من الجهاز (نفس النص المشفر لو أعدنا المحاولة) */
+      if (!state.sealed || state.sealed.key !== state.draftKey || state.sealed.text !== text) {
+        let body = text;
+        if (E2E.supported()) {
+          await E2E.register(ctx.api).catch(() => false);
+          const keys = await ctx.api('/api/e2e/keys?peer=' + encodeURIComponent(state.peer), 'GET').catch(() => null);
+          const me = await E2E.deviceKey().catch(() => null);
+          if (keys && Array.isArray(keys.peer) && keys.peer.length) {
+            const all = [...keys.peer, ...(keys.mine || [])]; if (me && !all.some((d) => d.dev === me.dev)) all.push({ dev: me.dev, x: me.x, y: me.y });
+            body = await E2E.seal(text, all);
+          }
+        }
+        state.sealed = { key: state.draftKey, text, body };
+      }
+      const result = await call('messages', 'POST', { to: state.peer, text: state.sealed.body, key: state.draftKey });
       if (!positive(result.message?.id)) throw new Error('تعذّر تأكيد إرسال الرسالة. جرّب بنفس النص أو حدّث المحادثة.');
-      state.draft = ''; state.draftKey = null; state.notice = 'تم إرسال رسالتك.';
+      state.notice = state.sealed?.body?.startsWith('e2e1.') ? 'انرسلت مشفّرة 🔒' : 'تم إرسال رسالتك. (ما انشفرت لأن صديقك ما فتح التطبيق من بعد التحديث)'; state.draft = ''; state.draftKey = null; state.sealed = null;
       await loadSafe('conversation');
       if (active()) await loadSafe('inbox');
     });
   };
   host.addEventListener('click', click); host.addEventListener('input', input);
   host.addEventListener('change', change); host.addEventListener('submit', submit);
+  E2E.register(ctx.api).catch(() => {});
   const ready = run(reload);
   return { ready, refresh: () => run(reload), destroy() {
     destroyed = true;

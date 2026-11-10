@@ -1,6 +1,6 @@
 // R69za: تحسينات «التطبيق» — رقم الجهاز (لكشف الحسابات الوهمية)، شاشة «ما فيه نت» مع لعبة XO تشتغل بدون نت،
 // بانر «ثبّت لعبك على جوالك»، وعداد الإشعارات على أيقونة التطبيق.
-import * as PWA from './pwa.js?v=r69zh';
+import * as PWA from './pwa.js?v=r69zj';
 const KEY_DID = 'la3_did', KEY_DISMISS = 'la3_install_x';
 const CSS = `
 .ap69-off{position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 30px) 18px 24px;background:radial-gradient(circle at 50% 20%,#4a1680,#160530 70%);color:#fff;direction:rtl;font-family:inherit;text-align:center;overflow:auto}
@@ -55,6 +55,8 @@ async function devicePing() {
     let did = ls.get(KEY_DID); if (!did || !/^[A-Za-z0-9_-]{20,64}$/.test(did)) { did = rnd(); ls.set(KEY_DID, did); }
     const r = await fetch('/api/device', { method: 'POST', credentials: 'same-origin', headers: { 'x-la3-did': did, 'x-la3-fp': await fingerprint() } }).then((x) => x.json()).catch(() => null);
     if (r?.did && r.did !== did) ls.set(KEY_DID, r.did);
+    /* R69ze: نسجل مفتاح التشفير العام عشان أصدقاؤك يقدرون يرسلون لك رسائل مشفّرة */
+    import('./e2e-r69.js?v=r69zj').then((E) => E.register((u, m, b) => fetch(u, { method: m, credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: b ? JSON.stringify(b) : undefined }).then((x) => x.json()))).catch(() => {});
   } catch { /* */ }
 }
 

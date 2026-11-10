@@ -1,8 +1,8 @@
-import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
+import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69z8';
+import * as UNIFIED from '../unified/shell.js?v=r69zj';
 import * as REF from '../unified/home.js?v=r69z8';
-import * as SOCIAL from '../unified/social.js?v=r69z8';
+import * as SOCIAL from '../unified/social.js?v=r69zj';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
@@ -34,6 +34,7 @@ import * as PLV from '../pool.js?v=r68z31';
 import { showQuitBan } from '../quit-ban-r68.js?v=r68z28';
 import * as CZ68 from '../casino-r68.js?v=r69w';
 import * as AR69 from '../arena-r69.js?v=r69d';
+import * as FZ from '../fuzzy-ar.js?v=r69zj';
 import * as THEME68 from '../theme-r68.js?v=r69z';
 import * as BWV from '../bowling.js?v=r68z31';
 import * as CRV from '../carrom.js?v=r68z31';
@@ -42,7 +43,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69zh';
+import * as PWA from '../pwa.js?v=r69zj';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -403,7 +404,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69zh');
+  const M = await import('../settings-r60.js?v=r69zj');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -688,7 +689,7 @@ async function render() {
       break;
     case 'admin': {
       const identity=S.user?.id||'',existing=view.querySelector('#adminRoot');
-      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r69zd').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
+      if(changed||!existing||existing.dataset.sessionIdentity!==identity) {view.innerHTML='<div id="adminRoot"></div>';const root=view.querySelector('#adminRoot');root.dataset.sessionIdentity=identity;import('../admin.js?v=r69zj').then(m=>{if(root.isConnected&&parseRoute().name==='admin')m.mountAdmin(root);}).catch(()=>{if(root.isConnected)root.textContent='تعذّر تحميل الإدارة؛ حدّث الصفحة.';});}
       break;
     }
     case 'city':
@@ -1108,16 +1109,20 @@ function gamesView() {
 }
 
 /* يطبّق التصنيف وطريقة اللعب على البطاقات ويخفي الأقسام الفاضية */
+/* R69ze: بحث الألعاب الذكي — أسماء ثانية للعبة (عشان «بلياردو» يلقى «٨ بول») */
+const GAME_ALIAS = {};
+const GAME_ALIAS_BY_NAME = { '٨ بول': 'بلياردو بول 8 ball pool', 'الكذابين': 'كذاب كذابين القنبلة liars', 'بولينغ': 'بولينج البولينج bowling', 'كيرم': 'كيرام كيرم carrom', 'أونو': 'اونو uno', 'جاكارو': 'جاكرو jackaro', 'لودو': 'ليدو ludo', 'بلوت': 'بلوت baloot', 'دومينو': 'دومنو domino', 'شفرة الكلمات': 'كلمات شفره codewords', 'مينابولي': 'مونوبولي مينابولي monopoly' };
 function applyGameFilter() {
   let shown = 0;
   $$('#liveGames .game-card').forEach((c) => {
     const okCat = S.fCat === 'all' || c.dataset.cats === S.fCat;
     const okMode = S.fMode === 'all' || (S.fMode === 'bots' ? c.dataset.bots === '1' : c.dataset.rooms === '1');
-    const okQ = !S.fQ || (c.querySelector('h3')?.textContent || '').includes(S.fQ.trim());
+    const okQ = !(S.fQ || '').trim() || FZ.fuzzyScore(S.fQ, (c.querySelector('h3')?.textContent || '') + ' ' + (GAME_ALIAS[c.querySelector('[data-game]')?.dataset.game || c.dataset.game || ''] || '') + ' ' + (GAME_ALIAS_BY_NAME[(c.querySelector('h3')?.textContent || '').trim()] || '')) > 0;
     c.hidden = !(okCat && okMode && okQ);
     if (!c.hidden) shown++;
   });
   $$('#liveGames .gcat').forEach((sec) => { sec.hidden = !sec.querySelector('.game-card:not([hidden])'); });
+  $$('.g69x a').forEach((a) => { a.hidden = !!(S.fQ || '').trim() && FZ.fuzzyScore(S.fQ, (a.getAttribute('aria-label') || '') + ' ' + ({ 'جاكبوت لعبك': 'سلوت slot جاكبوت', 'عجلة الأكل': 'عجله اكل مزرعه', 'مباشر': 'تفرج مشاهده live' }[a.getAttribute('aria-label')] || '')) <= 0; if (!a.hidden) shown++; }); $$('.g69x').forEach((g) => { const sec = g.closest('section'); if (sec) sec.hidden = !g.querySelector('a:not([hidden])'); });
   const f = $('#featured');
   if (f) f.hidden = S.fCat !== 'all' || S.fMode !== 'all' || !!S.fQ;
   const nm = $('#noMatch');

@@ -101,6 +101,9 @@ import { BombGames, BombError, BOMB_PRIZE, BOMB_PRIZE_MIN_PLAYERS } from './bomb
 import { SpyGames, SpyError, SPY_PRIZE } from './spy-r69.js';
 import { GoldChests, ChestError } from './gold-chest-r69.js';
 import { DeviceGuard } from './device-guard-r69.js';
+import { ImageGuard, compressImage } from './image-guard-r69.js';
+import { ServerMonitor } from './monitor-r69.js';
+import { E2EKeys } from './e2e-keys-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -917,6 +920,13 @@ export async function createApp(
   /* رسائل قصيرة جداً أو بدون حروف (ضحك، إيموجي، أرقام) ما تستاهل فحص */
   const aiWorth = (t: string) => { const x = t.replace(/[\s\p{Extended_Pictographic}\p{P}\d]/gu, ''); return x.length >= 3 && !/^(ه|ھ|h|a|خ|ك)+$/i.test(x); };
   /* R69za: كشف الحسابات الوهمية على نفس الجهاز */
+  /* R69ze: فحص الصور بالذكاء الاصطناعي (يصرف من حد المشرف الذكي اليومي) */
+  const imageGuard = new ImageGuard({ key: () => process.env.ANTHROPIC_API_KEY || '', model: process.env.AI_MOD_MODEL || 'claude-haiku-5-5', mock: process.env.AI_MOD_MOCK === '1', budget: () => aiMod.spend(), on: () => aiMod.isOn(), log });
+  const imageBlocked = async (buf: Buffer, by: string, where: string): Promise<string | null> => {
+    const v = await imageGuard.check(buf).catch(() => null); if (!v || v.verdict === 'ok') return null;
+    if (v.verdict === 'review') { arena.alert('reports', '🖼️ صورة تحتاج مراجعة', `${accounts.nameOf(by) || 'لاعب'} رفع ${where}: ${v.reason}`, `img:${by}:${Date.now() >> 16}`); return null; }
+    return `الصورة ما تنفع: ${v.reason || 'تخالف قواعد الموقع'}. اختار صورة ثانية.`;
+  };
   /** R69za: شروط الجوائز المجانية: الحساب مو زايد على جهاز، وعمره 3 أيام أو أكثر، ولعب 5 مباريات */
   const REWARD_MIN_AGE = 3 * 86400_000, REWARD_MIN_GAMES = 5;
   const rewardBlock = (uid: string): string | null => {
@@ -925,6 +935,7 @@ export async function createApp(
     const played = accounts.publicStats(uid)?.played ?? 0; if (played < REWARD_MIN_GAMES) return `العب ${REWARD_MIN_GAMES - played} مباريات بعد وتقدر تاخذ الجوائز المجانية 🎮`;
     return null;
   };
+  const e2eKeys = new E2EKeys(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'e2e-keys.json') : '', Date.now, storage);
   const devGuard = new DeviceGuard(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'device-guard.json') : '', {
     alert: (_did, ids) => arena.alert('collusion', '📱 حسابات كثيرة على جهاز واحد', `${ids.length} حسابات دخلت من نفس الجهاز: ${ids.slice(0, 6).map((i) => accounts.nameOf(i) || 'لاعب').join('، ')}. الحسابات الزايدة ما تاخذ جوائز مجانية لين تسمح لها من لوحة المالك.`, `dev:${_did}`),
   }, storage);
@@ -1057,6 +1068,7 @@ export async function createApp(
 
   /* المجتمع: نفس الجلسة والحسابات والحظر القائمة. معرّفات الحسابات ما تطلع للعميل (معرّف عام بالـHMAC) */
   const community = new Community(comFile, comMedia, {
+    imageGate: async (buf, by) => { const c = await compressImage(buf); const why = await imageBlocked(c.buf, by, 'صورة منشور'); return why ? { blocked: why } : { buf: c.buf, type: c.type }; },
     secret: cfg.cookieSecret, onContent: (kind, id, by, text) => aiMod.enqueue({ kind, id: String(id), by, text }), moderate: (t) => profanityOnly(t), official: (id) => verificationView(id).verificationKind === 'administration', hidden: (id) => deletion.hidden(id), nameOf: (id) => accounts.nameOf(id), avOf: (id) => wallet.equippedAvatar(id), stats: (id) => accountTools.settings(id).showActivity ? accounts.publicStats(id) : null,
     hasAccount: (id) => accounts.has(id), allIds: () => accounts.all().map((a) => a.id), isBanned: (id) => platform.isBanned(id),
     push: (id, msg) => sendToUser(id, msg), log, postsHidden: (id) => accountTools.settings(id).hidePosts === true,
@@ -1071,11 +1083,11 @@ export async function createApp(
     resolvePublicId: pub => community.resolvePublicId(pub),
     adultSelfDeclared: id => { const age=accounts.socialAge(id); return age===null?null:age>=18; },
     isDeactivated: id => !accounts.has(id),
-    isBlocked: (a, b) => community.pairBlocked(a, b), isMuted: (a, b) => community.isMuted(a, b), onMessage: (id, from, body) => { if (aiWorth(body)) aiMod.enqueue({ kind: 'dm', id: String(id), by: from, text: body }); },
+    isBlocked: (a, b) => community.pairBlocked(a, b), isMuted: (a, b) => community.isMuted(a, b), /* R69ze: الرسائل الخاصة مشفّرة — المشرف الذكي ما يقراها */
     pub: (id) => community.pub(id), nameOf: (id) => accounts.nameOf(id),
   });
   /* R62: رسالة خاصة جديدة → إشعار جوال للمستلم لو مب فاتح الموقع */
-  { const orig = social.send.bind(social); (social as any).send = (me: string, other: string, input: { body?: unknown; ref?: unknown }) => { const out = orig(me, other, input) as any; try { if (out && !out.error && !out.duplicate && typeof input?.body === 'string') pushTo([other], { title: `رسالة من ${accounts.nameOf(me) || 'صديق'}`, body: input.body.slice(0, 90), url: '#/messages', tag: 'dm-' + me.slice(0, 8) }); } catch { /* */ } return out; }; }
+  { const orig = social.send.bind(social); (social as any).send = (me: string, other: string, input: { body?: unknown; ref?: unknown }) => { const out = orig(me, other, input) as any; try { if (out && !out.error && !out.duplicate && typeof input?.body === 'string') pushTo([other], { title: `رسالة من ${accounts.nameOf(me) || 'صديق'}`, body: input.body.startsWith('e2e1.') ? '🔒 رسالة مشفّرة — افتحها' : input.body.slice(0, 90), url: '#/messages', tag: 'dm-' + me.slice(0, 8) }); } catch { /* */ } return out; }; }
   const cpPoints = new CpPoints(cpFile, Date.now, storage);
   const bonds = new Bonds(bondsFile, Date.now, storage);
   const tribes = new Tribes(process.env.TRIBES_FILE ?? besideSocial('tribes.json'), Date.now, storage);
@@ -1747,6 +1759,10 @@ export async function createApp(
     });
     functionalHttp.add('GET', '/api/admin/devices', () => ({ ok: true, ...devGuard.stats(), nets: devGuard.netClusters().map((n) => ({ ...n, players: n.ids.map((id) => ({ name: accounts.nameOf(id) || 'لاعب', displayId: accounts.displayPlayerId(id) ?? '', since: accounts.sinceOf(id) })), ids: undefined })), list: devGuard.clusters().map((c) => ({ ...c, players: c.ids.map((id, i) => ({ name: accounts.nameOf(id) || 'لاعب', displayId: accounts.displayPlayerId?.(id) ?? '', extra: i >= 2 })) , ids: undefined })) }), 'owner');
     functionalHttp.add('POST', '/api/admin/devices/allow', ({ actor, body }) => { adminNeed(devGuard.allow(String(body.did ?? ''), !!body.on), 'الجهاز مو موجود.'); admin.audit(actor!, 'device.allow', String(body.did).slice(0, 12), body.on ? 'سماح' : 'منع'); return { ok: true }; }, 'owner');
+    /* R69ze: مفاتيح التشفير العامة */
+    functionalHttp.add('PUT', '/api/e2e/key', ({ user, body }) => { adminNeed(accounts.has(user.id), 'سجّل دخولك أول.'); const r = e2eKeys.put(user.id, body as any); adminNeed(r.ok, (r as any).error || 'مفتاح غير صالح.'); return r; });
+    functionalHttp.add('GET', '/api/e2e/keys', ({ user, url }) => { adminNeed(accounts.has(user.id), 'سجّل دخولك أول.'); const other = community.resolvePublicId(url.searchParams.get('peer')); adminNeed(!!other && social.friendInternalIds(user.id).includes(other), 'صديقك غير متاح.'); return { ok: true, mine: e2eKeys.get(user.id), peer: e2eKeys.get(other!) }; });
+    functionalHttp.add('GET', '/api/admin/monitor', () => ({ ok: true, ...monitor.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');
     functionalHttp.add('POST', '/api/admin/chest/drop', ({ actor }) => { try { chests.dropNow(); } catch (e) { if (e instanceof ChestError) throw new FunctionalHttpError(409, e.message); throw e; } admin.audit(actor!, 'chest.drop', 'gold-chest', 'إطلاق صندوق ذهبي يدوي'); return { ok: true, ...chests.adminView() }; }, 'owner');
     functionalHttp.add('POST', '/api/room-quiz/cancel', ({ user, body }) => {
@@ -2039,8 +2055,12 @@ export async function createApp(
   await ownerTools.resumePending();
   replayIntents(); await Promise.all(supportJobs.values()); await socialRooms.sweep(); await missions.retry(); await rankRewards.retryPending();
   const newUnsaved = (): [string, boolean][] => [['social-rooms',socialRooms.unsaved() || socialRooms.cannonPendingCount()>0],['vip-membership',vipMembership.unsaved() || vipMembership.pendingCount()>0],['payments',payments.unsaved() || payments.pendingCount() > 0],['financial-reconcile', financialReconcilePending], ['server-sessions',sessions.unsaved()], ['owner-tools', platform.ownerPending().length > 0], ['account-tools', accountTools.unsaved()], ['social-private', social.unsaved()], ['support-notifications', support.unsaved()], ['functional-outbox', outbox.unsaved() || outbox.pending().length > 0], ['missions', missions.unsaved() || missions.pendingCount() > 0], ['rank-rewards', rankRewards.unsaved() || rankRewards.pendingCount() > 0]];
+  /* R69ze: مراقبة السيرفر — تنبيهات للمالك على الجوال */
+  const monitor = new ServerMonitor({ online: () => { let n = 0; for (const set of sockets.values()) if (set.size) n++; return n; }, storage: () => storage.status(),
+    alert: (title, text) => { let to: string[] = []; try { to = platform.staff().filter((x) => x.role === 'owner').map((x) => x.id).filter((id) => accounts.has(id)); if (to.length) support.announce(to, title, text, 'مراقبة السيرفر', 'mon-' + Date.now()); } catch { /* */ } if (!to.length) adminPush(title, text, 'server'); }, log });
   const server = http.createServer(async (req, res) => {
     requestResponses.set(req, res);
+    { const t0 = performance.now(); res.once('finish', () => { if (!String(req.url).startsWith('/ws')) monitor.request(performance.now() - t0, res.statusCode); }); }
     const finish = pendingWrites.begin('http-requests');
     try {
       const url = new URL(req.url ?? '/', 'http://x');
@@ -2111,6 +2131,7 @@ export async function createApp(
         avatarDecodes++;
         try {
           const image=await normalizeAvatar(input,ct as AvatarType),hash=createHash('sha256').update(image.buf).digest('hex');
+          {const why=await imageBlocked(image.buf,user.id,'غلاف غرفة');if(why)return json(res,400,{error:why},privateHeaders);}
           const result=await socialRooms.setCover(user.id,roomId,hash,key=>{if(!avatars.get(key))avatars.set(key,image.buf,image.type);},coverKey);
           if (!result.ok) return json(res,result.status??400,{error:result.error},privateHeaders);
           return json(res,200,{...result,photo:`/api/social/rooms/${roomId}/cover?v=${hash}`},privateHeaders);
@@ -2216,6 +2237,7 @@ export async function createApp(
           avatarDecodes++;
           try {
             const image = await normalizeAvatar(buf, ct as AvatarType);
+            { const why = await imageBlocked(image.buf, user.id, 'صورة بروفايل'); if (why) return json(res, 400, { error: why }); }
             const v = avatars.set(user.id, image.buf, image.type);
             return json(res, 200, { ok:true, avatar:v });
           } catch(e) { if (e instanceof ValidationError) return json(res,400,{error:e.message,code:e.code}); throw e; }

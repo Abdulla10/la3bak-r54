@@ -82,6 +82,8 @@ export interface CommunityDeps {
   moderate?(text: string): string | null;
   /** R69: محتوى يديد انكتب (للمشرف الذكي بالخلفية) */
   onContent?(kind: 'post' | 'comment', id: number, by: string, text: string): void;
+  /** R69ze: ضغط الصورة وفحصها قبل الحفظ. يرجع الصورة الجديدة، أو سبب الرفض */
+  imageGate?(buf: Buffer, by: string): Promise<{ buf: Buffer; type: string } | { blocked: string }>;
   /** R67ae: حساب إداري رسمي (نجمة ذهبية) */
   official?(id: string): boolean;
   /** R67ae: حساب مجدول للحذف أو محذوف */
@@ -111,7 +113,7 @@ export class Community {
   private lim: Record<keyof CommunityLimits, KeyedLimiter>;
   /** لاختبار فشل التخزين فقط */
   failMedia = false;
-  constructor(private file: string, private mediaDir: string, private dep: CommunityDeps, private now: () => number = Date.now, mon = new StorageMonitor(), limits: Partial<CommunityLimits> = {}) {
+  constructor(private file: string, private mediaDir: string, readonly dep: CommunityDeps, private now: () => number = Date.now, mon = new StorageMonitor(), limits: Partial<CommunityLimits> = {}) {
     if (file) {
       const loaded = loadJsonFile(file, validCommunity);
       if (loaded) this.d = { ...this.d, ...(loaded as unknown as Data) };
@@ -560,7 +562,9 @@ export function communityHttp(c: Community, h: CommunityHttpDeps) {
           req.on('end', () => resolve()); req.on('error', () => resolve());
         });
         if (big) return h.json(res, 413, { error: 'الصورة كبيرة. الحد الأقصى 700 كيلوبايت بعد التصغير.' }), true;
-        return h.json(res, 200, c.uploadMedia(me, Buffer.concat(chunks), ct)), true;
+        let img: { buf: Buffer; type: string } = { buf: Buffer.concat(chunks), type: ct };
+        if (c.dep.imageGate) { const g = await c.dep.imageGate(img.buf, me).catch(() => null); if (g && 'blocked' in g) return h.json(res, 400, { error: g.blocked }), true; if (g) img = g; }
+        return h.json(res, 200, c.uploadMedia(me, img.buf, img.type)), true;
       }
       let b: Record<string, unknown> = {};
       try { const raw = await h.readBody(req, 4096); const j = raw ? JSON.parse(raw) : {}; if (!j || typeof j !== 'object' || Array.isArray(j)) throw 0; b = j; } catch { return h.json(res, 400, { error: 'بيانات غير صالحة.' }), true; }

@@ -30,7 +30,7 @@ export interface SocialPrivateLimits {
 export const SOCIAL_PRIVATE_LIMITS: SocialPrivateLimits = {
   send: [20, 20 / 60], request: [10, 10 / 60], read: [120, 2], change: [30, 0.5],
 };
-export const PRIVATE_BODY_MAX = 2000, PRIVATE_PAGE_MAX = 50, PRIVATE_PAGE_DEFAULT = 20;
+export const PRIVATE_BODY_MAX = 2000, PRIVATE_E2E_MAX = 24000, PRIVATE_PAGE_MAX = 50, PRIVATE_PAGE_DEFAULT = 20;
 const REF_RE = /^[A-Za-z0-9][A-Za-z0-9_.:-]{7,95}$/;
 const identity = (x: unknown): x is string => typeof x === 'string' && x.length > 0 && x.length <= 128 && !/[\u0000-\u0020\u007f]/.test(x);
 const natural = (x: unknown): x is number => Number.isSafeInteger(x) && (x as number) >= 0;
@@ -62,7 +62,7 @@ export function validSocialPrivate(d: Record<string, unknown>): boolean {
     }
   }
   for (const m of messages) {
-    if (!isObj(m) || !positive(m.id) || m.id > (seq as number) || ids.has(m.id) || !identity(m.from) || !identity(m.to) || m.from === m.to || typeof m.body !== 'string' || !m.body.trim() || m.body.length > PRIVATE_BODY_MAX || typeof m.ref !== 'string' || !REF_RE.test(m.ref) || typeof m.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(m.fingerprint) || !natural(m.at) || !(m.readAt === null || natural(m.readAt))) return false;
+    if (!isObj(m) || !positive(m.id) || m.id > (seq as number) || ids.has(m.id) || !identity(m.from) || !identity(m.to) || m.from === m.to || typeof m.body !== 'string' || !m.body.trim() || m.body.length > (m.body.startsWith('e2e1.') ? PRIVATE_E2E_MAX : PRIVATE_BODY_MAX) || typeof m.ref !== 'string' || !REF_RE.test(m.ref) || typeof m.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(m.fingerprint) || !natural(m.at) || !(m.readAt === null || natural(m.readAt))) return false;
     const key = JSON.stringify([m.from, m.ref]);
     if (refs.has(key)) return false;
     refs.add(key); ids.add(m.id);
@@ -207,7 +207,8 @@ export class SocialPrivate {
     this.friendGuard(me, other);
     if (!isObj(input) || Object.keys(input).some(k => k !== 'body' && k !== 'ref')) return error(400, 'text_only', 'الرسائل النصية فقط متاحة.');
     if (typeof input.ref !== 'string' || !REF_RE.test(input.ref)) return error(400, 'ref', 'معرّف الرسالة غير صالح.');
-    if (typeof input.body !== 'string' || input.body.length > PRIVATE_BODY_MAX) return error(400, 'body', 'الرسالة طويلة أو غير صالحة.');
+    const enc = typeof input.body === 'string' && input.body.startsWith('e2e1.');
+    if (typeof input.body !== 'string' || input.body.length > (enc ? PRIVATE_E2E_MAX : PRIVATE_BODY_MAX) || (enc && !/^e2e1\.[A-Za-z0-9_-]+$/.test(input.body))) return error(400, 'body', 'الرسالة طويلة أو غير صالحة.');
     const body = input.body.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').trim();
     if (!body) return error(400, 'body', 'اكتب رسالة نصية.');
     const fp = fingerprint(other, input.body), old = this.refs.get(JSON.stringify([me, input.ref]));

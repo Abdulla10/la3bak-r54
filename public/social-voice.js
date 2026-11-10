@@ -1,4 +1,5 @@
 import { Room, RoomEvent, Track, createLocalAudioTrack, setLogLevel } from './vendor/livekit-client.2.23.0.mjs';
+import * as MIC from './mic-clean-r69.js?v=r69zj';
 
 // Never log SDK connection URLs or tokens. No camera, screen capture, recording or data publishing.
 setLogLevel('silent');
@@ -124,7 +125,9 @@ export class SocialVoiceClient {
     // Explicit microphone(true) is the only capture entry point. Permission prompts are generation guarded.
     let track;
     try {
-      track = await createLocalAudioTrack({ echoCancellation: true, noiseSuppression: true, autoGainControl: true });
+      track = await createLocalAudioTrack(MIC.micConstraints());
+      // R69ze: تنقية الصوت (إزالة الضجة) — لو فشلت، نكمل بالصوت العادي
+      if (MIC.cleanMicEnabled()) { try { await track.setProcessor(MIC.createCleanProcessor()); } catch { /* المتصفح ما يدعم */ } }
       if (generation !== this.generation || micGeneration !== this.micGeneration || this.room !== room || !this.desired || this.state !== 'connected') { track.stop(); return false; }
       this.stopLocal(); this.local = track;
       await room.localParticipant.publishTrack(track, { source: Track.Source.Microphone, audioPreset: { maxBitrate: this.highQuality ? 64000 : 48000 }, forceStereo: false });

@@ -1,3 +1,4 @@
+import { fuzzyScore } from '../fuzzy-ar.js?v=r69zj';
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
 
 const PUB = /^[A-Za-z0-9_-]{16}$/;
@@ -136,7 +137,8 @@ export function createGlobalSearch({ getContext, root = document } = {}) {
       const valid = item => item && typeof item.name === 'string' && (kind === 'people' ? PUB.test(item.pub || '') : ROOM_ID.test(item.id || ''));
       if (!Array.isArray(list) || !list.every(valid)) throw Object.assign(new Error('Invalid response'), { invalidData: true });
       const needle = fold(searchedQuery);
-      const filtered = kind === 'rooms' ? list.filter(item => fold(item.name).includes(needle) || fold(item.id).includes(needle)) : list;
+      /* R69ze: بحث الغرف الذكي (يتحمل الأخطاء) */
+      const filtered = kind === 'rooms' ? list.map(item => ({ item, s: fold(item.id).includes(needle) ? 90 : fuzzyScore(searchedQuery, item.name) })).filter(x => x.s > 0).sort((a, b) => b.s - a.s).map(x => x.item) : list;
       const next = { state: 'ok', list: filtered, message: '', status: 0 };
       if (kind === 'people') people = next; else rooms = next;
     } catch (error) {

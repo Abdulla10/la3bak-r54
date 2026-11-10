@@ -38,6 +38,9 @@ export class AiMod {
   }
   private now() { return (this.opts.now ?? Date.now)(); }
   ready() { return this.d.on && (!!this.opts.key() || this.opts.mock); }
+  /** R69ze: نصرف من نفس الحد اليومي لفحص الصور */
+  spend(): boolean { if (!this.budget()) return false; this.d.used++; this.disk.save(); return true; }
+  isOn() { return this.d.on; }
   setOn(on: boolean) { this.d.on = on; this.disk.save(); }
   private budget() { const k = dayKey(this.now()); if (this.d.day !== k) { this.d.day = k; this.d.used = 0; } return this.d.used < this.opts.dailyMax; }
   enqueue(it: ModItem) { if (!this.ready() || !it.text.trim()) return; if (this.q.length >= 500) this.q.shift(); this.q.push({ ...it, text: it.text.slice(0, 1200) }); void this.pump(); }
