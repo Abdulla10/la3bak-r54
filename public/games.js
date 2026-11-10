@@ -6,7 +6,7 @@ import { domino } from './domino.js?v=r67ac';
 import { uno } from './uno.js?v=r67ac';
 import { liars } from './liars.js?v=r68z19';
 import { pool } from './pool.js?v=r68z16';
-import { bowling } from './bowling.js?v=r68z21';
+import { bowling } from './bowling.js?v=r68z22';
 import { carrom } from './carrom.js?v=r67ac';
 import { minaboli } from './minaboli-r47.js?v=r57';
 /* واجهات الألعاب بالدور والتصويت. كل دالة تأخذ الغرفة وترجع HTML.

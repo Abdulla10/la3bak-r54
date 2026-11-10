@@ -35,3 +35,6 @@
 .bw-ban{direction:ltr;unicode-bidi:isolate}
 .bw{background:#0b0d22 url(/assets/games68/bowl-bg.webp) center/cover no-repeat}
 .bw-score{position:static;display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 0 6px;direction:rtl}.bw-score .bw-cr{flex-direction:column;align-items:stretch;gap:2px}.bw-score .bw-card{width:100%}.bw-score .bw-f{flex:1;width:auto}.bw-score .bw-f.last{flex:1.35}.bw-score .bw-cn{align-self:flex-start;max-width:100%}
+.bw-kmh{position:absolute;right:10px;bottom:30px;font:italic 900 18px/1 Arial,sans-serif;color:#fff;background:#0009;border:1px solid #6fb8ff;border-radius:10px;padding:5px 9px;text-shadow:0 0 8px #4aa8ff;direction:rtl}
+.bw-kmh[hidden]{display:none}.bw-cv{will-change:transform}
+.bw-ban.n,.bw-ban.gutter{direction:rtl}
