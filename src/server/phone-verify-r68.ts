@@ -1,4 +1,5 @@
-/** R68z: توثيق الحساب برقم الجوال (رمز SMS).
+/** R68z: توثيق الحساب برقم الجوال. R69zc: الرمز يوصل على الواتساب (واتساب للأعمال من Meta).
+ * - واتساب: WA_TOKEN و WA_PHONE_ID (و WA_TEMPLATE اسم قالب «المصادقة» المعتمد، الافتراضي la3bak_code، و WA_LANG الافتراضي ar).
  * - المزوّد: Twilio Verify لو انضبطت متغيرات البيئة TWILIO_ACCOUNT_SID و TWILIO_AUTH_TOKEN و TWILIO_VERIFY_SID.
  * - بدون مزوّد: الخدمة «غير متاحة». (للتجربة المحلية فقط: PHONE_DEV_CODES=1 يطلع الرمز بالرد.)
  * - ما نخزن الرقم نفسه: نخزن بصمة HMAC + آخر رقمين بس. والرقم الواحد لحساب واحد. */
@@ -17,14 +18,14 @@ export class PhoneVerify {
   private disk: Persister;
   private pending = new Map<string, Pending>();
   private sends = new Map<string, number[]>();
-  readonly mode: 'twilio' | 'dev' | 'off';
+  readonly mode: 'whatsapp' | 'twilio' | 'dev' | 'off';
   constructor(file: string, private secret: string, private env: NodeJS.ProcessEnv, private log: (e: string, d: Record<string, unknown>) => void, private now: () => number = Date.now, mon = new StorageMonitor()) {
     if (file) { const l = loadJsonFile(file, valid); if (l) this.d = l as unknown as Data; }
     this.disk = new Persister('phone-verify', file, () => this.d, now, mon, valid);
-    this.mode = env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_VERIFY_SID ? 'twilio' : env.PHONE_DEV_CODES === '1' && env.NODE_ENV !== 'production' ? 'dev' : 'off';
+    this.mode = env.WA_TOKEN && env.WA_PHONE_ID ? 'whatsapp' : env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_VERIFY_SID ? 'twilio' : env.PHONE_DEV_CODES === '1' && env.NODE_ENV !== 'production' ? 'dev' : 'off';
   }
   private hash(phone: string) { return createHmac('sha256', this.secret).update('phone:' + phone).digest('hex'); }
-  status(id: string) { const r = this.d.users[id]; return { available: this.mode !== 'off', verified: !!r, tail: r?.tail ?? '', cc: r?.cc ?? '', at: r?.at ?? null, countries: PHONE_COUNTRIES, pending: this.pending.has(id) && this.pending.get(id)!.exp > this.now() }; }
+  status(id: string) { const r = this.d.users[id]; return { channel: this.mode === 'twilio' ? 'sms' : 'whatsapp', available: this.mode !== 'off', verified: !!r, tail: r?.tail ?? '', cc: r?.cc ?? '', at: r?.at ?? null, countries: PHONE_COUNTRIES, pending: this.pending.has(id) && this.pending.get(id)!.exp > this.now() }; }
   verified(id: string) { return !!this.d.users[id]; }
   /** cc = رمز الدولة، num = الرقم المحلي */
   async send(id: string, cc: unknown, num: unknown): Promise<{ devCode?: string }> {
@@ -41,6 +42,7 @@ export class PhoneVerify {
     list.push(t); this.sends.set(id, list);
     const p: Pending = { phone, h, exp: t + 10 * 60_000, tries: 0 };
     if (this.mode === 'twilio') await this.twilio('Verifications', { To: phone, Channel: 'sms', Locale: 'ar' });
+    else if (this.mode === 'whatsapp') { p.code = String(randomInt(100000, 1000000)); await this.whatsapp(phone, p.code); }
     else { p.code = String(randomInt(100000, 1000000)); this.log('phone_dev_code', { user: id.slice(0, 8), code: p.code }); }
     this.pending.set(id, p);
     return this.mode === 'dev' ? { devCode: p.code } : {};
@@ -65,6 +67,18 @@ export class PhoneVerify {
   }
   /** الإدارة: فك التوثيق (لو اللاعب غيّر رقمه) */
   reset(id: string): boolean { const r = this.d.users[id]; if (!r) return false; const prev = structuredClone(this.d); delete this.d.users[id]; if (this.d.phones[r.h] === id) delete this.d.phones[r.h]; try { this.disk.mustSave(); } catch (e) { this.d = prev; throw e; } return true; }
+  /** واتساب Cloud API: قالب «مصادقة» فيه الرمز وزر «نسخ الرمز» */
+  private async whatsapp(phone: string, code: string) {
+    const url = `https://graph.facebook.com/v21.0/${encodeURIComponent(this.env.WA_PHONE_ID!)}/messages`;
+    const body = { messaging_product: 'whatsapp', to: phone.replace(/^\+/, ''), type: 'template', template: { name: this.env.WA_TEMPLATE || 'la3bak_code', language: { code: this.env.WA_LANG || 'ar' },
+      components: [{ type: 'body', parameters: [{ type: 'text', text: code }] }, { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: code }] }] } };
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { Authorization: 'Bearer ' + this.env.WA_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(10_000) });
+      if (!r.ok) { const j = await r.json().catch(() => null) as { error?: { code?: number } } | null; this.log('phone_wa_error', { status: r.status, code: j?.error?.code ?? 0 });
+        if (j?.error?.code === 131026 || j?.error?.code === 131030) throw new PhoneError('هالرقم ما عليه واتساب. تأكد من الرقم.', 400);
+        throw new PhoneError('تعذّر إرسال الرمز على الواتساب. تأكد من الرقم وجرب مرة ثانية.', 502); }
+    } catch (e) { if (e instanceof PhoneError) throw e; this.log('phone_wa_down', {}); throw new PhoneError('خدمة الواتساب مو متاحة الحين. جرب بعد شوي.', 502); }
+  }
   private async twilio(kind: 'Verifications' | 'VerificationCheck', form: Record<string, string>): Promise<{ status?: string } | null> {
     const url = `https://verify.twilio.com/v2/Services/${encodeURIComponent(this.env.TWILIO_VERIFY_SID!)}/${kind}`;
     const auth = Buffer.from(`${this.env.TWILIO_ACCOUNT_SID}:${this.env.TWILIO_AUTH_TOKEN}`).toString('base64');

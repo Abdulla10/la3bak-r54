@@ -42,7 +42,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69zd';
+import * as PWA from '../pwa.js?v=r69ze';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -403,7 +403,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69zd');
+  const M = await import('../settings-r60.js?v=r69ze');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -581,7 +581,7 @@ async function render() {
     case 'phone':
       if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,'phone','<div data-phone68></div>');
-      import('../phone-r68.js?v=r68z').then(({mountPhone})=>{const el=view.querySelector('[data-phone68]');if(el&&parseRoute().name==='phone')mountPhone(el,{api:functionalApi});}).catch(()=>{});
+      import('../phone-r68.js?v=r69ze').then(({mountPhone})=>{const el=view.querySelector('[data-phone68]');if(el&&parseRoute().name==='phone')mountPhone(el,{api:functionalApi});}).catch(()=>{});
       break;
     case 'ids':
       if (needUser('#/ids')) return;

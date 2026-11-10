@@ -17,11 +17,11 @@ export function mountPhone(root, { api }) {
     if (!d) body = `<p>${esc(S.err || 'جاري التحميل…')}</p>`;
     else if (d.verified) body = `<div class="ph68-done"><div class="ph68-ic">✅</div><h1>حسابك موثّق بالجوال</h1><p>الرقم المسجل ينتهي بـ <b dir="ltr">••${esc(d.tail)}</b></p><b>📱 موثّق</b></div>`;
     else if (!d.available) body = `<div class="ph68-ic">📱</div><h1>التوثيق بالجوال</h1><p>الخدمة مو متاحة حالياً، بتنفتح قريب.</p>`;
-    else if (S.step === 'phone') body = `<div class="ph68-ic">📱</div><h1>وثّق حسابك برقم جوالك</h1><p>نرسل لك رمز برسالة SMS. الرقم ما يطلع لأحد، ونستخدمه بس عشان نمنع الحسابات الوهمية.</p>
+    else if (S.step === 'phone') body = `<div class="ph68-ic">📱</div><h1>وثّق حسابك برقم جوالك</h1><p>${d.channel === 'sms' ? 'نرسل لك رمز برسالة SMS.' : 'نرسل لك رمز على <b>الواتساب</b> 💬.'} الرقم ما يطلع لأحد، ونستخدمه بس عشان نمنع الحسابات الوهمية.</p>
       <label>رقم الجوال</label><div class="ph68-row"><select data-ph="cc" aria-label="الدولة">${d.countries.map(([k, n]) => `<option value="${k}" ${S.cc === k ? 'selected' : ''}>+${k} ${esc(n)}</option>`).join('')}</select><input data-ph="phone" inputmode="tel" autocomplete="tel-national" placeholder="5X XXX XXXX" value="${esc(S.phone)}" aria-label="رقم الجوال"></div>
       <button class="ph68-btn" type="button" data-ph="send" ${S.busy ? 'disabled' : ''}>${S.busy ? 'جاري الإرسال…' : 'أرسل الرمز'}</button>
       <ul class="ph68-pts"><li>✓ رقم واحد لكل حساب</li><li>✓ تاخذ علامة «📱 موثّق» بملفك</li></ul>`;
-    else body = `<div class="ph68-ic">💬</div><h1>اكتب الرمز</h1><p>أرسلنا رمز من 6 أرقام إلى <b dir="ltr">+${esc(S.cc)} ${esc(S.phone)}</b></p>${S.msg ? `<p class="ph68-ok">${esc(S.msg)}</p>` : ''}
+    else body = `<div class="ph68-ic">💬</div><h1>اكتب الرمز</h1><p>أرسلنا رمز من 6 أرقام ${d.channel === 'sms' ? 'برسالة إلى' : 'على الواتساب إلى'} <b dir="ltr">+${esc(S.cc)} ${esc(S.phone)}</b></p>${S.msg ? `<p class="ph68-ok">${esc(S.msg)}</p>` : ''}
       <input class="code" data-ph="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" value="${esc(S.code)}" aria-label="رمز التحقق">
       <button class="ph68-btn" type="button" data-ph="verify" ${S.busy ? 'disabled' : ''}>${S.busy ? 'جاري التأكد…' : 'تأكيد'}</button><button class="ph68-link" type="button" data-ph="back">غيّر الرقم أو أرسل رمز جديد</button>`;
     root.innerHTML = `<div class="ph68"><section class="ph68-card">${body}${S.err && d ? `<p class="ph68-err" role="alert">${esc(S.err)}</p>` : ''}</section></div>`;
