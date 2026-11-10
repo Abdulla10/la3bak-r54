@@ -76,7 +76,37 @@ const CSS = `
 .sp69-float{position:fixed;top:calc(env(safe-area-inset-top,0px) + 118px);left:50%;transform:translateX(-50%);z-index:85;display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:99px;border:1.5px solid #ffc83d;background:linear-gradient(180deg,#5a2fd6,#2a0f6a);color:#fff;font-weight:900;font-size:14px;box-shadow:0 8px 20px #000a,0 0 18px #8a5cff88;cursor:pointer;white-space:nowrap}
 .sp69-float[hidden]{display:none}
 body:has(.so-room-panel[data-so-open-panel]) .sp69-float{display:none!important}
-@media (prefers-reduced-motion:reduce){.sp69-ov *{animation:none!important}}
+
+/* R69w: لمسة واقعية — إضاءة مسرح، طاولة خشب بإطار ذهبي، ملف سري للدور، ختم «مكشوف»، وشاشة تصويت متوترة */
+.sp69-deskclip{position:absolute;inset:0;border-radius:28px;overflow:hidden;pointer-events:none;z-index:0}
+.sp69-table::before{content:"";position:absolute;left:50%;top:0;width:70%;height:78%;transform:translateX(-50%);background:conic-gradient(from 180deg at 50% 0%,transparent 160deg,#ffd9a033 172deg,#ffe7c255 180deg,#ffd9a033 188deg,transparent 200deg);filter:blur(6px);pointer-events:none;z-index:0;animation:sp69lamp 4s ease-in-out infinite}
+@keyframes sp69lamp{50%{opacity:.75}}
+.sp69-desk{position:absolute;left:50%;bottom:-16%;width:96%;height:42%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at 50% 30%,#6a3a1a 0,#3a1e0c 55%,#1e0f06 100%);box-shadow:0 0 0 4px #c8902e,0 0 0 7px #6a4210,0 -6px 30px #ffb24a55,inset 0 10px 30px #ffcf8a33;z-index:0}
+.sp69-desk::after{content:"";position:absolute;left:50%;top:10%;width:20%;height:14%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(#ffdf9a,#ffb24a66 50%,transparent 70%);filter:blur(2px)}
+.sp69-mid{top:44%}
+.sp69-ov.is-vote::after{content:"";position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 120px #ff1a3a88;animation:sp69beat 1s ease-in-out infinite;z-index:1}
+@keyframes sp69beat{0%,100%{opacity:.35}15%{opacity:1}30%{opacity:.5}45%{opacity:.9}}
+.sp69-file{position:fixed;inset:0;z-index:98;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a0c52ee,#08020fee);animation:sp69fade .3s ease both}
+.sp69-file .doc{position:relative;width:min(330px,84vw);padding:26px 20px 22px;border-radius:10px 10px 14px 14px;background:linear-gradient(180deg,#e9d3a3,#cfa966);color:#3a2408;box-shadow:0 20px 50px #000c,inset 0 0 0 2px #a07a3a;text-align:center;animation:sp69flip .8s cubic-bezier(.2,1.2,.4,1) both;transform-origin:50% 100%}
+.sp69-file .doc::before{content:"";position:absolute;top:-16px;right:18px;width:110px;height:22px;border-radius:8px 8px 0 0;background:#d8b878;box-shadow:inset 0 0 0 2px #a07a3a}
+.sp69-file .stamp{position:absolute;top:14px;left:12px;padding:4px 10px;border:3px solid #c0101f;color:#c0101f;font-weight:900;font-size:14px;transform:rotate(-14deg);border-radius:6px;opacity:.85;animation:sp69stamp .5s .6s cubic-bezier(.2,1.6,.4,1) both}
+.sp69-file small{display:block;font-weight:900;letter-spacing:.5px;color:#7a5418}
+.sp69-file .who{font-size:54px;line-height:1.1;margin:8px 0}
+.sp69-file b{display:block;font-size:30px;font-weight:900;margin:4px 0}
+.sp69-file p{margin:6px 0 0;font-size:13px;color:#5a3a10}
+.sp69-file.is-spy .doc{background:linear-gradient(180deg,#2a2a2a,#121212);color:#fff;box-shadow:0 20px 50px #000c,inset 0 0 0 2px #ff3b5c}
+.sp69-file.is-spy .doc::before{background:#1c1c1c;box-shadow:inset 0 0 0 2px #ff3b5c}
+.sp69-file.is-spy small,.sp69-file.is-spy p{color:#ffb3c0}
+@keyframes sp69fade{from{opacity:0}}
+@keyframes sp69stamp{from{transform:rotate(-14deg) scale(2.4);opacity:0}to{transform:rotate(-14deg) scale(1);opacity:.85}}
+.sp69-p .sp69-seal{position:absolute;top:18px;left:50%;transform:translateX(-50%) rotate(-12deg);padding:2px 8px;border:2.5px solid #ff2a3a;color:#ff2a3a;background:#12041fcc;font-size:12px;font-weight:900;border-radius:5px;z-index:4;white-space:nowrap;animation:sp69stamp .5s cubic-bezier(.2,1.6,.4,1) both}
+.sp69-p .sp69-seal.safe{border-color:#2ecc71;color:#2ecc71}
+.sp69-prize{display:flex;align-items:center;gap:10px;padding:10px 14px}.sp69-prize>span{font-size:30px}.sp69-prize b{display:block;font-size:17px;color:#ffd76a}.sp69-prize small{color:#e2d4ff;font-size:12.5px}
+.sp69-won{display:inline-block;margin:8px auto 0;padding:6px 18px;border-radius:99px;background:linear-gradient(180deg,#ffe07a,#ffb21f);color:#3a1600;font-weight:900;font-size:20px;box-shadow:0 0 18px #ffb21f}
+.sp69-confetti{position:fixed;inset:0;pointer-events:none;z-index:99;overflow:hidden}
+.sp69-confetti i{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation:sp69fall linear forwards}
+@keyframes sp69fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media (prefers-reduced-motion:reduce){.sp69-ov *,.sp69-file *{animation:none!important}}
 `;
 const CATS = [['places', 'أماكن'], ['foods', 'أكلات'], ['jobs', 'مهن'], ['animals', 'حيوانات'], ['things', 'أغراض'], ['mixed', 'منوعة']];
 
@@ -102,6 +132,7 @@ export function startRoomSpy() {
     const chips = (k, list, cur) => list.map(([v, l]) => `<button type="button" class="sp69-chip ${String(cur) === String(v) ? 'on' : ''}" data-sp="set" data-k="${k}" data-v="${v}" ${ed}>${l}</button>`).join('');
     return `<div class="sp69-hero"><img src="${ART}spy-hero.webp?v=r69z5" alt="" decoding="async"></div>
     <section class="sp69-card"><h3>👥 اللاعبين <small style="color:#cdb8f2">(${x.players.length} من 8 · أقل شي ${x.minPlayers})</small></h3><div class="sp69-grid">${slots}</div></section>
+    <section class="sp69-card sp69-prize"><span aria-hidden="true">🏆</span><div><b>الفايز ياخذ ${Number(x.prizeAmount || 10000).toLocaleString('en-US')} 🪙</b><small>توصله تلقائياً آخر اللعبة · لو تعادلوا تنقسم بينهم</small></div></section>
     <section class="sp69-card"><h3>⚙️ إعدادات اللعبة</h3><div class="sp69-set">
       <div class="sp69-row"><span>🕵️ الوضع</span><div class="sp69-chips">${chips('mode', [['one', 'جاسوس واحد'], ['two', 'جاسوسين']], x.mode)}</div></div>
       <div class="sp69-row"><span>🔁 عدد الجولات</span><div class="sp69-chips">${chips('rounds', [[1, '1'], [2, '2'], [3, '3'], [5, '5']], x.rounds)}</div></div>
@@ -123,8 +154,8 @@ export function startRoomSpy() {
     const n = x.players.length, voting = x.phase === 'vote' && S.d.can.vote, open = x.phase === 'result' || x.phase === 'done';
     return `<div class="sp69-table">${x.players.map((p, i) => { const a = -Math.PI / 2 + (i / n) * Math.PI * 2, r = 41, l = 50 + r * Math.cos(a), t = 52 + r * Math.sin(a) * 0.95;
       const pick = x.myVote === p.id, can = voting && !p.me;
-      return `<button type="button" class="sp69-p${can ? ' can-vote' : ''}${pick ? ' is-pick' : ''}${open && p.spy ? ' is-spy' : ''}${p.me ? ' is-me' : ''}" style="left:${l}%;top:${t}%" ${can ? `data-sp="vote" data-id="${esc(p.id)}"` : 'tabindex="-1"'} aria-label="${esc(p.name)}">${av(p)}${p.id === x.host ? '<i class="sp69-crown">👑</i>' : ''}${open && p.votes ? `<i class="sp69-badge">${p.votes}</i>` : ''}${x.phase === 'vote' && p.voted ? '<i class="sp69-tick">✓</i>' : ''}<span class="sp69-name">${p.me ? 'أنت' : esc(p.name)}</span></button>`; }).join('')}
-      <div class="sp69-mid"><img src="${ART}spy-hero.webp?v=r69z5" alt="" decoding="async"></div></div>`;
+      return `<button type="button" class="sp69-p${can ? ' can-vote' : ''}${pick ? ' is-pick' : ''}${open && p.spy ? ' is-spy' : ''}${p.me ? ' is-me' : ''}" style="left:${l}%;top:${t}%" ${can ? `data-sp="vote" data-id="${esc(p.id)}"` : 'tabindex="-1"'} aria-label="${esc(p.name)}">${av(p)}${p.id === x.host ? '<i class="sp69-crown">👑</i>' : ''}${open && p.votes ? `<i class="sp69-badge">${p.votes}</i>` : ''}${x.phase === 'vote' && p.voted ? '<i class="sp69-tick">✓</i>' : ''}${x.phase === 'result' && x.result && p.spy ? `<i class="sp69-seal${x.result.winner === 'town' ? '' : ' safe'}">${x.result.winner === 'town' ? 'مكشوف!' : 'نجا!'}</i>` : ''}<span class="sp69-name">${p.me ? 'أنت' : esc(p.name)}</span></button>`; }).join('')}
+      <span class="sp69-deskclip" aria-hidden="true"><i class="sp69-desk"></i></span><div class="sp69-mid"><img src="${ART}spy-hero.webp?v=r69z5" alt="" decoding="async"></div></div>`;
   }
   function role() {
     const r = S.d.role; if (!r) return '';
@@ -148,7 +179,7 @@ export function startRoomSpy() {
   function done(x) {
     const sorted = [...x.players].sort((a, b) => b.score - a.score), top = sorted[0]?.score ?? 0;
     return `<section class="sp69-card sp69-res"><div class="big">🏆</div><h3>النتيجة النهائية</h3>${x.result ? `<p>آخر كلمة كانت: <b>${esc(x.result.word)}</b></p>` : ''}
-      <ol class="sp69-score">${sorted.map((p, i) => `<li class="${p.score === top && top > 0 ? 'top' : ''}"><i style="font-style:normal">${p.score === top && top > 0 ? '👑' : i + 1}</i>${av(p)}<b>${p.me ? 'أنت' : esc(p.name)}</b><span>${p.score} نقطة</span></li>`).join('')}</ol></section>
+      ${(x.prizes || []).filter((z) => z.amt > 0).map((z) => `<p style="display:flex;align-items:center;justify-content:center;gap:10px"><b>${esc(z.name)}</b><span class="sp69-won" style="margin:0">+${Number(z.amt).toLocaleString('en-US')} 🪙</span></p>`).join('')}<ol class="sp69-score" style="margin-top:10px">${sorted.map((p, i) => `<li class="${p.score === top && top > 0 ? 'top' : ''}"><i style="font-style:normal">${p.score === top && top > 0 ? '👑' : i + 1}</i>${av(p)}<b>${p.me ? 'أنت' : esc(p.name)}</b><span>${p.score} نقطة</span></li>`).join('')}</ol></section>
       ${S.d.can.again ? '<button type="button" class="sp69-btn" data-sp="again">لعبة جديدة</button>' : ''}<button type="button" class="sp69-btn ghost" data-sp="close">رجوع للغرفة</button>`;
   }
   function paint() {
@@ -167,9 +198,26 @@ export function startRoomSpy() {
     tick();
   }
   function tick() { const el = ov.querySelector('[data-sp69-t]'); const l = left(); if (el && l !== null) el.textContent = mmss(l); }
+  function dossier(r, ms) {
+    document.querySelector('.sp69-file')?.remove();
+    const n = document.createElement('div'); n.className = 'sp69-file' + (r.spy ? ' is-spy' : ''); n.setAttribute('role', 'status');
+    n.innerHTML = `<div class="doc"><span class="stamp">سري للغاية</span><small>${r.spy ? 'ملف الجاسوس' : 'الكلمة السرية'}</small><div class="who">${r.spy ? '🕵️' : '🔑'}</div><b>${r.spy ? 'أنت الجاسوس!' : esc(r.word)}</b><p>${r.spy ? `الفئة: ${esc(r.cat)}${r.partners?.length ? ` · شريكك: ${esc(r.partners.join('، '))}` : ''}<br>اسمع كلامهم وحاول تفهم الكلمة بدون ما تنكشف` : `الفئة: ${esc(r.cat)}<br>لا تقولها صريحة، وانتبه للجاسوس!`}</p></div>`;
+    n.addEventListener('click', () => n.remove()); document.body.append(n); setTimeout(() => n.remove(), Math.max(2500, ms));
+  }
+  function confetti() {
+    const c = document.createElement('div'); c.className = 'sp69-confetti'; const cols = ['#ffd76a', '#ff5a4e', '#b06bff', '#4ee6ff', '#5dff8a'];
+    c.innerHTML = Array.from({ length: 70 }, () => `<i style="left:${Math.random() * 100}%;background:${cols[Math.floor(Math.random() * cols.length)]};animation-duration:${2 + Math.random() * 2}s;animation-delay:${Math.random() * 0.8}s"></i>`).join('');
+    document.body.append(c); setTimeout(() => c.remove(), 5000);
+  }
+  // دقات قلب بآخر 10 ثواني من التصويت
+  setInterval(() => { const x = g(); if (!S.open || !x || x.phase !== 'vote') return; const l = left(); if (l !== null && l <= 10000) { beep(70, 0.09); setTimeout(() => beep(60, 0.07), 160); } }, 1000);
   function apply(d) {
     const prevPhase = g()?.phase; S.d = d; S.at = performance.now(); const x = g();
     if (x && prevPhase && prevPhase !== x.phase) { if (x.phase === 'reveal') S.show = false; if (S.open) beep(x.phase === 'result' ? 880 : 520, 0.12); }
+    if (x && x.phase === 'reveal' && S.open && d.role && S.fileRound !== x.round) { S.fileRound = x.round; dossier(d.role, Math.min(5200, x.left ?? 5000)); }
+    if (x && x.phase === 'result' && S.open && S.confRound !== x.round && x.result) { S.confRound = x.round; if ((x.result.winner === 'town') !== !!d.me.spy) confetti(); }
+    if (x && x.phase === 'done' && S.open && S.confDone !== x.id && prevPhase && prevPhase !== 'done') { S.confDone = x.id; confetti(); }
+    ov.classList.toggle('is-vote', !!x && x.phase === 'vote');
     const k = JSON.stringify([x?.phase, x?.round, x?.players?.map((p) => [p.id, p.voted, p.votes, p.score, p.spy]), x?.mode, x?.rounds, x?.cat, x?.discussMs, x?.guess, x?.ask?.from, x?.myVote, x?.votedCount, x?.options, x?.result, d.role, d.can, d.me, S.err, S.busy, S.show]);
     if (k !== S.key) { S.key = k; paint(); } else tick();
     schedule();

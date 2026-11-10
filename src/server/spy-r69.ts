@@ -15,6 +15,7 @@ export const SPY_CATEGORIES = [...Object.keys(SPY_WORDS), 'mixed'];
 const DISCUSS = [60000, 90000, 120000, 180000];
 const ROUNDS = [1, 2, 3, 5];
 const REVEAL_MS = 6000, VOTE_MS = 30000, GUESS_MS = 20000, RESULT_MS = 8000, ASK_MS = 15000;
+export const SPY_PRIZE = 10000;
 const MAX_PLAYERS = 8, LOBBY_TTL = 20 * 60_000, DONE_TTL = 5 * 60_000;
 
 type Player = { id: string; name: string; score: number };
@@ -22,7 +23,7 @@ type Round = { n: number; word: string; cat: string; spies: string[]; votes: Rec
 type Game = {
   id: string; room: string; host: string; hostName: string; mode: 'one' | 'two'; rounds: number; cat: string; discussMs: number; guess: boolean;
   phase: 'lobby' | 'reveal' | 'discuss' | 'vote' | 'guess' | 'result' | 'done'; players: Player[]; round: Round | null; history: Round[];
-  phaseEnd: number; phaseStart: number; order: string[]; usedWords: string[]; createdAt: number; updatedAt: number;
+  phaseEnd: number; phaseStart: number; order: string[]; usedWords: string[]; prizes: { id: string; name: string; amt: number }[]; createdAt: number; updatedAt: number;
 };
 export class SpyError extends Error { constructor(message: string, public status = 409) { super(message); } }
 const need = (c: unknown, msg: string): void => { if (!c) throw new SpyError(msg); };
@@ -31,7 +32,7 @@ const shuffle = <T>(a: T[]) => { const x = [...a]; for (let i = x.length - 1; i 
 export class SpyGames {
   private games = new Map<string, Game>();
   private now: () => number;
-  constructor(private deps: { name: (id: string) => string; avatar?: (id: string) => string | null; notify: (ids: string[], room: string) => void; now?: () => number }) { this.now = deps.now ?? Date.now; }
+  constructor(private deps: { prize?: (winner: string, amount: number, gameId: string) => number; name: (id: string) => string; avatar?: (id: string) => string | null; notify: (ids: string[], room: string) => void; now?: () => number }) { this.now = deps.now ?? Date.now; }
   private av(id: string) { try { const a = this.deps.avatar?.(id); return typeof a === 'string' && a ? a : null; } catch { return null; } }
   private ping(g: Game) { g.updatedAt = this.now(); try { this.deps.notify(g.players.map((p) => p.id).concat(g.host), g.room); } catch { /* */ } }
   private minPlayers(g: Game) { return g.mode === 'two' ? 5 : 3; }
@@ -70,11 +71,17 @@ export class SpyGames {
       else if (g.phase === 'guess') { g.round!.guessed = false; this.settle(g, t); }
       else if (g.phase === 'result') {
         g.history.push(g.round!);
-        if (g.history.length >= g.rounds) { g.phase = 'done'; g.phaseEnd = 0; }
+        if (g.history.length >= g.rounds) { g.phase = 'done'; g.phaseEnd = 0; this.payout(g); }
         else this.newRound(g, t);
       }
       this.ping(g);
     }
+  }
+  /** الجائزة: 10,000 للفايز (أعلى نقاط). لو تعادلوا تنقسم بينهم بالتساوي. */
+  private payout(g: Game) {
+    g.prizes = []; const top = Math.max(0, ...g.players.map((p) => p.score)); if (top <= 0) return;
+    const ws = g.players.filter((p) => p.score === top); const each = Math.floor(SPY_PRIZE / ws.length);
+    for (const w of ws) { let got = 0; try { got = this.deps.prize?.(w.id, each, g.id) ?? 0; } catch { got = 0; } g.prizes.push({ id: w.id, name: w.name, amt: got }); }
   }
   private closeVote(g: Game, t: number) {
     this.tally(g); const r = g.round!;
@@ -97,7 +104,7 @@ export class SpyGames {
         host: g.host, hostName: g.hostName, round: r?.n ?? 0, left: g.phaseEnd ? Math.max(0, g.phaseEnd - t) : null,
         players: g.players.map((p) => ({ id: p.id, name: p.name, score: p.score, me: p.id === uid, avatar: this.av(p.id), voted: !!r && g.phase === 'vote' && !!r.votes[p.id],
           votes: open && r ? Object.values(r.votes).filter((v) => v === p.id).length : 0, spy: open && r ? r.spies.includes(p.id) : false })),
-        ask, votedCount, minPlayers: this.minPlayers(g),
+        ask, votedCount, minPlayers: this.minPlayers(g), prizeAmount: SPY_PRIZE, prizes: g.phase === 'done' ? g.prizes : [],
         myVote: r?.votes[uid] ?? null,
         options: g.phase === 'guess' && amSpy ? r!.options : null,
         result: open && r ? { word: r.word, cat: SPY_WORDS[r.cat].name, spies: r.spies.map((s) => g.players.find((p) => p.id === s)?.name ?? ''), accused: r.accused ? g.players.find((p) => p.id === r.accused)?.name ?? '' : null, caught: r.caught, guess: r.guess, guessed: r.guessed, winner: r.winner } : null,
@@ -118,7 +125,7 @@ export class SpyGames {
     const cur = this.games.get(roomId); need(!cur || cur.phase === 'done', 'فيه لعبة جاسوس شغالة بالغرفة.'); need(members.includes(uid), 'لازم تكون داخل الغرفة.');
     const t = this.now(), name = this.deps.name(uid) || 'لاعب';
     const g: Game = { id: randomUUID().slice(0, 10), room: roomId, host: uid, hostName: name, mode: 'one', rounds: 3, cat: 'places', discussMs: 90000, guess: true,
-      phase: 'lobby', players: [{ id: uid, name, score: 0 }], round: null, history: [], phaseEnd: 0, phaseStart: 0, order: [], usedWords: [], createdAt: t, updatedAt: t };
+      phase: 'lobby', players: [{ id: uid, name, score: 0 }], round: null, history: [], phaseEnd: 0, phaseStart: 0, order: [], usedWords: [], prizes: [], createdAt: t, updatedAt: t };
     this.games.set(roomId, g); this.ping(g);
   }
   private game(roomId: string) { this.tick(roomId); const g = this.games.get(roomId); need(g, 'ما فيه لعبة جاسوس بالغرفة.'); return g!; }
@@ -156,6 +163,6 @@ export class SpyGames {
   cancel(roomId: string, uid: string, mod: boolean) { const g = this.game(roomId); need(g.host === uid || mod, 'الإلغاء للمضيف أو المشرف.'); this.games.delete(roomId); try { this.deps.notify(g.players.map((p) => p.id), roomId); } catch { /* */ } }
   again(roomId: string, uid: string, mod: boolean, members: string[]) {
     const g = this.game(roomId); need(g.phase === 'done', 'اللعبة ما خلصت.'); need(g.host === uid || mod, 'للمضيف بس.');
-    g.phase = 'lobby'; g.round = null; g.history = []; g.players = g.players.filter((p) => members.includes(p.id)).map((p) => ({ ...p, score: 0 })); this.ping(g);
+    g.phase = 'lobby'; g.round = null; g.history = []; g.prizes = []; g.players = g.players.filter((p) => members.includes(p.id)).map((p) => ({ ...p, score: 0 })); this.ping(g);
   }
 }

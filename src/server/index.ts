@@ -98,7 +98,7 @@ import { OwnerOps, OwnerError, dayKey as gulfDay } from './owner-r69.js';
 import { AiMod } from './ai-mod-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
 import { BombGames, BombError, BOMB_PRIZE, BOMB_PRIZE_MIN_PLAYERS } from './bomb-r69.js';
-import { SpyGames, SpyError } from './spy-r69.js';
+import { SpyGames, SpyError, SPY_PRIZE } from './spy-r69.js';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
@@ -1687,7 +1687,14 @@ export async function createApp(
       return { ok: true, now: Date.now(), ...bomb.view(room, user.id, acc.mod) };
     });
     /* R69v: لعبة الجاسوس داخل الغرفة */
-    const spy = new SpyGames({ name: (id) => accounts.nameOf(id) || 'لاعب', avatar: (id) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); }, notify: (ids, room) => { for (const id of new Set(ids)) sendToUser(id, { t: 'spy', room }); } });
+    const spyWins = new Map<string, { day: string; n: number }>();
+    const spy = new SpyGames({ prize: (winner, amount, gameId) => {
+      // الجائزة توصل للفايز تلقائياً. حد أقصى 5 جوائز باليوم لنفس اللاعب عشان ما تنحلب بحسابات وهمية
+      if (isGuest(winner) || amount <= 0 || amount > SPY_PRIZE) return 0;
+      const day = new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10), w = spyWins.get(winner); const n = w && w.day === day ? w.n : 0; if (n >= 5) return 0;
+      if (!wallet.grant(winner, 'coins', amount, 'فوز بلعبة الجاسوس 🕵️', `spy:${gameId}:${winner}`)) return 0;
+      spyWins.set(winner, { day, n: n + 1 }); return amount;
+    }, name: (id) => accounts.nameOf(id) || 'لاعب', avatar: (id) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); }, notify: (ids, room) => { for (const id of new Set(ids)) sendToUser(id, { t: 'spy', room }); } });
     { const st = setInterval(() => { try { spy.tick(); } catch (e) { log('spy_tick_failed', { error: String(e).slice(0, 100) }); } }, 500); st.unref?.(); }
     functionalHttp.add('GET', '/api/room-spy', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false, game: null, can: {} }; return { ok: true, member: true, ...spy.view(room, user.id, acc.mod) }; });
     functionalHttp.add('POST', '/api/room-spy/:act', ({ user, body, params }) => {
