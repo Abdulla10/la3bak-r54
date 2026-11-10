@@ -1,3 +1,4 @@
+import { recordQuit, quitBlock } from './quit-guard-r68.js';
 import { moderateText, maskBanned, profanityOnly, setExtraBannedWords, BANNED_WORDS_MAX } from './moderation-r58.js';
 import { Economy, validEconomy, MANUAL_CONVERSION_DISABLED, MANUAL_CONVERSION_CLOSED_MESSAGE } from './economy.js';
 import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
@@ -2072,10 +2073,13 @@ export async function createApp(
     return {...result,voice:binding.ok?binding.voice:voiceBlocked(binding.error)};
   }
 
+  const QUIT_GATED = new Set(['room:create', 'room:join', 'mm:join']);
   async function dispatch(user: User, t: string, m: any) {
     const blocked = admin.maintenanceBlock(user) ?? admin.banBlock(user);
     if (blocked) return { ok: false, error: blocked };
     if (isGuest(user.id) && (GUEST_WS_BLOCK.has(t) || (t === 'room:create' && m?.mode !== 'bots'))) return { ok: false, code: 'guest', error: GUEST_MSG };
+    // R68z28: الخروج المتكرر يمنع دخول أي لعبة 5 دقايق
+    if (QUIT_GATED.has(t)) { const qb = quitBlock(user.id); if (qb) return qb; }
     switch (t) {
       case 'room:create':
         if (typeof m.key!=='string' || !/^[A-Za-z0-9_-]{8,128}$/.test(m.key)) return {ok:false,error:'مفتاح إنشاء الغرفة مطلوب. حدّث الصفحة.'};
@@ -2088,8 +2092,12 @@ export async function createApp(
         return resolveGameVoice(user,m.code);
       case 'room:mine':
         return { ok: true, rooms: await service.mine(user) };
-      case 'room:leave':
-        return service.leave(user, m.code);
+      case 'room:leave': {
+        const mode = await service.modeFor(user, m.code);
+        const r = await service.leave(user, m.code);
+        if (r.ok && mode && mode !== 'bots') { const q = recordQuit(user.id); if (q.banned) return { ...r, quitBan: q.until - Date.now() }; }
+        return r;
+      }
       case 'room:delete':
         return service.deleteRoom(user, m.code);
       case 'room:setGame':

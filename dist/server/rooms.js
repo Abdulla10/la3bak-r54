@@ -210,6 +210,14 @@ export class RoomService {
         const room = await this.store.get(code);
         return !!room && !!this.member(room, user.id) && !!this.member(room, targetId);
     }
+    /** نوع الغرفة لو الطالب عضو فيها (لعقوبة الخروج المتكرر) */
+    async modeFor(user, rawCode) {
+        const code = normalizeCode(rawCode);
+        if (!CODE_RE.test(code))
+            return null;
+        const room = await this.store.get(code);
+        return room && this.member(room, user.id) ? room.mode : null;
+    }
     /** اللاعبون البشر الحاليون بالغرفة (للهدايا والمحادثة) لو الطالب عضو فيها؛ وإلا null */
     async humansFor(user, rawCode) {
         const code = normalizeCode(rawCode);

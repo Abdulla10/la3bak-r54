@@ -31,6 +31,7 @@ import * as DMV from '../domino.js?v=r67ac';
 import * as UNV from '../uno.js?v=r67ac';
 import * as LRV from '../liars.js?v=r68z19';
 import * as PLV from '../pool.js?v=r68z16';
+import { showQuitBan } from '../quit-ban-r68.js?v=r68z28';
 import * as BWV from '../bowling.js?v=r68z24';
 import * as CRV from '../carrom.js?v=r67ac';
 import * as MNV from '../minaboli-r47.js?v=r57';
@@ -38,7 +39,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z15';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r68z27';
+import * as PWA from '../pwa.js?v=r68z28';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z27';
@@ -318,6 +319,7 @@ async function req(t, body = {}) {
         for (const [fp,key] of roomCreateKeys) if (key===body.key) roomCreateKeys.delete(fp);
       }
       if(['room:create','room:join'].includes(t) && r.ok && r.room && S.user?.id===ownerId) rememberGameVoice(r.room.code,r.voice,ownerId);
+      if (r && (r.code === 'quit_ban' || r.quitBan > 0)) showQuitBan(r.banLeft || r.quitBan); // R68z28
       resolve(r);
     });
     try { S.ws.send(JSON.stringify({ id, t, ...body })); }
@@ -392,7 +394,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r68z27');
+  const M = await import('../settings-r60.js?v=r68z28');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
