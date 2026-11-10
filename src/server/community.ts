@@ -90,6 +90,7 @@ export interface CommunityDeps {
   /** R68z: درجة الملف المتحرك (0 بدون، 1 لمعة، 2 كامل) */
   animTier?(id: string): number;
   phoneOk?(id: string): boolean;
+  adminIdOf?(id: string): string | null;
   profileBg?(id: string): { id: string; css?: string; art?: string; rarity?: string; full: boolean } | null;
 }
 export interface CommunityLimits { post: [number, number]; comment: [number, number]; like: [number, number]; follow: [number, number]; report: [number, number]; upload: [number, number]; read: [number, number] }
@@ -218,8 +219,8 @@ export class Community {
     const posts = allPosts.filter((p) => p.id < b);
     const page = posts.slice(-PAGE - 1).reverse();
     if (iBlocked) return { user: { ...this.who(id), stats: null, ...counts, followers, following, followed: false, me: false, posts: 0, blocked: true, muted: iMuted }, posts: [], more: false };
-    if (this.priv(me, id)) return { user: { ...this.who(id), anim: this.dep.animTier?.(id) ?? 0, phone: this.dep.phoneOk?.(id) ?? false, stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: false, posts: 0, blocked: false, muted: iMuted, postsHidden: true, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: [], more: false };
-    return { user: { ...this.who(id), anim: this.dep.animTier?.(id) ?? 0, phone: this.dep.phoneOk?.(id) ?? false, stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: me === id, posts: allPosts.length, blocked: false, muted: iMuted, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: page.slice(0, PAGE).map((p) => this.postView(p, me)), more: page.length > PAGE };
+    if (this.priv(me, id)) return { user: { ...this.who(id), anim: this.dep.animTier?.(id) ?? 0, phone: this.dep.phoneOk?.(id) ?? false, adminId: this.dep.adminIdOf?.(id) ?? null, stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: false, posts: 0, blocked: false, muted: iMuted, postsHidden: true, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: [], more: false };
+    return { user: { ...this.who(id), anim: this.dep.animTier?.(id) ?? 0, phone: this.dep.phoneOk?.(id) ?? false, adminId: this.dep.adminIdOf?.(id) ?? null, stats: this.dep.stats(id), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: me === id, posts: allPosts.length, blocked: false, muted: iMuted, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: page.slice(0, PAGE).map((p) => this.postView(p, me)), more: page.length > PAGE };
   }
   followList(pub: unknown, which: 'followers' | 'following', me: string | null = null) {
     const id = this.idOfPub(pub); if (!id || this.dep.isBanned(id) || this.dep.hidden?.(id)) throw new CommunityError(404, 'الحساب غير موجود.');

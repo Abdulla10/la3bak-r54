@@ -1,0 +1,13 @@
+/* R68z: أيدي الإدارة (3 خانات) — الشكل الملكي: أحمر وذهبي + ADMIN + تاج + لمعة تمشي */
+.aid68{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 12px;border-radius:99px;direction:ltr;vertical-align:middle;background:linear-gradient(180deg,#8a0f1f,#3a0408);border:2px solid #ffd34d;box-shadow:0 0 12px #ff3d3d88,inset 0 1px 0 #fff4;position:relative;overflow:hidden;line-height:1}
+.aid68 b{font:900 18px Arial,sans-serif;color:#ffe9a0;letter-spacing:1px;text-shadow:0 0 6px #ffcf4d}
+.aid68 .aid68-tag{font:900 8px Arial,sans-serif;letter-spacing:1px;padding:2px 5px;border-radius:5px;background:#ffd34d;color:#5a0a00}
+.aid68 i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,#ffe08a,#c98a1a);font-style:normal;font-size:12px}
+.aid68::after{content:"";position:absolute;top:0;bottom:0;width:30%;left:-40%;background:linear-gradient(90deg,transparent,#ffffff88,transparent);transform:skewX(-20deg);animation:aid68sh 2.4s infinite;pointer-events:none}
+@keyframes aid68sh{to{left:130%}}
+.aid68.sm{padding:2px 4px 2px 9px;gap:4px}.aid68.sm b{font-size:13px}.aid68.sm i{width:16px;height:16px;font-size:9px}.aid68.sm .aid68-tag{font-size:7px;padding:1px 4px}
+@media (prefers-reduced-motion:reduce){.aid68::after{animation:none}}
+html body .aid68,html body .cm-facts .aid68,html body .pf68-id .aid68{background:linear-gradient(180deg,#8a0f1f,#3a0408)!important;border:2px solid #ffd34d!important;box-shadow:0 0 12px #ff3d3d88,inset 0 1px 0 #fff4!important;padding:3px 6px 3px 12px!important;border-radius:99px!important}
+html body .aid68.sm{padding:2px 4px 2px 9px!important}
+html body .aid68 b{color:#ffe9a0!important;-webkit-text-fill-color:#ffe9a0!important;background:none!important}
+html body .aid68 .aid68-tag{background:#ffd34d!important;color:#5a0a00!important;-webkit-text-fill-color:#5a0a00!important}

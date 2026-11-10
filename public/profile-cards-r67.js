@@ -23,7 +23,7 @@ function idCardHTML({ acc, pc }) {
   const badges = `${r.noble ? `<img src="${nobleSrc(r.noble)}" alt="نوبل ${r.noble}">` : ''}${r.vip ? `<img src="${vipSrc(r.vip)}" alt="VIP ${r.vip}">` : ''}`;
   const stat = (v, l) => `<span><b dir="ltr">${v}</b><small>${l}</small></span>`;
   return `<section class="idc67" dir="rtl" aria-label="بطاقتي">
-  <header class="idc67-top"><span class="idc67-face">${face(me)}</span><div class="idc67-who"><h3>${esc(me.name || acc.name)}</h3><p><span dir="ltr">ID: ${esc(acc.displayPlayerId || acc.playerId || '')}</span>${cc ? ` · ${flag(cc)} ${esc(country(cc))}` : ''}</p><p class="idc67-lv"><i>Lv ${esc(acc.level || 1)}</i>${badges}</p></div></header>
+  <header class="idc67-top"><span class="idc67-face">${face(me)}</span><div class="idc67-who"><h3>${esc(me.name || acc.name)}</h3><p><span dir="ltr">${/^[1-9]\d{2}$/.test(String(acc.displayPlayerId || '')) ? `<span class="aid68 sm"><b>${esc(acc.displayPlayerId)}</b><span class="aid68-tag">ADMIN</span><i aria-hidden="true">👑</i></span>` : `ID: ${esc(acc.displayPlayerId || acc.playerId || '')}`}</span>${cc ? ` · ${flag(cc)} ${esc(country(cc))}` : ''}</p><p class="idc67-lv"><i>Lv ${esc(acc.level || 1)}</i>${badges}</p></div></header>
   <div class="idc67-stats">${stat(d ? nf(d) : '—', 'يوم معانا')}${stat(nf(pc.gifts?.sent ?? 0), 'هدية أرسلتها')}${stat(nf(pc.gifts?.recv ?? 0), 'هدية وصلتني')}${stat(nf(pc.friends ?? 0), 'صديق')}</div>
   <div class="idc67-tags">${pc.cp ? `<span>💞 CP: ${esc(pc.cp)}</span>` : ''}${pc.tribe ? `<span>🛡️ ${esc(pc.tribe)}</span>` : ''}</div>
   <button type="button" class="idc67-share" data-idc67-share>مشاركة البطاقة</button></section>`;
