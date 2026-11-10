@@ -66,7 +66,8 @@ export function hubHTML(id, o) {
     <section class="card hub-hero"><span class="hub-ic" aria-hidden="true">${h.icon}</span><h1 class="section-title" style="margin:0">${h.name}</h1><p class="muted">${o.esc(h.tag)}</p>${online}</section>
     ${id === 'ludo' ? ludoModesHTML() : ''}
     ${wallet}
-    <section class="card"><h2>🌐 العب أونلاين مع ناس</h2><p class="muted">نبحث لك عن لاعبين داخلين الموقع الحين. بدون رمز ولا دعوة.</p>
+    <section class="card"><h2>🌐 العب أونلاين مع ناس</h2><p class="muted">نبحث لك عن لاعبين بمستواك داخلين الموقع الحين. بدون رمز ولا دعوة.</p>
+      <div data-rating-box data-g="${id}">${ratingHTML(id)}</div>
       <div class="of-seg">${chips('hub-size')}</div>
       <p class="hint" style="margin:10px 0 4px">رسم الدخول: الفائزون يقتسمون عملات الجميع. لو ما فيه فائز ترجع الرسوم.</p>
       <div class="of-seg">${stakeChips}</div>
@@ -116,3 +117,18 @@ export function reset() { clearInterval(MM.timer); MM.game = ''; MM.seats = 0; M
 export const BOT_LEVEL_GAMES = new Set(['baloot', 'jackaro']);
 export const botLevel = () => { try { const v = localStorage.getItem('la3_botlvl'); return v === 'easy' || v === 'pro' ? v : 'normal'; } catch { return 'normal'; } };
 export const setBotLevel = (v) => { try { localStorage.setItem('la3_botlvl', v); } catch { /* */ } };
+
+/* R69zn: تصنيفك باللعبة */
+const RATE = new Map();
+export function ratingHTML(id) {
+  const d = RATE.get(id); if (!d) return '';
+  const me = d.me, esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return `<div class="rt69"><div class="rt69-me"><span class="rt69-ic">${me.icon}</span><span><b>${esc(me.tier)} · ${me.rating}</b><small>${me.games ? `${me.games} مباراة · ${me.wins} فوز${me.rank ? ` · ترتيبك #${me.rank} من ${me.of}` : ''}` : 'العب أول مباراة عشان يتحدد مستواك'}${me.provisional && me.games ? ' · (مبدئي)' : ''}</small></span></div>
+    ${d.top.length ? `<details class="rt69-top"><summary>🏅 أقوى 10 لاعبين</summary>${d.top.map((x, i) => `<div class="rt69-row${x.me ? ' me' : ''}"><span>${i + 1}. ${x.icon} ${esc(x.name)}</span><b>${x.rating}</b></div>`).join('')}</details>` : ''}</div>`;
+}
+const RATE_AT = new Map();
+export async function loadRating(id, api) {
+  if (Date.now() - (RATE_AT.get(id) || 0) < 20000) return; RATE_AT.set(id, Date.now());
+  try { const r = await api('/api/rating?game=' + encodeURIComponent(id)); if (r && r.me) { RATE.set(id, r); const el = document.querySelector(`[data-rating-box][data-g="${id}"]`); if (el) el.innerHTML = ratingHTML(id); } } catch { /* */ }
+}
+if (typeof document !== 'undefined' && !document.querySelector('style[data-rt69]')) { const st = document.createElement('style'); st.dataset.rt69 = '1'; st.textContent = `.rt69{margin:10px 0 6px}.rt69-me{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(245,197,66,.16),rgba(124,58,237,.18));border:1px solid rgba(245,197,66,.35)}.rt69-ic{font-size:30px}.rt69-me b{display:block;font-size:16px}.rt69-me small{opacity:.8;font-size:12px}.rt69-top{margin-top:8px}.rt69-top summary{cursor:pointer;font-weight:700;padding:4px 0}.rt69-row{display:flex;justify-content:space-between;padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}.rt69-row.me{background:rgba(245,197,66,.14);border-radius:8px}`; document.head.appendChild(st); }

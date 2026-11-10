@@ -25,7 +25,24 @@ export class Matchmaker {
     private onCharged?: (userId: string) => void,
     private now: () => number = Date.now,
     private maxWaitMs = 10 * 60_000,
+    /** R69zn: تصنيف اللاعب باللعبة — نطابق المتقاربين بالمستوى */
+    private rating?: (game: string, uid: string) => number,
   ) {}
+
+  /** نطاق المستوى المقبول: يكبر كل ما طال الانتظار (بعد دقيقتين تقريباً أي أحد) */
+  private band(e: Entry) { const s = (this.now() - e.since) / 1000; return s < 10 ? 120 : s < 30 ? 220 : s < 60 ? 380 : s < 120 ? 600 : 5000; }
+  /** نختار مجموعة متقاربة بالمستوى من الطابور (الأقدم أولاً) */
+  private pick(game: string, list: Entry[], seats: number): Entry[] | null {
+    if (list.length < seats) return null;
+    if (!this.rating) return list.slice(0, seats);
+    const r = (e: Entry) => this.rating!(game, e.user.id);
+    for (const anchor of [...list].sort((a, b) => a.order - b.order)) {
+      const ra = r(anchor);
+      const near = list.filter((e) => e !== anchor && Math.abs(r(e) - ra) <= Math.min(this.band(anchor), this.band(e))).sort((a, b) => Math.abs(r(a) - ra) - Math.abs(r(b) - ra));
+      if (near.length >= seats - 1) return [anchor, ...near.slice(0, seats - 1)];
+    }
+    return null;
+  }
 
   private key(game: string, seats: number, stake: number) { return `${game}:${seats}:${stake}`; }
   private find(userId: string) {
@@ -74,7 +91,7 @@ export class Matchmaker {
     return n;
   }
 
-  async join(user: User, gameId: unknown, rawSeats: unknown, rawStake: unknown = 0) {
+  async join(user: User, gameId: unknown, rawSeats: unknown, rawStake: unknown = 0, prev?: { since: number; order: number }) {
     if (this.pending.has(user.id)) return { ok: false as const, error: 'جاري إنشاء غرفة المطابقة. انتظر لين تخلص المحاولة قبل بحث يديد.' };
     const engine = typeof gameId === 'string' ? this.registry.get(gameId) : undefined;
     if (!engine || engine.info.status !== 'available') return { ok: false as const, error: 'هذي اللعبة مو متاحة الحين.' };
@@ -86,10 +103,11 @@ export class Matchmaker {
     this.leave(user.id);
     const k = this.key(engine.info.id, seats, stake);
     const list = this.q.get(k) ?? [];
-    list.push({ user, since: this.now(), order: this.order++ });
+    list.push(prev ? { user, since: prev.since, order: prev.order } : { user, since: this.now(), order: this.order++ });
     this.q.set(k, list);
-    if (list.length >= seats) {
-      const take = list.splice(0, seats);
+    const picked = this.pick(engine.info.id, list, seats);
+    if (picked) {
+      const take = picked; for (const e of take) list.splice(list.indexOf(e), 1);
       if (!list.length) this.q.delete(k);
       this.track(take);
       try {
@@ -166,6 +184,18 @@ export class Matchmaker {
     }
   }
 
+  /** R69zn: كل كم ثانية نجرب نطابق من جديد (لأن النطاق يكبر مع الانتظار) */
+  async rematch() {
+    for (const [k, list] of [...this.q]) {
+      const [game, seatsS, stakeS] = k.split(':'); const seats = Number(seatsS);
+      if (list.length < seats || !this.pick(game, list, seats)) continue;
+      // نعيد إدخال أقدم واحد بنفس المسار عشان تنفّذ نفس منطق الخصم والإنشاء والاسترداد
+      const first = [...list].sort((a, b) => a.order - b.order).find((e) => this.pick(game, list, seats)!.includes(e));
+      if (!first) continue;
+      const rest = list.filter((e) => e !== first); if (rest.length) this.q.set(k, rest); else this.q.delete(k);
+      await this.join(first.user, game, seats, Number(stakeS), { since: first.since, order: first.order }).catch(() => undefined);
+    }
+  }
   /** تنظيف: من انتظر أكثر من الحد */
   sweep() {
     const t = this.now();

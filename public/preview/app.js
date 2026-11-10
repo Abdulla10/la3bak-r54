@@ -1,7 +1,7 @@
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69zn';
+import * as UNIFIED from '../unified/shell.js?v=r69zo';
 import * as REF from '../unified/home.js?v=r69z8';
 import * as SOCIAL from '../unified/social.js?v=r69zj';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -9,14 +9,14 @@ import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-av
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
 import {giftArtwork} from '../gift-assets-r27.js?v=r68i-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69zn';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69zo';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
-import * as HUB from '../hub.js?v=r69zn-r6';
+import * as HUB from '../hub.js?v=r69zo-r6';
 import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
 import { initStatus, checkStatusNow } from '../status.js?v=r68x-navigation-r50';
-import * as LOB from '../lobby.js?v=r69zn';
+import * as LOB from '../lobby.js?v=r69zo';
 import * as AVT from '../avatar.js?v=shell-r6';
 import * as AUTH from '../auth.js?v=r69a-r6';
 import * as FS from '../fullscreen.js?v=shell-r6';
@@ -44,7 +44,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69zn';
+import * as PWA from '../pwa.js?v=r69zo';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -193,6 +193,8 @@ function connect() {
       if (S.user && S.ws === ws && parseRoute().name === 'social-room') SOCIAL.receiveSocialSupport(m.event);
     } else if (m.t === 'chest:drop' || m.t === 'chest:taken' || m.t === 'chest:end') {
       if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:chest', { detail: m }));
+    } else if (m.t === 'rating') {
+      if (S.user && S.ws === ws && m.delta) setTimeout(() => toast(`${m.icon} تصنيفك ${m.delta > 0 ? '+' + m.delta : m.delta} ← ${m.rating} (${m.tier})`, m.delta < 0), 2500);
     } else if (m.t === 'spy') {
       if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:spy', { detail: m }));
     } else if (m.t === 'bomb') {
@@ -411,7 +413,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69zn');
+  const M = await import('../settings-r60.js?v=r69zo');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -647,6 +649,7 @@ async function render() {
       if (needUser('#/hub/' + r.a)) return;
       if (changed) loadOnline(r.a);
       unifiedPage(view,'hub',HUB.hubHTML(r.a, { nf, esc, coins: S.coins || 0, canClaim: !!S.canClaim, stakes: S.stakes }));
+      if (S.user) HUB.loadRating?.(r.a, (u) => fetch(u, { credentials: 'same-origin', cache: 'no-store' }).then((x) => x.json()));
       if (HUB.MM.game === r.a && HUB.MM.seats) HUB.tickTimer();
       break;
     case 'ranks':
@@ -1999,7 +2002,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69zn', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69zo', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },

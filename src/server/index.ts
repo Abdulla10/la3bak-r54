@@ -107,6 +107,7 @@ import { E2EKeys } from './e2e-keys-r69.js';
 import { Shield } from './shield-r69.js';
 import { OwnerSecrets, checkAnthropicKey } from './secrets-r69.js';
 import { AntiCheat, CHEAT_NAMES } from './anticheat-r69.js';
+import { Ratings } from './rating-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -848,6 +849,8 @@ export async function createApp(
     } catch { /* التنبيه شكلي، ما يوقف شي */ }
   };
   /* R69: المباريات الحية للمشاهدة */
+  const ratings = new Ratings(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'ratings.json') : '', Date.now, storage);
+  const TEAM_GAMES = new Set(['baloot', 'jackaro']);
   const liveGames = new Map<string, Room>();
   const acChecked = new Set<string>();
   const spectators = new Map<string, Map<string, number>>();
@@ -864,6 +867,8 @@ export async function createApp(
     },
     onGameFinished(room, players, winners, ref) {
       deliverIntent('game:' + ref);
+      /* R69zn: التصنيف — مباريات الناس بس (مو ضد الكمبيوتر) */
+      try { if (room.mode !== 'bots' && players.length >= 2 && !room.players.some((p) => p.bot)) { const order: string[] = Array.isArray((room.state as { players?: unknown })?.players) ? (room.state as { players: string[] }).players : players.map((p) => p.id); const team = (id: string) => (TEAM_GAMES.has(room.gameId) && order.length === 4 ? order.indexOf(id) % 2 : order.indexOf(id) + 10); const delta = ratings.record(ref, room.gameId, players.map((p) => ({ id: p.id, team: team(p.id) })), winners); for (const [id, d] of Object.entries(delta)) { const v = ratings.view(room.gameId, id); sendToUser(id, { t: 'rating', game: room.gameId, delta: d, rating: v.rating, tier: v.tier, icon: v.icon }); } } } catch (e) { if (e instanceof StorageError) throw e; log('rating_failed', { message: String(e).slice(0, 80) }); }
       try { const out = registry.historyEngine(room.gameId)?.outcome(room.state as never); arena.tourGameFinished(room.code, winners, out?.scores); if (players.length >= 2) arena.leagueGame(players, winners); } catch (e) { if (e instanceof StorageError) throw e; log('arena_game_hook_failed', { message: String(e).slice(0, 120) }); }
       { const gn = registry.historyEngine(room.gameId)?.info.name ?? room.gameId; for (const p of players) activity.note(p.id, 'game', room.code, `${gn}${winners.includes(p.id) ? ' — فاز 🏆' : ''}${room.stake ? ` · رسم ${room.stake}` : ''}`); }
     },
@@ -983,7 +988,8 @@ export async function createApp(
   await reconcileFinished();
   await service.restorePresence();
 
-  const mm = new Matchmaker(service, registry, sendToUser, wallet, (id) => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), won: 0 }));
+  const mm = new Matchmaker(service, registry, sendToUser, wallet, (id) => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), won: 0 }), Date.now, 10 * 60_000, (g, id) => ratings.get(g, id));
+  { const rmT = setInterval(() => { void mm.rematch().catch(() => undefined); }, 5000); rmT.unref?.(); }
   const sessionLimiter = new KeyedLimiter(cfg.sessionBurst, cfg.sessionBurst / 60);
   const ipOf = (req: http.IncomingMessage) => {
     if (trustProxy) {
@@ -1783,6 +1789,7 @@ export async function createApp(
     functionalHttp.add('POST', '/api/admin/ai-key', async (ctx) => { const key = String((ctx.body as any).key ?? '').trim(); adminNeed(key === '' || /^sk-ant-[A-Za-z0-9_-]{20,200}$/.test(key), 'هذا مو مفتاح Anthropic. المفتاح يبدأ بـ sk-ant-'); if (key) { const c = await checkAnthropicKey(key); adminNeed(c !== 'bad', 'المفتاح مرفوض من Anthropic. تأكد إنك نسخته كامل أو سوّ واحد جديد.'); ownerSecrets.set('ANTHROPIC_API_KEY', key); try { if (ctx.actor) admin.audit(ctx.actor, 'ai.key', 'ai', 'حط مفتاح الذكاء الاصطناعي'); } catch { /* */ } return { ok: true, checked: c, source: ownerSecrets.source('ANTHROPIC_API_KEY'), hint: ownerSecrets.hint('ANTHROPIC_API_KEY') }; } ownerSecrets.set('ANTHROPIC_API_KEY', ''); return { ok: true, source: ownerSecrets.source('ANTHROPIC_API_KEY'), hint: '' }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/cheats', () => ({ ok: true, held: antiCheat.heldCount(), list: antiCheat.list().map((x) => ({ ...x, name: accounts.nameOf(x.id) || 'لاعب', displayId: accounts.displayPlayerId(x.id) ?? '' })) }), 'owner');
     functionalHttp.add('POST', '/api/admin/cheats/clear', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(antiCheat.clear(id, actor?.name ?? 'المالك'), 'اللاعب مو بالقائمة.'); if (actor) admin.audit(actor, 'cheat.clear', id, 'شال إيقاف الجوائز'); return { ok: true }; }, 'owner');
+    functionalHttp.add('GET', '/api/rating', ({ user, url }) => { const g = String(url.searchParams.get('game') ?? ''); adminNeed(!!registry.get(g), 'لعبة غير معروفة.'); return { ok: true, me: ratings.view(g, user.id), top: ratings.top(g, 10).map((x) => ({ name: accounts.nameOf(x.id) || 'لاعب', rating: x.rating, games: x.games, tier: x.name, icon: x.icon, me: x.id === user.id })) }; });
     functionalHttp.add('GET', '/api/admin/shield', () => ({ ok: true, ...shield.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/monitor', () => ({ ok: true, ...monitor.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');
