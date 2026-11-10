@@ -420,6 +420,7 @@ function roomMenuGridHTML(c,ui,council){
     joined&&!c.ctx.gameRoom&&can('identity')?tile('cinema-open','play','فيديو يوتيوب'):'',
     tile('share','share','مشاركة'),
     tile('broadcast-open','bell','برقية للكل','data-bc67-open'),
+    joined&&!c.ctx.gameRoom?tile('broadcast-open','volume','أغاني الغرفة','data-rl69-music'):'',
     canInvite(c)?tile('invite','invite','دعوة صديق'):'',
     tile('room-heart','heart',roomFollowed(c)?'محفوظة ❤':'حفظ بالقلب'),
     panelTile('members','users','الأعضاء'),

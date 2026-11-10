@@ -13,6 +13,7 @@ function ytId(text) {
 }
 const CSS = `.rl69-fab{position:fixed;right:12px;z-index:79;width:50px;height:50px;border-radius:50%;font-size:24px;cursor:pointer;box-shadow:0 6px 18px #000a}
 .rl69-fab.env{bottom:230px;border:2px solid #ffd34d;background:radial-gradient(circle at 50% 30%,#ff4d5e,#a10f2a)}.rl69-fab.mus{bottom:290px;border:2px solid #7df0ff;background:radial-gradient(circle at 50% 30%,#3d6bff,#1a0a56)}
+body:has(.so-menu-tile) .rl69-fab,body:has(.so-menu-tile) .rq68-fab{display:none!important}
 .rl69-fab.has::after{content:"";position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#ffe14d;box-shadow:0 0 8px #ffe14d}
 .rl69-ov{position:fixed;inset:0;z-index:120;background:#0009;display:flex;align-items:flex-end;justify-content:center;direction:rtl}
 .rl69-sh{width:min(100%,480px);max-height:82vh;overflow:auto;background:linear-gradient(170deg,#3a1060,#170830);border:1px solid #a86bff55;border-radius:22px 22px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom) + 16px);color:#fff;font-family:inherit;animation:rl69up .25s ease}@keyframes rl69up{from{transform:translateY(40%)}}
@@ -28,7 +29,7 @@ const CSS = `.rl69-fab{position:fixed;right:12px;z-index:79;width:50px;height:50
 .rl69-now{display:flex;gap:10px;align-items:center;padding:10px;border-radius:14px;background:#0005}.rl69-now img{width:96px;height:54px;object-fit:cover;border-radius:8px}.rl69-now div{flex:1;font-size:13px}.rl69-now b{display:block;font-size:14px}
 .rl69-q{list-style:none;margin:6px 0 0;padding:0;font-size:13px}.rl69-q li{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #ffffff12}.rl69-q img{width:56px;height:32px;object-fit:cover;border-radius:6px}
 .rl69-in{width:100%;border-radius:12px;border:1px solid #9b5cff88;background:#0f0520;color:#fff;padding:10px 12px;font:inherit;direction:ltr}.rl69-row{display:flex;gap:6px;margin-top:8px}.rl69-row .rl69-go{margin-top:0}
-.rl69-bar{position:fixed;right:70px;bottom:290px;z-index:79;display:flex;align-items:center;gap:6px;padding:4px;border-radius:12px;background:#1a0a30ee;border:1px solid #7df0ff66;box-shadow:0 4px 14px #0008}
+.rl69-bar{position:fixed;right:12px;bottom:290px;z-index:79;display:flex;align-items:center;gap:6px;padding:4px;border-radius:12px;background:#1a0a30ee;border:1px solid #7df0ff66;box-shadow:0 4px 14px #0008}
 .rl69-bar iframe{width:128px;height:72px;border:0;border-radius:8px;display:block}.rl69-bar button{border:0;background:#ffffff18;color:#fff;border-radius:8px;width:30px;height:30px;cursor:pointer}`;
 let started = false;
 export function startRoomLuck() {
@@ -73,7 +74,7 @@ export function startRoomLuck() {
   }
   function paint() {
     const inRoom = !!S.room && !!S.env?.member;
-    fabE.hidden = !inRoom; fabM.hidden = !inRoom || !S.mus?.member;
+    fabE.hidden = !inRoom; fabM.hidden = true;
     fabE.classList.toggle('has', active().some((e) => !e.mine && e.got === null && e.left > 0));
     fabM.classList.toggle('has', !!S.mus?.cur);
     if (!inRoom) { ov.hidden = true; S.open = ''; }
@@ -112,6 +113,8 @@ export function startRoomLuck() {
   const run = async (fn) => { if (S.busy) return; S.busy = true; S.err = ''; S.ok = ''; paint(); try { await fn(); } catch (e) { S.err = e.message || 'تعذّر الطلب.'; } S.busy = false; paint(); };
   fabE.addEventListener('click', () => { S.open = 'env'; S.err = ''; S.ok = ''; paint(); });
   fabM.addEventListener('click', () => { S.open = 'mus'; S.err = ''; S.ok = ''; paint(); });
+  // R69b: زر الأغاني صار داخل قائمة الغرفة (☰)
+  document.addEventListener('click', (e) => { if (e.target.closest?.('[data-rl69-music]')) { e.preventDefault(); S.open = 'mus'; S.err = ''; S.ok = ''; paint(); poll(); } }, true);
   bar.addEventListener('click', (e) => { if (e.target.closest('[data-rl="mute"]')) { S.listen = false; paint(); } });
   ov.addEventListener('click', (e) => {
     if (e.target === ov) { S.open = ''; paint(); return; }
