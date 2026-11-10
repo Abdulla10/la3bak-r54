@@ -1,14 +1,14 @@
 import { createGlobalSearch } from '../unified/global-search.js?v=r68v-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69z7';
-import * as REF from '../unified/home.js?v=r69z1';
-import * as SOCIAL from '../unified/social.js?v=r69z5';
+import * as UNIFIED from '../unified/shell.js?v=r69z8';
+import * as REF from '../unified/home.js?v=r69z8';
+import * as SOCIAL from '../unified/social.js?v=r69z8';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
 import {giftArtwork} from '../gift-assets-r27.js?v=r68i-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69z1';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69z8';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
@@ -42,7 +42,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69z7';
+import * as PWA from '../pwa.js?v=r69z8';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -401,7 +401,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69z7');
+  const M = await import('../settings-r60.js?v=r69z8');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -826,7 +826,7 @@ const ICON_SVG = {
   domino: '<svg viewBox="0 0 40 40" width="1em" height="1em" aria-hidden="true"><g transform="rotate(-14 20 20)"><rect x="11" y="3" width="18" height="34" rx="4" fill="#fcf9f4" stroke="#3a2a18" stroke-width="2"/><path d="M13 20h14" stroke="#3a2a18" stroke-width="1.6"/><g fill="#1b1b1b"><circle cx="16" cy="8.5" r="1.9"/><circle cx="24" cy="15" r="1.9"/><circle cx="20" cy="11.8" r="1.9"/><circle cx="16" cy="25" r="1.9"/><circle cx="24" cy="25" r="1.9"/><circle cx="16" cy="32" r="1.9"/><circle cx="24" cy="32" r="1.9"/></g></g></svg>',
 };
 const ICO69 = new Set(['liars', 'bowling', 'pool', 'carrom', 'jackaro', 'baloot', 'ludo']);
-const gameIco = (g) => ICO69.has(g.id) ? `<img src="/assets/art69/g-${g.id}.webp?v=r69z" alt="" decoding="async" style="width:100%;height:100%;object-fit:contain;border-radius:12px">` : g.id === 'minaboli' ? '<img src="/preview/assets/game-minaboli-3d-r49.webp" alt="" width="64" height="44" decoding="async" style="width:100%;height:100%;object-fit:contain">' : ICON_SVG[g.id] ?? esc(g.icon);
+const gameIco = (g) => ICO69.has(g.id) ? `<img src="/assets/art69/g-${g.id}.webp?v=r69z8" alt="" decoding="async" style="width:100%;height:100%;object-fit:contain;border-radius:12px">` : g.id === 'minaboli' ? '<img src="/preview/assets/game-minaboli-3d-r49.webp" alt="" width="64" height="44" decoding="async" style="width:100%;height:100%;object-fit:contain">' : ICON_SVG[g.id] ?? esc(g.icon);
 function gameCardHTML(g, full) {
   const live = g.status === 'available';
   return `<article class="card game-card ${live ? '' : 'soon-card'}" data-bots="${g.supportsBots ? 1 : 0}" data-rooms="${g.maxPlayers >= 2 ? 1 : 0}" data-cats="${uiCat(g)}">
@@ -1087,7 +1087,7 @@ function gamesView() {
   return `<div class="stack">
     <h1 class="section-title" style="margin-top:0">الألعاب</h1>
     ${statusStrip()}
-    <section class="gcat" aria-label="ألعاب الحظ والتحدي"><h2 class="gcat-h"><span aria-hidden="true">🎰</span>الحظ والتحدي<small>5</small></h2><div class="g69x">${[['#/slot','g-slot','جاكبوت لعبك'],['#/foodwheel','g-foodwheel','عجلة الأكل'],['#/tournaments','g-tournaments','البطولات'],['#/league','g-league','الدوري'],['#/watch','g-watch','مباشر']].map(([h,i,n])=>`<a href="${h}" aria-label="${n}"><img src="/assets/art69/${i}.webp?v=r69z" alt="" loading="lazy" decoding="async"></a>`).join('')}</div></section>
+    <section class="gcat" aria-label="ألعاب الحظ والتحدي"><h2 class="gcat-h"><span aria-hidden="true">🎰</span>الحظ والتحدي<small>5</small></h2><div class="g69x">${[['#/slot','g-slot','جاكبوت لعبك'],['#/foodwheel','g-foodwheel','عجلة الأكل'],['#/tournaments','g-tournaments','البطولات'],['#/league','g-league','الدوري'],['#/watch','g-watch','مباشر']].map(([h,i,n])=>`<a href="${h}" aria-label="${n}"><img src="/assets/art69/${i}.webp?v=r69z8" alt="" loading="lazy" decoding="async"></a>`).join('')}</div></section>
     <input class="input" id="gq" type="search" inputmode="search" placeholder="🔎 ابحث باسم اللعبة" aria-label="بحث باسم اللعبة" autocomplete="off" value="${esc(S.fQ || '')}">
     <div class="chips filters scroll-row" role="group" aria-label="تصنيفات الألعاب">
       ${chip('all', 'جميع الألعاب', live.length)}
@@ -1985,7 +1985,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69z1', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69z8', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },
