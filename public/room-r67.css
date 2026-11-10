@@ -624,3 +624,7 @@ html.has-game-voice .gv-switch button{color:#e9dcff!important;min-height:32px!im
 html.has-game-voice .gv-switch button[aria-pressed="true"]{background:linear-gradient(180deg,#b06bff,#6d2fd6)!important;border-color:transparent!important;color:#fff!important}
 html.has-game-voice .gv-game-surface{top:calc(108px + env(safe-area-inset-top,0px))!important;background:#120822!important}
 html.has-game-voice .gv-wrapper .gv-social{padding-top:58px!important}
+/* R69n: أيقونة المدفع بدال الصندوق بالعمود الجانبي */
+html body .so-page .so-room-detail.r68 .r68-sbtn.is-chest img.r69-cannon-ic{height:58px;width:auto;max-width:100%;transform:scale(1.18);animation:r69cn 3s ease-in-out infinite}
+@keyframes r69cn{0%,100%{transform:scale(1.18) rotate(-3deg)}50%{transform:scale(1.18) rotate(3deg)}}
+@media (prefers-reduced-motion:reduce){html body .so-page .so-room-detail.r68 .r68-sbtn.is-chest img.r69-cannon-ic{animation:none}}
