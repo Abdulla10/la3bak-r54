@@ -59,7 +59,11 @@ const BET_MS = 30_000, SHOW_MS = 7_000;
 const FOOD_W = FOODS.map((f) => 1000 / f.mult);
 type Bet = { u: string; name: string; item: number; amt: number };
 type Round = { n: number; start: number; bets: Bet[]; result: number | null; settled: boolean };
-type Data = { v: 1; jackpot: number; free: Record<string, { left: number; bet: number }>; slotFeed: { at: number; name: string; win: number; kind: string }[]; round: Round; history: number[]; lastTop: { name: string; win: number }[]; daily: Record<string, { d: string; win: number; got?: number[] }> };
+type Data = { v: 1; jackpot: number; free: Record<string, { left: number; bet: number }>; slotFeed: { at: number; name: string; win: number; kind: string }[]; round: Round; history: number[]; lastTop: { name: string; win: number }[]; daily: Record<string, { d: string; win: number; got?: number[] }>; stats?: Stats; off?: { slot?: boolean; food?: boolean }; big?: { at: number; game: 'slot' | 'food'; name: string; bet: number; win: number }[] };
+/** R69: إحصائيات للإدارة: كم دخل وكم طلع (باليوم وبالمجموع) */
+type StatCell = { in: number; out: number; n: number };
+type Stats = { day: string; today: { slot: StatCell; food: StatCell; chest: number }; total: { slot: StatCell; food: StatCell; chest: number }; days: { d: string; slot: StatCell; food: StatCell; chest: number }[] };
+const cell = (): StatCell => ({ in: 0, out: 0, n: 0 });
 const valid = (x: Record<string, unknown>) => x.v === 1 && Number.isSafeInteger(x.jackpot) && isObj(x.free) && isObj(x.round) && Array.isArray(x.history);
 const day = (t: number) => new Date(t + 4 * 3_600_000).toISOString().slice(0, 10);
 
@@ -79,6 +83,17 @@ export class Casino {
     this.disk = new Persister('casino', file, () => this.d, now, mon, valid);
   }
   private save() { this.disk.save(); }
+  private st(): Stats {
+    const t = day(this.now());
+    let s = this.d.stats; if (!s) s = this.d.stats = { day: t, today: { slot: cell(), food: cell(), chest: 0 }, total: { slot: cell(), food: cell(), chest: 0 }, days: [] };
+    if (s.day !== t) { s.days.unshift({ d: s.day, ...s.today }); s.days = s.days.slice(0, 30); s.day = t; s.today = { slot: cell(), food: cell(), chest: 0 }; }
+    return s;
+  }
+  private track(game: 'slot' | 'food', bet: number, win: number, count = 1) { const s = this.st(); for (const c of [s.today[game], s.total[game]]) { c.in += bet; c.out += win; c.n += count; } }
+  private bigWin(game: 'slot' | 'food', name: string, bet: number, win: number) { if (win < 50_000 && win < bet * 20) return; (this.d.big ??= []).unshift({ at: this.now(), game, name, bet, win }); this.d.big = this.d.big.slice(0, 60); }
+  /** للإدارة */
+  adminView() { const s = this.st(); return { jackpot: this.d.jackpot, off: { slot: !!this.d.off?.slot, food: !!this.d.off?.food }, today: s.today, total: s.total, days: s.days.slice(0, 14), big: (this.d.big ?? []).slice(0, 40), round: this.d.round.n }; }
+  setOff(game: 'slot' | 'food', off: boolean) { (this.d.off ??= {})[game] = off; this.save(); return this.adminView(); }
   private addDaily(id: string, win: number) { const t = day(this.now()); const c = this.d.daily[id]; this.d.daily[id] = c?.d === t ? { d: t, win: c.win + win, got: c.got ?? [] } : { d: t, win, got: [] }; }
   private todayOf(id: string) { const c = this.d.daily[id]; return c?.d === day(this.now()) ? c : { d: day(this.now()), win: 0, got: [] as number[] }; }
   claimChest(id: string, i: unknown) {
@@ -88,13 +103,14 @@ export class Casino {
     if (c.win < CHESTS[k]) throw new Error('لازم يوصل فوزك اليوم ' + CHESTS[k].toLocaleString('en-US') + '.');
     const reward = Math.round(CHESTS[k] * CHEST_PCT);
     if (!this.w.grant(id, reward, 'عجلة الأكل — صندوق اليوم', `fwchest:${c.d}:${id}:${k}`)) throw new Error('تعذّر تسليم المكافأة.');
-    this.d.daily[id] = { d: c.d, win: c.win, got: [...got, k] }; this.save();
+    this.d.daily[id] = { d: c.d, win: c.win, got: [...got, k] }; { const st = this.st(); st.today.chest += reward; st.total.chest += reward; } this.save();
     return { reward, ...this.wheelState(id) };
   }
 
   /* ---------- السلوت ---------- */
   slotState(id: string) { return { jackpot: this.d.jackpot, bets: SLOT_BETS, lines: LINES.length, free: this.d.free[id] ?? null, feed: this.d.slotFeed.slice(-8).reverse(), coins: this.w.balance(id), lineMap: LINES }; }
   spin(id: string, name: string, betIdx: unknown) {
+    if (this.d.off?.slot) throw new Error('اللعبة موقفة مؤقتاً من الإدارة.');
     const fs = this.d.free[id];
     const bi = fs ? SLOT_BETS.indexOf(fs.bet as typeof SLOT_BETS[number]) : Number(betIdx);
     if (!Number.isInteger(bi) || bi < 0 || bi >= SLOT_BETS.length) throw new Error('رهان غير صالح.');
@@ -107,6 +123,7 @@ export class Casino {
     if (ev.jack >= 5) { jackWin = Math.floor(this.d.jackpot * JACK_TIER[bi]); this.d.jackpot = Math.max(JACK_SEED, this.d.jackpot - jackWin); win += jackWin; }
     if (ev.free >= 3) { freeWon = SLOT_FREE + (ev.free - 3) * 4; const cur = this.d.free[id]; this.d.free[id] = { left: (cur?.left ?? 0) + freeWon, bet: lineBet }; }
     if (win > 0) { if (!this.w.grant(id, win, jackWin ? 'جاكبوت لعبك — الجاكبوت!' : 'جاكبوت لعبك — فوز', op + ':win')) throw new Error('تعذّر تسليم الفوز، تواصل مع الدعم.'); this.addDaily(id, win); }
+    this.track('slot', fs ? 0 : total, win); this.bigWin('slot', name, fs ? lineBet * LINES.length : total, win);
     if (win >= total * 10 || jackWin) { this.d.slotFeed.push({ at: this.now(), name, win, kind: jackWin ? 'jack' : 'big' }); if (this.d.slotFeed.length > 40) this.d.slotFeed.splice(0, 10); }
     this.save();
     return { grid, wins: ev.wins, win, jackWin, freeWon, free: this.d.free[id] ?? null, jackpot: this.d.jackpot, coins: this.w.balance(id), tier: ['MINI', 'MAJOR', 'GRAND', 'MEGA'][bi], total };
@@ -123,20 +140,22 @@ export class Casino {
     const r = this.d.round; if (r.settled || r.result === null) return;
     const per = new Map<string, { name: string; win: number }>();
     for (const b of r.bets) if (b.item === r.result) { const x = per.get(b.u) ?? { name: b.name, win: 0 }; x.win += b.amt * FOODS[b.item].mult; per.set(b.u, x); }
-    for (const [u, x] of per) { if (this.w.grant(u, x.win, `عجلة الأكل — ${FOODS[r.result].name} ×${FOODS[r.result].mult}`, `fw:${r.n}:${u}`)) this.addDaily(u, x.win); }
+    for (const [u, x] of per) { if (this.w.grant(u, x.win, `عجلة الأكل — ${FOODS[r.result].name} ×${FOODS[r.result].mult}`, `fw:${r.n}:${u}`)) { this.addDaily(u, x.win); this.track('food', 0, x.win, 0); this.bigWin('food', x.name, r.bets.filter((b) => b.u === u).reduce((a, b) => a + b.amt, 0), x.win); } }
+    if (r.bets.length) this.track('food', 0, 0, 1);
     this.d.lastTop = [...per.values()].sort((a, b) => b.win - a.win).slice(0, 3);
     r.settled = true; this.save();
   }
   bet(id: string, name: string, item: unknown, chip: unknown) {
     this.tick();
     const r = this.d.round; const i = Number(item), c = Number(chip);
+    if (this.d.off?.food) throw new Error('اللعبة موقفة مؤقتاً من الإدارة.');
     if (r.result !== null || this.now() >= r.start + BET_MS) throw new Error('انتهى وقت الرهان، استنى الجولة الجاية.');
     if (!Number.isInteger(i) || i < 0 || i >= FOODS.length || !(CHIPS as readonly number[]).includes(c)) throw new Error('رهان غير صالح.');
     const mine = r.bets.filter((b) => b.u === id).reduce((a, b) => a + b.amt, 0);
     if (mine + c > 5_000_000) throw new Error('وصلت حد الرهان بالجولة (5 مليون).');
     const p = this.w.spend(id, c, `عجلة الأكل — رهان على ${FOODS[i].name}`, `fwb:${r.n}:${id}:${r.bets.length}:${this.now()}`);
     if (!p.ok) throw new Error(p.code === 'poor' ? 'عملاتك ما تكفي.' : 'تعذّر الخصم.');
-    r.bets.push({ u: id, name, item: i, amt: c }); this.save();
+    r.bets.push({ u: id, name, item: i, amt: c }); this.track('food', c, 0, 0); this.save();
     return this.wheelState(id);
   }
   wheelState(id: string) {

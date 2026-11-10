@@ -22,7 +22,7 @@ export function mountLiveAdmin(root, { call }) {
     <dt>القبيلة</dt><dd>${p.tribe ? esc(p.tribe.name) + (p.tribe.leader ? ' (القائد)' : '') : '—'}</dd><dt>CP</dt><dd>${p.cp ? `${esc(p.cp.partner)} · ${nf(p.cp.pts)} نقطة` : '—'}</dd>
     <dt>غرفه</dt><dd>${p.rooms.length ? p.rooms.map((r) => `${esc(r.name)} (Lv ${r.level})`).join('، ') : '—'}</dd><dt>المقتنيات</dt><dd>${nf(p.owned)}</dd>
     <dt>بلاغات عليه</dt><dd>${nf(p.reports.total)} (مفتوحة ${nf(p.reports.open)} · انحذف ${nf(p.reports.removed)})</dd>${p.ban ? `<dt>سبب الحظر</dt><dd>${esc(p.ban.reason)}</dd>` : ''}</dl>
-    ${S.msgTo === p.id ? `<form data-laf="msg" data-id="${esc(p.id)}" class="ad-form col"><input class="ad-in" name="title" placeholder="العنوان" maxlength="100" required minlength="3"><textarea class="ad-in" name="body" rows="3" placeholder="الرسالة" maxlength="2000" required minlength="3"></textarea><button class="ad-btn" type="submit">إرسال</button></form>` : `<button class="ad-btn ghost" data-la="msg-open" data-id="${esc(p.id)}">✉️ رسالة لهذا اللاعب</button>`}</div>`;
+    ${S.msgTo === p.id ? `<form data-laf="msg" data-id="${esc(p.id)}" class="ad-form col"><input class="ad-in" name="title" placeholder="العنوان" maxlength="100" required minlength="3"><textarea class="ad-in" name="body" rows="3" placeholder="الرسالة" maxlength="2000" required minlength="3"></textarea><button class="ad-btn" type="submit">إرسال</button></form>` : `<button class="ad-btn ghost" data-la="msg-open" data-id="${esc(p.id)}">✉️ رسالة لهذا اللاعب</button>${p.twofa ? ` <button class="ad-btn ghost" type="button" data-la="tf-reset" data-id="${esc(p.id)}" data-name="${esc(p.name)}">🔐 فك التحقق بخطوتين</button>` : ''}`}</div>`;
   function paint() {
     if (!root.isConnected) return;
     const L = S.live, now = S.events?.now ?? Date.now();
@@ -49,6 +49,7 @@ export function mountLiveAdmin(root, { call }) {
   root.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-la]'); if (!b) return;
     if (b.dataset.la === 'live-refresh') { await loadLive(); paint(); }
+    if (b.dataset.la === 'tf-reset') { if (window.confirm(`فك التحقق بخطوتين عن «${b.dataset.name}»؟\nسوّه بس بعد ما تتأكد إن الحساب حقه.`)) run(async () => { const j = await call('2fa-reset', { method: 'POST', body: { id: b.dataset.id } }); const r = await call('player-360?q=' + encodeURIComponent(S.q)); S.players = r.players; return j; }, 'تم فك التحقق بخطوتين ✅'); return; }
     if (b.dataset.la === 'msg-open') { S.msgTo = b.dataset.id; paint(); root.querySelector('[data-laf="msg"] [name=title]')?.focus(); }
     if (b.dataset.la === 'ev-end') { const r = window.prompt('إنهاء الفعالية الحين؟\n\nاكتب السبب (إلزامي):'); if (r && r.trim().length >= 3) run(async () => { const j = await call('events', { method: 'POST', body: { op: 'end', id: b.dataset.id, reason: r.trim() } }); await loadEvents(); return j; }, 'انتهت الفعالية.'); }
   });

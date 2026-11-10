@@ -63,7 +63,9 @@ export function totp(secret: string, step: number): string {
 }
 type TF = { secret: string; on: boolean; at: number; last: number; fails: number; lockUntil: number };
 
-type Data = { v: 1; envs: Env[]; tours: Tour[]; league: League; tf: Record<string, TF> };
+type Xfer = { at: number; kind: 'env' | 'cheer'; from: string; to: string; amt: number };
+type Data = { v: 1; envs: Env[]; tours: Tour[]; league: League; tf: Record<string, TF>; xfer?: Xfer[] };
+export const XFER_FLAG_COUNT = 3, XFER_FLAG_SUM = 20_000;
 const valid = (x: Record<string, unknown>) => x.v === 1 && Array.isArray(x.envs) && Array.isArray(x.tours) && isObj(x.league) && isObj(x.tf);
 
 /* ======================= أغاني الغرفة (بالذاكرة) ======================= */
@@ -119,7 +121,7 @@ export class Arena {
     const amt = e!.shares[e!.taken.length];
     need(amt !== undefined, 'الظرف خلص.');
     need(this.deps.wallet.grant(uid, amt, `ظرف الحظ من ${e!.byName}`, `env:${e!.id}:${uid}`), 'تعذّر التسليم.');
-    e!.taken.push({ id: uid, name: this.deps.name(uid) || 'لاعب', amt });
+    e!.taken.push({ id: uid, name: this.deps.name(uid) || 'لاعب', amt }); this.logXfer('env', e!.by, uid, amt);
     if (e!.taken.length >= e!.shares.length) e!.settled = true;
     this.save(); return { amt, env: e! };
   }
@@ -304,7 +306,21 @@ export class Arena {
   cheer(from: string, to: string, amount: number, ref: string) {
     need([10, 100, 1000].includes(amount), 'مبلغ غير صالح.', 400); need(from !== to, 'ما تقدر تشجع نفسك 😄');
     const p = this.deps.wallet.spend(from, amount, 'تشجيع لاعب بمباراة', `cheer:${ref}`); need(p.ok, p.code === 'poor' ? 'رصيدك ما يكفي.' : 'تعذّر الدفع.', 402);
-    this.deps.wallet.grant(to, amount, `تشجيع من ${this.deps.name(from) || 'مشجع'}`, `cheer:${ref}:to`);
+    this.deps.wallet.grant(to, amount, `تشجيع من ${this.deps.name(from) || 'مشجع'}`, `cheer:${ref}:to`); this.logXfer('cheer', from, to, amount); this.save();
+  }
+  private logXfer(kind: Xfer['kind'], from: string, to: string, amt: number) { const l = (this.d.xfer ??= []); l.push({ at: this.now(), kind, from, to, amt }); if (l.length > 3000) l.splice(0, l.length - 3000); }
+  /** للإدارة: التحويلات بين الحسابات (ظرف الحظ + التشجيع) والأزواج المشبوهة آخر 7 أيام */
+  xferAdmin(name: (id: string) => string) {
+    const since = this.now() - 7 * 86_400_000; const l = (this.d.xfer ?? []).filter((x) => x.at >= since);
+    const pairs = new Map<string, { from: string; to: string; n: number; sum: number; last: number; kinds: Set<string> }>();
+    for (const x of l) { const k = x.from + '>' + x.to; const p = pairs.get(k) ?? { from: x.from, to: x.to, n: 0, sum: 0, last: 0, kinds: new Set<string>() }; p.n++; p.sum += x.amt; p.last = Math.max(p.last, x.at); p.kinds.add(x.kind); pairs.set(k, p); }
+    const recv = new Map<string, { n: number; sum: number; from: Set<string> }>();
+    for (const x of l) { const r = recv.get(x.to) ?? { n: 0, sum: 0, from: new Set<string>() }; r.n++; r.sum += x.amt; r.from.add(x.from); recv.set(x.to, r); }
+    const flagged = [...pairs.values()].filter((p) => p.n >= XFER_FLAG_COUNT || p.sum >= XFER_FLAG_SUM).sort((a, b) => b.sum - a.sum).slice(0, 50)
+      .map((p) => ({ from: name(p.from), fromId: p.from, to: name(p.to), toId: p.to, n: p.n, sum: p.sum, last: p.last, kinds: [...p.kinds] }));
+    const top = [...recv.entries()].sort((a, b) => b[1].sum - a[1].sum).slice(0, 15).map(([id, r]) => ({ name: name(id), id, n: r.n, sum: r.sum, senders: r.from.size }));
+    const recent = l.slice(-80).reverse().map((x) => ({ at: x.at, kind: x.kind, from: name(x.from), to: name(x.to), amt: x.amt }));
+    return { flagged, top, recent, rule: { count: XFER_FLAG_COUNT, sum: XFER_FLAG_SUM }, total7d: l.reduce((a, x) => a + x.amt, 0) };
   }
 
   /* ---------- أغاني الغرفة ---------- */

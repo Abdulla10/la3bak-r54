@@ -1,11 +1,11 @@
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r68z40e';
-import { side68, head68, brand68, dash68HTML } from './admin-dash-r68.js?v=r68z10';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r69k';
+import { side68, head68, brand68, dash68HTML } from './admin-dash-r68.js?v=r69k';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=r68l-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=r68z40e';
+import {mountPaymentAdmin} from './payment-admin.js?v=r69k';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
-import {mountSocialAdmin} from './social-admin.js?v=r68z40e';
-import { pricingHTML, progressionHTML } from './economy-admin.js?v=r68z40e';
+import {mountSocialAdmin} from './social-admin.js?v=r69k';
+import { pricingHTML, progressionHTML } from './economy-admin.js?v=r69k';
 import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r68z40e';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
@@ -30,6 +30,7 @@ const TABS = [
   ['site-ops','التشغيل والغرف والمنشورات','staff.manage'],
   ['watch','الرقابة والاقتصاد','staff.manage'],
   ['live','المباشر واللاعبين والفعاليات','staff.manage'],
+  ['luck','ألعاب الحظ والتحويلات','staff.manage'],
   ['pricing', 'الباقات والتحويل', 'staff.manage'], ['payments','المدفوعات والمبيعات','staff.manage'], ['progression', 'LEVEL / VIP / NOBLE', 'staff.manage'], ['rank-vip', 'الرتب والمواسم وعضوية VIP', 'staff.manage'], ['functional', 'المهام والمكافآت والدعم', 'staff.manage'], ['verification', 'التوثيق', 'players.view'], ['overview', 'الإحصائيات', 'stats.view'], ['players', 'اللاعبون', 'players.view'], ['economy', 'الاقتصاد', 'stats.view'], ['bulk', 'منح جميع اللاعبين', 'wallet.bulk-grant'], ['shop', 'المتجر', 'shop.view'], ['gifts', 'الهدايا', 'shop.view'],
   ['rooms', 'الغرف والألعاب', 'rooms.view'], ['social', 'الغرف الاجتماعية والمجالس', 'social.view'], ['reports', 'بلاغات المجتمع', 'community.moderate'], ['achievements', 'الإنجازات', 'ach.view'], ['notices', 'الإعلانات والفعاليات', 'ann.manage'],
   ['staff', 'المشرفون والصلاحيات', 'staff.manage'], ['audit', 'التدقيق والأمان', 'audit.view'], ['settings', 'الإعدادات', 'settings.view'], ['maintenance', 'الصيانة', 'maint.manage'], ['system', 'الخدمات والمراقبة', 'system.view'], ['health', 'حالة الموقع', 'system.view'],
@@ -37,7 +38,7 @@ const TABS = [
 const GAME_NAME = { jackaro: 'جاكارو', ludo: 'لودو', baloot: 'بلوت' };
 const KIND = { start: 'رصيد البداية', daily: 'يومية', entry_fee: 'رسم دخول', prize: 'جائزة', refund: 'استرجاع', purchase: 'شراء', gift: 'هدية', reward: 'مكافأة', admin: 'تعديل إدارة' };
 const STATUS = { lobby: 'انتظار', playing: 'يلعبون', finished: 'منتهية' };
-const ACTIONS = { 'gift.update': 'تعديل هدية (تفعيل/سعر)', 'community.remove': 'حذف محتوى مُبلّغ عنه', 'community.dismiss': 'رفض بلاغ مجتمع', 'wallet.request': 'طلب تعديل رصيد (فوق الحد)', 'wallet.reject': 'رفض طلب تعديل رصيد', 'wallet.approve-failed': 'فشل تنفيذ طلب موافَق', 'player.clear-suspect': 'رفع اشتباه عن حساب', 'shop.create': 'إضافة منتج', 'shop.update': 'تعديل منتج', 'shop.enable': 'تفعيل بيع منتج', 'shop.disable': 'إيقاف بيع منتج', 'wallet.adjust': 'تعديل رصيد', 'player.ban': 'حظر لاعب', 'player.unban': 'رفع حظر', 'room.close': 'إغلاق غرفة', 'notice.create': 'إنشاء إعلان', 'notice.update': 'تعديل إعلان', 'notice.delete': 'حذف إعلان', 'staff.set': 'تعيين طاقم', 'staff.remove': 'إزالة طاقم', 'maintenance.on': 'تفعيل الصيانة', 'maintenance.off': 'إلغاء الصيانة', 'maintenance.update': 'تعديل رسالة الصيانة' };
+const ACTIONS = { 'luck.toggle': 'تشغيل/إيقاف لعبة حظ', '2fa.reset': 'فك التحقق بخطوتين', 'gift.update': 'تعديل هدية (تفعيل/سعر)', 'community.remove': 'حذف محتوى مُبلّغ عنه', 'community.dismiss': 'رفض بلاغ مجتمع', 'wallet.request': 'طلب تعديل رصيد (فوق الحد)', 'wallet.reject': 'رفض طلب تعديل رصيد', 'wallet.approve-failed': 'فشل تنفيذ طلب موافَق', 'player.clear-suspect': 'رفع اشتباه عن حساب', 'shop.create': 'إضافة منتج', 'shop.update': 'تعديل منتج', 'shop.enable': 'تفعيل بيع منتج', 'shop.disable': 'إيقاف بيع منتج', 'wallet.adjust': 'تعديل رصيد', 'player.ban': 'حظر لاعب', 'player.unban': 'رفع حظر', 'room.close': 'إغلاق غرفة', 'notice.create': 'إنشاء إعلان', 'notice.update': 'تعديل إعلان', 'notice.delete': 'حذف إعلان', 'staff.set': 'تعيين طاقم', 'staff.remove': 'إزالة طاقم', 'maintenance.on': 'تفعيل الصيانة', 'maintenance.off': 'إلغاء الصيانة', 'maintenance.update': 'تعديل رسالة الصيانة' };
 
 function ensureCss() {
     if(!document.querySelector('link[data-rank-vip-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/rank-vip-admin.css?v=r58p';l.dataset.rankVipAdminCss='1';document.head.appendChild(l);}
@@ -74,7 +75,7 @@ export function mountAdmin(root) {
   const can = (p) => S.me?.perms?.includes(p);
 
   function shell(inner) {
-    const tabs = TABS.filter((t) => can(t[2]) && (t[0] !== 'owner-tools' || ownerToolsVisible(S.me)) && (!['pricing', 'progression','payments','rank-vip','auction','tribes-cp','tuning','home-banners','suspicious','games-control','player-log','ids3','site-ops','watch','live'].includes(t[0]) || S.me?.role === 'owner') && (t[0] !== 'verification' || ['owner', 'admin'].includes(S.me?.role)));
+    const tabs = TABS.filter((t) => can(t[2]) && (t[0] !== 'owner-tools' || ownerToolsVisible(S.me)) && (!['pricing', 'progression','payments','rank-vip','auction','tribes-cp','tuning','home-banners','suspicious','games-control','player-log','ids3','site-ops','watch','live','luck'].includes(t[0]) || S.me?.role === 'owner') && (t[0] !== 'verification' || ['owner', 'admin'].includes(S.me?.role)));
     const primary = [
       ['overview','لوحة التحكم','overview','home'],['health','حالة الموقع','health','shield'],['players','إدارة اللاعبين','players','users'],
       ['economy','المحفظة والعملات','economy','wallet'],['shop','المتجر والمنتجات','shop','store'],
@@ -87,7 +88,7 @@ export function mountAdmin(root) {
     const btn=([id,label,tab,icon])=>{ const allowed=tab&&tabs.some(t=>t[0]===tab); return `<button type="button" class="${S.navId===id?'on ':''}${allowed?'':'ad-nav-unavailable'}" data-ad-entry data-ad-label="${esc(label)}" data-ad="${allowed?'tab':'unavailable'}" ${allowed?`data-t="${tab}" data-navid="${id}"`:''} ${S.navId===id?'aria-current="page"':''} ${allowed?'':`aria-disabled="true" data-why="${tab?'هالقسم مب ضمن صلاحيات حسابك.':'إدارة البطولات مب منفّذة في النظام الحالي؛ ما بنعرضها كأنها شغّالة.'}"`}><span aria-hidden="true">${adminRoyalIcon(icon)}</span><span>${label}</span>${allowed?'':'<small>غير متاح</small>'}</button>`; };
     const covered=new Set(primary.map(x=>x[2]).filter(Boolean));
     const extra=tabs.filter(t=>!covered.has(t[0]));
-    const extraIcons={'home-banners':'image',suspicious:'shield','games-control':'settings','player-log':'users',tuning:'trophy',live:'users',watch:'chart','tribes-cp':'crown','site-ops':'settings',pricing:'wallet',payments:'wallet',progression:'crown',functional:'gift',verification:'shield',bulk:'gift',gifts:'gift',reports:'megaphone',maintenance:'settings',system:'chart',health:'shield','owner-tools':'crown'};
+    const extraIcons={luck:'chart','home-banners':'image',suspicious:'shield','games-control':'settings','player-log':'users',tuning:'trophy',live:'users',watch:'chart','tribes-cp':'crown','site-ops':'settings',pricing:'wallet',payments:'wallet',progression:'crown',functional:'gift',verification:'shield',bulk:'gift',gifts:'gift',reports:'megaphone',maintenance:'settings',system:'chart',health:'shield','owner-tools':'crown'};
     const label = primary.find(x=>x[0]===S.navId)?.[1] || tabs.find(t=>t[0]===S.tab)?.[1] || 'لوحة التحكم';
     return `<div class="ad ad-modern ad-royal ad68${S.sidebarOpen?' ad-sidebar-open':''}"><button type="button" class="ad-mobile-shade" data-ad="close-menu" aria-label="إغلاق القائمة"></button><aside class="ad-side d68-side" id="ad-royal-sidebar"><a class="ad-brand d68-brand" href="#/" aria-label="العودة لموقع لعبك">${brand68()}</a><nav class="ad-nav d68-nav" aria-label="أقسام لوحة الإدارة">${side68({tabs,tab:S.tab,open:S.grpOpen||(S.grpOpen={})})}<p data-ad-search-empty class="ad-empty" hidden>ما لقينا قسم. اضغط بحث للبحث عن لاعب.</p></nav></aside><section class="ad-main-wrap">${head68({me:S.me,search:S.search,bell:S.data?.dash68?.bell||0,sidebarOpen:S.sidebarOpen,menuIcon:adminRoyalIcon('menu'),searchIcon:adminRoyalIcon('search')})}${S.tab!=='overview'?`<h1 class="ad-page-title">${esc(label)}</h1>`:''}${S.msg?`<div class="ad-note ok" role="status">${esc(S.msg)}</div>`:''}${S.err?`<div class="ad-note bad" role="alert">${esc(S.err)}</div>`:''}<main class="ad-main">${S.navId==='matches'?'<div class="ad-note">المباريات الحالية والمنتهية المتاحة موجودة ضمن الغرف. سجل تاريخي مستقل لكل مباراة مب متوفر؛ ما نعرض أرقام تاريخية غير موثقة.</div>':''}${S.navId==='rewards'?'<div class="ad-note"><a class="ad-btn ghost" href="#/leaderboard">فتح الترتيب الحقيقي للاعبين</a> · إدارة الإنجازات والمكافآت الحالية تحت.</div>':''}${S.navId==='events'?'<div class="ad-note">الفعاليات الحالية إعلانات مجدولة من نوع فعالية، مب نظام بطولة مستقل.</div>':''}${inner}</main></section></div>`;
   }
@@ -117,6 +118,7 @@ export function mountAdmin(root) {
     'site-ops': () => '<section data-site-admin></section>',
     watch: () => '<section data-watch-admin></section>',
     live: () => '<section data-live-admin></section>',
+    luck: () => '<section data-luck-admin></section>',
     tuning: () => '<section data-tuning-admin></section>',
     social: () => '<section data-social-admin></section>',
     payments: () => '<div data-payment-admin></div>',
@@ -336,7 +338,9 @@ export function mountAdmin(root) {
     const tnRoot=root.querySelector('[data-tuning-admin]');
     if(tnRoot && S.me?.role==='owner') import('./tuning-admin-r67.js?v=r67av').then(({mountTuningAdmin})=>{if(tnRoot.isConnected)mountTuningAdmin(tnRoot,{call});}).catch(()=>{if(tnRoot.isConnected)tnRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const laRoot=root.querySelector('[data-live-admin]');
-    if(laRoot && S.me?.role==='owner') import('./live-admin-r67.js?v=r67ak').then(({mountLiveAdmin})=>{if(laRoot.isConnected)mountLiveAdmin(laRoot,{call});}).catch(()=>{if(laRoot.isConnected)laRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
+    if(laRoot && S.me?.role==='owner') import('./live-admin-r67.js?v=r69k').then(({mountLiveAdmin})=>{if(laRoot.isConnected)mountLiveAdmin(laRoot,{call});}).catch(()=>{if(laRoot.isConnected)laRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
+    const lkRoot=root.querySelector('[data-luck-admin]');
+    if(lkRoot && S.me?.role==='owner') import('./luck-admin-r69.js?v=r69a').then(({mountLuckAdmin})=>{if(lkRoot.isConnected)mountLuckAdmin(lkRoot,{call,openLog:(q)=>{S.logQ=q;go('player-log');}});}).catch(()=>{if(lkRoot.isConnected)lkRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const waRoot=root.querySelector('[data-watch-admin]');
     if(waRoot && S.me?.role==='owner') import('./watch-admin-r67.js?v=r67ai').then(({mountWatchAdmin})=>{if(waRoot.isConnected)mountWatchAdmin(waRoot,{call});}).catch(()=>{if(waRoot.isConnected)waRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const atRoot=root.querySelector('[data-at68]');
@@ -350,7 +354,7 @@ export function mountAdmin(root) {
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=r68z40e').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r69k').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { if (tab !== 'player-log') S.logQ = ''; S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {

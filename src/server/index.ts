@@ -1356,7 +1356,7 @@ export async function createApp(
           giftsSent: { count: gs.length, value: gv(gs) }, giftsRecv: { count: gr.length, value: gv(gr) },
           tribe: t ? { name: t.name, leader: t.leader === id } : null, cp: c ? { partner: nm(c.partner), pts: cpPoints.get(cpKey(c.id, id, c.partner)) } : null,
           rooms: socialRooms.ownedRoomsOf(id), reports: community.reportsAgainst(id), ban: ban ? { reason: (ban as { reason?: string }).reason ?? '', at: (ban as { at?: number }).at ?? null } : null,
-          owned: wallet.owned(id).length, staff: null as string | null };
+          owned: wallet.owned(id).length, staff: null as string | null, twofa: arena.tfEnabled(id) };
       };
       return { ok: true, players: ids.map(card) };
     }, 'owner');
@@ -1677,6 +1677,8 @@ export async function createApp(
     functionalHttp.add('POST', '/api/2fa/setup', ({ user }) => { noGuest(user.id); return arenaRun(() => ({ ok: true, ...arena.tfSetup(user.id, accounts.nameOf(user.id) || 'حسابي') })); });
     functionalHttp.add('POST', '/api/2fa/enable', ({ user, body }) => arenaRun(() => { arena.tfEnable(user.id, body.code); return { ok: true, ...arena.tfStatus(user.id) }; }));
     functionalHttp.add('POST', '/api/2fa/disable', ({ user, body }) => arenaRun(() => { arena.tfDisable(user.id, body.code); return { ok: true, ...arena.tfStatus(user.id) }; }));
+    functionalHttp.add('GET', '/api/admin/luck', () => ({ ok: true, casino: casino.adminView(), xfer: arena.xferAdmin((id) => accounts.nameOf(id) || id.slice(0, 8)) }), 'owner');
+    functionalHttp.add('POST', '/api/admin/luck/toggle', ({ actor, body }) => { const g = body.game === 'slot' ? 'slot' : body.game === 'food' ? 'food' : null; adminNeed(!!g, 'لعبة غير معروفة.'); const off = !!body.off; const v = casino.setOff(g!, off); admin.audit(actor!, 'luck.toggle', g!, off ? 'إيقاف' : 'تشغيل'); return { ok: true, casino: v }; }, 'owner');
     functionalHttp.add('POST', '/api/admin/2fa-reset', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(accounts.has(id), 'اللاعب غير موجود.'); adminNeed(arena.tfReset(id), 'التحقق بخطوتين مو مفعّل عند اللاعب.'); admin.audit(actor!, '2fa.reset', id, 'فك التحقق بخطوتين'); return { ok: true }; }, 'owner');
     functionalHttp.add('POST', '/api/foodwheel/chest', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.claimChest(user.id, (body as any)?.i)) }; });
     functionalHttp.add('POST', '/api/foodwheel/bet', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.bet(user.id, accounts.nameOf(user.id) || 'لاعب', (body as any)?.item, (body as any)?.chip)) }; });

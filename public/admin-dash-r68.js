@@ -14,7 +14,7 @@ export const GROUPS68 = [
   ['players', 'إدارة اللاعبين', '👥', ['players', 'player-log', 'ids3', 'owner-tools', 'verification', 'bulk']],
   ['economy', 'المحفظة والعملات', '🪙', ['economy', 'pricing', 'payments', 'tuning']],
   ['shop', 'المتجر والمنتجات', '🛒', ['shop', 'gifts', 'auction', 'home-banners']],
-  ['games', 'إدارة الألعاب', '🎮', ['games-control', 'achievements']],
+  ['games', 'إدارة الألعاب', '🎮', ['games-control', 'luck', 'achievements']],
   ['rooms', 'الغرف والمباريات', '🗂️', ['rooms', 'social', 'site-ops']],
   ['cups', 'البطولات', '🏆', ['rank-vip', 'progression', 'tribes-cp']],
   ['events', 'الفعاليات', '📅', ['live', 'functional']],
