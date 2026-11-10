@@ -178,4 +178,3 @@ html.pf67-full .pf68 .pf68-mid{background:linear-gradient(180deg,rgba(18,7,34,0)
 .pf68 .pf68-card h2{font-size:16.5px}
 .pf68 .pf68-badge{width:62px;height:62px}
 .pf68 .pf68-avcard,.pf68 .pf68-frcard{min-height:88px}
-.pf68 .pc68-wrap{padding:calc(env(safe-area-inset-top) + 66px) 10px 0;background:linear-gradient(180deg,color-mix(in srgb,var(--pc-tint) 30%,transparent),color-mix(in srgb,var(--pc-tint) 18%,transparent))}

@@ -1,7 +1,6 @@
 /* المجتمع: منشورات وإعجابات وتعليقات ومتابعة وإشعارات وبلاغات. كل التحقق والعدّ والصلاحيات من الخادم (src/server/community.ts).
  * النصوص تُعرض بعد تهريبها دائماً (ما نستعمل HTML من المستخدم)، والروابط داخلية فقط. */
 import { avatarArt } from './avatars.js?v=r68z31';
-import { pcardHTML, pcardOk, pcardTint } from './pcard-r68.js?v=r68z34c';
 import { officialBadge } from './official-badge-r67.js?v=r67as';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -184,8 +183,7 @@ export function userPageHTML(signed, gameName) {
   const followBtn = signed && !u.me ? `<button type="button" class="btn ${u.followed ? 'ghost' : ''}" data-act="cm-follow" data-pub="${esc(u.pub)}" data-on="${u.followed ? 0 : 1}" ${CM.busy.has('f' + u.pub) ? 'disabled aria-busy="true"' : ''}>${u.followed ? 'تتابعه ✓' : 'متابعة'}</button>` : '';
   // الكتم والحظر (التطبيق كله بالخادم)
   const relBtns = signed && !u.me ? `<div class="cm-rel">${u.blocked ? '' : `<button type="button" class="pill-btn" data-act="cm-rel" data-k="mute" data-pub="${esc(u.pub)}" data-on="${u.muted ? 0 : 1}">${u.muted ? '👁 إظهار منشوراته' : '🙈 إخفاء منشوراته'}</button>`}<button type="button" class="pill-btn ${u.blocked ? '' : 'danger'}" data-act="cm-rel" data-k="block" data-pub="${esc(u.pub)}" data-on="${u.blocked ? 0 : 1}">${u.blocked ? '✅ فك الحظر' : '⛔ حظر'}</button></div>` : '';
-  const pc = !u.blocked && pcardOk(u.pcard?.css) ? u.pcard : null; // R68z34: بطاقة الملف
-  return `<div class="stack cm-page${pc ? ' pc68-tinted' : ''}"${pc ? ` style="--pc-tint:${pcardTint(pc.css)}"` : ''}>${pc ? pcardHTML(pc.css, { face: faceOf(u, 120), name: u.name, sub: u.adminId ? 'ID ' + esc(u.adminId) : '', vip: pc.vip, level: pc.level }) : ''}
+  return `<div class="stack cm-page">
     <section class="card cm-prof${u.anim ? ` pa68 t${u.anim}` : ''}">${u.anim ? '<span class="pa68-fx" aria-hidden="true"><b></b><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>' : ''}${u.bg && typeof u.bg.id === 'string' ? `<div class="cm67-bg" aria-hidden="true" data-id="${esc(u.bg.id)}" data-css="${esc(u.bg.css || '')}" data-art="${esc(u.bg.art || '')}" data-full="${u.bg.full ? 1 : 0}"></div>` : ''}${faceOf(u, 84)}<div class="cm-pi"><h1>${esc(u.name)}${u.official ? officialBadge(22) : ''}${u.me ? ' <small>(أنت)</small>' : ''}</h1>
       <p class="cm-facts">${facts.map((f) => `<span>${f}</span>`).join('')}</p>
       ${U.data.relations?.couple && PUB_RE.test(U.data.relations.couple.partnerPub) && !u.blocked ? `<p class="cm-facts" data-public-couple-r47><a href="#/u/${esc(U.data.relations.couple.partnerPub)}">ارتباط افتراضي · ملف الشريك</a></p>` : ''}
