@@ -11,7 +11,7 @@ const ART = '/assets/art68/casino/';
 /* ======================= السلوت ======================= */
 const SYM = { ten: 'ten', j: 'j', q: 'q', k: 'k', a: 'a', gem: 'gem', crown: 'crown', falcon: 'falcon', lion: 'lion', wild: 'wild', free: 'free', jack: 'jack' };
 const KEYS = Object.keys(SYM);
-const tile = (s) => `<div class="cz-t cz-t-${s}"><img src="${ART}sym-${SYM[s] || 'ten'}.webp" alt="" draggable="false"></div>`;
+const tile = (s) => `<div class="cz-t cz-t-${s}"><img src="${ART}sym2-${SYM[s] || 'ten'}.webp" alt="" draggable="false"></div>`;
 const SL = { st: null, bet: 0, busy: false, last: null, auto: false };
 const TIERS = ['MINI', 'MAJOR', 'GRAND', 'MEGA'], TIER_PCT = [5, 15, 40, 100];
 const spinLabel = () => SL.st?.free ? 'مجاني' : SL.auto ? 'إيقاف' : 'تدوير';
@@ -21,13 +21,13 @@ function slotHTML() {
   const grid = SL.last?.grid || [0, 1, 2, 3, 4].map((r) => [0, 1, 2].map((i) => KEYS[(r * 3 + i * 5) % 9]));
   const feed = st.feed.length ? st.feed.slice(0, 5).map((f) => `<p><i class="sl-av">${esc([...String(f.name || '؟')][0])}</i><bdi>${esc(f.name)}</bdi> فاز بـ <em>${nf(f.win)}</em>${COIN}${f.kind === 'jack' ? ' 🏆' : ''}</p>`).join('') : '<p class="cz-dim">أول فائز كبير يطلع هنا</p>';
   return `<div class="cz cz-slot" dir="rtl">
-  <header class="sl-head"><button type="button" class="sl-ic" data-cz="close" aria-label="إغلاق">✕</button><h1 class="sl-logo"><span>جاكبوت</span><span>لعبك</span></h1><button type="button" class="sl-ic sl-help" data-cz="help" aria-label="الشرح">?</button></header>
+  <header class="sl-head"><button type="button" class="sl-ic" data-cz="close" aria-label="إغلاق">✕</button><h1 class="sl-logo"><span>جاكبوت</span><span>لعبك</span></h1><button type="button" class="sl-ic sl-help" data-cz="help" aria-label="الشرح"><img src="${ART}sl-wheel.webp" alt=""></button></header>
   <section class="sl-feed">${feed}</section>
-  <section class="sl-jp"><i class="sl-jpw">Jackpot</i><div class="sl-jpbar"><small>${TIERS[SL.bet]}</small><b data-cz-jp>${nf(st.jackpot)}</b></div></section>
-  <section class="sl-reels"><div class="cz-reels">${grid.map((col, r) => `<div class="cz-reel" data-reel="${r}"><div class="cz-strip">${col.map(tile).join('')}</div></div>`).join('')}<svg class="cz-lines" viewBox="0 0 500 300" preserveAspectRatio="none" aria-hidden="true"></svg></div></section>
-  <p class="cz-freeb">${free ? `🎁 لفات مجانية باقية: <b>${free.left}</b>` : ''}</p><p class="cz-msg" role="status" data-cz-msg></p>
+  <section class="sl-jp"><img class="sl-jplogo" src="${ART}sl-jplogo.webp" alt="Jackpot"><div class="sl-jpbar"><small>${TIERS[SL.bet]}</small><b data-cz-jp>${nf(st.jackpot)}</b></div></section>
+  <section class="sl-machine"><img class="sl-ft" src="${ART}sl-ftop.webp" alt=""><div class="sl-fm" style="background-image:url(${ART}sl-fmid.webp)"></div><img class="sl-fb" src="${ART}sl-fbot.webp" alt=""><p class="sl-tpill">5 × JACKPOT = ${TIER_PCT[SL.bet]}%</p><div class="cz-reels">${grid.map((col, r) => `<div class="cz-reel" data-reel="${r}"><div class="cz-strip">${col.map(tile).join('')}</div></div>`).join('')}<svg class="cz-lines" viewBox="0 0 500 300" preserveAspectRatio="none" aria-hidden="true"></svg></div><p class="cz-msg sl-bpill" role="status" data-cz-msg></p></section>
+  <p class="cz-freeb">${free ? `🎁 لفات مجانية باقية: <b>${free.left}</b>` : ''}</p>
   <footer class="sl-bar"><div class="sl-r1"><span><small>الخطوط</small><b>${st.lines}</b></span><span><small>إجمالي الرهانات</small><b>${nf(free ? 0 : total)}</b></span><span><small>فوز</small><b data-cz-win>${nf(SL.last?.win || 0)}</b></span><button type="button" class="sl-auto${SL.auto ? ' on' : ''}" data-cz="auto">تلقائي</button></div>
-   <div class="sl-r2"><span class="sl-coins">${COIN}<b data-cz-bal>${nf(st.coins)}</b></span><div class="sl-step"><button type="button" data-cz="bet-" aria-label="أقل" ${free || SL.busy ? 'disabled' : ''}>−</button><b>${nf(lineBet)}</b><button type="button" data-cz="bet+" aria-label="أكثر" ${free || SL.busy ? 'disabled' : ''}>+</button></div><button type="button" class="sl-spin" data-cz="spin" ${SL.busy && !SL.auto ? 'disabled' : ''}>${spinLabel()}</button></div></footer>
+   <div class="sl-r2"><span class="sl-coins">${COIN}<b data-cz-bal>${nf(st.coins)}</b></span><div class="sl-step"><button type="button" data-cz="bet-" aria-label="أقل" ${free || SL.busy ? 'disabled' : ''}><img src="${ART}sl-minus.webp" alt=""></button><b>${nf(lineBet)}</b><button type="button" data-cz="bet+" aria-label="أكثر" ${free || SL.busy ? 'disabled' : ''}><img src="${ART}sl-plus.webp" alt=""></button></div><button type="button" class="sl-spin" data-cz="spin" ${SL.busy && !SL.auto ? 'disabled' : ''}>${spinLabel()}</button></div></footer>
   <p class="cz-note">العب بعملات الموقع بس. النتيجة يحددها الخادم.</p></div>`;
 }
 async function slotSpin(root) {
@@ -185,18 +185,22 @@ html:has(.cz-ov[data-casino=slot]) .cz-ov{background:#1a0638}
 .cz-slot{background:radial-gradient(110% 45% at 50% 0,#7b2fd6 0,#4a128f 45%,#260a52 75%,#1a0638)}
 .sl-head{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;direction:ltr}
 .sl-ic{width:36px;height:36px;border-radius:50%;border:2px solid #ff8ad8;background:radial-gradient(circle at 40% 35%,#c23cc9,#6d128a);color:#fff;font:900 17px/1 Arial,sans-serif;cursor:pointer;box-shadow:0 2px 0 #3a0650}
-.sl-help{border-color:#ff7aa8;background:radial-gradient(circle at 40% 35%,#ff4d8b,#a10f52)}
+.sl-help{padding:0;border:0;background:none;box-shadow:none;width:44px;height:44px}.sl-help img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px #0008)}
 .sl-logo{margin:0;display:flex;justify-content:center;gap:8px;font:italic 900 32px/1.25 Cairo,Tahoma,sans-serif;white-space:nowrap}
 .sl-logo span{background:linear-gradient(180deg,#fff 0,#e6c8ff 45%,#a66bff 55%,#e9d3ff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #4b0a8f) drop-shadow(0 0 1px #2a0060)}
-.sl-feed{margin:8px 4px 0;padding:6px 10px;min-height:96px;border-radius:14px;background:linear-gradient(180deg,#2a0c5c99,#1a063a99);border:1px solid #a86bff44;font-size:12.5px}
+.sl-feed{margin:8px 4px 0;padding:6px 10px;min-height:44px;border-radius:14px;background:linear-gradient(180deg,#2a0c5c99,#1a063a99);border:1px solid #a86bff44;font-size:12.5px}
 .sl-feed p{display:flex;align-items:center;gap:6px;margin:3px 0;white-space:nowrap;overflow:hidden}.sl-feed bdi{color:#e9dcff;max-width:40%;overflow:hidden;text-overflow:ellipsis}.sl-feed em{font-style:normal;font-weight:900;color:#ff9a3c;direction:ltr}
 .sl-av{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:900;background:linear-gradient(#8a5cff,#4a1fa6);border:1.5px solid #d6b8ff}
-.sl-jp{position:relative;margin:6px auto 0;width:86%;padding-top:18px}
-.sl-jpw{position:absolute;left:50%;top:-6px;transform:translateX(-50%) rotate(-4deg);z-index:1;font:italic 900 32px/1 "Brush Script MT","Segoe Script",Georgia,serif;color:#fff;-webkit-text-stroke:1px #ff5bd6;text-shadow:0 0 2px #c214a8,0 3px 0 #8a0d7a,0 0 12px #ff5bd6aa}
+.sl-jp{position:relative;margin:4px auto 0;width:88%;display:flex;flex-direction:column;align-items:center}.sl-jplogo{width:58%;margin-bottom:-14px;position:relative;z-index:1;filter:drop-shadow(0 3px 6px #0008)}
+
 .sl-jpbar{direction:ltr;display:flex;align-items:center;gap:10px;justify-content:center;height:36px;padding:0 14px;border-radius:12px;background:linear-gradient(180deg,#1e1452,#2d1b6d);border:2px solid #5c46b8;box-shadow:inset 0 2px 6px #0008}
 .sl-jpbar small{font:900 12px/1 Arial,sans-serif;color:#ff8ae6;letter-spacing:.5px}.sl-jpbar b{font:900 22px/1 Arial,sans-serif;color:#ffcf4a;text-shadow:0 2px 0 #8a4a00,0 0 10px #ffb80088;letter-spacing:1px}
-.sl-reels{position:relative;margin:10px -8px 0;padding:8px 10px;background:linear-gradient(180deg,#4d1d93,#2e0e63);border-top:3px solid #8f5ce6;border-bottom:3px solid #8f5ce6}
-.sl-reels::before,.sl-reels::after{content:"";position:absolute;top:8px;bottom:8px;width:10px;background:radial-gradient(circle,#ff6bd5 0 3px,#0000 3.5px) center/10px 33.33% repeat-y}.sl-reels::before{left:0}.sl-reels::after{right:0}
+.sl-machine{position:relative;margin:8px -8px 0;container-type:inline-size;display:flex;flex-direction:column}.sl-ft,.sl-fb{display:block;width:100%;height:auto}.sl-fm{height:45cqw;background:center/100% 100% no-repeat}
+.sl-machine .cz-reels{position:absolute;left:6.4%;right:7.1%;top:14.9cqw;bottom:14.6cqw;display:grid;grid-template-columns:repeat(5,1fr);gap:1.3cqw;background:none;padding:0}
+.sl-machine .cz-reel{aspect-ratio:auto;height:100%;background:none}
+.sl-tpill{position:absolute;left:17%;right:17%;top:5.6cqw;height:8.4cqw;margin:0;display:grid;place-items:center;font:900 3.6cqw/1 Arial,sans-serif;color:#ffd6fb;letter-spacing:.3cqw;direction:ltr}
+.sl-bpill{position:absolute;left:4%;right:4%;bottom:2.6cqw;height:9cqw;margin:0;display:grid;place-items:center;font-size:4cqw!important;min-height:0}
+
 .cz-reels{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;direction:ltr;background:#6a2fc4;padding:0 5px;border-radius:4px}
 .cz-reel{position:relative;aspect-ratio:1/3.25;container-type:size;contain:paint;overflow:hidden;background:linear-gradient(180deg,#141a4a,#1e2766 50%,#141a4a)}
 .cz-strip{display:flex;flex-direction:column;will-change:transform}
@@ -208,12 +212,12 @@ html:has(.cz-ov[data-casino=slot]) .cz-ov{background:#1a0638}
 .sl-bar{direction:ltr;margin:6px -8px 0;padding:8px 8px 10px;background:linear-gradient(180deg,#5a1fa8,#3a0f78);border-top:2px solid #a875ff;border-radius:18px 18px 0 0}
 .sl-r1{display:grid;grid-template-columns:auto 1fr 1fr auto;align-items:end;gap:8px}
 .sl-r1 span{display:flex;flex-direction:column;align-items:center;line-height:1.1}.sl-r1 small{font-size:12px;color:#d9c2ff}.sl-r1 b{font:900 20px/1.1 Arial,sans-serif;color:#ffe6a8}
-.sl-auto{padding:8px 20px;border-radius:99px;border:2px solid #fff3b0;background:linear-gradient(180deg,#ffe55c,#ffb000);color:#7a3a00;font-weight:900;font-size:15px;cursor:pointer;box-shadow:0 3px 0 #a86200}.sl-auto.on{background:linear-gradient(180deg,#ff9a3c,#e05a00);color:#fff}
+.sl-auto{padding:0 22px;height:40px;border:0;border-radius:0;background:url(/assets/art68/casino/sl-btn-yellow.webp) center/100% 100% no-repeat;color:#7a3a00;font-weight:900;font-size:15px;cursor:pointer;filter:drop-shadow(0 2px 2px #0006)}.sl-auto.on{filter:hue-rotate(-25deg) saturate(1.4) drop-shadow(0 0 8px #ffb000);color:#fff}
 .sl-r2{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;margin-top:8px}
-.sl-coins{display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:12px;background:#1e0a46;border:1.5px solid #7d4cd6;font:900 16px/1 Arial,sans-serif;overflow:hidden}
+.sl-coins{display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:12px;background:#1e0a46;border:1.5px solid #7d4cd6;font:900 14px/1 Arial,sans-serif;overflow:hidden;min-width:0}
 .sl-step{display:flex;align-items:center;gap:6px;height:40px;padding:0 4px;border-radius:99px;background:#1e0a46;border:1.5px solid #7d4cd6}.sl-step b{min-width:44px;text-align:center;font:900 18px/1 Arial,sans-serif;color:#e7d4ff}
-.sl-step button{width:30px;height:30px;border-radius:50%;border:0;background:linear-gradient(#efe6ff,#b9a3e6);color:#3a1a7a;font:900 20px/1 Arial,sans-serif;cursor:pointer}.sl-step button:disabled{opacity:.4}
-.sl-spin{min-width:112px;height:52px;border-radius:16px;border:2px solid #d8ff9c;background:linear-gradient(180deg,#9cff4f,#2fbf14 60%,#1c9a0b);color:#fff;font:900 20px/1 Cairo,Tahoma,sans-serif;text-shadow:0 2px 0 #0b5a00;cursor:pointer;box-shadow:0 4px 0 #0a6a0a}.sl-spin:active{transform:translateY(2px)}.sl-spin:disabled{filter:grayscale(.85);opacity:.75}
+.sl-step button{width:34px;height:34px;padding:0;border:0;background:none;cursor:pointer}.sl-step button img{width:100%;height:100%;object-fit:contain}.sl-step button:disabled{opacity:.4}
+.sl-spin{min-width:120px;height:54px;border:0;border-radius:0;background:url(/assets/art68/casino/sl-btn-green.webp) center/100% 100% no-repeat;color:#fff;font:900 20px/1 Cairo,Tahoma,sans-serif;text-shadow:0 2px 0 #0b5a00,0 0 4px #0006;cursor:pointer;filter:drop-shadow(0 3px 2px #0007)}.sl-spin:active{transform:translateY(2px)}.sl-spin:disabled{filter:grayscale(.85);opacity:.75}
 /* ---------- عجلة الأكل ---------- */
 html:has(.cz-ov[data-casino=food]) .cz-ov{background:#c3122f}
 .cz-food{padding-inline:0;padding-top:0;background:#b10f2a}
