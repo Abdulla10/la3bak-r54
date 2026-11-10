@@ -1,6 +1,6 @@
 /* R68z: ٨ بول — نفس جو الفيديو: خلفية زرقا مزخرفة، طاولة واقفة، شريط القوة يمين */
-.pl{position:relative;min-height:calc(100dvh - 170px);padding:8px 8px 12px;color:#fff;border-radius:18px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#1f6fd6 0%,#0c3a86 45%,#06204f 100%)}
-.pl::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(60deg,#ffffff08 0 2px,transparent 2px 46px),repeating-linear-gradient(-60deg,#ffffff08 0 2px,transparent 2px 46px);pointer-events:none}
+.pl{position:relative;min-height:calc(100dvh - 170px);padding:8px 8px 12px;color:#fff;border-radius:18px;overflow:hidden;background:#06204f url(/assets/games68/pool-bg.webp) center/cover no-repeat}
+.pl-old::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(60deg,#ffffff08 0 2px,transparent 2px 46px),repeating-linear-gradient(-60deg,#ffffff08 0 2px,transparent 2px 46px);pointer-events:none}
 .pl-bar{position:relative;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 8px}
 .pl-p{display:flex;align-items:center;gap:8px;flex:1;min-width:0}.pl-p.r{flex-direction:row-reverse}
 .pl-av{position:relative;width:50px;height:50px;border-radius:50%;border:2.5px solid #fff;overflow:visible;flex:none;background:#0a2a5a}

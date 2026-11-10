@@ -28,16 +28,22 @@ export function pool(room) {
   const side = (pi, cls) => { const id = g.players[pi]; const turn = g.phase === 'aim' && g.turnId === id; return `<div class="pl-p ${cls}${turn ? ' turn' : ''}"><span class="pl-av">${faceOf(room, id, pi, 54)}${turn ? `<b class="pl-t" data-pl-left="${left}" data-pl-at="${Date.now()}">${Math.ceil(left / 1000)}</b>` : ''}</span><span class="pl-who"><b>${esc(nm(room, id))}</b><span class="pl-row">${rowOf(g, pi)}</span></span></div>`; };
   const msg = g.phase === 'final' ? `<div class="pl-final"><div>${g.winner === room.you ? '🏆' : '🎱'}</div><b>${g.winner ? `${esc(nm(room, g.winner))} فاز!` : 'انتهت'}</b><small>${esc(g.msg)}</small></div>` : g.msg ? `<p class="pl-msg${/خطأ|خلص/.test(g.msg) ? ' bad' : ''}">${esc(g.msg)}${myTurn && g.inHand ? ' — حرّك البيضا وحطها وين ما تبي' : ''}</p>` : '';
   return `<div class="pl" dir="rtl"><div class="pl-bar">${side(meI, 'l')}<span class="pl-vs">VS</span>${side(opp, 'r')}</div>
-    <div class="pl-stage"><div class="pl-table"><canvas class="pl-cv" width="${W + 60}" height="${H + 60}" aria-label="طاولة البلياردو"></canvas></div>
+    <div class="pl-stage"><div class="pl-table"><canvas class="pl-cv" width="${W + 132}" height="${H + 132}" aria-label="طاولة البلياردو"></canvas></div>
     ${myTurn ? `<div class="pl-side"><button type="button" class="pl-spin" data-act="pl-spin" aria-label="دوران البيضا"><i style="top:${50 - PL.spin * 34}%"></i></button><div class="pl-power" data-pl-power aria-label="القوة — اسحب لتحت واترك"><span class="pl-pf" style="height:${PL.power * 100}%"></span><span class="pl-cue"></span></div><small>اسحب<br>لتحت</small></div>` : ''}</div>
     ${msg}${myTurn ? `<p class="pl-hint">${g.inHand ? '✋ البيضا بيدك: اسحبها لمكانها، ' : ''}اسحب على الطاولة عشان تصوّب، وبعدها اسحب القوة لتحت واترك.</p>` : ''}</div>`;
 }
 
 /* ---------- الرسم ---------- */
-const M = 30; // هامش الإطار داخل الكانفس
+const M = 66; // هامش الإطار داخل الكانفس
+/* رسومات المالك: الطاولة والعصي */
+const IMG = {}; const img = (src) => { if (!src) return null; let i = IMG[src]; if (!i) { i = IMG[src] = new Image(); i.decoding = 'async'; i.src = src; i.onload = () => { const c = document.querySelector('.pl-cv'); if (c && PL.repaint) PL.repaint(); }; } return i.complete && i.naturalWidth ? i : null; };
+const TABLE_SRC = '/assets/games68/pool-table.webp', DEFAULT_CUE = '/assets/games68/cues/cue00.webp';
+const CLOTH = { x: 48, y: 60, w: 455, h: 857 }; // مكان القماش داخل صورة الطاولة
 function drawTable(ctx) {
   const cw = W + 2 * M, ch = H + 2 * M;
   ctx.clearRect(0, 0, cw, ch);
+  const t = img(TABLE_SRC);
+  if (t) { const sx = W / CLOTH.w, sy = H / CLOTH.h; ctx.drawImage(t, M - CLOTH.x * sx, M - CLOTH.y * sy, t.naturalWidth * sx, t.naturalHeight * sy); ctx.strokeStyle = '#ffffff1c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M, M + HEAD_Y); ctx.lineTo(M + W, M + HEAD_Y); ctx.stroke(); return; }
   // الإطار
   const rail = ctx.createLinearGradient(0, 0, cw, 0); rail.addColorStop(0, '#1c1c22'); rail.addColorStop(.5, '#34343c'); rail.addColorStop(1, '#1c1c22');
   ctx.fillStyle = rail; roundRect(ctx, 0, 0, cw, ch, 26); ctx.fill();
@@ -79,6 +85,8 @@ function drawAim(ctx, balls, cue, ang, power) {
   if (best) { const nx = best.b.x - gx, ny = best.b.y - gy, nl = Math.hypot(nx, ny) || 1; ctx.beginPath(); ctx.moveTo(M + best.b.x, M + best.b.y); ctx.lineTo(M + best.b.x + nx / nl * 70, M + best.b.y + ny / nl * 70); ctx.stroke(); }
   // العصا
   const pull = 18 + power * 70; const sx = cue.x - dx * (R + pull), sy = cue.y - dy * (R + pull), ex = sx - dx * 520, ey = sy - dy * 520;
+  const ci = img(PL.cueArt || DEFAULT_CUE) || img(DEFAULT_CUE);
+  if (ci) { const len = 600, th = Math.max(16, len * ci.naturalHeight / ci.naturalWidth); ctx.save(); ctx.translate(M + sx, M + sy); ctx.rotate(ang); ctx.shadowColor = '#000a'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6; ctx.drawImage(ci, -len, -th / 2, len, th); ctx.restore(); return; }
   const gr = ctx.createLinearGradient(M + sx, M + sy, M + ex, M + ey); gr.addColorStop(0, '#f1e6cf'); gr.addColorStop(.04, '#f1e6cf'); gr.addColorStop(.05, '#2a5bd7'); gr.addColorStop(.08, '#d9b27a'); gr.addColorStop(.7, '#a0652b'); gr.addColorStop(1, '#2a1607');
   ctx.strokeStyle = gr; ctx.lineCap = 'round'; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(M + sx, M + sy); ctx.lineTo(M + ex, M + ey); ctx.stroke(); ctx.lineCap = 'butt';
 }
@@ -95,6 +103,7 @@ let clockT = 0;
 export function afterRender(view, room, send) {
   const g = room.game; if (!g || g.game !== 'pool') return;
   PL.send = send;
+  { const meP = room.players.find((p) => p.id === room.you); const a = meP?.equipped?.cue?.art; PL.cueArt = typeof a === 'string' && /^\/assets\/[A-Za-z0-9_./-]+\.webp$/.test(a) ? a : ''; }
   const cv = view.querySelector('.pl-cv'); if (!cv) return;
   const myTurn = g.phase === 'aim' && g.turnId === room.you;
   clearInterval(clockT); clockT = setInterval(() => { const els = document.querySelectorAll('[data-pl-left]'); if (!els.length) return clearInterval(clockT); for (const el of els) { const l = Number(el.dataset.plLeft) - (Date.now() - Number(el.dataset.plAt)); el.textContent = String(Math.max(0, Math.ceil(l / 1000))); el.classList.toggle('low', l < 8000); } }, 300);
@@ -107,6 +116,7 @@ export function afterRender(view, room, send) {
       PL.anim = { frames, i: 0, t0: performance.now() };
     }
   } else if (!g.last) PL.shown = g.shotNo;
+  PL.repaint = () => { if (!PL.anim) { const c = document.querySelector('.pl-cv'); if (c) paint(c, room, currentBalls(g), g.phase === 'aim' && g.turnId === room.you); } };
   const loop = () => {
     const c = document.querySelector('.pl-cv'); if (!c) { PL.anim = null; return; }
     if (PL.anim) {

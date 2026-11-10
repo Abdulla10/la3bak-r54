@@ -4,8 +4,8 @@ import { ldPlayMode, LD_MODES } from './hub.js?v=r68y-r6';
 import * as SFX from './sfx.js?v=shell-r6';
 import { domino } from './domino.js?v=r67ac';
 import { uno } from './uno.js?v=r67ac';
-import { liars } from './liars.js?v=r68z6';
-import { pool } from './pool.js?v=r68z6';
+import { liars } from './liars.js?v=r68z16';
+import { pool } from './pool.js?v=r68z16';
 import { carrom } from './carrom.js?v=r67ac';
 import { minaboli } from './minaboli-r47.js?v=r57';
 /* واجهات الألعاب بالدور والتصويت. كل دالة تأخذ الغرفة وترجع HTML.

@@ -60,3 +60,24 @@
 
 .lr-seat .lr-av::after{content:"";position:absolute;left:-30%;right:-30%;bottom:-48%;height:60%;border-radius:50% 50% 0 0;background:radial-gradient(ellipse at 50% 0,#3a2016,#1a0b06);z-index:-1;box-shadow:0 -4px 10px #0006}
 .lr-wire{position:relative;z-index:2;background:#0008;border-radius:8px;padding:0 6px}
+/* R68z16: صور المالك — البار، الطاولة، الشخصيات، القنبلة والقطّاعة */
+.lr-bar{object-fit:cover;object-position:center top}
+.lr-table{left:-6%;right:-6%;top:34%;height:auto;aspect-ratio:894/319;border-radius:0;padding:0;background:url(/assets/games68/liars-table.webp) center/100% 100% no-repeat;box-shadow:none;filter:drop-shadow(0 22px 30px #000b)}
+.lr-felt{background:none;box-shadow:none;border-radius:50%;width:84%;height:74%;margin:5% auto 0}
+.lr-table.myturn{filter:drop-shadow(0 0 16px #ffd34d) drop-shadow(0 22px 30px #000b)}
+.lr-table.myturn .lr-felt{box-shadow:none}
+.lr-seat{width:140px;z-index:0}
+.lr-ch{position:relative;display:block;width:132px;height:132px}
+.lr-ch>img{width:100%;height:100%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 8px 14px #000a)}
+.lr-me .lr-ch{width:120px;height:120px}
+.lr-seat.turn .lr-ch>img,.lr-me.turn .lr-ch>img{filter:drop-shadow(0 0 10px #ffd34d) drop-shadow(0 0 4px #ffd34d)}
+.lr-nm{display:flex;align-items:center;gap:4px;max-width:130px;margin-top:-6px;padding:2px 8px 2px 3px;border:1px solid #c9a24a88}
+.lr-mini{display:inline-block;width:20px;height:20px;border-radius:50%;overflow:hidden;flex:none}.lr-mini>*{width:100%!important;height:100%!important;border-radius:50%;object-fit:cover}
+.lr-seat .lr-av::after{display:none}
+.lr-bombi{position:relative;width:min(84%,330px);filter:drop-shadow(0 14px 24px #000)}.lr-bombi>img{display:block;width:100%;height:auto}
+.lr-bombi .lr-lcd{position:absolute;left:40.8%;right:25.2%;top:38.7%;bottom:33.8%;display:grid;place-items:center;font:900 clamp(16px,6vw,26px)/1 ui-monospace,Menlo,monospace;color:#41ff6a;text-shadow:0 0 8px #41ff6a99;letter-spacing:1px;direction:ltr;white-space:nowrap}
+.lr-bombi.safe .lr-lcd{font-family:Tahoma,sans-serif}
+.lr-bombi.set{animation:lrdrop .6s cubic-bezier(.2,1.4,.4,1)}.lr-bombi.tick{animation:lrshake .25s infinite}.lr-ov.boom .lr-bombi{animation:lrshake .1s 6}
+img.lr-pliers{width:130px;height:auto;filter:drop-shadow(0 8px 12px #000b)}
+.lr-seat{z-index:2}.lr-table{top:36%}
+.lr-ov img.lr-pliers{position:absolute;left:auto;right:4%;top:auto;bottom:34%;width:120px}

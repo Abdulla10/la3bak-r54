@@ -108,3 +108,8 @@ html body .ids-page .ids-ic{background:none!important;box-shadow:none!important;
 html body .ids-card,html body .ids-card:hover{background:linear-gradient(180deg,#1a1a1d,#121214)!important;box-shadow:0 6px 16px #0008!important}
 .ids-foot{bottom:calc(84px + env(safe-area-inset-bottom));border-radius:14px;margin:0 10px;border:1px solid #ffffff14}
 .ids-page{padding-bottom:160px}
+/* R68z: عصي البلياردو */
+.cue68-thumb{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:90px;background:radial-gradient(ellipse at 50% 50%,#1f6fd6,#0b3a86 70%);border-radius:12px;overflow:hidden}
+.cue68-thumb img{width:150%;max-width:none;transform:rotate(-32deg);filter:drop-shadow(0 6px 8px #000a)}
+.r23-lux-preview .cue68-thumb,.r23-preview-sheet .cue68-thumb{min-height:130px}.r23-preview-sheet .cue68-thumb img{width:100%;transform:rotate(-10deg)}
+.cue68-thumb img{width:200%}.r23-lux-preview:has(.cue68-thumb)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}
