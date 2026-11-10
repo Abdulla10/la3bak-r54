@@ -627,7 +627,7 @@ export async function createApp(cfg, suppliedStore, opts = {}) {
         /** R67au: تذكارات CP الجديدة اللي يرسلها المالك تنضاف هنا (فاضي لين توصل رسوماته) */
         const SOUVENIR_R67 = new Set();
         /** R68z: مدة الأغراض بالمتجر — 7 / 15 / 30 يوم / دائم. السعر نسبة من سعر الدائم. */
-        const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar', 'cue', 'bball']);
+        const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar']); // R68z30: العصي وكور البولينغ دائم بس
         const DURATIONS = [{ days: 7, pct: 25, label: '7 أيام' }, { days: 15, pct: 40, label: '15 يوم' }, { days: 30, pct: 60, label: '30 يوم' }, { days: 0, pct: 100, label: 'دائم' }]; // R68z29: مثل فيديو المالك
         const durPrice = (price, days) => { const d = DURATIONS.find((x) => x.days === days); if (!d)
             return -1; if (!days || price <= 0)
