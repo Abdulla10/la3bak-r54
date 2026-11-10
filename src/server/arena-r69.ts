@@ -64,7 +64,8 @@ export function totp(secret: string, step: number): string {
 type TF = { secret: string; on: boolean; at: number; last: number; fails: number; lockUntil: number };
 
 type Xfer = { at: number; kind: 'env' | 'cheer'; from: string; to: string; amt: number };
-type Data = { v: 1; envs: Env[]; tours: Tour[]; league: League; tf: Record<string, TF>; xfer?: Xfer[] };
+export type AdminAlert = { at: number; kind: 'big' | 'xfer' | 'reports'; title: string; text: string; key: string };
+type Data = { v: 1; envs: Env[]; tours: Tour[]; league: League; tf: Record<string, TF>; xfer?: Xfer[]; alerts?: AdminAlert[] };
 export const XFER_FLAG_COUNT = 3, XFER_FLAG_SUM = 20_000;
 const valid = (x: Record<string, unknown>) => x.v === 1 && Array.isArray(x.envs) && Array.isArray(x.tours) && isObj(x.league) && isObj(x.tf);
 
@@ -82,6 +83,8 @@ export interface ArenaDeps {
   createMatch: (players: TPlayer[], game: string) => Promise<string | null>;
   /** آخر نشاط بغرفة مباراة (null لو مو شغالة) */
   lastActivity?: (code: string) => number | null;
+  /** R69: تنبيه فوري للإدارة */
+  onAlert?: (a: AdminAlert) => void;
   now?: () => number;
 }
 
@@ -308,7 +311,19 @@ export class Arena {
     const p = this.deps.wallet.spend(from, amount, 'تشجيع لاعب بمباراة', `cheer:${ref}`); need(p.ok, p.code === 'poor' ? 'رصيدك ما يكفي.' : 'تعذّر الدفع.', 402);
     this.deps.wallet.grant(to, amount, `تشجيع من ${this.deps.name(from) || 'مشجع'}`, `cheer:${ref}:to`); this.logXfer('cheer', from, to, amount); this.save();
   }
-  private logXfer(kind: Xfer['kind'], from: string, to: string, amt: number) { const l = (this.d.xfer ??= []); l.push({ at: this.now(), kind, from, to, amt }); if (l.length > 3000) l.splice(0, l.length - 3000); }
+  private logXfer(kind: Xfer['kind'], from: string, to: string, amt: number) {
+    const l = (this.d.xfer ??= []); l.push({ at: this.now(), kind, from, to, amt }); if (l.length > 3000) l.splice(0, l.length - 3000);
+    const since = this.now() - 7 * 86_400_000; let n = 0, sum = 0; for (const x of l) if (x.at >= since && x.from === from && x.to === to) { n++; sum += x.amt; }
+    if (n >= XFER_FLAG_COUNT || sum >= XFER_FLAG_SUM) { const wk = Math.floor(this.now() / (7 * 86_400_000)); this.alert('xfer', '⚠️ تحويلات مشبوهة', `${this.deps.name(from) || 'حساب'} حوّل لـ ${this.deps.name(to) || 'حساب'} ${n} مرة بمجموع ${sum.toLocaleString('en-US')} عملة خلال 7 أيام (ظرف حظ/تشجيع). شيك عليهم من «ألعاب الحظ والتحويلات».`, `xfer:${from}:${to}:${wk}`); }
+  }
+  /** يسجل التنبيه مرة وحدة لكل مفتاح ويرسله للإدارة */
+  alert(kind: AdminAlert['kind'], title: string, text: string, key: string) {
+    const l = (this.d.alerts ??= []); if (l.some((a) => a.key === key)) return false;
+    const a = { at: this.now(), kind, title, text, key }; l.unshift(a); if (l.length > 200) l.length = 200; this.save();
+    try { this.deps.onAlert?.(a); } catch { /* التنبيه ما يوقف العملية */ }
+    return true;
+  }
+  alertsView() { return (this.d.alerts ?? []).slice(0, 60); }
   /** للإدارة: التحويلات بين الحسابات (ظرف الحظ + التشجيع) والأزواج المشبوهة آخر 7 أيام */
   xferAdmin(name: (id: string) => string) {
     const since = this.now() - 7 * 86_400_000; const l = (this.d.xfer ?? []).filter((x) => x.at >= since);

@@ -14,6 +14,8 @@ export function mountLuckAdmin(root, { call, openLog }) {
     if (!root.isConnected) return;
     const d = S.d; const C = d?.casino, X = d?.xfer;
     root.innerHTML = `${S.err ? `<div class="ad-note bad" role="alert">${esc(S.err)}</div>` : ''}${S.msg ? `<div class="ad-note ok" role="status">${esc(S.msg)}</div>` : ''}
+    <section class="ad-card"><h2>🔔 التنبيهات الفورية</h2><p class="ad-muted">توصل على طول لحسابات المالك بالإشعارات: فوز كبير، تحويلات مشبوهة بين حسابين، أو لاعب انبلّغ عليه من 3 أشخاص أو أكثر خلال 24 ساعة.</p>
+      ${d?.alerts ? (d.alerts.length ? d.alerts.slice(0, 30).map((a) => `<div class="lk69-row ${a.kind === 'big' ? '' : 'lk69-flag'}"><b>${esc(a.title)}</b><small>${dt(a.at)} · ${esc(a.text)}</small></div>`).join('') : '<p class="ad-empty">ما فيه تنبيهات للحين 👍</p>') : '<p class="ad-muted">جاري التحميل…</p>'}</section>
     <section class="ad-card"><h2>🎰 ألعاب الحظ <button class="ad-btn ghost" type="button" data-lk="reload">تحديث</button></h2>
     ${C ? `<div class="lk69-g">
       <div class="lk69-c"><h3>جاكبوت لعبك <span class="${C.off.slot ? 'lk69-off' : 'lk69-on'}">${C.off.slot ? '⛔ موقفة' : '🟢 شغالة'}</span></h3><dl><dt>الجاكبوت الحين</dt><dd>${nf(C.jackpot)}</dd></dl><button class="ad-btn ${C.off.slot ? '' : 'danger'}" type="button" data-lk="toggle" data-game="slot" data-off="${C.off.slot ? '0' : '1'}">${C.off.slot ? 'شغّلها' : 'أوقفها'}</button></div>

@@ -872,9 +872,13 @@ export async function createApp(
     name: (id) => accounts.nameOf(id) || '',
     notify: (id, msg) => sendToUser(id, msg),
     lastActivity: (code) => liveGames.get(code)?.updatedAt ?? null,
+    onAlert: (a) => { const to = platform.staff().filter((x) => x.role === 'owner').map((x) => x.id).filter((id) => accounts.has(id)); if (!to.length) return; try { support.announce(to, a.title, a.text, 'التنبيهات', 'alert-' + createHash('sha256').update(a.key).digest('hex').slice(0, 24)); } catch (e) { log('admin_alert_failed', { error: String(e).slice(0, 100) }); } },
     createMatch: async (players, game) => { const r = await service.createMatchRoom(players.map((p) => ({ id: p.id, name: p.name })), game, 2, false, 0).catch(() => null); return r && r.ok ? r.room.code : null; },
   }, storage);
   { const arenaTimer = setInterval(() => { try { arena.tick(); } catch (e) { log('arena_tick_failed', { message: String(e).slice(0, 120) }); } }, 5000); arenaTimer.unref?.(); }
+  /* R69: تنبيهات الإدارة الفورية — الفوز الكبير، والبلاغات المتكررة على نفس اللاعب (3 أشخاص أو أكثر خلال 24 ساعة) */
+  casino.onBig = (e) => { const tm = Math.floor(e.at / 60_000); arena.alert('big', '🏆 فوز كبير', `${e.name} فاز بـ ${e.win.toLocaleString('en-US')} عملة في ${e.game === 'slot' ? 'جاكبوت لعبك' : 'عجلة الأكل'} (رهان ${e.bet.toLocaleString('en-US')}).`, `big:${e.game}:${e.name}:${e.win}:${tm}`); };
+  { const repTimer = setInterval(() => { try { const day = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10); for (const r of community.reportsBurst(Date.now() - 86_400_000)) if (r.reporters >= 3) arena.alert('reports', '🚩 بلاغات متكررة', `${accounts.nameOf(r.author) || 'لاعب'} انبلّغ عليه من ${r.reporters} أشخاص خلال آخر 24 ساعة. شيك على «بلاغات المجتمع».`, `reports:${r.author}:${day}`); } catch (e) { log('report_alert_failed', { message: String(e).slice(0, 120) }); } }, 60_000); repTimer.unref?.(); }
 
   let financialReconcilePending = true;
   const reconcileFinished = async () => {
@@ -1677,7 +1681,7 @@ export async function createApp(
     functionalHttp.add('POST', '/api/2fa/setup', ({ user }) => { noGuest(user.id); return arenaRun(() => ({ ok: true, ...arena.tfSetup(user.id, accounts.nameOf(user.id) || 'حسابي') })); });
     functionalHttp.add('POST', '/api/2fa/enable', ({ user, body }) => arenaRun(() => { arena.tfEnable(user.id, body.code); return { ok: true, ...arena.tfStatus(user.id) }; }));
     functionalHttp.add('POST', '/api/2fa/disable', ({ user, body }) => arenaRun(() => { arena.tfDisable(user.id, body.code); return { ok: true, ...arena.tfStatus(user.id) }; }));
-    functionalHttp.add('GET', '/api/admin/luck', () => ({ ok: true, casino: casino.adminView(), xfer: arena.xferAdmin((id) => accounts.nameOf(id) || id.slice(0, 8)) }), 'owner');
+    functionalHttp.add('GET', '/api/admin/luck', () => ({ ok: true, alerts: arena.alertsView(), casino: casino.adminView(), xfer: arena.xferAdmin((id) => accounts.nameOf(id) || id.slice(0, 8)) }), 'owner');
     functionalHttp.add('POST', '/api/admin/luck/toggle', ({ actor, body }) => { const g = body.game === 'slot' ? 'slot' : body.game === 'food' ? 'food' : null; adminNeed(!!g, 'لعبة غير معروفة.'); const off = !!body.off; const v = casino.setOff(g!, off); admin.audit(actor!, 'luck.toggle', g!, off ? 'إيقاف' : 'تشغيل'); return { ok: true, casino: v }; }, 'owner');
     functionalHttp.add('POST', '/api/admin/2fa-reset', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(accounts.has(id), 'اللاعب غير موجود.'); adminNeed(arena.tfReset(id), 'التحقق بخطوتين مو مفعّل عند اللاعب.'); admin.audit(actor!, '2fa.reset', id, 'فك التحقق بخطوتين'); return { ok: true }; }, 'owner');
     functionalHttp.add('POST', '/api/foodwheel/chest', ({ user, body }) => { if (isGuest(user.id)) throw new FunctionalHttpError(403, GUEST_MSG); return { ok: true, ...casinoRun(() => casino.claimChest(user.id, (body as any)?.i)) }; });

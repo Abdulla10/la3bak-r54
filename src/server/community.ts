@@ -484,6 +484,8 @@ export class Community {
   /** R68y: تفاصيل البلاغات ضد لاعب (لسجل اللاعب) */
   reportsListAgainst(id: string, n = 30) { return this.d.reports.filter((r) => r.snap.author === id).slice(-n).reverse().map((r) => ({ at: r.at, reason: r.reason, note: r.note, status: r.status, by: this.dep.nameOf(r.by) || 'لاعب', text: r.snap.text.slice(0, 120) })); }
   reportsAgainst(id: string) { const l = this.d.reports.filter((r) => r.snap.author === id); return { total: l.length, open: l.filter((r) => r.status === 'open').length, removed: l.filter((r) => r.status === 'removed').length }; }
+  /** R69: كم بلاغ (من كم شخص مختلف) على كل كاتب بآخر فترة — لتنبيه الإدارة */
+  reportsBurst(sinceMs: number) { const m = new Map<string, Set<string>>(); for (const r of this.d.reports) if (r.at >= sinceMs) { const s = m.get(r.snap.author) ?? new Set<string>(); s.add(r.by); m.set(r.snap.author, s); } return [...m.entries()].map(([author, by]) => ({ author, reporters: by.size })); }
   openReports() { return this.d.reports.filter((r) => r.status === 'open').length; }
   counts() { return { posts: this.d.posts.length, comments: this.d.comments.length, reports: this.openReports() }; }
 }

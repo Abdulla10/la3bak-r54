@@ -90,7 +90,9 @@ export class Casino {
     return s;
   }
   private track(game: 'slot' | 'food', bet: number, win: number, count = 1) { const s = this.st(); for (const c of [s.today[game], s.total[game]]) { c.in += bet; c.out += win; c.n += count; } }
-  private bigWin(game: 'slot' | 'food', name: string, bet: number, win: number) { if (win < 50_000 && win < bet * 20) return; (this.d.big ??= []).unshift({ at: this.now(), game, name, bet, win }); this.d.big = this.d.big.slice(0, 60); }
+  /** R69: تنبيه الإدارة بالفوز الكبير */
+  onBig?: (e: { at: number; game: 'slot' | 'food'; name: string; bet: number; win: number }) => void;
+  private bigWin(game: 'slot' | 'food', name: string, bet: number, win: number) { if (win < 50_000 && win < bet * 20) return; const e = { at: this.now(), game, name, bet, win }; (this.d.big ??= []).unshift(e); this.d.big = this.d.big.slice(0, 60); try { this.onBig?.(e); } catch { /* */ } }
   /** للإدارة */
   adminView() { const s = this.st(); return { jackpot: this.d.jackpot, off: { slot: !!this.d.off?.slot, food: !!this.d.off?.food }, today: s.today, total: s.total, days: s.days.slice(0, 14), big: (this.d.big ?? []).slice(0, 40), round: this.d.round.n }; }
   setOff(game: 'slot' | 'food', off: boolean) { (this.d.off ??= {})[game] = off; this.save(); return this.adminView(); }
