@@ -106,6 +106,7 @@ import { ServerMonitor } from './monitor-r69.js';
 import { E2EKeys } from './e2e-keys-r69.js';
 import { Shield } from './shield-r69.js';
 import { OwnerSecrets, checkAnthropicKey } from './secrets-r69.js';
+import { AntiCheat, CHEAT_NAMES } from './anticheat-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -848,18 +849,26 @@ export async function createApp(
   };
   /* R69: المباريات الحية للمشاهدة */
   const liveGames = new Map<string, Room>();
+  const acChecked = new Set<string>();
   const spectators = new Map<string, Map<string, number>>();
   const service: RoomService = new RoomService(store, registry, cfg, {
     onBeforeGameFinished(room, players, winners, ref, ts) {
       return reserveGame(ref, players, winners, ts);
     },
     noRewards: (id: string) => isGuest(id),
+    held: (id: string) => antiCheat.held(id),
+    onHumanAction(room, uid, action, before, now) {
+      const st = before as { q?: { answer?: unknown }; startedAt?: unknown; phase?: unknown } | null, a = action as { type?: unknown; choice?: unknown } | null;
+      if (st && st.q && typeof st.q.answer === 'number' && typeof st.startedAt === 'number' && a?.type === 'answer') antiCheat.answer(uid, now - st.startedAt, a.choice === st.q.answer);
+      else antiCheat.move(uid, now - room.updatedAt);
+    },
     onGameFinished(room, players, winners, ref) {
       deliverIntent('game:' + ref);
       try { const out = registry.historyEngine(room.gameId)?.outcome(room.state as never); arena.tourGameFinished(room.code, winners, out?.scores); if (players.length >= 2) arena.leagueGame(players, winners); } catch (e) { if (e instanceof StorageError) throw e; log('arena_game_hook_failed', { message: String(e).slice(0, 120) }); }
       { const gn = registry.historyEngine(room.gameId)?.info.name ?? room.gameId; for (const p of players) activity.note(p.id, 'game', room.code, `${gn}${winners.includes(p.id) ? ' — فاز 🏆' : ''}${room.stake ? ` · رسم ${room.stake}` : ''}`); }
     },
     onRoom(room) {
+      if (room.status === 'playing' && room.gameNo && !acChecked.has(room.code + ':' + room.gameNo)) { acChecked.add(room.code + ':' + room.gameNo); if (acChecked.size > 20000) acChecked.clear(); try { const ids = room.players.filter((p) => !p.bot && !p.left).map((p) => p.id); for (const [x, y] of devGuard.sharedDevice(ids)) { const g = registry.historyEngine(room.gameId)?.info.name ?? room.gameId; antiCheat.flag(x, 'same-device', `لعب ${g} ضد/مع ${accounts.nameOf(y) || 'لاعب'} من نفس الجهاز`); antiCheat.flag(y, 'same-device', `لعب ${g} ضد/مع ${accounts.nameOf(x) || 'لاعب'} من نفس الجهاز`); } } catch (e) { log('anticheat_failed', { message: String(e).slice(0, 80) }); } }
       if (room.status === 'playing' && !room.access) liveGames.set(room.code, room); else liveGames.delete(room.code);
       { const sp = spectators.get(room.code); if (sp) { const t = Date.now(); for (const [uid, at] of sp) { if (t - at > 20_000) sp.delete(uid); else sendToUser(uid, { t: 'watch', code: room.code }); } } }
       if (room.status !== 'lobby' && room.gameNo) { try { const ref = `${room.code}:${room.gameNo}`; if (!(room.status === 'finished' && replays.meta(ref))) { const humans = room.players.filter((p) => !p.bot); const viewer = replays.viewerOf(ref) ?? humans[0]?.id; if (viewer) { replays.frame(ref, room.gameId, viewer, humans.map((p) => ({ id: p.id, name: p.name })), service.snapshot(room, viewer)); if (room.status === 'finished') replays.finish(ref); } } } catch (e) { log('replay_frame_failed', { error: String(e).slice(0, 100) }); } }
@@ -933,11 +942,15 @@ export async function createApp(
   /** R69za: شروط الجوائز المجانية: الحساب مو زايد على جهاز، وعمره 3 أيام أو أكثر، ولعب 5 مباريات */
   const REWARD_MIN_AGE = 3 * 86400_000, REWARD_MIN_GAMES = 5;
   const rewardBlock = (uid: string): string | null => {
+    if (antiCheat.held(uid)) return 'جوائزك موقوفة مؤقتاً للمراجعة. لو تشوف إن هذا خطأ تواصل مع الدعم.';
     if (!devGuard.rewardOk(uid)) return 'هالحساب ما ياخذ جوائز مجانية: فيه حسابات كثيرة على نفس الجهاز. تواصل مع الدعم لو هذا خطأ.';
     const since = accounts.sinceOf(uid); if (since !== null && Date.now() - since < REWARD_MIN_AGE) return `الجوائز المجانية للحسابات اللي عمرها ${REWARD_MIN_AGE / 86400_000} أيام أو أكثر. حسابك جديد، العب وتعال بعدين 😉`;
     const played = accounts.publicStats(uid)?.played ?? 0; if (played < REWARD_MIN_GAMES) return `العب ${REWARD_MIN_GAMES - played} مباريات بعد وتقدر تاخذ الجوائز المجانية 🎮`;
     return null;
   };
+  const antiCheat = new AntiCheat(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'anticheat.json') : '', {
+    alert: (uid, kind, detail) => arena.alert('collusion', '🚨 اشتباه غش', `${accounts.nameOf(uid) || 'لاعب'} — ${CHEAT_NAMES[kind]}: ${detail}. وقفنا جوائزه لين تراجعه من لوحتك.`, 'cheat-' + uid.slice(0, 8) + '-' + kind),
+  }, storage);
   const e2eKeys = new E2EKeys(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'e2e-keys.json') : '', Date.now, storage);
   const devGuard = new DeviceGuard(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'device-guard.json') : '', {
     alert: (_did, ids) => arena.alert('collusion', '📱 حسابات كثيرة على جهاز واحد', `${ids.length} حسابات دخلت من نفس الجهاز: ${ids.slice(0, 6).map((i) => accounts.nameOf(i) || 'لاعب').join('، ')}. الحسابات الزايدة ما تاخذ جوائز مجانية لين تسمح لها من لوحة المالك.`, `dev:${_did}`),
@@ -1768,6 +1781,8 @@ export async function createApp(
     /* R69zk: المالك يحط مفتاح الذكاء الاصطناعي من لوحته */
     functionalHttp.add('GET', '/api/admin/ai-key', () => ({ ok: true, source: ownerSecrets.source('ANTHROPIC_API_KEY'), hint: ownerSecrets.hint('ANTHROPIC_API_KEY') }), 'owner');
     functionalHttp.add('POST', '/api/admin/ai-key', async (ctx) => { const key = String((ctx.body as any).key ?? '').trim(); adminNeed(key === '' || /^sk-ant-[A-Za-z0-9_-]{20,200}$/.test(key), 'هذا مو مفتاح Anthropic. المفتاح يبدأ بـ sk-ant-'); if (key) { const c = await checkAnthropicKey(key); adminNeed(c !== 'bad', 'المفتاح مرفوض من Anthropic. تأكد إنك نسخته كامل أو سوّ واحد جديد.'); ownerSecrets.set('ANTHROPIC_API_KEY', key); try { if (ctx.actor) admin.audit(ctx.actor, 'ai.key', 'ai', 'حط مفتاح الذكاء الاصطناعي'); } catch { /* */ } return { ok: true, checked: c, source: ownerSecrets.source('ANTHROPIC_API_KEY'), hint: ownerSecrets.hint('ANTHROPIC_API_KEY') }; } ownerSecrets.set('ANTHROPIC_API_KEY', ''); return { ok: true, source: ownerSecrets.source('ANTHROPIC_API_KEY'), hint: '' }; }, 'owner');
+    functionalHttp.add('GET', '/api/admin/cheats', () => ({ ok: true, held: antiCheat.heldCount(), list: antiCheat.list().map((x) => ({ ...x, name: accounts.nameOf(x.id) || 'لاعب', displayId: accounts.displayPlayerId(x.id) ?? '' })) }), 'owner');
+    functionalHttp.add('POST', '/api/admin/cheats/clear', ({ actor, body }) => { const id = String(body.id ?? ''); adminNeed(antiCheat.clear(id, actor?.name ?? 'المالك'), 'اللاعب مو بالقائمة.'); if (actor) admin.audit(actor, 'cheat.clear', id, 'شال إيقاف الجوائز'); return { ok: true }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/shield', () => ({ ok: true, ...shield.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/monitor', () => ({ ok: true, ...monitor.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');

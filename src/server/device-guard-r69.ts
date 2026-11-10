@@ -45,6 +45,15 @@ export class DeviceGuard {
     return Object.entries(this.d.net ?? {}).filter(([, v]) => v.ids.length >= 4).sort((a, b) => b[1].ids.length - a[1].ids.length || b[1].last - a[1].last).slice(0, limit).map(([k, v]) => ({ net: k.slice(0, 8), ids: v.ids.map((x) => x.id), last: v.last }));
   }
   /** هل الحساب يستاهل جوائز مجانية؟ لا، لو هو حساب زايد (الثالث وطالع) على أي جهاز ما سمح له المالك */
+  /** R69zl: لاعبين بنفس المباراة دخلوا من نفس الجهاز (والجهاز مو مسموح له من المالك) */
+  sharedDevice(ids: string[]): string[][] {
+    const out: string[][] = [];
+    for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+      const a = this.d.byId[ids[i]] ?? [], b = new Set(this.d.byId[ids[j]] ?? []);
+      if (a.some((did) => b.has(did) && !this.d.dev[did]?.allowed)) out.push([ids[i], ids[j]]);
+    }
+    return out;
+  }
   rewardOk(uid: string): boolean {
     for (const did of this.d.byId[uid] ?? []) { const dv = this.d.dev[did]; if (!dv || dv.allowed) continue; const i = dv.ids.indexOf(uid); if (i >= DEVICE_ALLOWED) return false; }
     return true;

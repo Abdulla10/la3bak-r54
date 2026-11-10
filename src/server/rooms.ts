@@ -99,6 +99,10 @@ export interface Hooks {
   prizeBonus?(): number;
   /** نتيجة لعبة محفوظة بنجاح؛ يُستخدم لربط progression دون إعادة احتسابها. */
   onGameFinished?(room: Room, players: { id: string; name: string }[], winners: string[], ref: string): void;
+  /** R69zl: كل حركة لاعب حقيقي قبل التنفيذ (لكشف الغش) */
+  onHumanAction?(room: Room, userId: string, action: unknown, stateBefore: unknown, now: number): void;
+  /** R69zl: لاعب جوائزه موقوفة (اشتباه غش) — ما تنحسب نتايجه */
+  held?(id: string): boolean;
   /** R60: حسابات ما تاخذ نتائج/خبرة/جوايز (الضيف ضد الكمبيوتر) */
   noRewards?(id: string): boolean;
   /** Optional reservation before finished-room/source writes; failure leaves the stored game unchanged. */
@@ -191,7 +195,7 @@ export class RoomService {
     const engine = this.engineOf(room);
     if (!engine) return;
     // اللي غادر بنص المباراة يظل ضمن نتيجتها (يخسر مثل الصندوق)، وإلا نتيجته ما تنحسب عليه
-    const humans = room.players.filter((p) => !p.bot && !(room.mode === 'bots' && this.hooks.noRewards?.(p.id)));
+    const humans = room.players.filter((p) => !p.bot && !(room.mode === 'bots' && this.hooks.noRewards?.(p.id)) && !this.hooks.held?.(p.id));
     if (!humans.length) return;
     const ref = `${room.code}:${room.gameNo}`;
     const players = humans.map((p) => ({ id: p.id, name: p.name }));
@@ -205,7 +209,7 @@ export class RoomService {
     const engine = this.engineOf(room);
     if (!engine) return;
     const out = engine.outcome(room.state);
-    const humans = room.players.filter((p) => !p.bot); // نفس منطق الحساب: المغادر بنص المباراة يظل بنتيجتها
+    const humans = room.players.filter((p) => !p.bot && !this.hooks.held?.(p.id)); // نفس منطق الحساب: المغادر بنص المباراة يظل بنتيجتها
     this.board.record(`${room.code}:${room.gameNo}`, humans.map((p) => ({ id: p.id, name: p.name })), out.winners);
   }
 
@@ -737,8 +741,10 @@ export class RoomService {
       const engine = this.engineOf(room);
       if (!engine) return fail('اللعبة غير متاحة.');
       if (ver !== engine.version(room.state)) return fail('الجولة تغيّرت، حدّث الشاشة.');
-      const res = engine.apply(room.state, user.id, action, this.now());
+      const before = room.state, at0 = this.now();
+      const res = engine.apply(room.state, user.id, action, at0);
       if (!res.ok) return fail(res.error);
+      try { this.hooks.onHumanAction?.(room, user.id, action, before, at0); } catch { /* الكشف ما يوقف اللعب */ }
       room.state = res.state;
       if (engine.isOver(room.state)) room.status = 'finished';
       await this.persist(room);
