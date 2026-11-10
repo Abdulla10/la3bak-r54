@@ -1,6 +1,6 @@
 /* Vehicle entrances are 2D cosmetic assets, not a 3D runtime.
  * Only server-verified public member snapshots can trigger them. */
-import { is3D, entrance3DNode } from './entrance3d-r68.js?v=r68z37d';
+import { is3D, entrance3DNode } from './entrance3d-r68.js?v=r68z38e';
 export const ENTRANCE_ART = Object.freeze({
   // R68z31: دخوليات ثلاثية الأبعاد (صور المالك)
   'ent-dragon':'/assets/entr68/ent-dragon.webp',
@@ -33,7 +33,7 @@ export function createEntranceFX({getHost,getScope,now=()=>Date.now()}={}) {
     const item=member?.entrance,src=ENTRANCE_ART[item?.id],target=getHost?.();
     if(!src||item?.art!==src||!target?.isConnected)return false;
     clear();
-    if(is3D(item.id)){const n3=entrance3DNode(item.id,src,'وصل '+String(member.name||'عضو الغرفة'));n3.setAttribute('role','status');n3.setAttribute('aria-live','polite');n3.dataset.entranceMember=String(member.id);target.append(n3);active=n3;timer=setTimeout(clear,5700);return true;}
+    if(is3D(item.id)){const n3=entrance3DNode(item.id,src,'وصل '+String(member.name||'عضو الغرفة'));n3.setAttribute('role','status');n3.setAttribute('aria-live','polite');n3.dataset.entranceMember=String(member.id);target.append(n3);active=n3;timer=setTimeout(clear,6300);return true;}
     const node=document.createElement('div');node.className='r23-entrancefx';node.dataset.entranceId=item.id;node.dataset.entranceMember=String(member.id);node.setAttribute('role','status');node.setAttribute('aria-live','polite');
     const image=document.createElement('img');image.src=src;image.alt='';image.decoding='async';
     const label=document.createElement('span');label.textContent='وصل '+String(member.name||'عضو الغرفة');

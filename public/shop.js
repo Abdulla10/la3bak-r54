@@ -6,7 +6,7 @@ import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } fr
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=r68i-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
-import { entrance3DNode } from './entrance3d-r68.js?v=r68z37d';
+import { entrance3DNode } from './entrance3d-r68.js?v=r68z38e';
 // R68z37: معاينة الدخولية ثلاثية الأبعاد داخل نافذة المنتج
 if (typeof MutationObserver !== 'undefined' && !globalThis.__e3dObs) {
   globalThis.__e3dObs = new MutationObserver(() => { for (const s of document.querySelectorAll('.e3d-slot:not([data-done])')) { s.dataset.done = '1'; s.replaceChildren(entrance3DNode(s.dataset.e3d, s.dataset.src, '', { loop: true })); } });

@@ -1,12 +1,12 @@
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r68z37d';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r68z38e';
 import { side68, head68, brand68, dash68HTML } from './admin-dash-r68.js?v=r68z10';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=r68l-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=r68z37d';
+import {mountPaymentAdmin} from './payment-admin.js?v=r68z38e';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
-import {mountSocialAdmin} from './social-admin.js?v=r68z37d';
-import { pricingHTML, progressionHTML } from './economy-admin.js?v=r68z37d';
-import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r68z37d';
+import {mountSocialAdmin} from './social-admin.js?v=r68z38e';
+import { pricingHTML, progressionHTML } from './economy-admin.js?v=r68z38e';
+import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r68z38e';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -350,7 +350,7 @@ export function mountAdmin(root) {
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=r68z37d').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r68z38e').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { if (tab !== 'player-log') S.logQ = ''; S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {
