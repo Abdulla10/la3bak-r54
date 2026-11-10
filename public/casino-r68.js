@@ -12,19 +12,20 @@ const ART = '/assets/art68/casino/';
 const SYM = { ten: 'ten', j: 'j', q: 'q', k: 'k', a: 'a', gem: 'gem', crown: 'crown', falcon: 'falcon', lion: 'lion', wild: 'wild', free: 'free', jack: 'jack' };
 const KEYS = Object.keys(SYM);
 const tile = (s) => `<div class="cz-t cz-t-${s}"><img src="${ART}sym2-${SYM[s] || 'ten'}.webp" alt="" draggable="false"></div>`;
+const ROWS = 5;
 const SL = { st: null, bet: 0, busy: false, last: null, auto: false };
 const TIERS = ['MINI', 'MAJOR', 'GRAND', 'MEGA'], TIER_PCT = [5, 15, 40, 100];
 const spinLabel = () => SL.st?.free ? 'مجاني' : SL.auto ? 'إيقاف' : 'تدوير';
 function slotHTML() {
   const st = SL.st; if (!st) return '<p class="cz-load">جاري التحميل…</p>';
   const lineBet = st.bets[SL.bet], total = lineBet * st.lines, free = st.free;
-  const grid = SL.last?.grid || [0, 1, 2, 3, 4].map((r) => [0, 1, 2].map((i) => KEYS[(r * 3 + i * 5) % 9]));
+  const grid = SL.last?.grid || [0, 1, 2, 3, 4].map((r) => [0, 1, 2, 3, 4].map((i) => KEYS[(r * 3 + i * 5) % 9]));
   const feed = st.feed.length ? st.feed.slice(0, 5).map((f) => `<p><i class="sl-av">${esc([...String(f.name || '؟')][0])}</i><bdi>${esc(f.name)}</bdi> فاز بـ <em>${nf(f.win)}</em>${COIN}${f.kind === 'jack' ? ' 🏆' : ''}</p>`).join('') : '<p class="cz-dim">أول فائز كبير يطلع هنا</p>';
   return `<div class="cz cz-slot" dir="rtl">
   <header class="sl-head"><button type="button" class="sl-ic" data-cz="close" aria-label="إغلاق">✕</button><h1 class="sl-logo"><span>جاكبوت</span><span>لعبك</span></h1><button type="button" class="sl-ic sl-help" data-cz="help" aria-label="الشرح"><img src="${ART}sl-wheel.webp" alt=""></button></header>
   <section class="sl-feed">${feed}</section>
   <section class="sl-jp"><img class="sl-jplogo" src="${ART}sl-jplogo.webp" alt="Jackpot"><div class="sl-jpbar"><small>${TIERS[SL.bet]}</small><b data-cz-jp>${nf(st.jackpot)}</b></div></section>
-  <section class="sl-machine"><img class="sl-ft" src="${ART}sl-ftop.webp" alt=""><div class="sl-fm" style="background-image:url(${ART}sl-fmid.webp)"></div><img class="sl-fb" src="${ART}sl-fbot.webp" alt=""><p class="sl-tpill">5 × JACKPOT = ${TIER_PCT[SL.bet]}%</p><div class="cz-reels">${grid.map((col, r) => `<div class="cz-reel" data-reel="${r}"><div class="cz-strip">${col.map(tile).join('')}</div></div>`).join('')}<svg class="cz-lines" viewBox="0 0 500 300" preserveAspectRatio="none" aria-hidden="true"></svg></div><p class="cz-msg sl-bpill" role="status" data-cz-msg></p></section>
+  <section class="sl-machine"><img class="sl-ft" src="${ART}sl-ftop.webp" alt=""><div class="sl-fm" style="background-image:url(${ART}sl-fmid.webp)"></div><img class="sl-fb" src="${ART}sl-fbot.webp" alt=""><p class="sl-tpill">5 × JACKPOT = ${TIER_PCT[SL.bet]}%</p><div class="cz-reels">${grid.map((col, r) => `<div class="cz-reel" data-reel="${r}"><div class="cz-strip">${col.map(tile).join('')}</div></div>`).join('')}<svg class="cz-lines" viewBox="0 0 500 500" preserveAspectRatio="none" aria-hidden="true"></svg></div><p class="cz-msg sl-bpill" role="status" data-cz-msg></p></section>
   <p class="cz-freeb">${free ? `🎁 لفات مجانية باقية: <b>${free.left}</b>` : ''}</p>
   <footer class="sl-bar"><div class="sl-r1"><span><small>الخطوط</small><b>${st.lines}</b></span><span><small>إجمالي الرهانات</small><b>${nf(free ? 0 : total)}</b></span><span><small>فوز</small><b data-cz-win>${nf(SL.last?.win || 0)}</b></span><button type="button" class="sl-auto${SL.auto ? ' on' : ''}" data-cz="auto">تلقائي</button></div>
    <div class="sl-r2"><span class="sl-coins">${COIN}<b data-cz-bal>${nf(st.coins)}</b></span><div class="sl-step"><button type="button" data-cz="bet-" aria-label="أقل" ${free || SL.busy ? 'disabled' : ''}><img src="${ART}sl-minus.webp" alt=""></button><b>${nf(lineBet)}</b><button type="button" data-cz="bet+" aria-label="أكثر" ${free || SL.busy ? 'disabled' : ''}><img src="${ART}sl-plus.webp" alt=""></button></div><button type="button" class="sl-spin" data-cz="spin" ${SL.busy && !SL.auto ? 'disabled' : ''}>${spinLabel()}</button></div></footer>
@@ -38,13 +39,13 @@ async function slotSpin(root) {
   root.querySelector('.cz-lines').innerHTML = '';
   const reels = [...root.querySelectorAll('.cz-reel')];
   const rnd = () => Array.from({ length: 18 }, () => tile(KEYS[Math.floor(Math.random() * KEYS.length)])).join('');
-  reels.forEach((rl) => { const s = rl.querySelector('.cz-strip'); s.innerHTML = rnd() + s.innerHTML; s.style.transition = 'none'; s.style.transform = 'translateY(-' + (18 * 100 / 21) + '%)'; s.offsetHeight; rl.classList.add('spinning'); });
+  reels.forEach((rl) => { const s = rl.querySelector('.cz-strip'); s.innerHTML = rnd() + s.innerHTML; s.style.transition = 'none'; s.style.transform = 'translateY(-' + (18 * 100 / (18 + ROWS)) + '%)'; s.offsetHeight; rl.classList.add('spinning'); });
   const r = await api('/api/slot/spin', { bet: SL.bet });
   if (!r.ok) { SL.busy = false; SL.auto = false; root.innerHTML = slotHTML(); const m = root.querySelector('[data-cz-msg]'); if (m) m.textContent = r.error || 'تعذّر.'; return; }
   for (let i = 0; i < 5; i++) {
     const s = reels[i].querySelector('.cz-strip');
     s.innerHTML = r.grid[i].map(tile).join('') + rnd();
-    s.style.transition = 'none'; s.style.transform = 'translateY(-' + (18 * 100 / 21) + '%)'; s.offsetHeight;
+    s.style.transition = 'none'; s.style.transform = 'translateY(-' + (18 * 100 / (18 + ROWS)) + '%)'; s.offsetHeight;
     s.style.transition = `transform ${0.55 + i * 0.18}s cubic-bezier(.2,.8,.2,1.05)`; s.style.transform = 'translateY(0)'; reels[i].classList.remove('spinning');
   }
   await sleep(1400);
@@ -195,7 +196,7 @@ html:has(.cz-ov[data-casino=slot]) .cz-ov{background:#1a0638}
 
 .sl-jpbar{direction:ltr;display:flex;align-items:center;gap:10px;justify-content:center;height:36px;padding:0 14px;border-radius:12px;background:linear-gradient(180deg,#1e1452,#2d1b6d);border:2px solid #5c46b8;box-shadow:inset 0 2px 6px #0008}
 .sl-jpbar small{font:900 12px/1 Arial,sans-serif;color:#ff8ae6;letter-spacing:.5px}.sl-jpbar b{font:900 22px/1 Arial,sans-serif;color:#ffcf4a;text-shadow:0 2px 0 #8a4a00,0 0 10px #ffb80088;letter-spacing:1px}
-.sl-machine{position:relative;margin:8px -8px 0;container-type:inline-size;display:flex;flex-direction:column}.sl-ft,.sl-fb{display:block;width:100%;height:auto}.sl-fm{height:72cqw;background:center/100% 100% no-repeat}
+.sl-machine{position:relative;margin:8px -8px 0;container-type:inline-size;display:flex;flex-direction:column}.sl-ft,.sl-fb{display:block;width:100%;height:auto}.sl-fm{height:76cqw;background:center/100% 100% no-repeat}
 .sl-machine .cz-reels{position:absolute;left:6.4%;right:7.1%;top:14.9cqw;bottom:14.6cqw;display:grid;grid-template-columns:repeat(5,1fr);gap:1.3cqw;background:none;padding:0}
 .sl-machine .cz-reel{aspect-ratio:auto;height:100%;background:none}
 .sl-tpill{position:absolute;left:17%;right:17%;top:5.6cqw;height:8.4cqw;margin:0;display:grid;place-items:center;font:900 3.6cqw/1 Arial,sans-serif;color:#ffd6fb;letter-spacing:.3cqw;direction:ltr}
@@ -205,7 +206,7 @@ html:has(.cz-ov[data-casino=slot]) .cz-ov{background:#1a0638}
 .cz-reel{position:relative;aspect-ratio:1/3.25;container-type:size;contain:paint;overflow:hidden;background:linear-gradient(180deg,#141a4a,#1e2766 50%,#141a4a)}
 .cz-strip{display:flex;flex-direction:column;will-change:transform}
 .cz-reel.spinning .cz-strip{animation:czblur .12s linear infinite}@keyframes czblur{0%{filter:blur(0)}50%{filter:blur(2px)}100%{filter:blur(0)}}
-.cz-t{flex:none;height:33.333cqh;display:grid;place-items:center;padding:1.5% 0}.cz-t img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;filter:drop-shadow(0 2px 3px #000a)}
+.cz-t{flex:none;height:20cqh;display:grid;place-items:center;padding:5% 3%}.cz-t img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;filter:drop-shadow(0 2px 3px #000a)}
 .cz-t.hit{animation:czhit .6s ease-in-out infinite alternate}.cz-t.hit img{filter:drop-shadow(0 0 6px #ffe14d) drop-shadow(0 0 2px #fff)}@keyframes czhit{to{transform:scale(1.08)}}
 .cz-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 0 3px #000)}
 .cz-freeb{margin:6px 0 0;min-height:0;text-align:center;font-weight:900;color:#ffe14d}.cz-freeb:empty{display:none}

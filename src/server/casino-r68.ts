@@ -1,5 +1,5 @@
 /** R68z42: لعبتين حظ بالعملات (الخادم يحدد كل النتائج بـcrypto):
- *  1) «جاكبوت لعبك» — سلوت 5×3، 50 خط، وايلد، لفات مجانية، وجاكبوت مشترك يكبر مع الرهانات.
+ *  1) «جاكبوت لعبك» — سلوت 5×5، 50 خط، وايلد، لفات مجانية، وجاكبوت مشترك يكبر مع الرهانات.
  *  2) «عجلة الأكل» — جولة مشتركة كل 30 ثانية: تراهن على أكلة وإذا طلعت تاخذ رهانك × مضاعفها.
  * العملة وحدة (عملات)، وما فيه دفع حقيقي. */
 import { randomInt } from 'node:crypto';
@@ -14,13 +14,15 @@ const PAY: Partial<Record<Sym, [number, number, number]>> = {
   gem: [55, 176, 704], crown: [66, 264, 1100], falcon: [110, 440, 1760], lion: [176, 704, 3520], wild: [176, 704, 3520],
 };
 /** شريط كل بكرة (أوزان) — الوايلد ما يطلع ببكرة 1 */
-const W: Record<Sym, number> = { ten: 14, j: 14, q: 12, k: 12, a: 10, gem: 8, crown: 6, falcon: 5, lion: 4, wild: 3, free: 2.2, jack: 2.6 };
+const W: Record<Sym, number> = { ten: 14, j: 14, q: 12, k: 12, a: 10, gem: 8, crown: 6, falcon: 5, lion: 4, wild: 3, free: 1.15, jack: 1.3 };
+const PAY_K = 0.92; // R68z47: تعديل الدفع بعد ما صارت الشبكة 5×5 (العائد ~90%)
 const reelWeights = (r: number) => SYMS.map((s) => (s === 'wild' && r === 0 ? 0 : W[s]));
-/** 50 خط (ثابتة) */
+export const ROWS = 5;
+/** 50 خط (ثابتة): 5 مستقيمة، ثم أشكال V، ثم باقي المسارات اللي كل خطوة فيها صف واحد بالأكثر */
 export const LINES: number[][] = (() => {
-  const out: number[][] = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2]];
+  const out: number[][] = [[2, 2, 2, 2, 2], [1, 1, 1, 1, 1], [3, 3, 3, 3, 3], [0, 0, 0, 0, 0], [4, 4, 4, 4, 4], [0, 1, 2, 1, 0], [4, 3, 2, 3, 4], [1, 2, 3, 2, 1], [3, 2, 1, 2, 3], [2, 3, 4, 3, 2], [2, 1, 0, 1, 2]];
   const seen = new Set(out.map((l) => l.join('')));
-  for (let n = 0; out.length < 50 && n < 243; n++) { const l = [0, 0, 0, 0, 0].map((_, i) => Math.floor(n / 3 ** i) % 3); let ok = true; for (let i = 1; i < 5; i++) if (Math.abs(l[i] - l[i - 1]) > 1) ok = false; const k = l.join(''); if (ok && !seen.has(k)) { seen.add(k); out.push(l); } }
+  for (let n = 0; out.length < 50 && n < ROWS ** 5; n++) { const l = [0, 0, 0, 0, 0].map((_, i) => Math.floor(n / ROWS ** i) % ROWS); let ok = true; for (let i = 1; i < 5; i++) if (Math.abs(l[i] - l[i - 1]) > 1) ok = false; const k = l.join(''); if (ok && !seen.has(k)) { seen.add(k); out.push(l); } }
   return out;
 })();
 export const SLOT_BETS = [2, 10, 100, 500] as const; // رهان الخط
@@ -28,7 +30,7 @@ export const SLOT_FREE = 8;
 const JACK_TIER = [0.05, 0.15, 0.4, 1] as const; // نصيب الجاكبوت حسب مستوى الرهان
 const JACK_SEED = 200_000;
 function pick(weights: number[]): number { const tot = weights.reduce((a, b) => a + b, 0); let r = randomInt(Math.round(tot * 100)) / 100; for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r < 0) return i; } return weights.length - 1; }
-export function spinGrid(): Sym[][] { return [0, 1, 2, 3, 4].map((r) => [0, 1, 2].map(() => SYMS[pick(reelWeights(r))])); }
+export function spinGrid(): Sym[][] { return [0, 1, 2, 3, 4].map((r) => Array.from({ length: ROWS }, () => SYMS[pick(reelWeights(r))])); }
 /** grid[reel][row] */
 export function evaluate(grid: Sym[][], lineBet: number) {
   const wins: { line: number; sym: Sym; count: number; pay: number }[] = [];
@@ -37,7 +39,7 @@ export function evaluate(grid: Sym[][], lineBet: number) {
     let base: Sym | null = null; let count = 0;
     for (const s of seq) { if (s === 'free' || s === 'jack') break; if (s === 'wild') { count++; continue; } if (base === null) { base = s; count++; continue; } if (s === base) count++; else break; }
     const sym: Sym = base ?? 'wild';
-    if (count >= 3 && PAY[sym]) wins.push({ line: li, sym, count, pay: PAY[sym]![count - 3] * lineBet });
+    if (count >= 3 && PAY[sym]) wins.push({ line: li, sym, count, pay: Math.round(PAY[sym]![count - 3] * PAY_K * lineBet) });
   });
   const flat = grid.flat();
   return { wins, total: wins.reduce((a, w) => a + w.pay, 0), free: flat.filter((s) => s === 'free').length, jack: flat.filter((s) => s === 'jack').length };
