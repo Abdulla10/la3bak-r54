@@ -50,7 +50,7 @@ export function settingsHTML(ctx) {
     ${btn('إعادة تعيين كلمة المرور', 'password', google ? 'من حساب Google' : '')}
     ${link('ربط الحساب', '#/account-info', google ? '<b class="s60-ok">محمي ✓</b>' : '<b class="s60-warn">غير محمي ⓘ</b>')}
     ${link('ألوان الموقع 🎨', '#/themes')}
-    /* R69zc: توثيق الجوال (واتساب) مخفي لين نفعّله مستقبلاً — الكود جاهز */
+    <!-- R69zc: توثيق الجوال (واتساب) مخفي لين نفعّله مستقبلاً، والكود جاهز -->
     ${link('الأجهزة اللي سجّلت الدخول منها', '#/devices')}
     ${link('التحقق بخطوتين 🔐', '#/twofa')}
     ${row('الوضع الداكن', `<button type="button" class="s60-switch${document.documentElement.classList.contains('lb-dark') ? ' is-on' : ''}" role="switch" aria-checked="${document.documentElement.classList.contains('lb-dark')}" data-s60-dark><i></i></button>`)}
@@ -195,7 +195,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r69zf'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r69zg'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;
