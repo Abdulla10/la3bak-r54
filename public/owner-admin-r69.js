@@ -17,6 +17,8 @@ export function mountOwnerAdmin(root, { call }) {
       <p class="ad-muted">يوقف كل صرف للعملات من اللاعبين: الهدايا، المتجر، ظرف الحظ، التشجيع، ألعاب الحظ، البطولات المدفوعة، والمزادات. الموقع يظل شغال، واللعب المجاني والدردشة عادي.</p>
       ${d.frozen.on ? `<p class="ow-off">⛔ الصرف موقف من ${dt(d.frozen.at)} — بواسطة ${esc(d.frozen.by)} · السبب: ${esc(d.frozen.reason)}</p><button class="ad-btn" type="button" data-ow="unfreeze">شغّل الصرف من جديد</button>`
         : `<p class="ow-on">🟢 الصرف شغال</p><div class="ow-flex"><input class="ad-in" data-ow-in="reason" placeholder="السبب (إلزامي)" maxlength="200" style="flex:1;min-width:160px"><button class="ad-btn danger" type="button" data-ow="freeze">⛔ أوقف الصرف الحين</button></div>`}</section>
+    <section class="ad-card"><h2>📲 تنبيهات الإدارة على جوالك</h2><p class="ad-muted">توصلك إشعارات على الجوال حتى لو الموقع مسكّر: التنبيهات الفورية، التقرير الصباحي، دخول اللوحة، وزر الطوارئ.<br>على الآيفون: افتح الموقع في Safari ← مشاركة ← «إضافة إلى الشاشة الرئيسية»، وافتح اللوحة من الأيقونة، بعدين فعّلها.</p>
+      ${d.push?.available ? `<p>${d.push.devices ? `<span class="ow-on">🟢 مفعّلة على ${nf(d.push.devices)} جهاز</span>` : '<span class="ow-off">ما فيه أجهزة</span>'}</p><div class="ow-flex"><button class="ad-btn" type="button" data-ow="push-on">فعّلها على هالجهاز</button>${d.push.devices ? '<button class="ad-btn ghost" type="button" data-ow="push-test">أرسل تجربة</button>' : ''}</div>` : '<p class="ow-off">الإشعارات مو مفعّلة على الخادم.</p>'}</section>
     <section class="ad-card"><h2>🔐 حماية اللوحة بخطوتين</h2>
       <p class="ad-muted">لما تفعّلها، أي أحد يدخل اللوحة لازم يكتب رمز من جوال: أنت (رمز الإدارة) بتطبيق المصادقة، والمشرفين بتحققهم الشخصي من إعدادات حساباتهم. الجهاز يظل داخل 12 ساعة.<br>ضيّعت جوالك؟ ماينوس يقدر يطفيها بمتغير <code dir="ltr">ADMIN_2FA_OFF=1</code>.</p>
       ${d.panel.on ? `<p class="ow-on">✅ مفعّلة</p><div class="ow-flex"><input class="ad-in" data-ow-in="code" inputmode="numeric" maxlength="6" placeholder="الرمز للإيقاف" style="max-width:160px;direction:ltr"><button class="ad-btn ghost" type="button" data-ow="2fa-off">إيقاف الحماية</button></div>`
@@ -42,6 +44,16 @@ export function mountOwnerAdmin(root, { call }) {
   const val = (sel) => root.querySelector(sel)?.value ?? '';
   root.addEventListener('click', (e) => {
     const b = e.target.closest('[data-ow]'); if (!b) return; const a = b.dataset.ow;
+    if (a === 'push-on') return run(async () => {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) throw new Error(/iPad|iPhone|iPod/.test(navigator.userAgent) ? 'على الآيفون لازم تضيف الموقع للشاشة الرئيسية وتفتحه من الأيقونة أول.' : 'متصفحك ما يدعم الإشعارات.');
+      const perm = await Notification.requestPermission(); if (perm !== 'granted') throw new Error('لازم تسمح بالإشعارات من المتصفح.');
+      const k = await fetch('/api/push/key', { credentials: 'same-origin' }).then((r) => r.json()); if (!k.ok) throw new Error('الإشعارات مو متاحة على الخادم.');
+      const kb = (b64) => { const x = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(x, (c) => c.charCodeAt(0)); };
+      const reg = (await navigator.serviceWorker.getRegistration()) || await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready;
+      const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: kb(k.key) });
+      await call('owner/push/subscribe', { method: 'POST', body: { subscription: sub.toJSON() } }); return await call('owner');
+    }, 'تفعّلت ✅ بيوصلك إشعار تجربة.');
+    if (a === 'push-test') return run(async () => { await call('owner/push/test', { method: 'POST', body: {} }); return null; }, 'أرسلنا تجربة 🔔');
     if (a === 'freeze') { const reason = val('[data-ow-in="reason"]').trim(); if (reason.length < 3) { S.err = 'اكتب السبب.'; return paint(); } if (!window.confirm('توقف كل صرف العملات الحين؟')) return; return run(() => call('owner/freeze', { method: 'POST', body: { on: true, reason } }), 'وقفنا الصرف ⛔'); }
     if (a === 'unfreeze') return run(() => call('owner/freeze', { method: 'POST', body: { on: false } }), 'رجع الصرف شغال 🟢');
     if (a === '2fa-setup') return run(async () => { S.setup = await call('owner/panel2fa/setup', { method: 'POST', body: {} }); return null; }, '');

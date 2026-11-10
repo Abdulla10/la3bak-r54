@@ -64,7 +64,7 @@ export function totp(secret: string, step: number): string {
 type TF = { secret: string; on: boolean; at: number; last: number; fails: number; lockUntil: number };
 
 type Xfer = { at: number; kind: 'env' | 'cheer'; from: string; to: string; amt: number };
-export type AdminAlert = { at: number; kind: 'big' | 'xfer' | 'reports'; title: string; text: string; key: string };
+export type AdminAlert = { at: number; kind: 'big' | 'xfer' | 'reports' | 'collusion'; title: string; text: string; key: string };
 type Data = { v: 1; envs: Env[]; tours: Tour[]; league: League; tf: Record<string, TF>; xfer?: Xfer[]; alerts?: AdminAlert[] };
 export const XFER_FLAG_COUNT = 3, XFER_FLAG_SUM = 20_000;
 const valid = (x: Record<string, unknown>) => x.v === 1 && Array.isArray(x.envs) && Array.isArray(x.tours) && isObj(x.league) && isObj(x.tf);

@@ -1345,6 +1345,25 @@ export class Wallet {
     if (cur === 'coins') this.onTx?.(id, 'admin', delta, a.coins, 'admin');
     return { ok: true, coins: a.coins, gems: a.gems ?? 0, before: have, after, dup: false };
   }
+  /** R69: استرجاع محفظة لاعب لحالتها بنسخة احتياطية (العملات والجواهر والأغراض). السجل يبقى ويتسجل فيه الفرق. */
+  restorePlayer(id: string, snap: { coins: number; gems?: number; owned?: string[]; equipped?: Record<string, string>; exp?: Record<string, number> }, reason: string, opKey: string): { ok: true; dup: boolean; coins: number; gems: number; items: number } | { ok: false; code: 'bad' } {
+    if (!str(opKey) || !opKey || !nat(snap?.coins) || (snap.gems !== undefined && !nat(snap.gems))) return { ok: false, code: 'bad' };
+    const a = this.a(id);
+    if (this.d.admOps?.[opKey]) return { ok: true, dup: true, coins: a.coins, gems: a.gems ?? 0, items: (a.owned ?? []).length };
+    const sn = this.snap([id]); const opsBefore = this.d.admOps;
+    const dc = snap.coins - a.coins, dg = (snap.gems ?? 0) - (a.gems ?? 0);
+    a.coins = snap.coins; a.gems = snap.gems ?? 0;
+    a.owned = [...new Set((snap.owned ?? []).filter((x) => typeof x === 'string'))];
+    a.equipped = Object.fromEntries(Object.entries(snap.equipped ?? {}).filter(([, v]) => typeof v === 'string'));
+    if (snap.exp && typeof snap.exp === 'object') a.exp = { ...snap.exp }; else delete a.exp;
+    if (dc) this.rec(id, 'coins', 'admin', dc, a.coins, reason, 'admin');
+    if (dg) this.rec(id, 'gems', 'admin', dg, a.gems, reason, 'admin');
+    this.d.admOps = { ...(this.d.admOps ?? {}), [opKey]: { id, cur: 'coins', delta: dc, before: a.coins - dc, after: a.coins, at: Date.now() } };
+    try { this.disk.mustSave(); } catch (e) { this.restore(sn); this.d.admOps = opsBefore; throw e; }
+    return { ok: true, dup: false, coins: a.coins, gems: a.gems ?? 0, items: a.owned.length };
+  }
+  /** R69: حالة لاعب مختصرة من بيانات محفظة خام (للنسخ الاحتياطية) */
+  static snapshotOf(raw: unknown, id: string) { const acc = (raw as { acc?: Record<string, Acc> })?.acc?.[id]; return acc ? { coins: acc.coins, gems: acc.gems ?? 0, owned: acc.owned ?? [], equipped: acc.equipped ?? {}, exp: acc.exp } : null; }
   /** خادم الدفع فقط: إثبات العملية ضمن نفس الكاتب والرصيد والسجل؛ لا تقبل هالدالة مبلغًا من المتصفح. */
   hasPaymentProof(id: string, cur: Cur, delta: number, key: string): boolean {
     const proof = this.d.admOps?.[key];

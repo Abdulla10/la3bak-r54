@@ -6,7 +6,7 @@
    - المالك يقدر ينزّل أي نسخة من لوحة التحكم عشان يحفظها برا السيرفر. */
 import { createReadStream, readdirSync, statSync, readFileSync, writeFileSync, renameSync, mkdirSync, unlinkSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { gzipSync } from 'node:zlib';
+import { gzipSync, gunzipSync } from 'node:zlib';
 import type { ServerResponse } from 'node:http';
 
 export type BackupInfo = { name: string; size: number; at: number; files: number };
@@ -95,6 +95,21 @@ export class Backups {
       this.lastError = String((e as Error)?.message ?? e).slice(0, 200); this.log?.('backup_failed', { error: this.lastError }); throw e;
     } finally { this.running = false; }
   }
+  /** R69: يقرا ملف واحد (مسار نسبي من مجلد البيانات) من داخل نسخة احتياطية */
+  readFile(name: string, rel: string): Buffer | null {
+    if (!NAME.test(name)) return null;
+    let raw: Buffer; try { raw = gunzipSync(readFileSync(path.join(this.out, name))); } catch { return null; }
+    const want = 'la3bak-data/' + rel.split(path.sep).join('/');
+    for (let off = 0; off + 512 <= raw.length;) {
+      const h = raw.subarray(off, off + 512); if (h.every((b) => b === 0)) break;
+      const base = h.subarray(0, 100).toString('utf8').replace(/\0.*$/s, ''), prefix = h.subarray(345, 500).toString('utf8').replace(/\0.*$/s, '');
+      const full = prefix ? prefix + '/' + base : base; const size = parseInt(h.subarray(124, 136).toString('ascii').replace(/\0.*$/s, '').trim() || '0', 8);
+      if (full === want) return Buffer.from(raw.subarray(off + 512, off + 512 + size));
+      off += 512 + Math.ceil(size / 512) * 512;
+    }
+    return null;
+  }
+  get dataRoot() { return this.root; }
   private prune() {
     for (const b of this.list().slice(this.keep)) { try { unlinkSync(path.join(this.out, b.name)); } catch { /* */ } try { unlinkSync(path.join(this.out, b.name + '.json')); } catch { /* */ } }
   }
