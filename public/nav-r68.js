@@ -9,6 +9,7 @@ const ICON = {
   posts: (f) => `<svg viewBox="0 0 32 32" aria-hidden="true">${DEFS}<rect x="5" y="4" width="22" height="24" rx="4" fill="url(#${f})"/><path d="M10 11h12M10 16h12M10 21h7" stroke="#3d1670" stroke-width="2.4" stroke-linecap="round"/></svg>`,
   profile: (f) => `<svg viewBox="0 0 32 32" aria-hidden="true">${DEFS}<circle cx="16" cy="9.6" r="6.4" fill="url(#${f})"/><path d="M4 29c0-7.6 5.4-12 12-12s12 4.4 12 12z" fill="url(#${f})"/></svg>`,
 };
+// eslint-disable-next-line no-unused-vars
 const CROWN = `<svg class="n68-crown" viewBox="0 0 40 26" aria-hidden="true">${DEFS}<path d="M3 8l9 7 8-13 8 13 9-7-3.6 15H6.6z" fill="url(#n68g)" stroke="#9a5a00" stroke-width="1"/><circle cx="20" cy="15" r="2.3" fill="#c0263a"/><circle cx="12" cy="17" r="1.6" fill="#7b3fe4"/><circle cx="28" cy="17" r="1.6" fill="#7b3fe4"/></svg>`;
 export const NAV68 = [['home', 'الرئيسية', '#/'], ['shop', 'المتجر', '#/shop'], ['games', 'الألعاب', '#/games'], ['posts', 'المنشورات', '#/community'], ['friends', 'الأصدقاء', '#/friends'], ['profile', 'ملفي', '#/profile']];
 const SELECT = { home: 'home', '': 'home', shop: 'shop', games: 'games', lobby: 'games', hub: 'games', game: 'games', play: 'games', offline: 'games', challenge: 'games', room: 'games', join: 'games', city: 'games', friends: 'friends', messages: 'friends', community: 'posts', post: 'posts', u: 'posts', family: 'friends', profile: 'profile', account: 'profile', settings: 'profile', wallet: 'profile', vip: 'profile', ranks: 'profile', missions: 'profile', verification: 'profile', 'rank-rewards': 'profile' };
@@ -19,7 +20,7 @@ export function nav68HTML(page, { locked = () => false, cls = '' } = {}) {
   // ترتيب فعلي من اليسار لليمين = عكس القائمة (الرئيسية يمين)
   return `<nav class="lb-bottom nav68 ${cls}" aria-label="التنقل الرئيسي" dir="ltr">${[...NAV68].reverse().map(([key, label, url]) => {
     const on = sel === key, f = on ? 'n68g' : 'n68v';
-    const inner = `${key === 'games' ? `<span class="n68-dome">${CROWN}${ICON.games(f)}</span>` : `<span class="n68-ic">${ICON[key](f)}</span>`}<small>${label}</small>`;
+    const inner = `<span class="n68-ic">${ICON[key](f)}</span><small>${label}</small>`; // R68z27: الألعاب زر عادي بدون دائرة ولا تاج
     if (locked(url)) return `<button type="button" class="n68-item is-${key}" data-lb-nav="${key}" data-lb-locked aria-disabled="true" aria-label="${label}؛ مقفل من إعدادات ولي الأمر">${inner}</button>`;
     return `<a href="${url}" class="n68-item is-${key}${on ? ' is-on lb-selected' : ''}" data-lb-nav="${key}"${on ? ' aria-current="page"' : ''}>${inner}</a>`;
   }).join('')}</nav>`;

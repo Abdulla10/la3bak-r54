@@ -10,7 +10,7 @@ html body nav.nav68 .n68-ic{display:grid;place-items:center;width:32px;height:30
 html body nav.nav68 .n68-ic svg{width:30px;height:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
 html body nav.nav68 small{display:block!important;font:800 12.5px/1.2 Cairo,Tahoma,sans-serif!important;color:#f3eaff!important;white-space:nowrap!important;opacity:1!important;margin:0!important}
 html body nav.nav68 .n68-item.is-on:not(.is-games){background:none!important;box-shadow:none!important;border:1px solid transparent!important}
-html body nav.nav68 .n68-item.is-on small{color:#fff!important}
+html body nav.nav68 .n68-item.is-on small{color:#ffcb47!important}
 html body nav.nav68 .n68-item.is-on .n68-ic svg{filter:none}
 /* زر الألعاب بالنص مرفوع */
 html body nav.nav68 .n68-item.is-games{height:62px!important;overflow:visible!important}
@@ -36,3 +36,6 @@ html body nav.nav68 .n68-dome{width:56px;height:42px;bottom:18px;border-radius:2
 html body nav.nav68 .n68-dome>svg:not(.n68-crown){width:32px;height:23px;margin-top:5px}
 html body nav.nav68 .n68-crown{width:24px;height:16px;top:-12px}
 html body nav.nav68 .n68-item.is-games small{font-size:11px!important}
+/* R68z27: المختار لونه ذهبي (الأيقونة والكلمة)، والألعاب زر عادي */
+html body nav.nav68 .n68-item.is-games small{font-size:10.5px!important;font-weight:800!important}
+html body nav.nav68 .is-games .n68-ic svg{width:30px;height:22px}

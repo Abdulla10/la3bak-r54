@@ -11,7 +11,7 @@ import { avatarArt } from '../avatars.js?v=r67ac';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
 import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r68z24';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r67ac';
-import { nav68HTML } from '../nav-r68.js?v=r68q';
+import { nav68HTML } from '../nav-r68.js?v=r68z27';
 import { officialBadge } from '../official-badge-r67.js?v=r67as';
 import { rankSummary, renderRankOverview } from './rank-overview.js?v=r66b';
 

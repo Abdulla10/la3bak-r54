@@ -1,5 +1,5 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
-import { nav68HTML } from '../nav-r68.js?v=r68q';
+import { nav68HTML } from '../nav-r68.js?v=r68z27';
 import { headerHTML as head68 } from './home-r68.js?v=r68z20';
 import * as home from './home.js?v=r68z20';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
