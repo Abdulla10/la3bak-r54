@@ -117,3 +117,7 @@ html body .ids-card,html body .ids-card:hover{background:linear-gradient(180deg,
 .bb68-thumb img{width:78%;height:auto;filter:drop-shadow(0 8px 10px #000b)}
 .r23-lux-preview .bb68-thumb{min-height:170px}.r23-lux-preview .bb68-thumb img{width:150px}
 .r23-lux-preview:has(.bb68-thumb)+.cx-pnote{background:#ffffff0d!important;color:#d6c6ff!important;border-radius:10px;margin-top:8px}
+/* R68z25: الكور والعصي بنص الدائرة، وبدون إضاءة حول دوائر المتجر (طلب المالك) */
+.r23-product-art .bb68-thumb,.r23-product-art .cue68-thumb{min-height:0;height:100%;width:100%;border-radius:50%;background:none}
+.r23-product-art .bb68-thumb img{width:84%;height:84%;object-fit:contain;filter:drop-shadow(0 4px 6px #0009)}
+html body .r23-store .r23-product[class] .r23-product-art{box-shadow:0 0 0 1.5px #b98a3d80!important}
