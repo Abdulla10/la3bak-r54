@@ -2,7 +2,7 @@
  * والمتصفح يعيد نفس المحاكاة (pool-physics.js) عشان يحرّك الكرات. الطاولة والكرات رسم أصلي (Canvas). */
 import { faceHtml } from './characters.js?v=shell-r6';
 import { avatarArt } from './avatars.js?v=r68z31';
-import { simulate, canPlace, groupOf, W, H, R, HEAD_Y, POCKETS, POCKET_ART } from './pool-physics.js?v=r69zs';
+import { simulate, canPlace, groupOf, W, H, R, HEAD_Y, POCKETS, POCKET_ART } from './pool-physics.js?v=r69zt';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const PL = { room: '', angle: -Math.PI / 2, power: 0, spin: 0, place: null, anim: null, shown: -1, busy: false, dragging: '', send: null, evSeq: -1 };

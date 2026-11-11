@@ -2,25 +2,25 @@
 // وحدات الطاولة: العرض 500 والطول 1000 (الطاولة واقفة)، والزمن «خطوة» = 1/60 ثانية.
 // ما فيه أي دالة مثلثية داخل المحاكاة عشان النتيجة تطلع نفسها بالمكانين.
 // R69zs: كرات أكبر وفتحات أصغر (نسبة قريبة من الطاولة الحقيقية: الفتحة تقريباً ضعف الكرة)
-export const W = 500, H = 1000, R = 16, MAXV = 30;
+export const W = 500, H = 1000, R = 18.5, MAXV = 30;
 export const POCKETS = [
-  { x: 5, y: 5, r: 25 }, { x: W - 5, y: 5, r: 25 },
-  { x: -6, y: H / 2, r: 24 }, { x: W + 6, y: H / 2, r: 24 },
-  { x: 5, y: H - 5, r: 25 }, { x: W - 5, y: H - 5, r: 25 },
+  { x: 6, y: 6, r: 28 }, { x: W - 6, y: 6, r: 28 },
+  { x: -6, y: H / 2, r: 27 }, { x: W + 6, y: H / 2, r: 27 },
+  { x: 6, y: H - 6, r: 28 }, { x: W - 6, y: H - 6, r: 28 },
 ];
 /** شكل الفتحات بالرسم (مركز ونص قطر) */
 export const POCKET_ART = [
-  { x: 8, y: 8, r: 28 }, { x: W - 8, y: 8, r: 28 },
-  { x: -4, y: H / 2, r: 26 }, { x: W + 4, y: H / 2, r: 26 },
-  { x: 8, y: H - 8, r: 28 }, { x: W - 8, y: H - 8, r: 28 },
+  { x: 9, y: 9, r: 31 }, { x: W - 9, y: 9, r: 31 },
+  { x: -3, y: H / 2, r: 29 }, { x: W + 3, y: H / 2, r: 29 },
+  { x: 9, y: H - 9, r: 31 }, { x: W - 9, y: H - 9, r: 31 },
 ];
 export const HEAD_Y = 750; // خط الكسر: الكرة البيضا ورا هالخط بالكسر
 const SUB = 5, FRIC = 0.012, ROLL = 0.9935, REST_BALL = 0.95, REST_RAIL = 0.78, STOP = 0.01;
 const near = (b, p, extra = 0) => { const dx = b.x - p.x, dy = b.y - p.y; return dx * dx + dy * dy < (p.r + extra) * (p.r + extra); };
 /** هل الكرة قريبة من فتحة جيب (ما ترتد من الحافة هني) */
 function mouth(b) {
-  if (b.y < 33 || b.y > H - 33) { if (b.x < 33 || b.x > W - 33) return true; }
-  if (Math.abs(b.y - H / 2) < 22 && (b.x < 20 || b.x > W - 20)) return true;
+  if (b.y < 37 || b.y > H - 37) { if (b.x < 37 || b.x > W - 37) return true; }
+  if (Math.abs(b.y - H / 2) < 24 && (b.x < 23 || b.x > W - 23)) return true;
   return false;
 }
 /**
@@ -66,6 +66,8 @@ export function simulate(ballsIn, v, spin = 0, onStep) {
     }
     for (const b of live()) {
       const sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+      // R69zt: كرة وقفت بفم الجيب وهي طالعة برا الحافة = دخلت (ما تعلق على طرف الفتحة)
+      if (sp < STOP && (b.x < R * 0.4 || b.x > W - R * 0.4 || b.y < R * 0.4 || b.y > H - R * 0.4)) { b.in = true; b.vx = b.vy = 0; pocketed.push(b.n); continue; }
       if (sp < STOP) { b.vx = b.vy = 0; continue; }
       const ns = Math.max(0, sp * ROLL - FRIC); b.vx = b.vx / sp * ns; b.vy = b.vy / sp * ns; if (ns > 0) moving = true;
     }
