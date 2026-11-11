@@ -99,7 +99,7 @@ export function paymentAdminHTML(state = {}, { actor, pending = null } = {}) {
 }
 function ensureCSS() {
   if (!document.querySelector('link[data-payment-admin-css]')) {
-    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/payment-admin.css?v=r58p'; link.dataset.paymentAdminCss = '1'; document.head.appendChild(link);
+    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/payment-admin.css?v=r69zz4'; link.dataset.paymentAdminCss = '1'; document.head.appendChild(link);
   }
 }
 export function mountPaymentAdmin(root, { call, actor } = {}) {

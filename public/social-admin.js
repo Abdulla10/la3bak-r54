@@ -12,7 +12,7 @@ const btn=(action,label,extra='',danger=false)=>`<button type="button" class="ad
 const date=value=>Number.isFinite(Number(value))?new Date(Number(value)).toLocaleString('ar-u-nu-latn'):'';
 export function mountSocialAdmin(root,{call,actor}={}) {
   if(!root||typeof call!=='function')return {dispose(){}};
-  if(!document.querySelector('link[data-social-admin-styles]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/social-admin.css?v=r58p';link.dataset.socialAdminStyles='';document.head.append(link);}
+  if(!document.querySelector('link[data-social-admin-styles]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/social-admin.css?v=r69zz4';link.dataset.socialAdminStyles='';document.head.append(link);}
   const actorId=String(actor?.id??actor?.uuid??actor?.userId??'');
   const storageKey=`la3bak:social-admin:pending:${encodeURIComponent(actorId)}`;
   let alive=true,seq=0,busy=false,loading=false,data=null,error='',notice='',pending=null,dialog=null,dialogBusy=false,dialogHandler=null,dialogReturn=null;

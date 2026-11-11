@@ -1,11 +1,12 @@
+import { watchContrast } from './admin-contrast-r69.js?v=r69zz4';
 import {mountAuctionAdminR47} from './auction-admin-r47.js?v=r57';
-import {mountRankVipAdmin} from './rank-vip-admin.js?v=r69zz2';
+import {mountRankVipAdmin} from './rank-vip-admin.js?v=r69zz4';
 import { side68, head68, brand68, dash68HTML } from './admin-dash-r68.js?v=r69m';
 import {adminRoyalIcon,adminRoyalBrand,adminRoyalLogin,adminRoyalOverview} from './admin-royal-view.js?v=r68l-royal-1';
-import {mountPaymentAdmin} from './payment-admin.js?v=r69zz2';
+import {mountPaymentAdmin} from './payment-admin.js?v=r69zz4';
 import {mountBulkGrants,unmountBulkGrants,resetBulkGrants} from './admin-bulk-grants.js?v=r66a';
-import {mountSocialAdmin} from './social-admin.js?v=r69zz2';
-import { pricingHTML, progressionHTML } from './economy-admin.js?v=r69zz2';
+import {mountSocialAdmin} from './social-admin.js?v=r69zz4';
+import { pricingHTML, progressionHTML } from './economy-admin.js?v=r69zz4';
 import { ownerToolsVisible, ownerToolsEntryHTML, mountOwnerPlayerTools } from './owner-player-tools.js?v=r68z40e';
 /* لوحة الإدارة (عربي RTL). كل البيانات من /api/admin/* بالخادم؛ الواجهة تخفي ما لا تملك صلاحيته لكن الحماية الفعلية بالخادم.
    الدخول: رمز الإدارة (يُحفظ بـ sessionStorage فقط، يزول بإغلاق التبويب) أو حساب مسجّل بالطاقم. */
@@ -67,9 +68,9 @@ const STATUS = { lobby: 'انتظار', playing: 'يلعبون', finished: 'من
 const ACTIONS = { 'aimod.toggle': 'تشغيل/إيقاف المشرف الذكي', 'player.restore': 'استرجاع لاعب لنسخة احتياطية', 'economy.freeze': 'إيقاف صرف العملات', 'economy.unfreeze': 'تشغيل صرف العملات', 'panel2fa.on': 'تفعيل حماية اللوحة', 'panel2fa.off': 'إيقاف حماية اللوحة', 'staff.suspend': 'إيقاف مشرف', 'staff.unsuspend': 'رجوع مشرف', 'staff.limit': 'حد يومي لمشرف', 'undo': 'تراجع عن عملية', 'luck.toggle': 'تشغيل/إيقاف لعبة حظ', '2fa.reset': 'فك التحقق بخطوتين', 'gift.update': 'تعديل هدية (تفعيل/سعر)', 'community.remove': 'حذف محتوى مُبلّغ عنه', 'community.dismiss': 'رفض بلاغ مجتمع', 'wallet.request': 'طلب تعديل رصيد (فوق الحد)', 'wallet.reject': 'رفض طلب تعديل رصيد', 'wallet.approve-failed': 'فشل تنفيذ طلب موافَق', 'player.clear-suspect': 'رفع اشتباه عن حساب', 'shop.create': 'إضافة منتج', 'shop.update': 'تعديل منتج', 'shop.enable': 'تفعيل بيع منتج', 'shop.disable': 'إيقاف بيع منتج', 'wallet.adjust': 'تعديل رصيد', 'player.ban': 'حظر لاعب', 'player.unban': 'رفع حظر', 'room.close': 'إغلاق غرفة', 'notice.create': 'إنشاء إعلان', 'notice.update': 'تعديل إعلان', 'notice.delete': 'حذف إعلان', 'staff.set': 'تعيين طاقم', 'staff.remove': 'إزالة طاقم', 'maintenance.on': 'تفعيل الصيانة', 'maintenance.off': 'إلغاء الصيانة', 'maintenance.update': 'تعديل رسالة الصيانة' };
 
 function ensureCss() {
-    if(!document.querySelector('link[data-rank-vip-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/rank-vip-admin.css?v=r58p';l.dataset.rankVipAdminCss='1';document.head.appendChild(l);}
-    if (!document.querySelector('link[data-ad-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin.css?v=r61a'; l.dataset.adCss = '1'; document.head.appendChild(l); }
-    if(!document.querySelector('link[data-payment-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/payment-admin.css?v=r58p';l.dataset.paymentAdminCss='1';document.head.appendChild(l);}
+    if(!document.querySelector('link[data-rank-vip-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/rank-vip-admin.css?v=r69zz4';l.dataset.rankVipAdminCss='1';document.head.appendChild(l);}
+    if (!document.querySelector('link[data-ad-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin.css?v=r69zz4'; l.dataset.adCss = '1'; document.head.appendChild(l); }
+    if(!document.querySelector('link[data-payment-admin-css]')) {const l=document.createElement('link');l.rel='stylesheet';l.href='/payment-admin.css?v=r69zz4';l.dataset.paymentAdminCss='1';document.head.appendChild(l);}
     if (!document.querySelector('link[data-ad-dashboard-css]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/admin-dashboard.css?v=r58p'; l.dataset.adDashboardCss = '1'; document.head.appendChild(l); }
     if (!document.querySelector('link[data-ad68-css]')) { const l=document.createElement('link');l.rel='stylesheet';l.href='/admin-dash-r68.css?v=r68z';l.dataset.ad68Css='1';document.head.appendChild(l); }
     if (!document.querySelector('link[data-ad-royal-css]')) { const l=document.createElement('link');l.rel='stylesheet';l.href='/admin-royal.css?v=r58p';l.dataset.adRoyalCss='1';document.head.appendChild(l); }
@@ -81,6 +82,7 @@ export function mountAdmin(root) {
   if (root.dataset.adminMounted === '1') return;
   root.dataset.adminMounted = '1';
   ensureCss();
+  watchContrast(root);
   const S = { dirty: {}, me: null, tab: 'overview', err: '', warn: '', busy: false, data: {}, player: null, q: '', sort: 'since', off: 0, msg: '', period:'7d', checking:false, search:'', sidebarOpen:false, navId:'overview' };
   let authEpoch=0;
   const live = () => root.isConnected;
@@ -387,7 +389,7 @@ export function mountAdmin(root) {
     const bulkRoot=root.querySelector('[data-bulk-grants-host]');
     if(bulkRoot && can('wallet.bulk-grant')) mountBulkGrants(bulkRoot,{call,me:{...S.me,perms:[...S.me.perms,'rewards.grant']}});
     const functional=root.querySelector('[data-functional-admin]');
-    if(functional) import('./functional-admin.js?v=r69zz2').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
+    if(functional) import('./functional-admin.js?v=r69zz4').then(({mountFunctionalAdmin})=>{if(functional.isConnected)mountFunctionalAdmin(functional,{api:(path,method='GET',body)=>call(path,{method,body})});}).catch(()=>{if(functional.isConnected)functional.textContent='تعذّر تحميل أدوات الوظائف. أعد فتح التبويب.';});
   }
   async function go(tab, keep = false) { if (tab === 'owner-tools' && !ownerToolsVisible(S.me)) return; if (tab) { if (tab !== 'player-log') S.logQ = ''; S.tab = tab; S.player = null; } S.sidebarOpen=false; if (!keep) { S.err = ''; S.msg = ''; S.warn = ''; } paint(); await load(); paint(); }
   async function run(fn, ok) {
