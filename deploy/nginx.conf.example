@@ -7,7 +7,8 @@ map $http_upgrade $la3bak_connection_upgrade {
 }
 server {
     listen 127.0.0.1:8080;
-    server_name YOUR_DOMAIN;
+    # R70: لوحة التحكم على دومين فرعي (اختياري) — نفس السيرفر، وحط ADMIN_HOST=admin.YOUR_DOMAIN
+    server_name YOUR_DOMAIN admin.YOUR_DOMAIN;
     client_max_body_size 16m;
     add_header Permissions-Policy 'camera=(), microphone=(self)' always;
     location / {

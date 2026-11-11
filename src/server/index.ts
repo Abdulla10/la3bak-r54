@@ -224,6 +224,11 @@ export function transportStoreUnsaved(store: object): boolean {
 }
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
+/* R70: لوحة التحكم موقع منفصل بمجلدها. ADMIN_HOST (مثل admin.la3bak.com) يخليها على دومين بروحها؛ بدونه تنفتح على /admin */
+const ADMIN_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../admin-panel');
+const ADMIN_HOST = String(process.env.ADMIN_HOST ?? '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+const hostOf = (req: { headers: { host?: string } }) => String(req.headers.host ?? '').toLowerCase().replace(/:\d+$/, '');
+const isAdminHost = (req: { headers: { host?: string } }) => !!ADMIN_HOST && hostOf(req) === ADMIN_HOST.replace(/:\d+$/, '');
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -1092,16 +1097,22 @@ export async function createApp(
       return src.h === want ? path.join(PUBLIC_DIR, 'b', page) : null;
     } catch { return null; }
   };
-  async function serveStatic(req: http.IncomingMessage, res: http.ServerResponse, pathname: string) {
+  async function serveStatic(req: http.IncomingMessage, res: http.ServerResponse, pathname: string, only?: string) {
     let rel = decodeURIComponent(pathname);
     if (rel.endsWith('/')) rel += 'index.html';
-    let file = path.join(PUBLIC_DIR, path.normalize(rel));
-    /* R69zv: لو فيه نسخة مدموجة من الصفحة (كود واحد + تنسيق واحد) ومبنية من نفس الصفحة الحالية، نقدّمها */
-    if ((rel === '/index.html' || rel === '/preview.html') && process.env.CLIENT_BUNDLE !== '0') { const b = bundledPage(rel.slice(1)); if (b) file = b; }
-    if (!file.startsWith(PUBLIC_DIR + path.sep)) return json(res, 403, { error: 'ممنوع' });
+    /* R70: ملفات الموقع بـ public وملفات لوحة التحكم بـ admin-panel. دومين اللوحة يدور بمجلدها أول، والموقع بمجلده أول */
+    const onAdmin = isAdminHost(req);
+    const dirs = only ? [only] : onAdmin ? [ADMIN_DIR, PUBLIC_DIR] : ADMIN_HOST ? [PUBLIC_DIR] : [PUBLIC_DIR, ADMIN_DIR];
+    let file = '', st: { size: number; mtimeMs: number } | null = null;
+    for (const dir of dirs) {
+      let f = path.join(dir, path.normalize(rel));
+      if (!f.startsWith(dir + path.sep)) return json(res, 403, { error: 'ممنوع' });
+      /* R69zv: لو فيه نسخة مدموجة من الصفحة (كود واحد + تنسيق واحد) ومبنية من نفس الصفحة الحالية، نقدّمها */
+      if (dir === PUBLIC_DIR && (rel === '/index.html' || rel === '/preview.html') && process.env.CLIENT_BUNDLE !== '0') { const b = bundledPage(rel.slice(1)); if (b) f = b; }
+      try { const s0 = await stat(f); if (s0.isFile()) { file = f; st = s0; break; } } catch { /* الملف مو هني */ }
+    }
     try {
-      const st = await stat(file);
-      if (!st.isFile()) throw new Error('nf');
+      if (!st || !file) throw new Error('nf');
       const ext = path.extname(file);
       // R60b (السرعة): ETag من الحجم ووقت التعديل → المتصفح يرجع 304 بدون ما ينزّل الملف من جديد
       const tag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
@@ -2194,8 +2205,12 @@ export async function createApp(
       if (url.pathname === '/fonts/la3bak.css' && req.method === 'GET') { const css = await fontCache.getCss(); if (!css) { res.writeHead(302, { Location: GOOGLE_FONTS, 'Cache-Control': 'no-store' }); res.end(); return; } res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=86400', ...securityHeaders }); res.end(css); return; }
       { const fm = /^\/fonts\/([0-9a-f]{16}\.woff2)$/.exec(url.pathname); if (fm && req.method === 'GET') { const b = fontCache.file(fm[1]); if (!b) return json(res, 404, { error: 'غير موجود' }); res.writeHead(200, { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable', ...securityHeaders }); res.end(b); return; } }
       /* R69zz: رابط دعوة بمعاينة حلوة بالواتساب (صورة واسم اللعبة)، وبعدين يدخل الغرفة على طول */
-      /* R69zz3: رابط ثابت للوحة التحكم: la3bak.com/admin يفتح اللوحة مباشرة */
-      if (/^\/(admin|dashboard|panel)\/?$/i.test(url.pathname) && (req.method === 'GET' || req.method === 'HEAD')) { res.writeHead(302, { Location: '/#/admin', 'Cache-Control': 'no-store' }); return res.end(); }
+      /* R70: لوحة التحكم: على دومينها (ADMIN_HOST) أو على /admin لو ما فيه دومين */
+      if ((req.method === 'GET' || req.method === 'HEAD') && !url.pathname.startsWith('/api/')) {
+        const onAdmin = isAdminHost(req), adminPath = /^\/(admin|dashboard|panel)\/?$/i.test(url.pathname);
+        if (adminPath && ADMIN_HOST && !onAdmin) { res.writeHead(302, { Location: `${cfg.cookieSecure ? 'https' : 'http'}://${ADMIN_HOST}/`, 'Cache-Control': 'no-store' }); return res.end(); }
+        if (adminPath || (onAdmin && (url.pathname === '/' || url.pathname === '/index.html'))) return serveStatic(req, res, '/index.html', ADMIN_DIR);
+      }
       { const jm = /^\/j\/([A-Za-z0-9]{4,8})$/.exec(url.pathname); if (jm && req.method === 'GET') {
         const code = jm[1].toUpperCase(); let room: Room | null = null; try { room = await store.get(code); } catch { room = null; }
         const eng = room ? registry.historyEngine(room.gameId) : undefined; const host = room ? (room.players.find((p) => p.id === room!.hostId)?.name ?? 'صديقك') : 'صديقك';

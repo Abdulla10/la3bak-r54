@@ -294,3 +294,6 @@ html.is-admin-ui #top,html.is-admin-ui #bnav{display:none!important;}
 
 /* The login root itself needs border-box; descendant-only resets do not cover it. */
 .ad-royal-login{box-sizing:border-box;max-width:100%;}
+
+/* R70: كلام زر الدخول الذهبي واضح */
+#adminRoot .ad-royal-login-submit,#adminRoot .ad-royal-login-submit span{color:#2a1500!important;font-weight:800}

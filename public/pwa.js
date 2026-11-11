@@ -13,7 +13,7 @@ export function init(cb) {
   onChange = cb;
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     // R60b: لو الصفحة خلصت تحميل قبل ما يوصل هالسطر، حدث load ما يرجع يصير — فنسجّل على طول (قبل كان الـ SW أحيانًا ما يتسجل أبدًا)
-    const reg = () => navigator.serviceWorker.register('/sw.js?v=r69zz4').catch(() => {});
+    const reg = () => navigator.serviceWorker.register('/sw.js?v=r70').catch(() => {});
     if (document.readyState === 'complete') reg(); else window.addEventListener('load', reg);
     /* R69zz: لما تنزل نسخة جديدة من الموقع، نقول للاعب بدل ما يظل على القديمة */
     const hadController = !!navigator.serviceWorker.controller; let shown = false;
@@ -120,7 +120,7 @@ export const featuresHTML = () =>
 export function footerHTML(q) {
   const yr = new Date().getFullYear();
   return `<footer class="site-foot">
-    <div class="links"><a href="#/about">عن الموقع</a><a href="#/privacy">سياسة الخصوصية</a><a href="#/admin">الإدارة</a></div>
+    <div class="links"><a href="#/about">عن الموقع</a><a href="#/privacy">سياسة الخصوصية</a><a href="/admin">الإدارة</a></div>
     <div class="tools">
       ${canInstall() ? `<button class="pill-btn" type="button" data-act="install">📲 ثبّت التطبيق</button>` : `<span class="pill-btn" style="display:inline-grid;place-items:center">✅ مثبّت</span>`}
       <button class="pill-btn" type="button" data-act="sound" aria-pressed="${SFX.isOn()}">${SFX.isOn() ? '🔊 الصوت يعمل' : '🔇 الصوت مكتوم'}</button>
