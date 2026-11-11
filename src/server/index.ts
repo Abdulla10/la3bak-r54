@@ -7,7 +7,7 @@ import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
 import {quoteGiftBatch} from './social-gift-batch-r27.js';
 import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, statSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 import { timingSafeEqual, createHash, createHmac, randomInt, randomUUID } from 'node:crypto';
@@ -1067,10 +1067,29 @@ export async function createApp(
   };
 
   const staticCache = new Map<string, { size: number; mtime: number; raw: Buffer; gz: Buffer | null }>(); let staticCacheBytes = 0;
+  const pageHash = new Map<string, { mtime: number; h: string }>();
+  let bundleMeta: { at: number; mtime: number; pages: Record<string, { src: string }> } | null = null;
+  const bundledPage = (page: string): string | null => {
+    try {
+      const mf = path.join(PUBLIC_DIR, 'b', 'manifest.json'), m = statSync(mf).mtimeMs;
+      if (!bundleMeta || bundleMeta.mtime !== m || Date.now() - bundleMeta.at > 30_000) {
+        const j = JSON.parse(readFileSync(mf, 'utf8'));
+        // لو أي ملف داخل النسخة المدموجة تغيّر بعد البناء، النسخة قديمة → نرجع للملفات العادية لين ينبنى من جديد
+        let fresh = true; for (const [rel, h] of Object.entries((j.inputs ?? {}) as Record<string, string>)) { try { if (createHash('sha1').update(readFileSync(path.join(PUBLIC_DIR, rel))).digest('hex').slice(0, 16) !== h) { fresh = false; break; } } catch { fresh = false; break; } }
+        bundleMeta = { at: Date.now(), mtime: m, pages: fresh ? (j.pages ?? {}) : {} }; if (!fresh) log('client_bundle_stale', {});
+      }
+      const want = bundleMeta.pages[page]?.src; if (!want) return null;
+      const hp = path.join(PUBLIC_DIR, page), hm = statSync(hp).mtimeMs; let src = pageHash.get(page);
+      if (!src || src.mtime !== hm) { src = { mtime: hm, h: createHash('sha256').update(readFileSync(hp)).digest('hex') }; pageHash.set(page, src); }
+      return src.h === want ? path.join(PUBLIC_DIR, 'b', page) : null;
+    } catch { return null; }
+  };
   async function serveStatic(req: http.IncomingMessage, res: http.ServerResponse, pathname: string) {
     let rel = decodeURIComponent(pathname);
     if (rel.endsWith('/')) rel += 'index.html';
-    const file = path.join(PUBLIC_DIR, path.normalize(rel));
+    let file = path.join(PUBLIC_DIR, path.normalize(rel));
+    /* R69zv: لو فيه نسخة مدموجة من الصفحة (كود واحد + تنسيق واحد) ومبنية من نفس الصفحة الحالية، نقدّمها */
+    if ((rel === '/index.html' || rel === '/preview.html') && process.env.CLIENT_BUNDLE !== '0') { const b = bundledPage(rel.slice(1)); if (b) file = b; }
     if (!file.startsWith(PUBLIC_DIR + path.sep)) return json(res, 403, { error: 'ممنوع' });
     try {
       const st = await stat(file);
@@ -1080,7 +1099,7 @@ export async function createApp(
       const tag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
       const noCache = ext === '.html' || ext === '.webmanifest' || path.basename(file) === 'sw.js';
       // الملف اللي طالب برقم نسخة (?v=) ما يتغير محتواه لنفس الرقم → كاش طويل
-      const versioned = !noCache && /[?&]v=[^&]+/.test(req.url ?? '');
+      const versioned = !noCache && (/[?&]v=[^&]+/.test(req.url ?? '') || /^\/b\/(app|c)-[\w-]+\.(js|css)$/.test(rel));
       const cacheControl = noCache ? 'no-cache' : versioned ? 'public, max-age=2592000, immutable' : 'public, max-age=3600';
       const wantsGz = st.size > 1024 && /\.(js|css|html|svg|webmanifest|json)$/.test(ext) &&/\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
       const etag = wantsGz ? tag.slice(0, -1) + '-gz"' : tag;

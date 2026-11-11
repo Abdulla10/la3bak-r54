@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/bundle-client.mjs",
     "start": "node dist/server/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test test/*.test.ts",
@@ -18,7 +18,8 @@
     "predev": "node scripts/preflight.mjs tsx",
     "pretest": "node scripts/preflight.mjs tsx",
     "prebuild": "node scripts/preflight.mjs tsc",
-    "pretypecheck": "node scripts/preflight.mjs tsc"
+    "pretypecheck": "node scripts/preflight.mjs tsc",
+    "bundle": "node scripts/bundle-client.mjs"
   },
   "dependencies": {
     "sharp": "0.35.5",
@@ -31,6 +32,7 @@
     "@types/node": "^22.10.2",
     "@types/ws": "^8.5.13",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "esbuild": "^0.28.2"
   }
 }

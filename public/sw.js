@@ -1,6 +1,6 @@
 /* لعبك — عامل الخدمة: تحديث الشبكة أولاً، واللعب الجماعي يحتاج اتصال. */
 const CACHE_PREFIX = 'la3bak-shell-';
-const VER = CACHE_PREFIX + 'r69zu';
+const VER = CACHE_PREFIX + 'r69zv';
 const LEGACY_SHELL_CACHES = ['la3bak-rank-vip-1'];
 // Deduplicate exact URLs; keep the existing network-first/offline policy.
 // The unused legacy codewords image is not precached; the shipped R45 cover stays.
@@ -27,7 +27,7 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(fetch(req, { cache: 'no-cache' }).then(put).catch(async () => { const c = await caches.open(VER); const hit = await c.match(req); return hit || (req.mode === 'navigate' ? (await c.match('/')) || Response.error() : Response.error()); }));
     return;
   }
-  if (url.searchParams.has('v')) {
+  if (url.searchParams.has('v') || /^\/b\/(?:app|c)-[\w-]+\.(?:js|css)$/.test(url.pathname)) {
     e.respondWith(caches.open(VER).then((c) => c.match(req)).then((hit) => hit || fetch(req).then(put)).catch(() => fetch(req)));
     return;
   }
