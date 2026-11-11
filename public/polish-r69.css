@@ -1,0 +1,38 @@
+/* R69zw: توحيد ولمسة احترافية للموقع كامل (آخر ملف تنسيق — يطبّق على كل الصفحات) */
+:root{
+  --la-primary:#7c3aed;--la-primary-2:#a855f7;--la-gold:#f5c542;--la-gold-2:#e2a920;--la-danger:#ef4444;--la-ok:#22c55e;
+  --la-surface:#1a0b33;--la-surface-2:#241246;--la-line:rgba(255,255,255,.12);--la-text:#fff;--la-muted:rgba(255,255,255,.72);
+  --la-r-sm:10px;--la-r:14px;--la-r-lg:22px;--la-tap:44px;
+  --la-shadow:0 10px 30px rgba(0,0,0,.45);--la-ease:cubic-bezier(.2,.8,.2,1);
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+/* لمس أسرع: بدون تأخير الضغطتين، وبدون الوميض الرمادي حق آيفون */
+a,button,[role="button"],[data-act],[data-so-action],input,select,textarea,label,summary{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button,[role="button"],summary{-webkit-user-select:none;user-select:none}
+img{-webkit-user-drag:none}
+/* إحساس الضغط: الزر يغمق شوي لحظة الضغط (بدون تحريك عشان ما يخرب ترتيب الأزرار) */
+button:not(:disabled):active,[role="button"]:active,a.btn:active,.btn:not(:disabled):active{filter:brightness(.88) saturate(1.05);transition:filter .06s}
+button,[role="button"],.btn{transition:filter .15s var(--la-ease),background-color .2s var(--la-ease),border-color .2s var(--la-ease),opacity .2s}
+button:disabled,.btn:disabled{cursor:not-allowed}
+/* تركيز واضح للكيبورد بس (مو مع اللمس) */
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--la-gold);outline-offset:2px;border-radius:6px}
+::selection{background:rgba(245,197,66,.35);color:inherit}
+/* حقول الكتابة: 16px عشان آيفون ما يقرّب الشاشة */
+@media (pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:max(16px,1em)}}
+/* أشرطة تمرير رفيعة وأنيقة */
+*{scrollbar-width:thin;scrollbar-color:rgba(167,139,250,.45) transparent}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(167,139,250,.45);border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+/* تمرير ناعم بدون ما يسحب الصفحة كلها */
+.so-chat-messages,.so-gift-catalog,[data-so-panel-scroll],.d68-sub{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+/* انتقال ناعم بين الصفحات */
+@keyframes la69pg{from{opacity:.0;transform:translateY(8px)}to{opacity:1;transform:none}}
+html.la69-pg #view>*{animation:la69pg .26s var(--la-ease) both}
+/* صور تظهر بنعومة بدل ما تطلع فجأة */
+@keyframes la69img{from{opacity:0}}
+img[loading="lazy"]{animation:la69img .3s ease-out}
+/* هيكل تحميل لامع */
+.la69-skel{position:relative;overflow:hidden;background:rgba(255,255,255,.06);border-radius:var(--la-r)}
+.la69-skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);animation:la69sh 1.2s infinite}
+@keyframes la69sh{to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

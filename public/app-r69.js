@@ -153,3 +153,15 @@ export function startApp69() {
   addEventListener('visibilitychange', () => { if (!document.hidden) { badge(); devicePing(); } });
 }
 startApp69();
+
+/* R69zw: انتقال ناعم بين الصفحات (بس لما تتغير الصفحة، مو مع كل تحديث) */
+(() => {
+  let t = 0, last = '';
+  const page = () => String((globalThis.__LA3BAK_NAV__ || location).hash || '').split('/').slice(0, 2).join('/');
+  addEventListener('hashchange', () => {
+    const p = page(); if (p === last) return; last = p;
+    if (p.startsWith('#/room')) return; // داخل اللعبة ما نحرّك شي
+    const h = document.documentElement; h.classList.add('la69-pg'); clearTimeout(t); t = setTimeout(() => h.classList.remove('la69-pg'), 320);
+  });
+  last = page();
+})();
