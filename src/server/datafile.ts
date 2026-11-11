@@ -147,6 +147,9 @@ function rotateBak(file: string, now: number, validate: DataValidator) {
 }
 
 /** كتابة ذرّية متينة عند دعم النظام (fsync المؤقت ثم rename ثم fsync المجلد) مع اللقطة الداخلية. ليست multiwriter. */
+/** R69zx: نسخة من كل حفظ تروح لقاعدة البيانات (لو مفعّلة) */
+let dataMirror: ((file: string, contents: string) => void) | null = null;
+export function setDataMirror(fn: ((file: string, contents: string) => void) | null) { dataMirror = fn; }
 export function saveJsonFile(file: string, data: unknown, now: number, validate?: DataValidator) {
   // المدقق نفسه المستخدم عند القراءة يحمي الحفظ أيضاً، قبل لمس الأصل أو اللقطة.
   const guard = validate ?? validators.get(fileKey(file)) ?? isObj;
@@ -157,6 +160,7 @@ export function saveJsonFile(file: string, data: unknown, now: number, validate?
   mkdirSync(path.dirname(file), { recursive: true });
   rotateBak(file, now, guard);
   durableReplace(file, contents); // بيانات لاعبين: قراءة المالك فقط
+  if (dataMirror) { try { dataMirror(file, contents); } catch { /* المرآة اختيارية وما توقف الحفظ */ } }
 }
 
 /** فشل حفظ دائم: العملية ما اكتملت ولا تغيّر شيء. الرسالة عامة عمداً (بدون مسارات ولا تفاصيل نظام). */

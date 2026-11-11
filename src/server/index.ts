@@ -57,7 +57,7 @@ import { cleanName, nameProblem, newUserId, sessionCookie, clearCookie, sessionF
 import { Identities, validIdentities } from './identities.js';
 import type { GiftRec } from './gifts.js';
 import { Community, communityHttp, validCommunity, type CommunityLimits } from './community.js';
-import { checkDataFiles, DataFilesCorruptError, describeDataFailure, StorageMonitor, StorageError, STORAGE_MSG, Persister } from './datafile.js';
+import { checkDataFiles, DataFilesCorruptError, describeDataFailure, StorageMonitor, StorageError, STORAGE_MSG, Persister, setDataMirror } from './datafile.js';
 import { flushUnsaved, PendingWrites, type FlushReport } from './shutdown.js';
 import { googleKeyFetcher, verifyGoogleToken, type KeyFetcher } from './google.js';
 import { Progression, validProgression } from './progression.js';
@@ -111,6 +111,7 @@ import { Ratings } from './rating-r69.js';
 import { Passkeys, PasskeyError } from './passkeys-r69.js';
 import { Offsite, applyPendingRestore, stageRestore, checkArchive } from './offsite-r69.js';
 import { ClientErrors } from './client-errors-r69.js';
+import { DataMirror } from './data-mirror-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -2863,6 +2864,18 @@ async function main() {
   const cfg = loadConfig();
   /* R69zp: لو المالك طلب استرجاع نسخة، نرجّع الملفات قبل لا نحمّل أي بيانات */
   if (cfg.walletFile) { try { applyPendingRestore(path.dirname(cfg.walletFile)); } catch (e) { console.error('[la3bak] restore failed', e); } }
+  /* R69zx: مرآة قاعدة البيانات (DATA_MIRROR=1 مع STORE=mariadb، بعد تطبيق db/data-mirror-r69.sql) */
+  let mirror: DataMirror | null = null;
+  if (cfg.walletFile && cfg.store === 'mariadb' && process.env.DATA_MIRROR === '1') {
+    try {
+      const mysql: any = await import('mysql2/promise' as string);
+      const pool = mysql.createPool({ host: cfg.db.host, port: cfg.db.port, user: cfg.db.user, password: cfg.db.password, database: cfg.db.database, waitForConnections: true, connectionLimit: 3, charset: 'utf8mb4' });
+      mirror = new DataMirror(pool, path.dirname(cfg.walletFile), (e, d) => console.log(JSON.stringify({ t: new Date().toISOString(), event: e, ...d })));
+      const n = await mirror.restoreMissing(); if (n) console.log(`[la3bak] data mirror restored ${n} files`);
+      setDataMirror((f, c) => mirror!.note(f, c));
+      console.log('[la3bak] data mirror on');
+    } catch (e) { console.error('[la3bak] data mirror off:', String((e as Error).message).slice(0, 160)); mirror = null; setDataMirror(null); }
+  }
   const app = await createApp(cfg);
   let stopping = false;
   const stop = async () => {
@@ -2871,6 +2884,7 @@ async function main() {
     // شبكة أمان لو علق شيء غير متزامن (الكتابة المتزامنة المعلّقة ما تنقطع، وهنا يتدخل systemd بـTimeoutStopSec)
     setTimeout(() => process.exit(1), cfg.shutdownTimeoutMs + 5000).unref();
     const rep = await app.shutdown();
+    await mirror?.close();
     process.exit(rep.clean ? 0 : 1);
   };
   process.on('SIGTERM', stop);
