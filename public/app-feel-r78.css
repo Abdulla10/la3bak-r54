@@ -14,3 +14,7 @@ img{-webkit-user-drag:none;-webkit-touch-callout:none}
   html body input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),html body select,html body textarea{font-size:16px!important}
 }
 html:not(.lb-dark) body .lb-message-privacy p{color:#2c1a4a!important}
+/* R79: حقوق محفوظة أسفل كل صفحة */
+html body .lb-copy79{display:block!important;margin:18px 0 6px!important;padding:0!important;text-align:center!important;font-size:12px!important;font-weight:500;color:#a891c8!important;background:none!important;border:0!important;opacity:.9}
+html:not(.lb-dark) body .lb-copy79{color:#6a5a80!important}
+html body nav.lb-bottom.nav68.nav68{grid-template-columns:repeat(4,minmax(0,1fr))!important}

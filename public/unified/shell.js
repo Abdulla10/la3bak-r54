@@ -1,5 +1,5 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
-import { nav68HTML } from '../nav-r68.js?v=r68z27';
+import { nav68HTML } from '../nav-r68.js?v=r79';
 import { headerHTML as head68 } from './home-r68.js?v=r69z8';
 import * as home from './home.js?v=r69z8';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
@@ -69,7 +69,7 @@ export function pageHTML(ctx){
   const key=pageKey(ctx.page);const locked=ctx.noCommunity&&protectedRoute('#/'+ctx.page);const mod=ctx.contentOnly||locked?null:modules[key];
   const meta=true?'':`<div class="lb-route-meta"><a class="lb-route-back" href="${esc(ctx.backHref||'#/')}" aria-label="رجوع">رجوع</a>${ctx.user?`<span class="lb-route-connection${ctx.connected?'':' lb-offline'}"><i aria-hidden="true"></i>${ctx.connected?'متصل':'جاري الاتصال…'}</span>`:''}</div>`;
   const body=locked?`<section class="panel empty-state" role="status"><p>${esc(lockedText)}</p><a class="btn" href="#/">الرئيسية</a></section>`:mod?.render(ctx)??ctx.content??'';
-  return `<article class="lb-unified" data-lb-release="reference-milestone-1" data-lb-route="${esc(key)}" dir="rtl">${ctx.page==='shop'?`<div class="h68 h68-shophead">${head68(ctx)}</div>`:headerHTML(ctx)}${meta}<main class="lb-content" data-lb-page="${key}">${body}</main>${bottomHTML(ctx.page,ctx)}${ctx.page==='home'?home.footerHTML(ctx):''}<div class="lb-backdrop" data-lb-shell="close" hidden></div><aside class="lb-drawer" aria-label="القائمة الجانبية" aria-hidden="true" inert>${drawerHTML(ctx)}</aside><p class="lb-visually-hidden" data-lb-lock-status role="status" aria-live="polite"></p></article>`;
+  return `<article class="lb-unified" data-lb-release="reference-milestone-1" data-lb-route="${esc(key)}" dir="rtl">${ctx.page==='shop'?`<div class="h68 h68-shophead">${head68(ctx)}</div>`:headerHTML(ctx)}${meta}<main class="lb-content" data-lb-page="${key}">${body}<p class="lb-copy79" dir="rtl">© ${new Date().getFullYear()} لعبك — جميع الحقوق محفوظة</p></main>${bottomHTML(ctx.page,ctx)}${ctx.page==='home'?home.footerHTML(ctx):''}<div class="lb-backdrop" data-lb-shell="close" hidden></div><aside class="lb-drawer" aria-label="القائمة الجانبية" aria-hidden="true" inert>${drawerHTML(ctx)}</aside><p class="lb-visually-hidden" data-lb-lock-status role="status" aria-live="polite"></p></article>`;
 }
 export function mount(root,ctx){
   const key=pageKey(ctx.page);const pageRoot=root.querySelector('[data-lb-page]');const shell=root.querySelector('.lb-unified');const aside=shell?.querySelector('.lb-drawer');const backdrop=shell?.querySelector('.lb-backdrop');let oldFocus;

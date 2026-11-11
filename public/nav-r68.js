@@ -11,7 +11,8 @@ const ICON = {
 };
 // eslint-disable-next-line no-unused-vars
 const CROWN = `<svg class="n68-crown" viewBox="0 0 40 26" aria-hidden="true">${DEFS}<path d="M3 8l9 7 8-13 8 13 9-7-3.6 15H6.6z" fill="url(#n68g)" stroke="#9a5a00" stroke-width="1"/><circle cx="20" cy="15" r="2.3" fill="#c0263a"/><circle cx="12" cy="17" r="1.6" fill="#7b3fe4"/><circle cx="28" cy="17" r="1.6" fill="#7b3fe4"/></svg>`;
-export const NAV68 = [['home', 'الرئيسية', '#/'], ['shop', 'المتجر', '#/shop'], ['games', 'الألعاب', '#/games'], ['posts', 'المنشورات', '#/community'], ['friends', 'الأصدقاء', '#/friends'], ['profile', 'ملفي', '#/profile']];
+/* R79: المتجر والألعاب انشالوا من الشريط السفلي بطلب المالك (للحين يوصلون من الرئيسية والقائمة) */
+export const NAV68 = [['home', 'الرئيسية', '#/'], ['posts', 'المنشورات', '#/community'], ['friends', 'الأصدقاء', '#/friends'], ['profile', 'ملفي', '#/profile']];
 const SELECT = { home: 'home', '': 'home', shop: 'shop', games: 'games', lobby: 'games', hub: 'games', game: 'games', play: 'games', offline: 'games', challenge: 'games', room: 'games', join: 'games', city: 'games', friends: 'friends', messages: 'friends', community: 'posts', post: 'posts', u: 'posts', family: 'friends', profile: 'profile', account: 'profile', settings: 'profile', wallet: 'profile', vip: 'profile', ranks: 'profile', missions: 'profile', verification: 'profile', 'rank-rewards': 'profile' };
 export const nav68Selected = (page) => SELECT[page] || '';
 /** locked(url) => true لو القسم مقفل بإعدادات ولي الأمر */
