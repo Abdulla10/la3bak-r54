@@ -2194,6 +2194,8 @@ export async function createApp(
       if (url.pathname === '/fonts/la3bak.css' && req.method === 'GET') { const css = await fontCache.getCss(); if (!css) { res.writeHead(302, { Location: GOOGLE_FONTS, 'Cache-Control': 'no-store' }); res.end(); return; } res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=86400', ...securityHeaders }); res.end(css); return; }
       { const fm = /^\/fonts\/([0-9a-f]{16}\.woff2)$/.exec(url.pathname); if (fm && req.method === 'GET') { const b = fontCache.file(fm[1]); if (!b) return json(res, 404, { error: 'غير موجود' }); res.writeHead(200, { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable', ...securityHeaders }); res.end(b); return; } }
       /* R69zz: رابط دعوة بمعاينة حلوة بالواتساب (صورة واسم اللعبة)، وبعدين يدخل الغرفة على طول */
+      /* R69zz3: رابط ثابت للوحة التحكم: la3bak.com/admin يفتح اللوحة مباشرة */
+      if (/^\/(admin|dashboard|panel)\/?$/i.test(url.pathname) && (req.method === 'GET' || req.method === 'HEAD')) { res.writeHead(302, { Location: '/#/admin', 'Cache-Control': 'no-store' }); return res.end(); }
       { const jm = /^\/j\/([A-Za-z0-9]{4,8})$/.exec(url.pathname); if (jm && req.method === 'GET') {
         const code = jm[1].toUpperCase(); let room: Room | null = null; try { room = await store.get(code); } catch { room = null; }
         const eng = room ? registry.historyEngine(room.gameId) : undefined; const host = room ? (room.players.find((p) => p.id === room!.hostId)?.name ?? 'صديقك') : 'صديقك';
