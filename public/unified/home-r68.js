@@ -61,7 +61,23 @@ function gamesHTML(ctx) {
   return `<section class="h68-card h68-games"><header><h2>${SVG.pad}<span>الألعاب المتاحة</span></h2><a class="h68-all" href="#/games">عرض الكل ${SVG.chev}</a></header>${games.length ? `<div class="h68-grid">${EXTRA68.map((x) => `<a class="h68-tile is-img is-xtra" href="${x[0]}" aria-label="${x[2]}"><img src="/assets/art69/${x[1]}.webp?v=r69z8" alt="" loading="lazy" decoding="async"></a>`).join('')}${games.map((g, i) => TILE[g.id] ? `<a class="h68-tile is-img" href="${url(g)}" aria-label="العب ${esc(g.name)}"><img src="${TILE[g.id]}" alt="" loading="lazy" decoding="async"></a>` : `<a class="h68-tile t${i % 4}" href="${url(g)}" aria-label="العب ${esc(g.name)}"><span class="h68-tart">${ART[g.id] ? `<img src="${ART[g.id]}" alt="" loading="lazy" decoding="async">` : SVG.pad}</span><b>${esc(g.name)}</b></a>`).join('')}</div>` : '<p class="h68-empty">جاري تحميل الألعاب…</p>'}</section>`;
 }
 export function render68(ctx = {}) {
-  return `<div class="h68" dir="rtl">${headerHTML(ctx)}<div data-h68-banner-host>${bannersHTML(bannerCache)}</div>${shortcutsHTML(ctx)}${gamesHTML(ctx)}${ctx.user && !ctx.noCommunity ? `<div class="h68-row"><section class="h68-card h68-live" data-h68-live><header><h2><span>غرف مباشرة</span>${SVG.live}</h2><a class="h68-all" href="#/social-rooms" aria-label="كل الغرف">${SVG.chev}</a></header><div class="h68-rooms"><p class="h68-empty">جاري التحميل…</p></div></section><section class="h68-card h68-now" data-h68-now><header><h2><i class="h68-on" aria-hidden="true"></i><span>الآن في اللعب</span></h2></header><div class="h68-people"><p class="h68-empty">جاري التحميل…</p></div></section></div>` : ''}</div>`;
+  return `<div class="h68" dir="rtl">${headerHTML(ctx)}<div data-h68-banner-host>${bannersHTML(bannerCache)}</div>${shortcutsHTML(ctx)}${gamesHTML(ctx)}${ctx.user && !ctx.noCommunity ? `<div class="h68-row"><section class="h68-card h68-live" data-h68-live><header><h2><span>غرف مباشرة</span>${SVG.live}</h2><a class="h68-all" href="#/social-rooms" aria-label="كل الغرف">${SVG.chev}</a></header><div class="h68-rooms"><p class="h68-empty">جاري التحميل…</p></div></section><section class="h68-card h68-now" data-h68-now><header><h2><i class="h68-on" aria-hidden="true"></i><span>الآن في اللعب</span></h2></header><div class="h68-people"><p class="h68-empty">جاري التحميل…</p></div></section></div>` : ''}${moreHTML(ctx)}</div>`;
+}
+/* R81: تحت الغرف: أبطال لعبك + آخر المنشورات + روابط الموقع (بدل الفراغ) */
+function moreHTML(ctx) {
+  const posts = ctx.noCommunity ? '' : `<section class="h68-card h81-posts" data-h81-posts><header><h2><span>📝 آخر المنشورات</span></h2><a class="h68-all" href="#/community" aria-label="كل المنشورات">${SVG.chev}</a></header><div class="h81-list"><p class="h68-empty">جاري التحميل…</p></div></section>`;
+  return `<section class="h68-card h81-top" data-h81-top><header><h2><span>🏆 أبطال لعبك</span></h2><a class="h68-all" href="#/leaderboard" aria-label="الترتيب كامل">${SVG.chev}</a></header><div class="h81-list"><p class="h68-empty">جاري التحميل…</p></div></section>${posts}<nav class="h81-links" aria-label="روابط الموقع"><a href="#/about">من نحن</a><a href="#/support">المساعدة</a><a href="#/contact">اتصل بنا</a><a href="#/terms">الشروط</a><a href="#/privacy">الخصوصية</a></nav>`;
+}
+function topHTML(list) {
+  const top = arr(list).filter((r) => r && r.name).slice(0, 5);
+  if (!top.length) return '<p class="h68-empty">ما في نتائج للحين — العب وكن أول بطل!</p>';
+  const medal = ['🥇', '🥈', '🥉'];
+  return top.map((r, i) => `<div class="h81-row${r.me ? ' me' : ''}"><span class="h81-pos">${medal[i] || nf(i + 1)}</span><span class="h81-av">${r.av && /^\/[A-Za-z0-9_./?=&-]+$/.test(r.av) ? `<img src="${esc(r.av)}" alt="" loading="lazy">` : `<i>${esc([...String(r.name)][0])}</i>`}</span><b>${esc(r.name)}</b><small>${nf(r.points || 0)} نقطة</small></div>`).join('');
+}
+function postsHTML(list) {
+  const ps = arr(list).filter((p) => p && Number.isSafeInteger(p.id)).slice(0, 3);
+  if (!ps.length) return '<p class="h68-empty">ما في منشورات للحين — <a href="#/community">اكتب أول منشور</a></p>';
+  return ps.map((p) => `<a class="h81-post" href="#/post/${p.id}"><span class="h81-av">${p.author?.av && /^\/[A-Za-z0-9_./?=&-]+$/.test(p.author.av) ? `<img src="${esc(p.author.av)}" alt="" loading="lazy">` : `<i>${esc([...String(p.author?.name || '؟')][0])}</i>`}</span><span class="h81-ptext"><b>${esc(p.author?.name || '')}</b><small>${esc(String(p.text || (p.media ? '📷 صورة' : '')).slice(0, 90))}</small></span><span class="h81-meta">❤️ ${nf(p.likes || 0)} · 💬 ${nf(p.comments || 0)}</span></a>`).join('');
 }
 const getJSON = (u) => fetch(u, { credentials: 'same-origin', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 function roomsHTML(rooms) {
@@ -112,6 +128,8 @@ if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined' &
 export function mount68(root, ctx = {}) {
   let alive = true;
   scan();
+  getJSON('/api/rankings').then((j) => { const el = root.querySelector('[data-h81-top] .h81-list'); if (alive && el) el.innerHTML = j ? topHTML(j.list) : '<p class="h68-empty">تعذّر التحميل.</p>'; });
+  if (!ctx.noCommunity) getJSON('/api/community/feed').then((j) => { const el = root.querySelector('[data-h81-posts] .h81-list'); if (alive && el) el.innerHTML = j ? postsHTML(j.posts) : '<p class="h68-empty">تعذّر التحميل.</p>'; });
   if (ctx.user && !ctx.noCommunity) {
     getJSON('/api/social/rooms').then((j) => { const el = root.querySelector('[data-h68-live] .h68-rooms'); if (alive && el) el.innerHTML = j?.ok ? roomsHTML(j.rooms) : '<p class="h68-empty">تعذّر التحميل.</p>'; });
     getJSON('/api/friends/live').then((j) => { const el = root.querySelector('[data-h68-now] .h68-people'); if (alive && el) el.innerHTML = peopleHTML(j?.list); });

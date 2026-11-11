@@ -29,3 +29,28 @@ html body nav.lb-bottom.nav68.nav68{display:none!important}
 html body .h68-left{display:flex;align-items:center;gap:8px;min-width:0}
 html body .h68-left .h68-who{display:none!important}
 html body .lb68-tools .lb68-menu{margin:0}
+/* R81: أقسام أسفل الرئيسية */
+html body .h81-top,html body .h81-posts{margin-top:10px}
+html body .h81-list{display:grid;gap:6px}
+html body .h81-row,html body .h81-post{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(190,150,255,.18);color:#f3eaff;text-decoration:none;min-width:0}
+html body .h81-row.me{border-color:#ffd66b88;background:rgba(255,214,107,.08)}
+html body .h81-pos{width:24px;text-align:center;font-weight:900;color:#ffd66b;flex:none}
+html body .h81-av{width:32px;height:32px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center;background:#4a1f78;border:1.5px solid #ffd66b66}
+html body .h81-av img{width:100%;height:100%;object-fit:cover}
+html body .h81-av i{font-style:normal;font-weight:800;color:#ffd66b;font-size:14px}
+html body .h81-row b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+html body .h81-row small{color:#ffd66b;font-weight:700;font-size:12px;flex:none}
+html body .h81-ptext{flex:1;min-width:0;display:grid}
+html body .h81-ptext b{font-size:13px}
+html body .h81-ptext small{color:#d9c8f0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body .h81-meta{flex:none;font-size:11px;color:#c9b4ec}
+html body .h81-links{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin:16px 0 0;padding:0}
+html body .h81-links a{color:#c9b4ec;font-size:13px;text-decoration:none}
+html body .h68-empty a{color:#ffd66b}
+html:not(.lb-dark) body :is(.h81-row,.h81-post){background:#fff;color:#2c1a4a;border-color:#c49a3a44}
+html:not(.lb-dark) body :is(.h81-ptext small,.h81-meta,.h81-links a){color:#6a5a80}
+html:not(.lb-dark) body .h81-row small,html:not(.lb-dark) body .h81-pos{color:#8a641f}
+html body #view .h68{padding-bottom:6px!important}
+html body #view .h81-row small{color:#ffd66b!important}
+html:not(.lb-dark) body #view .h81-row small{color:#8a641f!important}
+html body #view .h68 .lb-copy79,html body #view .lb-copy79{margin-top:10px!important}
