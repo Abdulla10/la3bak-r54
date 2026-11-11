@@ -70,6 +70,8 @@ export function cleanText(v: unknown, max: number, lines = true): string {
 }
 
 export interface CommunityDeps {
+  /** R74: بلاغات أصحاب «الدعم الأولوية» تطلع أول */
+  priority?: (id: string) => boolean;
   secret: string;
   nameOf(id: string): string;
   avOf(id: string): string | null;
@@ -444,7 +446,9 @@ export class Community {
   /* ---------- الإدارة ---------- */
   reports(status: string) {
     const list = this.d.reports.filter((r) => status === 'all' || r.status === (status || 'open')).slice(-200).reverse();
-    return { list: list.map((r) => ({ id: r.id, kind: r.kind, target: r.target, reason: r.reason, note: r.note, at: r.at, status: r.status, by: r.by === 'ai-moderator' ? '🤖 المشرف الذكي' : this.dep.nameOf(r.by) || 'لاعب', author: this.dep.nameOf(r.snap.author) || 'لاعب', authorId: r.snap.author, text: r.snap.text, media: !!r.snap.media, decidedBy: r.decidedBy ?? null, decidedAt: r.decidedAt ?? null, decision: r.decision ?? null, exists: r.kind === 'post' ? this.d.posts.some((p) => p.id === r.target) : this.d.comments.some((c) => c.id === r.target) })), open: this.d.reports.filter((r) => r.status === 'open').length };
+    const pri = (r: { by: string }) => (r.by !== 'ai-moderator' && this.dep.priority?.(r.by) ? 1 : 0);
+    list.sort((a, b) => pri(b) - pri(a));
+    return { list: list.map((r) => ({ id: r.id, priority: pri(r) === 1, kind: r.kind, target: r.target, reason: r.reason, note: r.note, at: r.at, status: r.status, by: r.by === 'ai-moderator' ? '🤖 المشرف الذكي' : this.dep.nameOf(r.by) || 'لاعب', author: this.dep.nameOf(r.snap.author) || 'لاعب', authorId: r.snap.author, text: r.snap.text, media: !!r.snap.media, decidedBy: r.decidedBy ?? null, decidedAt: r.decidedAt ?? null, decision: r.decision ?? null, exists: r.kind === 'post' ? this.d.posts.some((p) => p.id === r.target) : this.d.comments.some((c) => c.id === r.target) })), open: this.d.reports.filter((r) => r.status === 'open').length };
   }
   /** قرار الإدارة: remove يحذف المحتوى (المنشور/التعليق) ويغلق كل البلاغات المفتوحة عليه؛ dismiss يغلق البلاغ بدون حذف */
   decide(rid: unknown, action: 'remove' | 'dismiss', actorName: string, why: string) {

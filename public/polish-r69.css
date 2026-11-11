@@ -134,3 +134,16 @@ html:not(.lb-dark) .sp73-wave i{background:#2c1a4a33}html:not(.lb-dark) .sp73-wa
 html:not(.lb-dark) .sp73{color:#2c1a4a}html:not(.lb-dark) :is(.sp73-card,.sp73-row,.sp73-msg,.sp73-sc,.sp73-compose){background:#fcf9f4;border-color:#e3d6f2}
 html:not(.lb-dark) .sp73-msg.mine{background:#efe3fc}html:not(.lb-dark) :is(.sp73-mid small,.sp73-h p,.sp73-empty,.sp73-sc small,.sp73-rules){color:#6a5a80}
 html:not(.lb-dark) .sp73-chips button:not(.on){background:#f3ecfb;color:#2c1a4a}html:not(.lb-dark) :is(.sp73-l,.sp73-sec,.sp73-msg b){color:#8a641f}
+/* R74: مزايا VIP والنوبل */
+.sp74-p{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:16px;background:#1c0c30;border:1px solid #ffffff14;opacity:.72}
+.sp74-p.on{opacity:1;border-color:#ffd66b66;background:linear-gradient(160deg,#2f1550,#1f0d35)}
+.sp74-i{display:grid;place-items:center;min-width:42px;height:42px;border-radius:12px;background:#2a0e45;font-size:20px}
+.sp74-l{flex:none;font-size:12px;font-weight:800;color:#ffd66b;white-space:nowrap}.sp74-p:not(.on) .sp74-l{color:#a891c8}
+.sp74-go{display:grid;grid-template-columns:1fr auto;gap:2px 8px;margin:10px 0;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,#4a1f78,#2a1048);border:1px solid #ffd66b88;color:#fff;text-decoration:none}
+.sp74-go b{color:#ffd66b}.sp74-go small{grid-column:1;color:#e6d6fa;font-size:12px}.sp74-go span{grid-row:1/span 2;grid-column:2;align-self:center;font-size:24px}
+#sp74-bc{position:fixed;z-index:9998;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);width:min(94vw,440px);display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:18px;background:linear-gradient(135deg,#ffe08a,#e0a526);color:#2a1500;box-shadow:0 12px 30px #0008;animation:sp74in .4s ease-out;transition:opacity .5s,transform .5s}
+#sp74-bc.out{opacity:0;transform:translate(-50%,-14px)}#sp74-bc b{display:block;font-size:12.5px}#sp74-bc span span{font-weight:700;font-size:14.5px}
+#sp74-bc .sp74-bc-c{font-size:26px}#sp74-bc button{margin-inline-start:auto;border:0;background:#2a150022;border-radius:50%;width:28px;height:28px;cursor:pointer}
+@keyframes sp74in{from{opacity:0;transform:translate(-50%,-16px)}}
+html:not(.lb-dark) .sp74-p{background:#fcf9f4;border-color:#e3d6f2}html:not(.lb-dark) .sp74-l{color:#8a641f}
+.sp74-p .sp73-mid small{white-space:normal;overflow:visible;line-height:1.55}

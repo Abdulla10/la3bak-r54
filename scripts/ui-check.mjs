@@ -12,7 +12,7 @@ const { chromium } = await import('playwright');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const BASE = arg('url', 'http://127.0.0.1:3000'), OUT = arg('out', ''), STRICT = process.argv.includes('--strict');
 const MIN_RATIO = Number(arg('min-ratio', 2.2)); // أقل من كذا = ما يبين تقريباً
-const ROUTES = ['#/home', '#/games', '#/hub/baloot', '#/hub/jackaro', '#/rooms', '#/messages', '#/settings', '#/profile', '#/shop', '#/friends', '#/community', '#/missions', '#/league', '#/casino', '#/leaderboard', '#/wallet', '#/notifications', '#/groups', '#/lfg', '#/majalis', '#/vibe'];
+const ROUTES = ['#/home', '#/games', '#/hub/baloot', '#/hub/jackaro', '#/rooms', '#/messages', '#/settings', '#/profile', '#/shop', '#/friends', '#/community', '#/missions', '#/league', '#/casino', '#/leaderboard', '#/wallet', '#/notifications', '#/groups', '#/lfg', '#/majalis', '#/vibe', '#/perks'];
 const GAMES = [['ludo', 2], ['baloot', 4], ['pool', 2], ['uno', 2]];
 if (OUT) mkdirSync(OUT, { recursive: true });
 

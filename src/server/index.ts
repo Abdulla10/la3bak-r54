@@ -1,6 +1,6 @@
 import { Casino } from './casino-r68.js';
 import { Bonds, BondError } from './bonds-r68.js';
-import { recordQuit, quitBlock } from './quit-guard-r68.js';
+import { recordQuit, quitBlock, liftQuitBan } from './quit-guard-r68.js';
 import { moderateText, maskBanned, profanityOnly, setExtraBannedWords, BANNED_WORDS_MAX } from './moderation-r58.js';
 import { Economy, validEconomy, MANUAL_CONVERSION_DISABLED, MANUAL_CONVERSION_CLOSED_MESSAGE } from './economy.js';
 import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
@@ -122,6 +122,7 @@ import { AvifCache } from './avif-r71.js';
 import { createSeo } from './seo-r71.js';
 import { PERSONAS, personaOf } from './personas-r72.js';
 import { Social73 } from './social-r73.js';
+import { Perks } from './perks-r74.js';
 
 /** Compatibility wrapper: old generic intents remain valid; optional social payloads fail closed. */
 export function validSocialGiftOutbox(d: Record<string, unknown>): boolean {
@@ -584,6 +585,8 @@ export async function createApp(
   /** R68z: الملف المتحرك: VIP 5+ أو نبيل 3+ = لمعة، VIP 10+ أو نبيل 6+ = كامل */
   const profileAnimTier = (id: string) => { const t = tierOf(id); return t.vip >= 10 || t.noble >= 6 ? 2 : t.vip >= 5 || t.noble >= 3 ? 1 : 0; };
   const tierOf = (id: string) => { const p = progression.view(id); return { vip: p.vip.enabled && p.vip.value ? Number(p.vip.value.slice(1)) || 0 : 0, noble: p.noble.enabled && p.noble.value ? Number(p.noble.value.slice(1)) || 0 : 0 }; };
+  /* R74: مزايا عملية لـ VIP والنوبل */
+  const perks = new Perks(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'perks74.json') : '', tierOf, Date.now, storage);
   const PRIVACY_GATES: Record<string, { on: boolean; vip: number; noble: number | null; msg: string; level?: number }> = {
     showPresence: { on: false, vip: 4, noble: 3, msg: 'إخفاء حالة الاتصال يحتاج VIP 4 أو نبيل 3.' },
     hideEntrances: { on: true, vip: 6, noble: 8, msg: 'إخفاء الدخولية يحتاج VIP 6 أو نبيل 8.' },
@@ -597,7 +600,7 @@ export async function createApp(
   };
   const VISITORS_VIP = 11;
   accountTools.gate = (id, key, value) => { const g = PRIVACY_GATES[key]; return g && value === g.on && !privacyAllowed(id, key) ? g.msg : null; };
-  const privacyAllowed = (id: string, key: string) => { const g = PRIVACY_GATES[key]; if (!g) return true; const t = tierOf(id); if (g.level && (progression.view(id).level.value ?? 0) >= g.level) return true; return t.vip >= g.vip || (g.noble !== null && t.noble >= g.noble); };
+  const privacyAllowed = (id: string, key: string) => { const g = PRIVACY_GATES[key]; if (!g) return true; if (['hideVisits', 'hideEntrances', 'showPresence'].includes(key) && perks.has(id, 'stealth')) return true; const t = tierOf(id); if (g.level && (progression.view(id).level.value ?? 0) >= g.level) return true; return t.vip >= g.vip || (g.noble !== null && t.noble >= g.noble); };
   /** الخيار مفعّل فعليًا (اختاره اللاعب + رتبته تسمح الحين) */
   const privacyOn = (id: string, key: 'showPresence' | 'hideEntrances' | 'hideVisits' | 'hideGiftLog' | 'hideVipId' | 'noFollow' | 'unsearchable' | 'hideWealth') => { const g = PRIVACY_GATES[key]; const v = accountTools.explicitSetting(id, key as any); return v === g.on && privacyAllowed(id, key); };
   const eligibleItem = (id: string, it: ReturnType<ShopCatalog['get']>) => {
@@ -897,7 +900,7 @@ export async function createApp(
       deliverIntent('game:' + ref);
       try { s73Ref.v?.gamePlayed(players.map((p) => p.id)); } catch { /* */ }
       /* R69zn: التصنيف — مباريات الناس بس (مو ضد الكمبيوتر) */
-      try { if (room.mode !== 'bots' && players.length >= 2 && !room.players.some((p) => p.bot)) { const order: string[] = Array.isArray((room.state as { players?: unknown })?.players) ? (room.state as { players: string[] }).players : players.map((p) => p.id); const team = (id: string) => (TEAM_GAMES.has(room.gameId) && order.length === 4 ? order.indexOf(id) % 2 : order.indexOf(id) + 10); const delta = ratings.record(ref, room.gameId, players.map((p) => ({ id: p.id, team: team(p.id) })), winners); for (const [id, d] of Object.entries(delta)) { const v = ratings.view(room.gameId, id); sendToUser(id, { t: 'rating', game: room.gameId, delta: d, rating: v.rating, tier: v.tier, icon: v.icon }); } } } catch (e) { if (e instanceof StorageError) throw e; log('rating_failed', { message: String(e).slice(0, 80) }); }
+      try { if (room.mode !== 'bots' && players.length >= 2 && !room.players.some((p) => p.bot)) { const order: string[] = Array.isArray((room.state as { players?: unknown })?.players) ? (room.state as { players: string[] }).players : players.map((p) => p.id); const team = (id: string) => (TEAM_GAMES.has(room.gameId) && order.length === 4 ? order.indexOf(id) % 2 : order.indexOf(id) + 10); const delta = ratings.record(ref, room.gameId, players.map((p) => ({ id: p.id, team: team(p.id) })), winners, (id) => perks.useDaily(id, 'rankShield')); for (const [id, d] of Object.entries(delta)) { const v = ratings.view(room.gameId, id); sendToUser(id, { t: 'rating', game: room.gameId, delta: d, rating: v.rating, tier: v.tier, icon: v.icon }); } } } catch (e) { if (e instanceof StorageError) throw e; log('rating_failed', { message: String(e).slice(0, 80) }); }
       try { const out = registry.historyEngine(room.gameId)?.outcome(room.state as never); arena.tourGameFinished(room.code, winners, out?.scores); if (players.length >= 2) arena.leagueGame(players, winners); } catch (e) { if (e instanceof StorageError) throw e; log('arena_game_hook_failed', { message: String(e).slice(0, 120) }); }
       { const gn = registry.historyEngine(room.gameId)?.info.name ?? room.gameId; for (const p of players) activity.note(p.id, 'game', room.code, `${gn}${winners.includes(p.id) ? ' — فاز 🏆' : ''}${room.stake ? ` · رسم ${room.stake}` : ''}`); }
     },
@@ -1049,7 +1052,7 @@ export async function createApp(
   await reconcileFinished();
   await service.restorePresence();
 
-  const mm = new Matchmaker(service, registry, sendToUser, wallet, (id) => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), won: 0 }), Date.now, 10 * 60_000, (g, id) => ratings.get(g, id));
+  const mm = new Matchmaker(service, registry, sendToUser, wallet, (id) => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), won: 0 }), Date.now, 10 * 60_000, (g, id) => ratings.get(g, id), (id) => perks.has(id, 'mmPriority'));
   { const rmT = setInterval(() => { void mm.rematch().catch(() => undefined); }, 5000); rmT.unref?.(); }
   const sessionLimiter = new KeyedLimiter(cfg.sessionBurst, cfg.sessionBurst / 60);
   const ipOf = (req: http.IncomingMessage) => {
@@ -1193,6 +1196,7 @@ export async function createApp(
     adminIdOf: (id) => { const v = accounts.displayPlayerId(id); return v && /^[1-9]\d{2}$/.test(v) ? v : null; },
     profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg') return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
   }, Date.now, storage, opts.communityLimits);
+  (community.dep as { priority?: (id: string) => boolean }).priority = (id) => perks.has(id, 'support');
   const social = new SocialPrivate(socialFile, Date.now, storage, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id),
     resolvePublicId: pub => community.resolvePublicId(pub),
@@ -1220,7 +1224,7 @@ export async function createApp(
   }, Date.now, storage);
   const socialEligible=(id:string)=>accounts.has(id)&&!platform.isBanned(id)&&(accounts.socialAge(id)===null||Number(accounts.socialAge(id))>=18);
   let socialVoice:SocialVoice|null=null;
-  const socialRooms=new SocialRooms({file:socialRoomsFile,onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
+  const socialRooms=new SocialRooms({file:socialRoomsFile,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
     cannon:{wallet,catalog:shopcat,pendingCount:id=>outbox.pending().filter(i=>i.payload.kind==='gift'&&validCannonGiftContext(i.payload.cannonSupport)&&i.payload.cannonSupport.cannonId===id).length,
       onAward:(id,eventId)=>{sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id),won:0});support.announce([id],'مكافأة مدفع الغرفة','تمت إضافة الإطار والخلفية الدائمين إلى ملكيتك. حدّث المتجر لعرضهما.','room-cannon-r27','cannon:'+eventId);}},
     pendingChallengeGift:id=>outbox.pending().some(intent=>intent.payload.kind==='gift'&&validGiftSupportContext(intent.payload.socialSupport)&&intent.payload.socialSupport.challengeId===id),
@@ -1931,17 +1935,35 @@ export async function createApp(
       pub: (id) => community.pub(id), resolve: (p) => (typeof p === 'string' ? community.resolvePublicId(p) : null), nameOf: (id) => accounts.nameOf(id) || 'لاعب',
       banned: (id) => platform.isBanned(id), guest: (id) => isGuest(id), adult: (id) => { const a = accounts.socialAge(id); return a === null ? null : a >= 18; },
       profanity: (t) => !!profanityOnly(t), mod: (kind, id, by, text) => aiMod.enqueue({ kind, id, by, text }),
-      push: (id, msg) => sendToUser(id, msg), online: () => [...sockets.keys()],
+      push: (id, msg) => sendToUser(id, msg), online: () => [...sockets.keys()], perk: (id, k) => perks.has(id, k),
       ownedRooms: (id) => socialRooms.ownedRoomsOf(id).filter((r: any) => !socialRooms.isGameRoom(r.id)).map((r: any) => ({ id: r.id, name: r.name })), liveRooms: () => socialRooms.liveRooms().filter((r: any) => !socialRooms.isGameRoom(r.id)) as any,
       createRoom: async (uid, gameId, seats) => { const eng = registry.get(gameId); if (!eng) return { ok: false, error: 'اللعبة مب متاحة.' }; const n = Math.max(eng.info.minPlayers, Math.min(eng.info.maxPlayers, seats)); const r: any = await withGameVoice(s73User(uid), await service.createRoom(s73User(uid), { gameId, mode: 'friends', seats: n, key: 's73' + randomUUID().replace(/-/g, '') })); return r.ok ? { ok: true, code: r.room.code } : { ok: false, error: r.error }; },
       joinRoom: async (uid, code) => { const r: any = await withGameVoice(s73User(uid), await service.joinRoom(s73User(uid), code, undefined)); return r.ok ? { ok: true } : { ok: false, error: r.error }; },
       roomSeats: async (code) => { try { const r = await store.get(code); return r ? { free: r.seats - r.players.filter((p) => !p.left).length, status: r.status } : null; } catch { return null; } },
       gameName: (id) => { const e = registry.get(id); return e && e.info.status === 'available' ? e.info.name : null; },
+      big: (id) => perks.has(id, 'bigGroups'),
     }, Date.now, storage);
     setInterval(() => { void s73.vibeTick().catch(() => undefined); }, 3_000).unref();
     setInterval(() => { try { s73.sweep(); } catch { /* */ } }, 6 * 3600_000).unref();
     { const orig = social.send.bind(social); (social as any).send = (me: string, other: string, input: { body?: unknown; ref?: unknown }) => { const out = orig(me, other, input) as any; try { if (out && !out.error && !out.duplicate) s73.bump(me, other, 1); } catch { /* */ } return out; }; }
     s73Ref.v = s73;
+    /* R74: مزايا VIP والنوبل */
+    functionalHttp.add('GET', '/api/perks', ({ user }) => ({ ok: true, ...perks.view(user.id), broadcastLeft: perks.broadcastLeft(user.id) }));
+    functionalHttp.add('GET', '/api/admin/perks', () => ({ ok: true, ...perks.adminList() }), 'owner');
+    functionalHttp.add('POST', '/api/admin/perks', ({ body }) => perks.setLevel(body.key, body.level), 'owner');
+    functionalHttp.add('POST', '/api/broadcast', ({ user, body }) => {
+      if (!perks.has(user.id, 'broadcast')) throw Object.assign(new Error(`الإعلان العام لرتبة N${perks.level('broadcast')} وفوق.`), { status: 403 });
+      const left = perks.broadcastLeft(user.id); if (left) throw Object.assign(new Error(`تقدر ترسل إعلان بعد ${Math.ceil(left / 86400_000)} يوم.`), { status: 429 });
+      const text = String(body.text ?? '').replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (text.length < 4 || text.length > 120) throw Object.assign(new Error('الإعلان من 4 لين 120 حرف.'), { status: 400 });
+      const bad = moderateText(text, 'profile-name'); if (profanityOnly(text) || !bad.ok) throw Object.assign(new Error('الإعلان فيه كلام أو روابط غير مسموحة.'), { status: 400 });
+      perks.markBroadcast(user.id); const from = accounts.nameOf(user.id) || 'نبيل', t = tierOf(user.id);
+      for (const id of sockets.keys()) sendToUser(id, { t: 'broadcast', from, noble: t.noble, text });
+      aiMod.enqueue({ kind: 'post', id: 'bc-' + user.id + '-' + Date.now(), by: user.id, text });
+      log('broadcast', { by: user.id.slice(0, 8) }); return { ok: true, sent: sockets.size };
+    });
+    functionalHttp.add('POST', '/api/friend-note', ({ user, body }) => s73.friendNote(user.id, body.to, body.text, () => social.request(user.id, community.resolvePublicId(String(body.to ?? '')) ?? '')));
+    functionalHttp.add('GET', '/api/friend-notes', ({ user }) => s73.friendNotes(user.id));
     functionalHttp.add('GET', '/api/groups', ({ user }) => s73.groups(user.id));
     functionalHttp.add('POST', '/api/groups', ({ user, body }) => s73.createGroup(user.id, body.name, body.members));
     functionalHttp.add('GET', '/api/groups/:id', ({ user, params }) => s73.groupDetail(user.id, params.id));
@@ -2317,8 +2339,8 @@ export async function createApp(
       if (url.pathname === '/api/vn' && req.method === 'POST') {
         if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' });
         if (!s73Ref.v) return json(res, 503, { error: 'جرّب بعد شوي.' });
-        if (Number(req.headers['content-length'] ?? 0) > 1_200_000) { req.resume(); return json(res, 413, { error: 'الصوت كبير.' }); }
-        const buf = await new Promise<Buffer | null>((resolve, reject) => { const ch: Buffer[] = []; let n = 0, big = false; req.on('data', (c: Buffer) => { n += c.length; if (n > 1_200_000) { big = true; ch.length = 0; } else if (!big) ch.push(c); }); req.once('end', () => resolve(big ? null : Buffer.concat(ch))); req.once('error', reject); req.once('aborted', () => reject(new BodyReadError(400, 'aborted'))); });
+        if (Number(req.headers['content-length'] ?? 0) > 2_400_000) { req.resume(); return json(res, 413, { error: 'الصوت كبير.' }); }
+        const buf = await new Promise<Buffer | null>((resolve, reject) => { const ch: Buffer[] = []; let n = 0, big = false; req.on('data', (c: Buffer) => { n += c.length; if (n > 2_400_000) { big = true; ch.length = 0; } else if (!big) ch.push(c); }); req.once('end', () => resolve(big ? null : Buffer.concat(ch))); req.once('error', reject); req.once('aborted', () => reject(new BodyReadError(400, 'aborted'))); });
         if (!buf) return json(res, 413, { error: 'الصوت كبير.' });
         let tr = ''; try { tr = decodeURIComponent(String(req.headers['x-transcript'] ?? '')); } catch { tr = ''; }
         const kind = url.searchParams.get('kind'); const target = kind === 'dm' ? url.searchParams.get('to') : kind === 'group' ? url.searchParams.get('g') : null;
@@ -2803,7 +2825,7 @@ export async function createApp(
       case 'room:leave': {
         const mode = await service.modeFor(user, m.code);
         const r = await service.leave(user, m.code);
-        if (r.ok && mode && mode !== 'bots') { const q = recordQuit(user.id); if (q.banned) return { ...r, quitBan: q.until - Date.now() }; }
+        if (r.ok && mode && mode !== 'bots') { const q = recordQuit(user.id); if (q.banned) { if (perks.useDaily(user.id, 'quitPass')) { liftQuitBan(user.id); return { ...r, quitPass: true }; } return { ...r, quitBan: q.until - Date.now() }; } }
         return r;
       }
       case 'room:delete':

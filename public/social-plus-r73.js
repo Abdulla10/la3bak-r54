@@ -78,7 +78,7 @@ async function recordFlow(btn, max, send) {
 /* ---------- الصفحات ---------- */
 const S = { groups: null, group: null, gid: '', addOpen: false, membersOpen: false, lfg: null, lfgForm: { gameId: 'baloot', need: 1, note: 'جاهز الحين' }, maj: null, majI: '', vibe: null, vibeI: 'chill', vibePoll: 0, friends: null };
 const shell = (title, sub, body, back = '#/friends') => `<div class="sp73"><header class="sp73-h"><a class="sp73-back" href="${back}" aria-label="رجوع">‹</a><div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div></header>${body}</div>`;
-export const ROUTES = new Set(['groups', 'group', 'lfg', 'majalis', 'vibe']);
+export const ROUTES = new Set(['groups', 'group', 'lfg', 'majalis', 'vibe', 'perks']);
 
 export function render(view, r, ctx = {}) {
   toast = ctx.toast || toast;
@@ -89,6 +89,7 @@ export function render(view, r, ctx = {}) {
   if (r.name === 'lfg') return lfgPage(view);
   if (r.name === 'majalis') return majPage(view);
   if (r.name === 'vibe') return vibePage(view);
+  if (r.name === 'perks') return perksPage(view);
 }
 let RENDER = () => {};
 const rerender = () => RENDER();
@@ -190,6 +191,29 @@ function vibePollStart() {
   }, 2500);
 }
 
+/* R74: مزايا VIP والنوبل */
+const PK = { d: null, at: 0 };
+async function myPerks(force = false) { if (!force && PK.d && Date.now() - PK.at < 60_000) return PK.d; try { PK.d = await api('/api/perks'); PK.at = Date.now(); } catch { /* */ } return PK.d; }
+async function perksPage(view) {
+  const paint = () => {
+    const d = PK.d; if (!d) { view.innerHTML = shell('👑 مزايا رتبتك', '', '<p class="sp73-empty">جاري التحميل…</p>', '#/vip'); return; }
+    const row = (p) => `<div class="sp74-p${p.open ? ' on' : ''}"><span class="sp74-i">${p.icon}</span><span class="sp73-mid"><b>${esc(p.name)}</b><small>${esc(p.desc)}</small></span><span class="sp74-l">${p.open ? '✅ مفعّلة' : '🔒 ' + (p.system === 'vip' ? 'VIP' : 'N') + p.level}</span></div>`;
+    const bc = d.list.find((p) => p.key === 'broadcast');
+    view.innerHTML = shell('👑 مزايا رتبتك', `رتبتك: ${d.vip ? 'VIP' + d.vip : 'بدون VIP'} · ${d.noble ? 'N' + d.noble : 'بدون نوبل'}`, `
+      <h2 class="sp73-sec">💎 مزايا VIP</h2><div class="sp73-list">${d.list.filter((p) => p.system === 'vip').map(row).join('')}</div>
+      <h2 class="sp73-sec">👑 مزايا النوبل</h2><div class="sp73-list">${d.list.filter((p) => p.system === 'noble').map(row).join('')}</div>
+      ${bc?.open ? `<form class="sp73-card" data-sp73f="bcast"><b>📣 إعلان على كل الموقع</b><small class="sp73-t">${d.broadcastLeft ? `تقدر ترسل الإعلان الجاي بعد ${Math.ceil(d.broadcastLeft / 86400000)} يوم` : 'يطلع لكل المتصلين الحين — مرة بالأسبوع'}</small><input name="text" maxlength="120" placeholder="مثلاً: مجلسي مفتوح الحين، حياكم 🎙️" ${d.broadcastLeft ? 'disabled' : ''}><button class="btn block" type="submit" ${d.broadcastLeft ? 'disabled' : ''}>📣 أرسل الإعلان</button></form>` : ''}
+      <a class="btn block ghost" href="#/vip">💎 صفحة VIP</a>`, '#/vip');
+  };
+  paint(); await myPerks(true); if (curHash() === '#/perks') paint();
+}
+function banner(m) {
+  let el = document.getElementById('sp74-bc'); if (el) el.remove();
+  el = document.createElement('div'); el.id = 'sp74-bc'; el.setAttribute('role', 'status');
+  el.innerHTML = `<span class="sp74-bc-c">👑</span><span><b>${esc(m.from)}${m.noble ? ` · N${Number(m.noble)}` : ''}</b><span>${esc(m.text)}</span></span><button type="button" aria-label="إغلاق">✕</button>`;
+  el.querySelector('button').onclick = () => el.remove(); document.body.appendChild(el); setTimeout(() => el.classList.add('out'), 9000); setTimeout(() => el.remove(), 9600);
+}
+
 /* ---------- الأحداث ---------- */
 document.addEventListener('click', async (e) => {
   const b = e.target.closest?.('[data-sp73]'); if (!b) return;
@@ -221,6 +245,7 @@ document.addEventListener('click', async (e) => {
     else if (k === 'vibe-go') { b.disabled = true; const r = await api('/api/vibe', 'POST', { interest: S.vibeI }); S.vibe = { waiting: true, count: r.waiting }; rerender(); vibePollStart(); }
     else if (k === 'vibe-stop') { await api('/api/vibe', 'DELETE'); S.vibe = null; clearInterval(S.vibePoll); rerender(); }
     else if (k === 'sug-add') { b.disabled = true; await api('/api/social-private/friend-requests', 'POST', { to: b.dataset.p, key: 'sug-' + crypto.randomUUID() }); b.textContent = '✓ انرسل'; }
+    else if (k === 'fnote') { const t = prompt('رسالتك مع طلب الصداقة (لين 140 حرف):'); if (!t || !t.trim()) return; await api('/api/friend-note', 'POST', { to: b.dataset.p, text: t.trim() }); toast('💌 انرسل طلب الصداقة مع رسالتك'); b.disabled = true; b.textContent = '✓ انرسل'; }
     else if (k === 'our-table') { b.disabled = true; const r = await api('/api/friend-table', 'POST', { pub: b.dataset.p, gameId: 'baloot' }); go('#/room/' + r.code); }
   } catch (err) { toast(err.message || 'صار خطأ.'); b.disabled = false; }
 });
@@ -230,6 +255,7 @@ document.addEventListener('submit', async (e) => {
   try {
     if (k === 'gnew') { const g = await api('/api/groups', 'POST', { name: f.name.value, members: [...f.querySelectorAll('input[name=m]:checked')].map((x) => x.value) }); S.addOpen = false; S.groups = null; go('#/group/' + g.id); }
     else if (k === 'gmsg') { const t = f.text.value.trim(); if (!t) return; await api(`/api/groups/${encodeURIComponent(S.gid)}/msg`, 'POST', { text: t }); f.text.value = ''; await reloadGroup(); }
+    else if (k === 'bcast') { const r = await api('/api/broadcast', 'POST', { text: f.text.value }); toast(`📣 وصل إعلانك لـ ${r.sent} متصل`); await myPerks(true); rerender(); }
     else if (k === 'gadd') { S.group = await api(`/api/groups/${encodeURIComponent(S.gid)}/add`, 'POST', { pub: f.p.value }); rerender(); }
   } catch (err) { toast(err.message || 'صار خطأ.'); } finally { if (btn) btn.disabled = false; }
 }, true);
@@ -246,6 +272,8 @@ export function onEvent(m) {
   if (m.t === 'friend:table') { toast(`🎲 ${m.name || m.from} فتح لكم طاولة ${m.game || ''} — ادخل من «#/join/${m.code}»`); setTimeout(() => { if (confirm(`${m.from} يبيك بطاولة ${m.game || ''} — تدخل؟`)) go('#/join/' + m.code); }, 300); return true; }
   if (m.t === 'lfg:new') { toast(`🙋 ${m.from} يدوّر شريك ${m.game} — «${m.note}» · افتح «أبي شريك»`); if (curHash() === '#/lfg') { S.lfg = null; rerender(); } return true; }
   if (m.t === 'lfg:joined') { toast(`🙋 ${m.name} دخل طاولتك!`); return true; }
+  if (m.t === 'broadcast') { banner(m); return true; }
+  if (m.t === 'friend:note') { toast(`💌 ${m.from} أرسل لك طلب صداقة مع رسالة: «${m.text}»`); return true; }
   if (m.t === 'vibe:match') { if (S.vibe) { S.vibe = null; clearInterval(S.vibePoll); toast('لقينا لك ناس! ☕'); go('#/room/' + m.code); } return true; }
   return false;
 }
@@ -270,9 +298,15 @@ function decorate(force = false) {
     const anchor = view.querySelector('main.lb-content > section.hero, .lb-content .hero') ;
     if (anchor && !view.querySelector('.sp73-hub')) anchor.insertAdjacentHTML('afterend', `<nav class="sp73-hub" aria-label="تواصل"><a href="#/groups">👥<b>قروباتي</b></a><a href="#/lfg">🙋<b>أبي شريك</b></a><a href="#/majalis">🎙️<b>مجالس الاهتمامات</b></a><a href="#/vibe">☕<b>سوالف عشوائية</b></a></nav><section class="sp73-sug" hidden></section>`);
     const sug = view.querySelector('.sp73-sug'); if (sug && !sug.dataset.loaded) { sug.dataset.loaded = '1'; api('/api/friend-suggestions').then((j) => { if (!j.list?.length) return; sug.hidden = false; sug.innerHTML = `<h2 class="sp73-sec">✨ ناس يمكن تعرفهم</h2><div class="sp73-sugs">${j.list.map((u) => `<div class="sp73-sc"><a href="#/u/${esc(encodeURIComponent(u.pub))}"><span class="sp73-av">${u.online ? '🟢' : '👤'}</span><b>${esc(u.name)}</b></a><small>${esc(u.why.join(' · '))}</small><button type="button" class="btn sm" data-sp73="sug-add" data-p="${esc(u.pub)}">➕ إضافة</button></div>`).join('')}</div>`; }).catch(() => {}); }
+    const nt = view.querySelector('.sp74-notes'); if (!nt && view.querySelector('.sp73-hub')) { view.querySelector('.sp73-hub').insertAdjacentHTML('afterend', '<section class="sp74-notes" hidden></section>'); api('/api/friend-notes').then((j) => { const box = view.querySelector('.sp74-notes'); if (!box || !j.list?.length) return; box.hidden = false; box.innerHTML = `<h2 class="sp73-sec">💌 رسائل مع طلبات الصداقة</h2>${j.list.map((n) => `<div class="sp73-row"><span class="sp73-av">💌</span><span class="sp73-mid"><b>${esc(n.name)}</b><small>${esc(n.text)}</small></span><a class="btn sm" href="#/u/${esc(encodeURIComponent(n.pub))}">الملف</a></div>`).join('')}<small class="sp73-t">تقبل أو ترفض من «طلبات الصداقة» تحت.</small>`; }).catch(() => {}); }
     const paintLv = () => { for (const a of view.querySelectorAll('a.lb-friends-name')) { if (a.dataset.sp73) continue; const m = /#\/u\/([^/?#]+)/.exec(a.getAttribute('href') || ''); const pub = m && decodeURIComponent(m[1]); const l = pub && LV.data?.levels?.[pub]; if (!l) continue; a.dataset.sp73 = '1'; a.insertAdjacentHTML('afterend', `<span class="sp73-lv" title="${l.next ? `باقي ${l.next.need} نقطة على «${esc(l.next.name)}»` : 'أعلى مستوى'}">${l.icon} ${esc(l.level)}</span>${l.score >= 40 ? `<button type="button" class="btn sm sp73-ours" data-sp73="our-table" data-p="${esc(pub)}">🎲 طاولتنا</button>` : ''}`); } };
     if (!LV.data || Date.now() - LV.at > 60_000) { LV.at = Date.now(); api('/api/friend-levels').then((j) => { LV.data = j; paintLv(); }).catch(() => {}); } else paintLv();
   }
+  /* R74: رابط المزايا بصفحة VIP والرتب */
+  if (/^#\/(vip|ranks)(\/|$)/.test(h) && !view.querySelector('.sp74-go')) { const top = view.querySelector('main.lb-content > section, main.lb-content .hero, .lb-content > *'); if (top) top.insertAdjacentHTML('afterend', '<a class="sp74-go" href="#/perks">⚡ <b>مزايا رتبتك العملية</b><small>دخول المجالس الممتلئة، أولوية بالبحث، حماية التصنيف، الدخول المخفي…</small><span>‹</span></a>'); }
+  /* R74: طلب صداقة مع رسالة (نوبل) */
+  const um2 = /^#\/u\/([^/?#]+)/.exec(h);
+  if (um2 && !view.querySelector('.sp74-fn')) { const rel = view.querySelector('.cm-rel'); if (rel) { rel.insertAdjacentHTML('afterend', '<span class="sp74-fn"></span>'); myPerks().then((d) => { const box = view.querySelector('.sp74-fn'); const p = d?.list?.find((x) => x.key === 'reqNote'); if (box && p?.open) box.innerHTML = `<button type="button" class="btn sm" data-sp73="fnote" data-p="${esc(decodeURIComponent(um2[1]))}">💌 طلب صداقة مع رسالة</button>`; }); } }
   /* الملف الشخصي: نبذة صوتية */
   const um = /^#\/u\/([^/?#]+)/.exec(h); const own = /^#\/(profile|account)(\/|$)/.test(h) || h === '#/profile';
   if (um || own) {

@@ -31,3 +31,6 @@ export function quitBlock(userId: string, now = Date.now()) {
 export function clearQuitBan(userId: string) { bans.delete(userId); exits.delete(userId); }
 // تنظيف دوري
 setInterval(() => { const now = Date.now(); for (const [k, v] of bans) if (v <= now) bans.delete(k); for (const [k, v] of exits) if (!v.some((t) => now - t < QUIT_WINDOW_MS)) exits.delete(k); }, 120_000).unref?.();
+
+/** R74: ميزة VIP «إعفاء من عقوبة الخروج» */
+export function liftQuitBan(userId: string) { bans.delete(userId); exits.delete(userId); }

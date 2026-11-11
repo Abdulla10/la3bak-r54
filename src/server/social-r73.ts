@@ -31,7 +31,7 @@ type VN = { id: string; by: string; kind: 'dm' | 'group' | 'bio'; to?: string; g
 type GMsg = { id: string; from: string; at: number; text?: string; vn?: string; game?: { code: string; gameId: string; name: string }; hidden?: boolean };
 type Group = { id: string; name: string; owner: string; members: string[]; at: number; msgs: GMsg[]; seen: Record<string, number> };
 type Pair = { s: number; g: number; at: number };
-type Data = { v: 1; groups: Group[]; vns: VN[]; bios: Record<string, string>; pairs: Record<string, Pair>; interests: Record<string, string>; myInterests: Record<string, string> };
+type Data = { v: 1; notes?: Record<string, { text: string; at: number }>; groups: Group[]; vns: VN[]; bios: Record<string, string>; pairs: Record<string, Pair>; interests: Record<string, string>; myInterests: Record<string, string> };
 
 export type Social73Deps = {
   friends: (id: string) => string[];
@@ -45,6 +45,9 @@ export type Social73Deps = {
   joinRoom: (uid: string, code: string) => Promise<{ ok: boolean; error?: string }>;
   roomSeats: (code: string) => Promise<{ free: number; status: string } | null>;
   gameName: (gameId: string) => string | null;
+  /** R74: ميزة VIP «قروبات أكبر وصوت أطول» */
+  big?: (id: string) => boolean;
+  perk?: (id: string, k: 'reqNote') => boolean;
 };
 
 const ERR = (status: number, error: string) => Object.assign(new Error(error), { status });
@@ -88,8 +91,8 @@ export class Social73 {
     this.notGuest(uid); if (!this.vnDir) throw ERR(503, 'الرسائل الصوتية مب متاحة هني.');
     if (kind !== 'dm' && kind !== 'group' && kind !== 'bio') throw ERR(400, 'نوع غير صالح.');
     if (!/^audio\/(webm|mp4|ogg|mpeg|aac|x-m4a)/.test(mime)) throw ERR(415, 'صيغة الصوت غير مدعومة.');
-    const max = kind === 'bio' ? 21 : 61; if (!(dur > 0.4 && dur <= max)) throw ERR(400, kind === 'bio' ? 'النبذة من ثانية لين 20 ثانية.' : 'الرسالة الصوتية لين 60 ثانية.');
-    if (buf.length < 600 || buf.length > 1_200_000) throw ERR(413, 'الصوت كبير أو فاضي.');
+    const big = !!this.deps.big?.(uid); const max = kind === 'bio' ? 21 : big ? 181 : 61; if (!(dur > 0.4 && dur <= max)) throw ERR(400, kind === 'bio' ? 'النبذة من ثانية لين 20 ثانية.' : big ? 'الرسالة الصوتية لين 3 دقايق.' : 'الرسالة الصوتية لين 60 ثانية (VIP يوصل 3 دقايق).');
+    if (buf.length < 600 || buf.length > (big ? 2_400_000 : 1_200_000)) throw ERR(413, 'الصوت كبير أو فاضي.');
     this.limit('vn:' + uid, 20, 10 * 60_000);
     const text = String(transcript || '').slice(0, 600);
     if (text && this.deps.profanity(text)) throw ERR(400, 'الرسالة الصوتية فيها كلام غير لائق، ما انرسلت.');
@@ -136,7 +139,8 @@ export class Social73 {
     this.notGuest(uid); this.limit('gnew:' + uid, 5, DAY);
     const name = this.cleanText(rawName, 30);
     if (this.d.groups.filter((g) => g.members.includes(uid)).length >= 20) throw ERR(409, 'وصلت حد 20 قروب.');
-    const add = (Array.isArray(rawMembers) ? rawMembers : []).slice(0, 49).map((p) => this.deps.resolve(p)).filter((x): x is string => !!x && x !== uid && this.deps.isFriend(uid, x));
+    const cap = this.deps.big?.(uid) ? 100 : 50;
+    const add = (Array.isArray(rawMembers) ? rawMembers : []).slice(0, cap - 1).map((p) => this.deps.resolve(p)).filter((x): x is string => !!x && x !== uid && this.deps.isFriend(uid, x));
     const g: Group = { id: rid(9), name, owner: uid, members: [uid, ...new Set(add)], at: this.now(), msgs: [], seen: {} };
     g.msgs.push({ id: rid(), from: uid, at: this.now(), text: `أنشأ القروب «${name}» 🎉` });
     this.d.groups.push(g); this.save(); this.ping(g, uid);
@@ -146,7 +150,7 @@ export class Social73 {
     const g = this.group(id, uid); const other = this.deps.resolve(rawPub);
     if (!other || !this.deps.isFriend(uid, other)) throw ERR(403, 'تقدر تضيف أصدقاءك بس.');
     if (g.members.includes(other)) return this.gView(g, uid, true);
-    if (g.members.length >= 50) throw ERR(409, 'القروب وصل 50 عضو.');
+    const cap = this.deps.big?.(g.owner) ? 100 : 50; if (g.members.length >= cap) throw ERR(409, `القروب وصل ${cap} عضو.`);
     g.members.push(other); g.msgs.push({ id: rid(), from: uid, at: this.now(), text: `أضاف ${this.who(other).name} 👋` }); this.save(); this.ping(g, uid);
     return this.gView(g, uid, true);
   }
@@ -208,6 +212,23 @@ export class Social73 {
     return { ok: true, code: r.code };
   }
 
+  /* ---------- R74: رسالة مع طلب الصداقة (نوبل) ---------- */
+  friendNote(uid: string, rawTo: unknown, rawText: unknown, sendRequest: () => unknown) {
+    if (!this.deps.perk?.(uid, 'reqNote')) throw ERR(403, 'هالميزة للنوبل.');
+    const to = this.deps.resolve(rawTo); if (!to || to === uid) throw ERR(404, 'الحساب غير متاح.');
+    if (this.deps.isFriend(uid, to)) throw ERR(409, 'هو صديقك من قبل.');
+    this.limit('fnote:' + uid, 10, 86400_000);
+    const text = this.cleanText(rawText, 140);
+    const r = sendRequest() as { error?: string } | null; if (r && typeof r === 'object' && 'error' in r && r.error) throw ERR(409, String(r.error));
+    (this.d.notes ??= {})[`${uid}|${to}`] = { text, at: this.now() }; this.save();
+    this.deps.push(to, { t: 'friend:note', from: this.who(uid).name, text });
+    this.deps.mod('group', 'note-' + uid + '-' + to, uid, text);
+    return { ok: true };
+  }
+  friendNotes(uid: string) {
+    const out = []; for (const [k, v] of Object.entries(this.d.notes ?? {})) { const [from, to] = k.split('|'); if (to === uid && !this.deps.isFriend(uid, from) && this.now() - v.at < 30 * DAY) out.push({ ...this.who(from), text: v.text, at: v.at }); }
+    return { list: out.sort((a, b) => b.at - a.at).slice(0, 30) };
+  }
   /* ---------- 4) اقتراحات الأصدقاء ---------- */
   suggestions(uid: string) {
     const mine = new Set(this.deps.friends(uid)); mine.add(uid);

@@ -27,16 +27,19 @@ export class Matchmaker {
     private maxWaitMs = 10 * 60_000,
     /** R69zn: تصنيف اللاعب باللعبة — نطابق المتقاربين بالمستوى */
     private rating?: (game: string, uid: string) => number,
+    /** R74: أولوية VIP — كأنه منتظر من قبل بـ45 ثانية، ويتقدم بالطابور */
+    private priority?: (uid: string) => boolean,
   ) {}
 
   /** نطاق المستوى المقبول: يكبر كل ما طال الانتظار (بعد دقيقتين تقريباً أي أحد) */
-  private band(e: Entry) { const s = (this.now() - e.since) / 1000; return s < 10 ? 120 : s < 30 ? 220 : s < 60 ? 380 : s < 120 ? 600 : 5000; }
+  private band(e: Entry) { const s = (this.now() - e.since) / 1000 + (this.priority?.(e.user.id) ? 45 : 0); return s < 10 ? 120 : s < 30 ? 220 : s < 60 ? 380 : s < 120 ? 600 : 5000; }
   /** نختار مجموعة متقاربة بالمستوى من الطابور (الأقدم أولاً) */
   private pick(game: string, list: Entry[], seats: number): Entry[] | null {
     if (list.length < seats) return null;
-    if (!this.rating) return list.slice(0, seats);
+    if (!this.rating) return [...list].sort((a, b) => (this.priority?.(a.user.id) ? 0 : 1) - (this.priority?.(b.user.id) ? 0 : 1) || a.order - b.order).slice(0, seats);
     const r = (e: Entry) => this.rating!(game, e.user.id);
-    for (const anchor of [...list].sort((a, b) => a.order - b.order)) {
+    const pr = (e: Entry) => (this.priority?.(e.user.id) ? 0 : 1);
+    for (const anchor of [...list].sort((a, b) => pr(a) - pr(b) || a.order - b.order)) {
       const ra = r(anchor);
       const near = list.filter((e) => e !== anchor && Math.abs(r(e) - ra) <= Math.min(this.band(anchor), this.band(e))).sort((a, b) => Math.abs(r(a) - ra) - Math.abs(r(b) - ra));
       if (near.length >= seats - 1) return [anchor, ...near.slice(0, seats - 1)];

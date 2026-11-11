@@ -30,6 +30,8 @@ import { initialRoomToolsR33, validRoomToolsR33, validRoomToolResultR33, applyRo
 export type SocialResult = { ok: true; [key: string]: unknown } | { ok: false; error: string; status?: number };
 export interface SocialRoomsOptions {
   file: string;
+  /** R74: مزايا VIP/النوبل: دخول المجالس الممتلئة، الحماية من الطرد والكتم، المقاعد المحجوزة */
+  perk?: (id: string, k: 'roomFull' | 'noKick' | 'seat') => boolean;
   profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null } } | null;
   blocked: (a: string, b: string) => boolean;
   eligible: (id: string) => boolean;
@@ -916,7 +918,7 @@ export class SocialRooms {
     if(r.bans.some(b=>b.id===id)||this.blocked(id,r.ownerId)||r.members.some(m=>m.id!==id&&this.blocked(id,m.id)))fail('room_access_denied',403);
     const active=r.members.some(m=>m.id===id&&(m.deadline===null||m.deadline>this.clock()));
     if(r.privacy==='private'&&!r.invites.includes(id)&&r.ownerId!==id&&!r.moderators.includes(id)&&!active)fail('room_invitation_required',403);
-    if(!active&&r.members.length>=r.maxMembers+roomCapacityBonus(roomLevelOf(r.support??0).level))fail('room_full',409);
+    { const cap=r.maxMembers+roomCapacityBonus(roomLevelOf(r.support??0).level); if(!active&&r.members.length>=cap&&!(r.members.length<cap+3&&this.opts.perk?.(id,'roomFull')))fail('room_full',409); }
     if(r.password&&!active&&admission?.passwordVerifiedRoomId!==r.id)fail('room_password_required',403);
   }
   private enterRoom(d: State,r: Room,id: string,media: Set<string>,now: number, admission?: DirectoryAdmission) {
@@ -944,11 +946,12 @@ export class SocialRooms {
       const locked = new Set(c.lockedSeats ?? []), occupied = new Set([...layout].filter(([memberId]) => memberId !== id).map(([, index]) => index));
       if (requestedSeat !== undefined) {
         if (!validSeatIndex(requestedSeat, c.seats)) fail('invalid_seat_index');
-        if (locked.has(requestedSeat)) fail('seat_locked',409);
+        if (locked.has(requestedSeat) && !this.opts.perk?.(id,'seat')) fail('seat_locked',409);
         if (occupied.has(requestedSeat)) fail('seat_occupied',409);
         seatIndex = requestedSeat;
       } else {
         seatIndex = Array.from({length:c.seats}, (_, i) => i).find(i => !locked.has(i) && !occupied.has(i));
+        if (seatIndex === undefined && this.opts.perk?.(id,'seat')) seatIndex = Array.from({length:c.seats}, (_, i) => i).find(i => !occupied.has(i));
         if (seatIndex === undefined) fail('council_full',409);
       }
       if (already) { already.seatIndex = seatIndex; return; } // Same channel and permissions: keep voice epoch/approval.
@@ -1345,7 +1348,7 @@ export class SocialRooms {
       const c:Council={id:randomUUID(),name:text(b.name,80),description:text(b.description,400,true),kind,privacy:p,ownerId:id,hostId:null,seats:this.seats(d,kind,b.seats),locked:false,allowRequests:b.allowRequests===undefined?kind==='private':boolean(b.allowRequests),invites:[],requests:[],channel:randomUUID(),createdAt:now,modeEnabled:Object.fromEntries(SOCIAL_MODE_IDS.map(mode=>[mode,true])) as Council['modeEnabled'],modes:Object.fromEntries(SOCIAL_MODE_IDS.map(mode=>[mode,SOCIAL_MODES[mode].initial()])) as Council['modes'],chat:[]};
       r.councils.push(c);this.enterCouncil(d,r,c,id,media,now);this.activity(r,command,now);return success({roomId:r.id,councilId:c.id});
     } else if(command==='member:mute'||command==='member:kick'||command==='member:ban'||command==='member:unban') {
-      this.requireMod(r,id,undefined,'moderation');const t=this.target(d,b.targetId);if(t===id||t===r.ownerId||r.moderators.includes(t)&&r.ownerId!==id)fail('protected_member',403);
+      this.requireMod(r,id,undefined,'moderation');const t=this.target(d,b.targetId);if(t===id||t===r.ownerId||r.moderators.includes(t)&&r.ownerId!==id)fail('protected_member',403);if(command!=='member:unban'&&r.ownerId!==id&&this.opts.perk?.(t,'noKick'))fail('protected_member',403);
       const m=r.members.find(m=>m.id===t);if(!m&&command!=='member:ban'&&command!=='member:unban')fail('member_not_found',404);
       const reason=command==='member:ban'?text(b.reason,400):text(b.reason,400,true)||'moderation';
       if(command==='member:unban'){if(!r.bans.some(b=>b.id===t))fail('ban_not_found',404);r.bans=r.bans.filter(b=>b.id!==t);}
