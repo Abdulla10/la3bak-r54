@@ -2,7 +2,7 @@
  * (bowling-physics.js) عشان يحرّك الكرة والدبابيس. المسار والدبابيس رسم أصلي (Canvas) بمنظور ثلاثي الأبعاد. */
 import { faceHtml } from './characters.js?v=shell-r6';
 import { avatarArt } from './avatars.js?v=r68z31';
-import { isOn as soundOn } from './sfx.js?v=shell-r6';
+import { isOn as soundOn } from './sfx.js?v=r69zu-r6';
 import { simulate, PINS, HALF, HP, BR, normShot, BALL_Y0, ballPath } from './bowling-physics.js?v=r68z23';
 import * as R3 from './bowling3d.js?v=r68z24';
 

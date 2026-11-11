@@ -110,6 +110,7 @@ import { AntiCheat, CHEAT_NAMES } from './anticheat-r69.js';
 import { Ratings } from './rating-r69.js';
 import { Passkeys, PasskeyError } from './passkeys-r69.js';
 import { Offsite, applyPendingRestore, stageRestore, checkArchive } from './offsite-r69.js';
+import { ClientErrors } from './client-errors-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -852,6 +853,8 @@ export async function createApp(
   };
   /* R69: المباريات الحية للمشاهدة */
   const passkeys = new Passkeys(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'passkeys.json') : '', Date.now, storage);
+  const clientErrors = new ClientErrors(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'client-errors.json') : '', { alert: (title, text, key) => arena.alert('reports', title, text, key) }, storage);
+  const cerrLimiter = new KeyedLimiter(20, 20 / 600);
   const ratings = new Ratings(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'ratings.json') : '', Date.now, storage);
   const TEAM_GAMES = new Set(['baloot', 'jackaro']);
   const liveGames = new Map<string, Room>();
@@ -1845,6 +1848,11 @@ export async function createApp(
     functionalHttp.add('GET', '/api/voice-mod/config', () => ({ ok: true, on: voiceModOn() && aiMod.ready(), ios: voiceModIOS() }));
     functionalHttp.add('POST', '/api/admin/voice-mod', ({ actor, body }) => { const b = body as { on?: unknown; ios?: unknown }; if (typeof b.on === 'boolean') vmFlags.on = b.on; if (typeof b.ios === 'boolean') vmFlags.ios = b.ios; try { writeFileSync(vmFile, JSON.stringify(vmFlags)); } catch { /* */ } if (actor) admin.audit(actor, 'voicemod.set', 'ai-mod', JSON.stringify(vmFlags)); return { ok: true, ...vmFlags }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/voice-mod', () => ({ ok: true, ...vmFlags, ready: aiMod.ready() }), 'owner');
+    /* R69zu: أخطاء المتصفح عند اللاعبين */
+    functionalHttp.add('POST', '/api/client-error', ({ user, body }) => { if (cerrLimiter.allow(user.id)) clientErrors.report(user.id, body); return { ok: true }; });
+    functionalHttp.add('GET', '/api/admin/client-errors', () => ({ ok: true, ...clientErrors.stats(), list: clientErrors.list() }), 'owner');
+    functionalHttp.add('POST', '/api/admin/client-errors/fixed', ({ body }) => { adminNeed(clientErrors.fixed(String((body as { id?: unknown }).id ?? '')), 'الخطأ مو موجود.'); return { ok: true }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/client-errors/clear', () => { clientErrors.clear(); return { ok: true }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/shield', () => ({ ok: true, ...shield.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/monitor', () => ({ ok: true, ...monitor.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/chest', () => ({ ok: true, ...chests.adminView() }), 'owner');
@@ -2541,7 +2549,8 @@ export async function createApp(
   });
 
   // ---------- WebSocket ----------
-  const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 });
+  /* R69zu: ضغط رسائل اللعب (حالة الطاولة) قبل لا تطلع — الحجم يصغر 5-10 مرات، أخف على النت والبطارية */
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024, perMessageDeflate: process.env.WS_DEFLATE === '0' ? false : { threshold: 1024, zlibDeflateOptions: { level: 5, memLevel: 7 }, serverNoContextTakeover: true, clientNoContextTakeover: true, concurrencyLimit: 8 } });
 
   server.on('upgrade', (req, socket, head) => {
     const url = new URL(req.url ?? '/', 'http://x');

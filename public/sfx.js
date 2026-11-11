@@ -30,6 +30,7 @@ const SOUNDS = {
   ok: () => { tone(660, 0, 0.12); tone(880, 0.1, 0.18); },
   bad: () => { tone(220, 0, 0.18, 'sawtooth', 0.04); tone(165, 0.14, 0.24, 'sawtooth', 0.04); },
   win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.11, 0.22, 'triangle', 0.07)),
+  lose: () => [392, 349, 311].forEach((f, i) => tone(f, i * 0.16, 0.26, 'sine', 0.05)),
 };
 
 export function play(name) {
