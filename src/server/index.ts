@@ -1143,7 +1143,7 @@ export async function createApp(
       let f = path.join(dir, path.normalize(rel));
       if (!f.startsWith(dir + path.sep)) return json(res, 403, { error: 'ممنوع' });
       /* R69zv: لو فيه نسخة مدموجة من الصفحة (كود واحد + تنسيق واحد) ومبنية من نفس الصفحة الحالية، نقدّمها */
-      if (dir === PUBLIC_DIR && (rel === '/index.html' || rel === '/preview.html') && process.env.CLIENT_BUNDLE !== '0') { const b = bundledPage(rel.slice(1)); if (b) f = b; }
+      if (dir === PUBLIC_DIR && (rel === '/index.html' || rel === '/preview.html') && process.env.CLIENT_BUNDLE !== '0' && !/[?&]nb=1(?:&|$)/.test(String(req.url || ''))) { const b = bundledPage(rel.slice(1)); if (b) f = b; }
       try { const s0 = await stat(f); if (s0.isFile()) { file = f; st = s0; break; } } catch { /* الملف مو هني */ }
     }
     try {
