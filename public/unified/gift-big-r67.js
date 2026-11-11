@@ -1,6 +1,6 @@
 /* R67: الهدايا الكبيرة تعبي الشاشة — للهدايا الغالية بس (قيمتها 9,000 عملة أو أكثر).
  * نستخدم رسمة الهدية نفسها مكبرة مع أشعة وألعاب نارية من رسومات المدفع، وشريط «فلان أرسل … إلى فلان». */
-import { giftArtwork } from '../gift-assets-r27.js?v=r68i-r36';
+import { giftArtwork } from '../gift-assets-r27.js?v=r69zz-r36';
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const FX = '/assets/art67/cannon/', V = 'r67i';
 const seen = new Set(); const queue = []; let busy = false;

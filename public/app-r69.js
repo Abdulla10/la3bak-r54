@@ -1,6 +1,6 @@
 // R69za: تحسينات «التطبيق» — رقم الجهاز (لكشف الحسابات الوهمية)، شاشة «ما فيه نت» مع لعبة XO تشتغل بدون نت،
 // بانر «ثبّت لعبك على جوالك»، وعداد الإشعارات على أيقونة التطبيق.
-import * as PWA from './pwa.js?v=r69zy';
+import * as PWA from './pwa.js?v=r69zz';
 const KEY_DID = 'la3_did', KEY_DISMISS = 'la3_install_x';
 const CSS = `
 .ap69-off{position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 30px) 18px 24px;background:radial-gradient(circle at 50% 20%,#4a1680,#160530 70%);color:#fff;direction:rtl;font-family:inherit;text-align:center;overflow:auto}
@@ -164,4 +164,12 @@ startApp69();
     const h = document.documentElement; h.classList.add('la69-pg'); clearTimeout(t); t = setTimeout(() => h.classList.remove('la69-pg'), 320);
   });
   last = page();
+})();
+
+/* R69zz: توفير البطارية: نوقف الحركات لما الصفحة مخفية، ووضع توفير لما البطارية أقل من 20% وما هي على الشاحن */
+(() => {
+  const h = document.documentElement;
+  const vis = () => h.classList.toggle('la69-hidden', document.visibilityState === 'hidden');
+  document.addEventListener('visibilitychange', vis); vis();
+  try { navigator.getBattery?.().then((b) => { const up = () => h.classList.toggle('la69-saver', !b.charging && b.level < 0.2); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); up(); }).catch(() => {}); } catch { /* */ }
 })();

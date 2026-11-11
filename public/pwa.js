@@ -13,8 +13,23 @@ export function init(cb) {
   onChange = cb;
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     // R60b: لو الصفحة خلصت تحميل قبل ما يوصل هالسطر، حدث load ما يرجع يصير — فنسجّل على طول (قبل كان الـ SW أحيانًا ما يتسجل أبدًا)
-    const reg = () => navigator.serviceWorker.register('/sw.js?v=r69zy').catch(() => {});
+    const reg = () => navigator.serviceWorker.register('/sw.js?v=r69zz').catch(() => {});
     if (document.readyState === 'complete') reg(); else window.addEventListener('load', reg);
+    /* R69zz: لما تنزل نسخة جديدة من الموقع، نقول للاعب بدل ما يظل على القديمة */
+    const hadController = !!navigator.serviceWorker.controller; let shown = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || shown) return; shown = true;
+      const b = document.createElement('div'); b.setAttribute('role', 'status');
+      b.style.cssText = 'position:fixed;z-index:2147483600;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:linear-gradient(135deg,#3b0a6b,#1d0638);border:1.5px solid #f5c542;color:#fff;font:600 14px system-ui,sans-serif;direction:rtl;box-shadow:0 10px 30px rgba(0,0,0,.5)';
+      b.innerHTML = '<span style="font-size:22px">✨</span><span style="flex:1">نسخة جديدة من لعبك جاهزة</span><button type="button" style="border:0;border-radius:12px;padding:8px 14px;font:800 14px system-ui;background:linear-gradient(#ffd86b,#e2a920);color:#2a1500">حدّث</button><button type="button" aria-label="لاحقاً" style="border:0;background:transparent;color:#fff;font-size:18px;opacity:.7">✕</button>';
+      const [go, x] = b.querySelectorAll('button'); go.onclick = () => location.reload(); x.onclick = () => b.remove();
+      // داخل لعبة شغالة ما نزعجه: يطلع بعد ما يطلع من اللعبة
+      const put = () => { if (/^#\/room\//.test(String((globalThis.__LA3BAK_NAV__ || location).hash || ''))) { addEventListener('hashchange', put, { once: true }); return; } document.body.appendChild(b); };
+      put();
+    });
+    // نتأكد من التحديثات لما يرجع للتطبيق (كل نص ساعة كحد أقصى)
+    let lastCheck = Date.now();
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastCheck > 30 * 60_000) { lastCheck = Date.now(); navigator.serviceWorker.getRegistration().then((r) => r?.update()).catch(() => {}); } });
   }
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();

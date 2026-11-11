@@ -7,7 +7,7 @@ import { GIFT_REWARD_POLICY, quoteGiftRewards } from './gift-rewards.js';
 import {quoteGiftBatch} from './social-gift-batch-r27.js';
 import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
-import { readFileSync, writeFileSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, statSync, existsSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 import { timingSafeEqual, createHash, createHmac, randomInt, randomUUID } from 'node:crypto';
@@ -112,6 +112,8 @@ import { Passkeys, PasskeyError } from './passkeys-r69.js';
 import { Offsite, applyPendingRestore, stageRestore, checkArchive } from './offsite-r69.js';
 import { ClientErrors } from './client-errors-r69.js';
 import { DataMirror } from './data-mirror-r69.js';
+import { ClientPerf } from './client-perf-r69.js';
+import { FontCache, GOOGLE_FONTS } from './fonts-r69.js';
 import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
@@ -244,9 +246,12 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()', // الميكروفون مقفّل افتراضياً؛ يُسمح لنفس الموقع فقط عند تفعيل الصوت.
   'Content-Security-Policy':
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' blob: ws: wss:; " +
+    "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' blob: ws: wss:; " +
     "frame-src https://www.youtube-nocookie.com; media-src 'self' blob:; " +
-    "frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+    "frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'; worker-src 'self'; manifest-src 'self'",
+  // R69zz: تقوية إضافية
+  'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+  'X-Permitted-Cross-Domain-Policies': 'none',
 };
 
 export interface App {
@@ -279,7 +284,7 @@ export async function createApp(
 ): Promise<App> {
   const registry = createRegistry();
   const trustProxy = process.env.TRUST_PROXY === 'true';
-  const securityHeaders:Record<string,string> = {...SECURITY_HEADERS, 'Permissions-Policy': `camera=(), microphone=${cfg.socialVoice?.enabled?'(self)':'()'}, geolocation=()`};
+  const securityHeaders:Record<string,string> = {...SECURITY_HEADERS, ...(cfg.cookieSecure ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' } : {}), 'Permissions-Policy': `camera=(), microphone=${cfg.socialVoice?.enabled?'(self)':'()'}, geolocation=()`};
   const errRing: { ts: string; event: string; data: Record<string, unknown> }[] = [];
   const log = (event: string, data: Record<string, unknown> = {}) => {
     // لا نسجّل أسماء اللاعبين ولا رموز الغرف
@@ -856,6 +861,8 @@ export async function createApp(
   const passkeys = new Passkeys(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'passkeys.json') : '', Date.now, storage);
   const clientErrors = new ClientErrors(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'client-errors.json') : '', { alert: (title, text, key) => arena.alert('reports', title, text, key) }, storage);
   const cerrLimiter = new KeyedLimiter(20, 20 / 600);
+  const fontCache = new FontCache(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'fonts') : path.join(PUBLIC_DIR, '..', '.fonts'));
+  const clientPerf = new ClientPerf(); const perfLimiter = new KeyedLimiter(3, 3 / 3600);
   const ratings = new Ratings(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'ratings.json') : '', Date.now, storage);
   const TEAM_GAMES = new Set(['baloot', 'jackaro']);
   const liveGames = new Map<string, Room>();
@@ -1870,6 +1877,8 @@ export async function createApp(
     functionalHttp.add('GET', '/api/admin/voice-mod', () => ({ ok: true, ...vmFlags, ready: aiMod.ready() }), 'owner');
     /* R69zu: أخطاء المتصفح عند اللاعبين */
     functionalHttp.add('POST', '/api/client-error', ({ user, body }) => { if (cerrLimiter.allow(user.id)) clientErrors.report(user.id, body); return { ok: true }; });
+    functionalHttp.add('POST', '/api/client-perf', ({ user, body }) => { if (perfLimiter.allow(user.id)) clientPerf.add(body); return { ok: true }; });
+    functionalHttp.add('GET', '/api/admin/client-perf', () => ({ ok: true, devices: clientPerf.view() }), 'owner');
     functionalHttp.add('GET', '/api/admin/client-errors', () => ({ ok: true, ...clientErrors.stats(), list: clientErrors.list() }), 'owner');
     functionalHttp.add('POST', '/api/admin/client-errors/fixed', ({ body }) => { adminNeed(clientErrors.fixed(String((body as { id?: unknown }).id ?? '')), 'الخطأ مو موجود.'); return { ok: true }; }, 'owner');
     functionalHttp.add('POST', '/api/admin/client-errors/clear', () => { clientErrors.clear(); return { ok: true }; }, 'owner');
@@ -2181,6 +2190,21 @@ export async function createApp(
     try {
       const url = new URL(req.url ?? '/', 'http://x');
       if (url.pathname !== '/healthz' && shieldIp(req)) { const sk = shield.key(shieldIp(req)!); const isApi = url.pathname.startsWith('/api/'); if (shield.isBanned(sk) || (isApi && !shield.allow(sk))) { res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60' }); res.end(JSON.stringify({ error: 'طلبات كثيرة. انتظر دقيقة وجرّب.' })); return; } }
+      /* R69zz: الخط العربي من سيرفرنا */
+      if (url.pathname === '/fonts/la3bak.css' && req.method === 'GET') { const css = await fontCache.getCss(); if (!css) { res.writeHead(302, { Location: GOOGLE_FONTS, 'Cache-Control': 'no-store' }); res.end(); return; } res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=86400', ...securityHeaders }); res.end(css); return; }
+      { const fm = /^\/fonts\/([0-9a-f]{16}\.woff2)$/.exec(url.pathname); if (fm && req.method === 'GET') { const b = fontCache.file(fm[1]); if (!b) return json(res, 404, { error: 'غير موجود' }); res.writeHead(200, { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable', ...securityHeaders }); res.end(b); return; } }
+      /* R69zz: رابط دعوة بمعاينة حلوة بالواتساب (صورة واسم اللعبة)، وبعدين يدخل الغرفة على طول */
+      { const jm = /^\/j\/([A-Za-z0-9]{4,8})$/.exec(url.pathname); if (jm && req.method === 'GET') {
+        const code = jm[1].toUpperCase(); let room: Room | null = null; try { room = await store.get(code); } catch { room = null; }
+        const eng = room ? registry.historyEngine(room.gameId) : undefined; const host = room ? (room.players.find((p) => p.id === room!.hostId)?.name ?? 'صديقك') : 'صديقك';
+        const gname = eng?.info.name ?? 'لعبك'; const proto = String(req.headers['x-forwarded-proto'] ?? (cfg.allowedOrigins[0]?.startsWith('https') ? 'https' : 'http')).split(',')[0]; const origin = `${proto}://${String(req.headers.host ?? '')}`;
+        const art = room && existsSync(path.join(PUBLIC_DIR, 'assets/og', `g-${room.gameId}.jpg`)) ? `/assets/og/g-${room.gameId}.jpg` : '/assets/og/la3bak.jpg';
+        const e = (x: string) => x.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+        const title = room ? `🎮 ${host} يدعوك تلعب ${gname} في لعبك` : 'تعال العب معي في لعبك 🎮', desc = room ? `اضغط وادخل الغرفة ${code} على طول — جمعتكم تبدأ هنا!` : 'منصة ألعاب عربية: بلوت، جاكارو، لودو وغيرها مع أصحابك.';
+        const to = `/#/join/${code}`;
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=60', ...securityHeaders });
+        res.end(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${e(title)}</title><meta name="viewport" content="width=device-width,initial-scale=1"><meta property="og:site_name" content="LA3BAK | لعبك"><meta property="og:title" content="${e(title)}"><meta property="og:description" content="${e(desc)}"><meta property="og:image" content="${e(origin + art)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:type" content="website"><meta property="og:url" content="${e(origin + url.pathname)}"><meta name="twitter:card" content="summary_large_image"><meta http-equiv="refresh" content="0;url=${e(to)}"><meta name="theme-color" content="#1a0536"></head><body style="background:#1a0536;color:#fff;font-family:system-ui;text-align:center;padding:40px"><a href="${e(to)}" style="color:#f5c542">ادخل الغرفة ${e(code)}</a></body></html>`);
+        return; } }
       if (url.pathname === '/api/pow' && req.method === 'GET') return json(res, 200, shield.challenge(shield.key(shieldIp(req) ?? 'shared'), !shieldIp(req)), { 'Cache-Control': 'no-store' });
       if (await webhook(req,res,url)) return;
       if (await socialVoice!.handleHttp(req,res)) return;

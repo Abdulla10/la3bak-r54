@@ -36,3 +36,6 @@ img[loading="lazy"]{animation:la69img .3s ease-out}
 .la69-skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);animation:la69sh 1.2s infinite}
 @keyframes la69sh{to{transform:translateX(100%)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+/* R69zz: توفير البطارية — لما التطبيق بالخلفية أو البطارية ضعيفة نوقف الحركات الزخرفية المتكررة */
+html.la69-hidden *,html.la69-hidden *::before,html.la69-hidden *::after{animation-play-state:paused!important}
+html.la69-saver .rs69-ic,html.la69-saver [class*="glow"],html.la69-saver [class*="shine"],html.la69-saver [class*="sparkle"],html.la69-saver [class*="aura"]{animation:none!important}
