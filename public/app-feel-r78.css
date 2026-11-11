@@ -54,3 +54,7 @@ html body #view .h68{padding-bottom:6px!important}
 html body #view .h81-row small{color:#ffd66b!important}
 html:not(.lb-dark) body #view .h81-row small{color:#8a641f!important}
 html body #view .h68 .lb-copy79,html body #view .lb-copy79{margin-top:10px!important}
+/* R84: شعار لعبك الجديد بالرأس */
+html body .lg84-wrap{display:grid!important;place-items:center;padding:0!important;background:none!important;line-height:0}
+html body .lg84-wrap::before,html body .lg84-wrap::after{display:none!important}
+html body .lg84{width:56px!important;height:56px!important;display:block;border-radius:14px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}

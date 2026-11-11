@@ -1,7 +1,7 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
 import { nav68HTML } from '../nav-r68.js?v=r79';
-import { headerHTML as head68 } from './home-r68.js?v=r81';
-import * as home from './home.js?v=r81';
+import { headerHTML as head68 } from './home-r68.js?v=r84';
+import * as home from './home.js?v=r84';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import {giftArt} from '../giftart.js?v=r68i-r14';
 import * as rooms from './rooms.js?v=r58p';
@@ -17,7 +17,7 @@ import * as store from './store.js?v=r68z40e';
 import * as payments from './payments.js?v=r68i';
 import * as ranks from './ranks.js?v=r68z40e';
 import * as vip from './vip.js?v=r68z40e';
-import * as social from './social.js?v=r81';
+import * as social from './social.js?v=r84';
 const modules={home,rooms,wallet,notifications,messages,friends,ranking,games,settings,store,payments,ranks,vip,social};
 export const routes=Object.freeze(['home','rooms','social-rooms','social-room','wallet','notifications','notifications-internal','messages','friends','leaderboard','games','settings','shop','payments','ranks','vip','game','hub','room','join','city','lobby','play','offline','daily','challenge','events','tournaments','support','contact','auction','family','missions','wheel','phone','ids','visitors','invite','verification','rank-rewards','about','privacy','terms','agreement','privacy-settings','account-info','devices','hidden-posts','community','post','u','not-found','league','watch','themes','twofa','passkeys']);
 export const hasRoute=name=>routes.includes(name);
@@ -42,7 +42,7 @@ function identityHTML(ctx){
 /* R68l: رأس الصفحات الداخلية بتصميم لعبك: رجوع · الشعار · البحث والإشعارات */
 function header68(ctx){
   const bell=ctx.noCommunity?'':`<a class="lb68-ico" href="#/notifications" aria-label="الإشعارات"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v4.2L4.4 16a1 1 0 0 0 .9 1.5h13.4a1 1 0 0 0 .9-1.5L18 13.2V9a6 6 0 0 0-6-6zM9.5 19a2.5 2.5 0 0 0 5 0" fill="#e7d2ff"/></svg>${ctx.unread?'<i class="lb68-dot"></i>':''}</a>`;
-  return `<header class="lb-topbar lb68-head" dir="ltr"><a class="lb68-ico lb68-back" href="${esc(ctx.backHref||'#/')}" aria-label="رجوع"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="lb68-logo" href="#/" aria-label="لعبك — الرئيسية"><i aria-hidden="true">👑</i><b>لعبك</b><small>LA3BAK</small></a><span class="lb68-tools"><button type="button" class="lb68-ico" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${bell}<button type="button" class="lb68-ico lb68-menu" data-lb-shell="menu" aria-label="القائمة" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="#e7d2ff" stroke-width="2.4" stroke-linecap="round"/></svg></button></span></header>`;
+  return `<header class="lb-topbar lb68-head" dir="ltr"><a class="lb68-ico lb68-back" href="${esc(ctx.backHref||'#/')}" aria-label="رجوع"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="lb68-logo lg84-wrap" href="#/" aria-label="لعبك — الرئيسية"><img class="lg84" src="/assets/brand/logo-r84.webp" alt="" width="56" height="56" decoding="async" fetchpriority="high"></a><span class="lb68-tools"><button type="button" class="lb68-ico" data-lb-global-search aria-label="البحث عن الأشخاص والغرف" aria-haspopup="dialog" aria-expanded="false">${SEARCH_ICON}</button>${bell}<button type="button" class="lb68-ico lb68-menu" data-lb-shell="menu" aria-label="القائمة" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="#e7d2ff" stroke-width="2.4" stroke-linecap="round"/></svg></button></span></header>`;
 }
 export function headerHTML(ctx={}){
   if(ctx.page!=='home')return header68(ctx);

@@ -24,7 +24,7 @@ function page(o: { origin: string; path: string; title: string; desc: string; im
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(o.title)}</title><meta name="description" content="${esc(o.desc)}"><link rel="canonical" href="${esc(url)}">
 <meta property="og:site_name" content="LA3BAK | لعبك"><meta property="og:type" content="website"><meta property="og:url" content="${esc(url)}"><meta property="og:title" content="${esc(o.title)}"><meta property="og:description" content="${esc(o.desc)}"><meta property="og:image" content="${esc(o.origin + o.image)}"><meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#0d0614"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/fonts/la3bak.css"><style>${CSS}</style>
+<meta name="theme-color" content="#0d0614"><link rel="icon" href="/favicon-r84.png" type="image/png"><link rel="stylesheet" href="/fonts/la3bak.css"><style>${CSS}</style>
 ${o.ld ? `<script type="application/ld+json">${JSON.stringify(o.ld).replace(/</g, '\\u003c')}</script>` : ''}</head>
 <body><main><header><a class="brand" href="/">لعبك<small>LA3BAK</small></a><a href="/games">كل الألعاب</a></header>${o.body}
 <footer>لعبك — منصة ألعاب عربية اجتماعية. العملات افتراضية للعب فقط.</footer></main></body></html>`;

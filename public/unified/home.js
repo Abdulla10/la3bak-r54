@@ -3,7 +3,7 @@
  * The optional avatarHTML callback is trusted application-owned markup.
  */
 import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
-import { render68, mount68 } from './home-r68.js?v=r81';
+import { render68, mount68 } from './home-r68.js?v=r84';
 import { visibleGameCatalogue } from '../game-availability.js?v=games-royal-1';
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
