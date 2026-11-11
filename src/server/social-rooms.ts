@@ -539,6 +539,8 @@ export class SocialRooms {
   }
   roomIdOf(userId: string): string | null { return this.member(this.state, userId)?.room.id ?? null; }
   ownedRoomsOf(userId: string) { return this.state.rooms.filter((r) => r.ownerId === userId).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length })); }
+  /** R73: المجالس العادية بس (بدون غرف الألعاب) */
+  isGameRoom(id: string): boolean { return this.state.receipts.some((x) => !x.admin && x.command === 'game:bind' && x.key === id); }
   liveRooms() { return this.state.rooms.filter((r) => r.members.length > 0).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length, owner: this.opts.profile(r.ownerId)?.name ?? '', video: !!r.video })).sort((a, b) => b.members - a.members); }
   ownerMaxRoomLevel(userId: string): number { let lv = 0; for (const r of this.state.rooms) if (r.ownerId === userId) lv = Math.max(lv, roomLevelOf(r.support ?? 0).level); return lv; }
   /** R58u: يمنح جوائز إطلاقات الصاروخ المعلّقة (معرّف ثابت لكل إطلاق، فإعادة المحاولة ما تكرر). */

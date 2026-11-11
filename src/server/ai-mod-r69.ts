@@ -6,7 +6,7 @@
  *  - AI_MOD_MOCK=1 للتجربة المحلية بدون مفتاح (حكم تقريبي بقواعد بسيطة). */
 import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 
-export type ModKind = 'post' | 'comment' | 'room-name' | 'chat' | 'dm' | 'voice';
+export type ModKind = 'post' | 'comment' | 'room-name' | 'chat' | 'dm' | 'voice' | 'group' | 'vn';
 export type Verdict = 'ok' | 'review' | 'block';
 export type ModItem = { kind: ModKind; id: string; by: string; text: string; ref?: string };
 export type ModResult = { verdict: Verdict; category: string; reason: string };

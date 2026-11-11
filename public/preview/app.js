@@ -47,10 +47,11 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r72';
+import * as PWA from '../pwa.js?v=r73';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
+import * as SP from '../social-plus-r73.js?v=r73';
 import * as CHAT from '../chat.js?v=r72';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -161,6 +162,8 @@ function connect() {
       if (m.code === 'guest') guestPrompt(m.error);
       S.pending.get(m.r)(m);
       S.pending.delete(m.r);
+    } else if (typeof m.t === 'string' && /^(group|friend|lfg|vibe):/.test(m.t) && SP.onEvent(m)) {
+      /* R73: أحداث التواصل */
     } else if (m.t === 'persona:beaten') {
       /* R72: هزمت شخصية لأول مرة */
       toast(`🏆 هزمت ${m.emoji} ${m.name} لأول مرة! +🪙 ${nf(m.reward)}`);
@@ -451,7 +454,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r72');
+  const M = await import('../settings-r60.js?v=r73');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -818,6 +821,11 @@ async function render() {
       if (S.user && !isCommunityRestricted() && r.a === 'gifts' && ['received','sent'].includes(r.b) && S.helloDone && (changed || PROFILE_GIFT_LOG.owner !== S.user.id)) void loadProfileGiftHistory();
       view.innerHTML = profileView();
       mountGoogle();
+      break;
+    case 'groups': case 'group': case 'lfg': case 'majalis': case 'vibe':
+      /* R73: صفحات التواصل */
+      document.documentElement.classList.add('has-unified');
+      SP.render(view, r, { user: S.user, toast, restricted: isCommunityRestricted() });
       break;
     case 'join': {
       /* R72: جاي من رابط دعوة (قروب واتساب) وما عنده حساب: نعرض الطاولة واسم واحد بس ويدخل على طول */
@@ -2908,3 +2916,5 @@ function profileContext() {
 window.addEventListener('focus',()=>{if(S.user&&S.helloDone&&!document.activeElement?.closest('.pv-profile-editor')){loadAcct();if(['profile','account','shop'].includes(parseRoute().name))SHOP.load(req).then(render);}});
 
 boot();
+/* R73: إضافات التواصل على الصفحات */
+try { SP.start({ toast, render }); } catch { /* */ }

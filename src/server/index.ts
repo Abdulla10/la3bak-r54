@@ -121,6 +121,7 @@ import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-
 import { AvifCache } from './avif-r71.js';
 import { createSeo } from './seo-r71.js';
 import { PERSONAS, personaOf } from './personas-r72.js';
+import { Social73 } from './social-r73.js';
 
 /** Compatibility wrapper: old generic intents remain valid; optional social payloads fail closed. */
 export function validSocialGiftOutbox(d: Record<string, unknown>): boolean {
@@ -294,7 +295,7 @@ export async function createApp(
 ): Promise<App> {
   const registry = createRegistry();
   const trustProxy = process.env.TRUST_PROXY === 'true';
-  const securityHeaders:Record<string,string> = {...SECURITY_HEADERS, ...(cfg.cookieSecure ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' } : {}), 'Permissions-Policy': `camera=(), microphone=${cfg.socialVoice?.enabled?'(self)':'()'}, geolocation=()`};
+  const securityHeaders:Record<string,string> = {...SECURITY_HEADERS, ...(cfg.cookieSecure ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' } : {}), 'Permissions-Policy': 'camera=(), microphone=(self), geolocation=()' /* R73: المايك لنفس الموقع (الرسائل الصوتية والنبذة) */};
   const errRing: { ts: string; event: string; data: Record<string, unknown> }[] = [];
   const log = (event: string, data: Record<string, unknown> = {}) => {
     // لا نسجّل أسماء اللاعبين ولا رموز الغرف
@@ -810,6 +811,8 @@ export async function createApp(
     if (!pendingWrites.has('financial-reconcile')) void reconcileFinished();
   };
   const sockets = new Map<string, Set<WebSocket>>();
+  /* R73: يتعبّى بعدين (يحتاجه هوك نهاية اللعبة) */
+  const s73Ref: { v: Social73 | null } = { v: null };
   onlineNow = (id) => (sockets.get(id)?.size ?? 0) > 0;
   /* R62: دقايق المايك للمهام — عينة كل دقيقة، وتنحفظ دفعة كل 5 دقايق */
   const micBatch = new Map<string, number>(); let micTicks = 0;
@@ -892,6 +895,7 @@ export async function createApp(
     },
     onGameFinished(room, players, winners, ref) {
       deliverIntent('game:' + ref);
+      try { s73Ref.v?.gamePlayed(players.map((p) => p.id)); } catch { /* */ }
       /* R69zn: التصنيف — مباريات الناس بس (مو ضد الكمبيوتر) */
       try { if (room.mode !== 'bots' && players.length >= 2 && !room.players.some((p) => p.bot)) { const order: string[] = Array.isArray((room.state as { players?: unknown })?.players) ? (room.state as { players: string[] }).players : players.map((p) => p.id); const team = (id: string) => (TEAM_GAMES.has(room.gameId) && order.length === 4 ? order.indexOf(id) % 2 : order.indexOf(id) + 10); const delta = ratings.record(ref, room.gameId, players.map((p) => ({ id: p.id, team: team(p.id) })), winners); for (const [id, d] of Object.entries(delta)) { const v = ratings.view(room.gameId, id); sendToUser(id, { t: 'rating', game: room.gameId, delta: d, rating: v.rating, tier: v.tier, icon: v.icon }); } } } catch (e) { if (e instanceof StorageError) throw e; log('rating_failed', { message: String(e).slice(0, 80) }); }
       try { const out = registry.historyEngine(room.gameId)?.outcome(room.state as never); arena.tourGameFinished(room.code, winners, out?.scores); if (players.length >= 2) arena.leagueGame(players, winners); } catch (e) { if (e instanceof StorageError) throw e; log('arena_game_hook_failed', { message: String(e).slice(0, 120) }); }
@@ -963,6 +967,13 @@ export async function createApp(
         void socialRooms.systemMute(it.by, true).then((rid) => { if (!rid) return; try { support.announce([it.by], '🔇 انكتم مايكك', `المشرف الصوتي سمع كلام مخالف (${label}). مايكك مكتوم ${mins} دقيقة. التكرار يطوّل الكتم.`, 'المشرف الذكي', 'vmute-' + it.id); } catch { /* */ } sendToUser(it.by, { t: 'social:update', roomId: rid });
           setTimeout(() => { void socialRooms.systemMute(it.by, false).then((r2) => { if (r2) sendToUser(it.by, { t: 'social:update', roomId: r2 }); }); }, mins * 60_000).unref?.(); });
         return `انكتم ${mins} دقيقة`;
+      }
+      if (it.kind === 'group' || it.kind === 'vn') {
+        const who = accounts.nameOf(it.by) || 'لاعب', where = it.kind === 'group' ? 'رسالة قروب' : 'رسالة صوتية';
+        if (r.category === 'self_harm') arena.alert('reports', '⚠️ محتاج انتباه', `${who} في ${where}: إشارة لإيذاء النفس. تواصل معه بلطف.`, 'sh-' + it.kind + '-' + it.by.slice(0, 8));
+        if (r.verdict !== 'block') return 'للمراجعة';
+        const from = s73Ref.v?.moderate(it.kind as 'group' | 'vn', it.id); if (from) { try { support.announce([from], 'انحذفت رسالتك', `المشرف الآلي حذف ${where} لأنها تخالف القواعد (${label}). تكرارها يعرض حسابك للإيقاف.`, 'المشرف الآلي', `aimod:${it.kind}:${it.id}`); } catch { /* */ } }
+        return from ? 'انحذفت' : 'محذوفة من قبل';
       }
       if (it.kind === 'chat' || it.kind === 'dm') {
         const where = it.kind === 'chat' ? 'دردشة غرفة' : 'رسالة خاصة', who = accounts.nameOf(it.by) || 'لاعب';
@@ -1912,6 +1923,48 @@ export async function createApp(
     functionalHttp.add('GET', '/api/voice-mod/config', () => ({ ok: true, on: voiceModOn() && aiMod.ready(), ios: voiceModIOS() }));
     functionalHttp.add('POST', '/api/admin/voice-mod', ({ actor, body }) => { const b = body as { on?: unknown; ios?: unknown }; if (typeof b.on === 'boolean') vmFlags.on = b.on; if (typeof b.ios === 'boolean') vmFlags.ios = b.ios; try { writeFileSync(vmFile, JSON.stringify(vmFlags)); } catch { /* */ } if (actor) admin.audit(actor, 'voicemod.set', 'ai-mod', JSON.stringify(vmFlags)); return { ok: true, ...vmFlags }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/voice-mod', () => ({ ok: true, ...vmFlags, ready: aiMod.ready() }), 'owner');
+    /* R73: تواصل وتعارف أقوى — قروبات، رسائل صوتية، نبذة صوتية، اقتراحات، أبي شريك، مجالس الاهتمامات، مستويات الصداقة، سوالف عشوائية */
+    const s73User = (id: string) => ({ id, name: accounts.nameOf(id) || 'لاعب' });
+    const s73 = new Social73(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'social73.json') : '', {
+      friends: (id) => { try { return social.friendInternalIds(id); } catch { return []; } },
+      isFriend: (a, b) => { try { return social.friendInternalIds(a).includes(b); } catch { return false; } },
+      pub: (id) => community.pub(id), resolve: (p) => (typeof p === 'string' ? community.resolvePublicId(p) : null), nameOf: (id) => accounts.nameOf(id) || 'لاعب',
+      banned: (id) => platform.isBanned(id), guest: (id) => isGuest(id), adult: (id) => { const a = accounts.socialAge(id); return a === null ? null : a >= 18; },
+      profanity: (t) => !!profanityOnly(t), mod: (kind, id, by, text) => aiMod.enqueue({ kind, id, by, text }),
+      push: (id, msg) => sendToUser(id, msg), online: () => [...sockets.keys()],
+      ownedRooms: (id) => socialRooms.ownedRoomsOf(id).filter((r: any) => !socialRooms.isGameRoom(r.id)).map((r: any) => ({ id: r.id, name: r.name })), liveRooms: () => socialRooms.liveRooms().filter((r: any) => !socialRooms.isGameRoom(r.id)) as any,
+      createRoom: async (uid, gameId, seats) => { const eng = registry.get(gameId); if (!eng) return { ok: false, error: 'اللعبة مب متاحة.' }; const n = Math.max(eng.info.minPlayers, Math.min(eng.info.maxPlayers, seats)); const r: any = await withGameVoice(s73User(uid), await service.createRoom(s73User(uid), { gameId, mode: 'friends', seats: n, key: 's73' + randomUUID().replace(/-/g, '') })); return r.ok ? { ok: true, code: r.room.code } : { ok: false, error: r.error }; },
+      joinRoom: async (uid, code) => { const r: any = await withGameVoice(s73User(uid), await service.joinRoom(s73User(uid), code, undefined)); return r.ok ? { ok: true } : { ok: false, error: r.error }; },
+      roomSeats: async (code) => { try { const r = await store.get(code); return r ? { free: r.seats - r.players.filter((p) => !p.left).length, status: r.status } : null; } catch { return null; } },
+      gameName: (id) => { const e = registry.get(id); return e && e.info.status === 'available' ? e.info.name : null; },
+    }, Date.now, storage);
+    setInterval(() => { void s73.vibeTick().catch(() => undefined); }, 3_000).unref();
+    setInterval(() => { try { s73.sweep(); } catch { /* */ } }, 6 * 3600_000).unref();
+    { const orig = social.send.bind(social); (social as any).send = (me: string, other: string, input: { body?: unknown; ref?: unknown }) => { const out = orig(me, other, input) as any; try { if (out && !out.error && !out.duplicate) s73.bump(me, other, 1); } catch { /* */ } return out; }; }
+    s73Ref.v = s73;
+    functionalHttp.add('GET', '/api/groups', ({ user }) => s73.groups(user.id));
+    functionalHttp.add('POST', '/api/groups', ({ user, body }) => s73.createGroup(user.id, body.name, body.members));
+    functionalHttp.add('GET', '/api/groups/:id', ({ user, params }) => s73.groupDetail(user.id, params.id));
+    functionalHttp.add('POST', '/api/groups/:id/add', ({ user, params, body }) => s73.addMember(user.id, params.id, body.pub));
+    functionalHttp.add('POST', '/api/groups/:id/kick', ({ user, params, body }) => s73.kick(user.id, params.id, body.pub));
+    functionalHttp.add('POST', '/api/groups/:id/leave', ({ user, params }) => s73.leave(user.id, params.id));
+    functionalHttp.add('POST', '/api/groups/:id/msg', ({ user, params, body }) => s73.post(user.id, params.id, body));
+    functionalHttp.add('POST', '/api/groups/:id/play', ({ user, params, body }) => s73.play(user.id, params.id, body.gameId));
+    functionalHttp.add('GET', '/api/voice-bio', ({ user, url }) => ({ bio: s73.bioOf(url.searchParams.get('u'), user.id) }));
+    functionalHttp.add('DELETE', '/api/voice-bio', ({ user }) => s73.dropBio(user.id));
+    functionalHttp.add('GET', '/api/friend-suggestions', ({ user }) => s73.suggestions(user.id));
+    functionalHttp.add('GET', '/api/friend-levels', ({ user }) => s73.friendLevels(user.id));
+    functionalHttp.add('POST', '/api/friend-table', ({ user, body }) => s73.ourTable(user.id, body.pub, body.gameId));
+    functionalHttp.add('GET', '/api/lfg', ({ user }) => s73.lfgList(user.id));
+    functionalHttp.add('POST', '/api/lfg', ({ user, body }) => s73.lfgPost(user.id, body.gameId, body.need, body.note));
+    functionalHttp.add('POST', '/api/lfg/:id/join', ({ user, params }) => s73.lfgJoin(user.id, params.id));
+    functionalHttp.add('DELETE', '/api/lfg', ({ user }) => s73.lfgCancel(user.id));
+    functionalHttp.add('GET', '/api/majalis', ({ user, url }) => s73.majalis(user.id, url.searchParams.get('i')));
+    functionalHttp.add('POST', '/api/majalis/room', ({ user, body }) => s73.setRoomInterest(user.id, body.roomId, body.interest));
+    functionalHttp.add('POST', '/api/majalis/me', ({ user, body }) => s73.setMyInterest(user.id, body.interest));
+    functionalHttp.add('POST', '/api/vibe', ({ user, body }) => s73.vibeJoin(user.id, body.interest));
+    functionalHttp.add('GET', '/api/vibe', ({ user }) => s73.vibeStatus(user.id));
+    functionalHttp.add('DELETE', '/api/vibe', ({ user }) => s73.vibeLeave(user.id));
     /* R69zu: أخطاء المتصفح عند اللاعبين */
     functionalHttp.add('POST', '/api/client-error', ({ user, body }) => { if (cerrLimiter.allow(user.id)) clientErrors.report(user.id, body); return { ok: true }; });
     functionalHttp.add('POST', '/api/client-perf', ({ user, body }) => { if (perfLimiter.allow(user.id)) clientPerf.add(body); return { ok: true }; });
@@ -2260,6 +2313,23 @@ export async function createApp(
       const session = sessions.cookieUser(req.headers.cookie);
       const user = session ? { ...session, name: accounts.nameOf(session.id) || session.name } : null;
       /* R72: قائمة شخصيات الكمبيوتر (ومين هزمت منهم) */
+      /* R73: الرسائل الصوتية (رفع/تشغيل) */
+      if (url.pathname === '/api/vn' && req.method === 'POST') {
+        if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' });
+        if (!s73Ref.v) return json(res, 503, { error: 'جرّب بعد شوي.' });
+        if (Number(req.headers['content-length'] ?? 0) > 1_200_000) { req.resume(); return json(res, 413, { error: 'الصوت كبير.' }); }
+        const buf = await new Promise<Buffer | null>((resolve, reject) => { const ch: Buffer[] = []; let n = 0, big = false; req.on('data', (c: Buffer) => { n += c.length; if (n > 1_200_000) { big = true; ch.length = 0; } else if (!big) ch.push(c); }); req.once('end', () => resolve(big ? null : Buffer.concat(ch))); req.once('error', reject); req.once('aborted', () => reject(new BodyReadError(400, 'aborted'))); });
+        if (!buf) return json(res, 413, { error: 'الصوت كبير.' });
+        let tr = ''; try { tr = decodeURIComponent(String(req.headers['x-transcript'] ?? '')); } catch { tr = ''; }
+        const kind = url.searchParams.get('kind'); const target = kind === 'dm' ? url.searchParams.get('to') : kind === 'group' ? url.searchParams.get('g') : null;
+        try { return json(res, 200, { ok: true, ...s73Ref.v.saveVoice(user.id, kind, target, buf, String(req.headers['content-type'] ?? ''), Number(req.headers['x-dur']), tr) }); }
+        catch (e) { const er = e as { status?: number; message?: string }; if (e instanceof StorageError) throw e; return json(res, er.status ?? 400, { error: er.message ?? 'ما انحفظ الصوت.' }); }
+      }
+      { const vm = /^\/api\/vn\/([A-Za-z0-9_-]{8,40})$/.exec(url.pathname); if (vm && req.method === 'GET') {
+        if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); if (!s73Ref.v) return json(res, 503, { error: 'جرّب بعد شوي.' });
+        try { const v = s73Ref.v.readVoice(user.id, vm[1]); res.writeHead(200, { 'Content-Type': v.mime, 'Content-Length': v.buf.length, 'Cache-Control': 'private, max-age=86400', ...securityHeaders }); return res.end(v.buf); }
+        catch (e) { const er = e as { status?: number; message?: string }; return json(res, er.status ?? 404, { error: er.message ?? 'مب موجودة.' }); }
+      } }
       /* R72: معاينة غرفة من رابط الدعوة (اسم اللعبة والمضيف وعدد اللاعبين) — بدون أي معلومات خاصة */
       if (url.pathname === '/api/room-peek' && req.method === 'GET') {
         if (!peekLimiter.allow(ipOf(req))) return json(res, 429, { error: 'طلبات كثيرة.' });
