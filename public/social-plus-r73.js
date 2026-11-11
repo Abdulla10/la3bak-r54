@@ -41,7 +41,32 @@ async function upload(rec, q) {
   const r = await fetch('/api/vn?' + new URLSearchParams(q), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': rec.blob.type || 'audio/webm', 'x-dur': String(rec.dur.toFixed(1)), 'x-transcript': encodeURIComponent(rec.text.slice(0, 600)) }, body: rec.blob });
   const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'ما انرسل الصوت.'); return j;
 }
-const player = (id, dur) => `<span class="sp73-vn"><audio controls preload="none" src="/api/vn/${esc(id)}"></audio>${dur ? `<small>${Math.round(dur)}ث</small>` : ''}</span>`;
+/* R73b: مشغّل صوت بتصميم الموقع (بدل مشغّل المتصفح الأسود): زر ذهبي + موجات + الوقت */
+const fmtT = (s) => { s = Math.max(0, Math.round(s || 0)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const bars = (id) => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return Array.from({ length: 28 }, (_, i) => { h = (h * 1103515245 + 12345) >>> 0; const v = 0.28 + ((h >>> 8) % 1000) / 1000 * 0.72; return `<i style="height:${Math.round(v * 100)}%"></i>`; }).join(''); };
+const player = (id, dur) => `<span class="sp73-vn" data-vn="${esc(id)}" data-dur="${Number(dur) || 0}"><button type="button" class="sp73-play" data-sp73="vn-play" aria-label="شغّل الرسالة الصوتية"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pl" d="M8 5.5v13l10.5-6.5z"/><path class="pa" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg></button><span class="sp73-wave" data-sp73="vn-seek">${bars(id)}</span><small class="sp73-tm">${dur ? fmtT(dur) : '🎤'}</small><audio preload="none" src="/api/vn/${esc(id)}"></audio></span>`;
+let VN_CUR = null;
+function vnToggle(box) {
+  const a = box.querySelector('audio'); if (!a) return;
+  if (VN_CUR && VN_CUR !== a) { VN_CUR.pause(); }
+  if (!a.dataset.wired) {
+    a.dataset.wired = '1';
+    const tm = box.querySelector('.sp73-tm'), wave = box.querySelector('.sp73-wave'), total = () => (Number.isFinite(a.duration) && a.duration > 0 ? a.duration : Number(box.dataset.dur) || 0);
+    const bs = [...wave.children]; const paint = (p) => { const n = Math.round(p * bs.length); bs.forEach((b, i) => b.classList.toggle('d', i < n)); };
+    a.addEventListener('timeupdate', () => { paint(total() ? Math.min(1, a.currentTime / total()) : 0); tm.textContent = fmtT(a.currentTime); });
+    a.addEventListener('play', () => box.classList.add('on')); a.addEventListener('pause', () => box.classList.remove('on'));
+    a.addEventListener('ended', () => { box.classList.remove('on'); paint(0); tm.textContent = fmtT(total()); });
+    a.addEventListener('error', () => { box.classList.remove('on'); tm.textContent = 'ما اشتغل'; });
+  }
+  if (a.paused) { VN_CUR = a; void a.play().catch(() => {}); } else a.pause();
+}
+function vnSeek(box, ev) {
+  const a = box.querySelector('audio'), wave = box.querySelector('.sp73-wave'); if (!a || !wave) return;
+  const r = wave.getBoundingClientRect(); const rtl = getComputedStyle(wave).direction === 'rtl';
+  const f = Math.min(1, Math.max(0, rtl ? (r.right - ev.clientX) / r.width : (ev.clientX - r.left) / r.width));
+  const go = () => { const d = Number.isFinite(a.duration) ? a.duration : Number(box.dataset.dur) || 0; if (d) a.currentTime = f * d; };
+  if (a.readyState < 1) { a.addEventListener('loadedmetadata', go, { once: true }); vnToggle(box); } else go();
+}
 /** زر تسجيل: يرجع HTML، والتحكم بالنقر عبر data-sp73="rec" */
 const recBtn = (label = '🎤') => `<button type="button" class="sp73-mic" data-sp73="rec" aria-label="سجّل رسالة صوتية">${label}</button>`;
 async function recordFlow(btn, max, send) {
@@ -170,6 +195,8 @@ document.addEventListener('click', async (e) => {
   const b = e.target.closest?.('[data-sp73]'); if (!b) return;
   const k = b.dataset.sp73;
   try {
+    if (k === 'vn-play') { vnToggle(b.closest('.sp73-vn')); return; }
+    if (k === 'vn-seek') { vnSeek(b.closest('.sp73-vn'), e); return; }
     if (k === 'gnew-open') { S.addOpen = !S.addOpen; await loadFriends(); rerender(); }
     else if (k === 'gmembers') { S.membersOpen = !S.membersOpen; rerender(); }
     else if (k === 'gplay') { b.disabled = true; const r = await api(`/api/groups/${encodeURIComponent(S.gid)}/play`, 'POST', { gameId: b.dataset.g }); go('#/room/' + r.code); }
@@ -233,6 +260,9 @@ function decorate(force = false) {
   /* الرسائل الخاصة: زر المايك + تشغيل الرسائل الصوتية */
   if (h.startsWith('#/messages')) {
     const f = view.querySelector('form.chat-compose'); if (f && !f.querySelector('.sp73-mic') && canRecord()) { const ta = f.querySelector('textarea'); if (ta && !ta.disabled) f.insertAdjacentHTML('afterbegin', recBtn()); }
+    /* معاينة آخر رسالة بالقائمة: نخفي رمز الملف */
+    const tw = document.createTreeWalker(view, NodeFilter.SHOW_TEXT); const fix = []; for (let t = tw.nextNode(); t; t = tw.nextNode()) if (t.textContent.includes('[vn:') && !t.parentElement?.closest('.chat-bubble')) fix.push(t);
+    for (const t of fix) t.textContent = t.textContent.replace(/\s*\[vn:[A-Za-z0-9_-]{8,40}\]/g, '');
     for (const p of view.querySelectorAll('.chat-bubble p')) { const m = /^🎤 رسالة صوتية \[vn:([A-Za-z0-9_-]{8,40})\]$/.exec(p.textContent.trim()); if (m && !p.dataset.sp73) { p.dataset.sp73 = '1'; p.innerHTML = player(m[1]); } }
   }
   /* صفحة الأصدقاء: روابط الميزات + الاقتراحات + مستوى الصداقة */
