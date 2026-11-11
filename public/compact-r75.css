@@ -1,0 +1,72 @@
+/* R75: ترتيب أنظف — نفس الألوان بالضبط، بس بطايق أصغر ومسافات أضبط وعناوين أهدى.
+ * يشتغل على صفحات الموقع بس (مو داخل الألعاب). ينحمّل آخر شي. */
+
+/* ===== رأس الصفحة (الأيقونة الكبيرة + العنوان): صار سطر واحد مرتب ===== */
+html body .lb-unified .lb-content .hero:not(.lpu-hero):not(.pf68-hero){direction:rtl;display:grid!important;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:12px;row-gap:0;
+  text-align:start!important;padding:10px 14px!important;min-height:0!important;margin:0 0 10px!important;border-radius:16px!important}
+html body .lb-unified .lb-content .hero .hero-symbol{grid-row:1/span 2;width:42px!important;height:42px!important;min-width:42px;margin:0!important;font-size:24px!important;display:grid;place-items:center;border-radius:12px}
+html body .lb-unified .lb-content .hero .hero-symbol :is(svg,img){width:26px!important;height:26px!important;max-width:26px}
+html body .lb-unified .lb-content .hero h1{grid-column:2;font-size:19px!important;line-height:1.35!important;margin:0!important;text-align:start!important}
+html body .lb-unified .lb-content .hero :is(.subtitle,p.subtitle,div.subtitle){grid-column:2;font-size:12px!important;line-height:1.5!important;margin:0!important;padding:0!important;text-align:start!important;max-width:none!important}
+html body .lb-unified .lb-content .hero > :not(.hero-symbol):not(h1):not(.subtitle){grid-column:1/-1;margin-top:8px}
+
+/* ===== البطايق واللوحات ===== */
+html body .lb-unified .lb-content :is(section.panel,aside.panel,div.panel,section.card,article.card){padding:12px!important;border-radius:16px!important;margin-bottom:10px!important}
+html body .lb-unified .lb-content :is(.panel-title,section.panel > h2,section.card > h2,aside.panel > h2){font-size:16px!important;line-height:1.4!important;margin:0 0 8px!important}
+html body .lb-unified .lb-content :is(.stack,.grid2){gap:10px!important}
+html body .lb-unified .lb-content p.muted{font-size:12.5px;line-height:1.6}
+
+/* الأزرار والتبويبات داخل الصفحات: أنحف */
+html body .lb-unified .lb-content :is(.tabs,.lbw-tabs) button{min-height:34px!important;padding:6px 12px!important;font-size:13px!important}
+html body .lb-unified .lb-content :is(.tabs,.lbw-tabs){gap:6px!important;margin-bottom:10px!important}
+html body .lb-unified .lb-content .btn:not(.block):not(.sm){min-height:38px;padding:7px 16px;font-size:14px}
+html body .lb-unified .lb-content :is(input.search,input[type=search],textarea){font-size:14px}
+
+/* صفوف القوائم */
+html body .lb-unified .lb-content :is(.list-row,.lb-notification-row,.lb-message-row){padding:9px 11px!important;min-height:0!important;border-radius:14px!important}
+html body .lb-unified .lb-content :is(.lb-message-avatar,.list-row .avatar){width:40px!important;height:40px!important;min-width:40px}
+
+/* المحفظة: بطاقة الرصيد كانت ضخمة */
+html body .lb-unified .lb-content .lbw-balances > *{padding:12px!important;min-height:0!important}
+html body .lb-unified .lb-content .lbw-balances :is(.lbw-hero-symbol,.balance-icon,.hero-symbol){width:40px!important;height:40px!important;font-size:22px!important;margin:0 auto 4px!important}
+html body .lb-unified .lb-content .lbw-balances :is(strong,.amount,.balance){font-size:24px!important;line-height:1.2!important}
+
+/* ===== صفحات التواصل (القروبات، أبي شريك، المجالس، السوالف، المزايا) ===== */
+.sp73{gap:10px;padding-top:8px}
+.sp73-h h1{font-size:18px}.sp73-h p{font-size:12px}.sp73-back{min-width:36px;height:36px;font-size:22px}
+.sp73-card{padding:12px;gap:8px;border-radius:16px}
+.sp73-row{padding:9px 10px;gap:9px;border-radius:14px}.sp73-av{min-width:38px;height:38px;font-size:19px}
+.sp73-mid b{font-size:14.5px}.sp73-sec{font-size:15px;margin-top:4px}
+.sp73-chips{gap:6px}.sp73-chips button{padding:6px 11px;font-size:13px}
+.sp73-hub{gap:6px;margin:6px 0 10px}.sp73-hub a{padding:8px 4px;font-size:19px;border-radius:14px}.sp73-hub b{font-size:11px}
+.sp74-p{padding:9px 10px;gap:9px;border-radius:14px}.sp74-i{min-width:38px;height:38px;font-size:18px}
+.sp74-go{padding:10px 12px;margin:8px 0}
+.qj72{padding:20px 16px!important}
+
+/* شخصيات الكمبيوتر بصفحة اللعبة */
+.pz72{gap:6px}.pz72-c{padding:8px 4px 6px;border-radius:14px}.pz72-e{font-size:26px}
+
+/* مسافة أسفل الصفحة فوق الشريط السفلي بدون فراغ زايد */
+html body .lb-unified .lb-content{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+
+/* المحفظة: بطاقة الرصيد بسطر واحد بدل بطاقة طويلة */
+html body .lb-unified .lb-content .lbw-balances{grid-template-columns:minmax(0,1fr)!important}
+html body .lb-unified .lb-content .lbw-balances .lbw-balance{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto auto;align-items:center;column-gap:12px;row-gap:0;text-align:start!important;padding:12px 14px!important;direction:rtl}
+html body .lb-unified .lb-content .lbw-balance .card-art{grid-row:1/span 3;width:48px!important;height:48px!important;margin:0!important}
+html body .lb-unified .lb-content .lbw-balance .card-art svg{width:44px!important;height:44px!important}
+html body .lb-unified .lb-content .lbw-balance h2{grid-column:2;font-size:13px!important;margin:0!important;opacity:.85}
+html body .lb-unified .lb-content .lbw-balance .lbw-value{grid-column:2;font-size:24px!important;line-height:1.2!important}
+html body .lb-unified .lb-content .lbw-balance small{grid-column:2;font-size:11.5px!important}
+html body .lb-unified .lb-content .lbw-balance .btn{grid-column:3;grid-row:1/span 3;min-height:36px!important;padding:6px 12px!important;font-size:13px!important;margin:0!important}
+html body .lb-unified .lb-content .lbw-hero-symbol :is(svg,img){width:26px!important;height:26px!important}
+html body .lb-unified .lb-content .lbw-hero-symbol{height:42px!important;overflow:hidden}
+
+/* الإعدادات: صفوف أنحف ومسافات أقل */
+html body .s60 :is(.s60-list,.s60-plist){gap:6px!important}
+html body .s60 .s60-row{min-height:44px!important}
+html body .s60 .s60-row :is(.s60-link,.s60-label){min-height:44px;font-size:15px!important}
+html body .s60 .s60-head h1{font-size:21px!important}
+/* المجتمع: أزرار الفلاتر أنحف */
+html body .lb-unified .lb-content .chips .chip-btn{min-height:36px!important;padding:6px 13px!important;font-size:13.5px!important}
+/* الوضع الفاتح: الوصف تحت العنوان كان له إطار يقطع الرأس */
+html body .lb-unified .lb-content .hero :is(.subtitle,p.subtitle,div.subtitle){border:0!important;background:none!important;box-shadow:none!important}
