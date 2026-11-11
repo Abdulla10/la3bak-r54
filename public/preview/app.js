@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r85';
+import * as PWA from '../pwa.js?v=r86';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r79';
@@ -454,7 +454,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r85');
+  const M = await import('../settings-r60.js?v=r86');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -541,7 +541,9 @@ function applyAccountSettings(settings) {
 async function functionalPage(view, name) {
   functionalMount?.destroy?.(); functionalMount = null;
   const heading=name==='verification'?'':`<section class="card"><h1>${esc({ auction:'مزادات المقتنيات', family:'العائلة والارتباط الافتراضي', friends:'الأصدقاء', messages:'الرسائل الخاصة', missions:'المهام اليومية والأسبوعية', verification:'توثيق الحساب', 'rank-rewards':'مكافآت الرتب', support:'الدعم', contact:'التواصل مع الإدارة', 'notifications-internal':'إشعارات الإدارة', settings:'الإعدادات', visitors:'من الذي رآني', invite:'ادعُ الأصدقاء' }[name] || name)}</h1></section>`;
-  unifiedPage(view, name, `${heading}<div data-functional-page></div>`);
+  /* R86: إيميل الدعم بصفحة «اتصل بنا» */
+  const mail = name === 'contact' ? '<section class="card ct86"><h2>📧 راسلنا على الإيميل</h2><p>تقدر تتواصل معنا مباشرة على:</p><a class="ct86-mail" href="mailto:support@la3bak.com" dir="ltr">support@la3bak.com</a><p class="muted">أو أرسل طلبك من النموذج تحت وتابع الرد داخل الموقع.</p></section>' : '';
+  unifiedPage(view, name, `${heading}${mail}<div data-functional-page></div>`);
   const root = view.querySelector('[data-functional-page]');
   // R53: رابط دعوة لزائر ما عنده حساب بعد: نحفظ الرمز محلياً ونعرضه بعد التسجيل بصفحة «ادعُ الأصدقاء»
   if (name === 'invite' && /^[A-Za-z0-9_-]{16}$/.test(parseRoute().a || '')) { try { localStorage.setItem('la3bak:pending-invite', parseRoute().a); } catch { /* اختياري */ } }

@@ -54,3 +54,8 @@ html body #view .h68{padding-bottom:6px!important}
 html body #view .h81-row small{color:#ffd66b!important}
 html:not(.lb-dark) body #view .h81-row small{color:#8a641f!important}
 html body #view .h68 .lb-copy79,html body #view .lb-copy79{margin-top:10px!important}
+/* R86: إيميل الدعم */
+html body .ct86{display:grid;gap:8px;text-align:center}
+html body .ct86 h2{margin:0;font-size:17px}
+html body .ct86 p{margin:0}
+html body .ct86-mail{display:inline-block;justify-self:center;padding:10px 18px;border-radius:14px;background:linear-gradient(135deg,#ffd66b,#f0b429);color:#2a1500!important;font-weight:800;font-size:16px;text-decoration:none}
