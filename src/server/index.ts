@@ -120,6 +120,7 @@ import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
 import { AvifCache } from './avif-r71.js';
 import { createSeo } from './seo-r71.js';
+import { PERSONAS, personaOf } from './personas-r72.js';
 
 /** Compatibility wrapper: old generic intents remain valid; optional social payloads fail closed. */
 export function validSocialGiftOutbox(d: Record<string, unknown>): boolean {
@@ -515,6 +516,7 @@ export async function createApp(
   const avatarLimiter = new KeyedLimiter(6, 6 / 60);
   const roomAvatarLimiter = new KeyedLimiter(120, 2);
   const watchLimiter = new KeyedLimiter(8, 1);
+  const peekLimiter = new KeyedLimiter(30, 0.5);
   const identities = new Identities(idFile, Date.now, storage);
   /* R60 (قرار المالك): الضيف (بدون Google) يتصفح بس، ويلعب ضد الكمبيوتر بدون جوايز. القفل هنا بالخادم.
    * يشتغل بس إذا الدخول بـGoogle مفعّل بالخادم (وإلا الضيف ما يقدر يربط حسابه أصلًا). GUEST_READONLY=0 يطفيه. */
@@ -904,6 +906,16 @@ export async function createApp(
         if (p.bot || p.left) continue;
         sendToUser(p.id, { t: 'room', room: service.snapshot(room, p.id) });
       }
+    },
+    /* R72: أول مرة تهزم شخصية اخترتها: جائزة عملات مرة وحدة لكل شخصية */
+    onPersonaBeaten(uid, pid, reward) {
+      const ps = personaOf(pid); if (!ps) return;
+      try {
+        if (wallet.grant(uid, 'coins', reward, `هزمت ${ps.name} ${ps.emoji}`, `persona:${pid}`)) {
+          sendToUser(uid, { t: 'wallet', coins: wallet.balance(uid), gems: wallet.gems(uid), won: reward });
+          sendToUser(uid, { t: 'persona:beaten', id: pid, name: ps.name, emoji: ps.emoji, reward });
+        }
+      } catch (e) { if (e instanceof StorageError) throw e; }
     },
     onReact(room, fromId, fromName, text) {
       const eventId = randomUUID(), ts = Date.now();
@@ -2247,6 +2259,18 @@ export async function createApp(
       if (await socialVoice!.handleHttp(req,res)) return;
       const session = sessions.cookieUser(req.headers.cookie);
       const user = session ? { ...session, name: accounts.nameOf(session.id) || session.name } : null;
+      /* R72: قائمة شخصيات الكمبيوتر (ومين هزمت منهم) */
+      /* R72: معاينة غرفة من رابط الدعوة (اسم اللعبة والمضيف وعدد اللاعبين) — بدون أي معلومات خاصة */
+      if (url.pathname === '/api/room-peek' && req.method === 'GET') {
+        if (!peekLimiter.allow(ipOf(req))) return json(res, 429, { error: 'طلبات كثيرة.' });
+        const code = String(url.searchParams.get('code') ?? '').toUpperCase(); if (!/^[A-Z0-9]{4,8}$/.test(code)) return json(res, 400, { error: 'رمز غير صالح.' });
+        let room: Room | null = null; try { room = await store.get(code); } catch { room = null; }
+        if (!room) return json(res, 404, { error: 'ما لقينا الغرفة.' });
+        const eng = registry.historyEngine(room.gameId); const host = room.players.find((p) => p.id === room!.hostId);
+        const humans = room.players.filter((p) => !p.bot && !p.left).length;
+        return json(res, 200, { ok: true, code, gameId: room.gameId, game: eng?.info.name ?? room.gameId, icon: eng?.info.icon ?? '🎮', host: host?.name ?? 'صديقك', players: humans, seats: room.seats, status: room.status, guestOk: room.mode === 'friends' && !(room.stake ?? 0) && !room.access && !isGuest(room.hostId) });
+      }
+      if (url.pathname === '/api/personas' && req.method === 'GET') return json(res, 200, { ok: true, list: PERSONAS.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, level: p.level, style: p.style, reward: p.reward, beaten: !!user && wallet.hasClaimed(user.id, `persona:${p.id}`) })) });
       if (user) { try { const h = sessions.tokenHash(req.headers.cookie); if (h) devices.touch(user.id, h, String(req.headers['user-agent'] ?? '').slice(0, 300), (x) => sessions.activeHashes(user.id).includes(x)); } catch { /* الأجهزة ثانوية */ } }
 
       if (url.pathname === '/healthz') {
@@ -2672,19 +2696,33 @@ export async function createApp(
     return {...result,voice:binding.ok?binding.voice:voiceBlocked(binding.error)};
   }
 
+  /** R72: هل يقدر الضيف يدخل هالغرفة برابط دعوة؟ يرجع سبب الرفض أو null */
+  async function guestInviteBlock(code: unknown): Promise<string | null> {
+    if (typeof code !== 'string' || !/^[A-Za-z0-9]{4,8}$/.test(code)) return 'رمز الغرفة غير صالح.';
+    let room: Room | null = null; try { room = await store.get(code.toUpperCase()); } catch { return 'جرّب بعد شوي.'; }
+    if (!room) return 'ما لقينا هالغرفة. يمكن انتهت — اطلب رابط جديد من صاحبك.';
+    if (room.mode !== 'friends' || (room.stake ?? 0) > 0 || room.access) return GUEST_MSG;
+    if (isGuest(room.hostId)) return GUEST_MSG;
+    return null;
+  }
   const QUIT_GATED = new Set(['room:create', 'room:join', 'mm:join']);
   async function dispatch(user: User, t: string, m: any) {
     const blocked = admin.maintenanceBlock(user) ?? admin.banBlock(user);
     if (blocked) return { ok: false, error: blocked };
     if (ownerOps.frozen() && (['gift:send', 'shop:buy', 'shop:checkout', 'shop:convert', 'shop:gems', 'city:up', 'city:roll'].includes(t) || (t === 'mm:join' && Number(m?.stake) > 0))) return { ok: false, error: FREEZE_MSG };
-    if (isGuest(user.id) && (GUEST_WS_BLOCK.has(t) || (t === 'room:create' && m?.mode !== 'bots'))) return { ok: false, code: 'guest', error: GUEST_MSG };
+    /* R72: رابط الدعوة (قروب واتساب): الضيف يدخل طاولة صاحبه على طول بدون تسجيل — غرفة أصدقاء مجانية مضيفها حساب مسجّل.
+       بدون صوت ولا كتابة حرة (الردود الجاهزة بس) لين يحفظ حسابه. */
+    if (isGuest(user.id) && t === 'room:join') { const why = await guestInviteBlock(m?.code); if (why) return { ok: false, code: 'guest', error: why }; m = { ...m, voice: false }; }
+    else if (isGuest(user.id) && t === 'room:react') { /* الردود الجاهزة آمنة */ }
+    else if (isGuest(user.id) && t === 'room:voice') return { ok: true, voice: voiceBlocked('guest_voice_locked') }; // الضيف بدون صوت، بهدوء بدون نافذة تسجيل
+    else if (isGuest(user.id) && (GUEST_WS_BLOCK.has(t) || (t === 'room:create' && m?.mode !== 'bots'))) return { ok: false, code: 'guest', error: GUEST_MSG };
     // R68z28: الخروج المتكرر يمنع دخول أي لعبة 5 دقايق
     if (QUIT_GATED.has(t)) { const qb = quitBlock(user.id); if (qb) return qb; }
     switch (t) {
       case 'room:create':
         if (typeof m.key!=='string' || !/^[A-Za-z0-9_-]{8,128}$/.test(m.key)) return {ok:false,error:'مفتاح إنشاء الغرفة مطلوب. حدّث الصفحة.'};
         if(m.voice!==undefined&&typeof m.voice!=='boolean')return {ok:false,error:'خيار الصوت غير صالح.'};
-        return variantBlock(m) ?? withGameVoice(user,await service.createRoom(user, { gameId: m.gameId, mode: m.mode, seats: m.seats, key:m.key, visibility:m.visibility, password:m.password, botLevel: m.botLevel }),m.voice!==false);
+        return variantBlock(m) ?? withGameVoice(user,await service.createRoom(user, { gameId: m.gameId, mode: m.mode, seats: m.seats, key:m.key, visibility:m.visibility, password:m.password, botLevel: m.botLevel, persona: m.persona }),m.voice!==false);
       case 'room:join':
         if(m.voice!==undefined&&typeof m.voice!=='boolean')return {ok:false,error:'خيار الصوت غير صالح.'};
         return withGameVoice(user,await service.joinRoom(user, m.code, m.password),m.voice!==false);

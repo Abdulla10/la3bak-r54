@@ -1,3 +1,4 @@
+import { Banter, personaByName, personaName, personaOf, personasFor } from './personas-r72.js';
 import { randomInt, randomUUID, randomBytes, createHmac, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 const scrypt = promisify(scryptCallback);
@@ -100,6 +101,8 @@ export interface Hooks {
   prizeBonus?(): number;
   /** نتيجة لعبة محفوظة بنجاح؛ يُستخدم لربط progression دون إعادة احتسابها. */
   onGameFinished?(room: Room, players: { id: string; name: string }[], winners: string[], ref: string): void;
+  /** R72: لاعب هزم شخصية الكمبيوتر اللي اختارها */
+  onPersonaBeaten?(userId: string, personaId: string, reward: number, room: Room): void;
   /** R69zl: كل حركة لاعب حقيقي قبل التنفيذ (لكشف الغش) */
   onHumanAction?(room: Room, userId: string, action: unknown, stateBefore: unknown, now: number): void;
   /** R69zl: لاعب جوائزه موقوفة (اشتباه غش) — ما تنحسب نتايجه */
@@ -121,6 +124,8 @@ export class RoomService {
   private locks = new Map<string, Promise<unknown>>();
   private online = new Map<string, number>();
   private botPlans = new Map<string, BotPlanEntry>();
+  /** R72: كلام الشخصيات */
+  private banter = new Banter(() => this.now());
   /** طلب إغلاق إداري تعلّق حفظ استرجاعه؛ نوقف اللعب لين يثبت الاسترجاع. */
   private closingPaid = new Set<string>();
   private finishedPayoutQueue: string[] = [];
@@ -187,6 +192,7 @@ export class RoomService {
       const won = this.settle(room);
       this.tally(room);
       this.account(room, won);
+      this.personaEndTalk(room);
     } finally { if (typeof release === 'function') release(); }
   }
 
@@ -201,7 +207,7 @@ export class RoomService {
     const ref = `${room.code}:${room.gameNo}`;
     const players = humans.map((p) => ({ id: p.id, name: p.name }));
     const winners = engine.outcome(room.state).winners;
-    if (this.accounts.record(ref, room.gameId, players, winners, room.stake ?? 0, coins)) this.hooks.onGameFinished?.(room, players, winners, ref);
+    if (this.accounts.record(ref, room.gameId, players, winners, room.stake ?? 0, coins)) { this.hooks.onGameFinished?.(room, players, winners, ref); this.personaFinish(room, winners, players); }
   }
 
   /** نقاط الصدارة: من الخادم، مرة وحدة لكل لعبة منتهية، ولاعبين حقيقيين فأكثر */
@@ -330,13 +336,15 @@ export class RoomService {
   private syncBots(room: Room) {
     if (room.mode !== 'bots') return;
     const humans = room.players.filter((p) => !p.bot);
-    room.players = [...humans, ...this.makeBots(room.seats - humans.length)];
+    room.players = [...humans, ...this.makeBots(room.seats - humans.length, room)];
   }
 
-  private makeBots(n: number): RoomPlayer[] {
+  private makeBots(n: number, room?: Room): RoomPlayer[] {
+    /* R72: البوتات صاروا شخصيات (أبو سالم، أم فهد…) — الأول هو الخصم اللي اخترته */
+    const ps = room ? personasFor(room.code, room.persona, Math.max(0, n)) : [];
     return Array.from({ length: Math.max(0, n) }, (_, i) => ({
       id: `bot-${i + 1}`,
-      name: this.botName(i + 1),
+      name: ps[i] ? personaName(ps[i]) : this.botName(i + 1),
       bot: true,
       ready: true,
       left: false,
@@ -533,7 +541,7 @@ export class RoomService {
 
   // ---------- الغرف ----------
 
-  createRoom(user: User, p: { gameId: unknown; mode: unknown; seats: unknown; key?: unknown; visibility?: unknown; password?: unknown; botLevel?: unknown }): Promise<Res<{ room: Snapshot }>> {
+  createRoom(user: User, p: { gameId: unknown; mode: unknown; seats: unknown; key?: unknown; visibility?: unknown; password?: unknown; botLevel?: unknown; persona?: unknown }): Promise<Res<{ room: Snapshot }>> {
     return this.guard(() => this.lock('create:' + user.id, async () => {
       const engine = typeof p.gameId === 'string' ? this.registry.get(p.gameId) : undefined;
       if (!engine || engine.info.status !== 'available') return fail('هذي اللعبة مو متاحة الحين.');
@@ -558,6 +566,9 @@ export class RoomService {
         players:[{id:user.id,name:user.name,bot:false,ready:true,left:false}],state:null,revision:1,createdAt:now,updatedAt:now,
         creation:{key,fingerprint} };
       if (mode === 'bots' && (p.botLevel === 'easy' || p.botLevel === 'pro')) room.botLevel = p.botLevel;
+      /* R72: شخصية الخصم تحدد المستوى */
+      const persona = mode === 'bots' ? personaOf(p.persona) : null;
+      if (persona) { room.persona = persona.id; if (persona.level === 'normal') delete room.botLevel; else room.botLevel = persona.level; }
       if (privateRoom) {
         const salt = randomBytes(16).toString('hex');
         room.access = { visibility:'private',salt,passwordHash:((await scrypt(password as string,salt,64)) as Buffer).toString('hex') };
@@ -720,6 +731,7 @@ export class RoomService {
       this.botPlans.forEach((_, k) => k.startsWith(room.code + ':') && this.botPlans.delete(k));
       await this.persist(room);
       await this.emit(room);
+      this.hello(room);
       return { ok: true as const, room: this.snapshot(room, user.id) };
     });
   }
@@ -890,6 +902,7 @@ export class RoomService {
       const now = this.now();
       let state = room.state;
       let changed = false;
+      const talk: [string, string, string][] = [];
 
       const advanced = engine.tick(state, now);
       if (advanced !== state) {
@@ -910,7 +923,7 @@ export class RoomService {
               this.botPlans.delete(key);
               continue;
             }
-            plan = { at: now + next.delayMs * this.cfg.botSpeed, ver, action: next.action };
+            plan = { at: now + next.delayMs * this.cfg.botSpeed * (personaByName(bot.name)?.speed ?? 1), ver, action: next.action };
             this.botPlans.set(key, plan);
           }
           if (plan.at <= now) {
@@ -920,6 +933,8 @@ export class RoomService {
             if (res.ok) {
               state = res.state;
               changed = true;
+              const ps = personaByName(bot.name); const say = ps && this.banter.line(room.code, ps, 'move', 0.16);
+              if (say) talk.push([bot.id, bot.name, say]);
             }
           }
         } catch (e) {
@@ -932,7 +947,37 @@ export class RoomService {
       if (engine.isOver(state)) room.status = 'finished';
       await this.persist(room);
       await this.emit(room);
+      for (const [id, name, text] of talk) this.say(room, id, name, text);
     });
+  }
+
+  /** R72: جملة من شخصية بفقاعة الشات */
+  private say(room: Room, id: string, name: string, text: string) { try { this.hooks.onReact?.(room, id, name, text); } catch { /* الكلام ما يوقف اللعب */ } }
+  /** R72: ترحيب أول ما تبدأ الجولة */
+  private hello(room: Room) {
+    if (room.mode !== 'bots') return;
+    const b = room.players.find((p) => p.bot && personaByName(p.name)); const ps = b && personaByName(b.name);
+    const t = ps && this.banter.line(room.code, ps, 'hello');
+    if (b && t) setTimeout(() => this.say(room, b.id, b.name, t), 1200).unref?.();
+  }
+  /** R72: نهاية الجولة: كلام الفوز/الخسارة + جائزة أول مرة تهزم الشخصية اللي اخترتها */
+  private talkedEnd = new Set<string>();
+  private personaEndTalk(room: Room) {
+    if (room.mode !== 'bots' || room.status !== 'finished' || !room.state) return;
+    const ref = `${room.code}:${room.gameNo}`; if (this.talkedEnd.has(ref)) return; this.talkedEnd.add(ref);
+    if (this.talkedEnd.size > 5000) this.talkedEnd.clear();
+    const engine = this.engineOf(room); if (!engine) return;
+    const winners = engine.outcome(room.state).winners;
+    const bots = room.players.filter((p) => p.bot && personaByName(p.name));
+    const botWon = bots.find((b) => winners.includes(b.id));
+    const speaker = botWon ?? bots[0]; const ps = speaker && personaByName(speaker.name);
+    const t = ps && this.banter.line(room.code, ps, botWon ? 'win' : 'lose');
+    if (speaker && t) setTimeout(() => this.say(room, speaker.id, speaker.name, t), 900).unref?.();
+  }
+  private personaFinish(room: Room, winners: string[], humans: { id: string }[]) {
+    if (room.mode !== 'bots') return;
+    const chosen = personaOf(room.persona);
+    if (chosen) for (const h of humans) if (winners.includes(h.id)) { try { this.hooks.onPersonaBeaten?.(h.id, chosen.id, chosen.reward, room); } catch { /* */ } }
   }
 
   /** يحذف الغرف الخاملة فقط: ما فيها أحد متصل ومرّ عليها وقت أطول من المدة المسموحة */

@@ -1304,6 +1304,8 @@ export class Wallet {
    * مكافأة (عملات/جواهر) مرة وحدة لكل مفتاح (إنجاز، فعالية، ولاحقاً عملية دفع موثّقة من الخادم). ترجّع false لو انصرفت قبل.
    * الجهة المنادية مسؤولة عن التحقق من الاستحقاق بالخادم قبل المناداة.
    */
+  /** R72: هل انصرفت جائزة بهالمفتاح قبل؟ (ما ينشئ حساب) */
+  hasClaimed(id: string, key: string): boolean { return (this.d.acc[id]?.claimed ?? []).includes(key); }
   grant(id: string, cur: Cur, amount: number, reason: string, key: string): boolean {
     if (!currency(cur) || !pos(amount) || !str(key) || !key) return false;
     const a = this.a(id);

@@ -73,8 +73,8 @@ export function hubHTML(id, o) {
       <div class="of-seg">${stakeChips}</div>
       ${stake ? `<p class="stake-info" role="status">رسم الدخول: <b>🪙 ${o.nf(stake)}</b> · صندوق الجائزة: <b>🪙 ${o.nf(stake * size)}</b> يقتسمه الفائزون${o.coins < stake ? ' · <span class="neg">رصيدك ما يكفي لهذا الرسم</span>' : ''}</p>` : ''}
       ${lockNote}<button class="btn block" type="button" data-act="hub-search" data-g="${id}" style="margin-top:12px"${lockAttr}>🔍 ابحث عن لاعبين</button></section>
-    <section class="card"><h2>🤖 العب ضد الكمبيوتر</h2><p class="muted">تبدأ فوراً بدون انتظار.</p>
-      ${BOT_LEVEL_GAMES.has(id) ? `<p class="hint" style="margin:8px 0 4px">مستوى الكمبيوتر:</p><div class="of-seg">${[['easy', '😊 سهل'], ['normal', '😎 متوسط'], ['pro', '🔥 محترف']].map(([k, t]) => `<button type="button" class="chip-btn ${botLevel() === k ? 'on' : ''}"${botLevel() === k ? ' style="background:linear-gradient(#ffd86b,#e2a920);color:#2a1500;border-color:#f5c542;font-weight:800"' : ''} data-act="hub-botlvl" data-lvl="${k}" aria-pressed="${botLevel() === k}">${t}</button>`).join('')}</div><p class="hint" style="margin:4px 0 10px">${botLevel() === 'pro' ? 'يعدّ الورق ويخطط مثل اللاعب الخبير.' : botLevel() === 'easy' ? 'يغلط أحياناً — مناسب للتعلّم.' : 'لاعب عادي.'}</p>` : ''}
+    <section class="card"><h2>🤖 العب ضد الكمبيوتر</h2><p class="muted">اختر خصمك — كل شخصية لها أسلوب وكلام. اهزمها أول مرة وخذ جائزتها.</p>
+      ${personaPickerHTML(o)}
       <button class="btn block ghost" type="button" data-act="hub-bots" data-g="${id}"${lockAttr}>ابدأ ضد الكمبيوتر (${size} لاعبين)</button></section>
     <section class="card"><h2>👥 مع أصدقائك</h2><p class="muted">أنشئ غرفة وأرسل الرمز، أو ادخل برمز صديقك.</p>
       <div class="btn-row">${locked ? '<button class="btn ghost" type="button" disabled aria-disabled="true">أنشئ غرفة</button>' : `<a class="btn ghost" href="#/game/${id}">أنشئ غرفة</a>`}<a class="btn ghost" href="#/rooms">عندي رمز</a></div></section>
@@ -132,3 +132,27 @@ export async function loadRating(id, api) {
   try { const r = await api('/api/rating?game=' + encodeURIComponent(id)); if (r && r.me) { RATE.set(id, r); const el = document.querySelector(`[data-rating-box][data-g="${id}"]`); if (el) el.innerHTML = ratingHTML(id); } } catch { /* */ }
 }
 if (typeof document !== 'undefined' && !document.querySelector('style[data-rt69]')) { const st = document.createElement('style'); st.dataset.rt69 = '1'; st.textContent = `.rt69{margin:10px 0 6px}.rt69-me{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(245,197,66,.16),rgba(124,58,237,.18));border:1px solid rgba(245,197,66,.35)}.rt69-ic{font-size:30px}.rt69-me b{display:block;font-size:16px}.rt69-me small{opacity:.8;font-size:12px}.rt69-top{margin-top:8px}.rt69-top summary{cursor:pointer;font-weight:700;padding:4px 0}.rt69-row{display:flex;justify-content:space-between;padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}.rt69-row.me{background:rgba(245,197,66,.14);border-radius:8px}`; document.head.appendChild(st); }
+
+/* R72: شخصيات الكمبيوتر — اختيار الخصم بدل «سهل/متوسط/محترف» */
+export const PERSONA = { list: null, loading: false };
+const PERSONA_FALLBACK = [
+  ['nouf', 'نوف', '💅', 'easy', 'مستجدة وتضحك على كل شي — بداية حلوة', 150], ['fahood', 'فهود', '😂', 'normal', 'مهرّج الطاولة — يمزح ويلعب على البركة', 250],
+  ['bukhalifa', 'بو خليفة', '👴', 'normal', 'شايب حكيم، يتأنى ويرمي أمثال شعبية', 350], ['umfahad', 'أم فهد', '🧕', 'pro', 'هادية وذكية، تحسب كل حركة', 500],
+  ['abusalem', 'أبو سالم', '😤', 'pro', 'حامي وهجومي، سريع ويطقطق', 600], ['theeb', 'ذيب', '🐺', 'pro', 'صامت وقاتل، أسرع واحد بالطاولة', 800],
+].map(([id, name, emoji, level, style, reward]) => ({ id, name, emoji, level, style, reward, beaten: false }));
+export const persona = () => { try { return localStorage.getItem('la3_persona') || 'fahood'; } catch { return 'fahood'; } };
+export const setPersona = (v) => { try { localStorage.setItem('la3_persona', v); } catch { /* */ } };
+export function loadPersonas(force = false) {
+  if (PERSONA.loading || (PERSONA.list && !force)) return Promise.resolve(PERSONA.list);
+  PERSONA.loading = true;
+  return fetch('/api/personas', { credentials: 'same-origin', cache: 'no-store' }).then((r) => r.json()).then((j) => { if (Array.isArray(j.list)) PERSONA.list = j.list; return PERSONA.list; }).catch(() => null).finally(() => { PERSONA.loading = false; });
+}
+const LVL = { easy: '😊 سهلة', normal: '😎 متوسط', pro: '🔥 محترف' };
+export function personaPickerHTML(o) {
+  const list = PERSONA.list || PERSONA_FALLBACK; const cur = persona();
+  const done = list.filter((p) => p.beaten).length;
+  return `<div class="pz72" role="radiogroup" aria-label="اختر خصمك">${list.map((p) => `<button type="button" role="radio" class="pz72-c${p.id === cur ? ' on' : ''}${p.beaten ? ' won' : ''}" data-act="hub-persona" data-p="${p.id}" aria-checked="${p.id === cur}">
+<span class="pz72-e" aria-hidden="true">${p.emoji}</span><b>${o.esc(p.name)}</b><small class="pz72-l">${LVL[p.level] || ''}</small>
+<small class="pz72-r">${p.beaten ? '✅ هزمته' : '🏆 🪙 ' + o.nf(p.reward)}</small></button>`).join('')}</div>
+<p class="hint pz72-s" style="margin:6px 0 10px">${o.esc((list.find((p) => p.id === cur) || list[0]).style)} · هزمت ${done} من ${list.length}</p>`;
+}

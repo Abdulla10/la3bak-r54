@@ -14,6 +14,8 @@ export interface Room {
   mode: 'friends' | 'bots';
   /** R69zm: مستوى البوتات */
   botLevel?: 'easy' | 'normal' | 'pro';
+  /** R72: شخصية الكمبيوتر اللي اختارها اللاعب */
+  persona?: string;
   gameId: string;
   seats: number;
   status: 'lobby' | 'playing' | 'finished';

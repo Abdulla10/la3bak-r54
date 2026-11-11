@@ -4,7 +4,7 @@ import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r71';
+import * as UNIFIED from '../unified/shell.js?v=r72';
 import * as REF from '../unified/home.js?v=r69z8';
 import * as SOCIAL from '../unified/social.js?v=r71';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -12,14 +12,14 @@ import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-av
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
 import {giftArtwork} from '../gift-assets-r27.js?v=r69zz-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69zu';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r72';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
-import * as HUB from '../hub.js?v=r69zo-r6';
+import * as HUB from '../hub.js?v=r72-r6';
 import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
 import { initStatus, checkStatusNow } from '../status.js?v=r68x-navigation-r50';
-import * as LOB from '../lobby.js?v=r69zo';
+import * as LOB from '../lobby.js?v=r72';
 import * as AVT from '../avatar.js?v=shell-r6';
 import * as AUTH from '../auth.js?v=r69a-r6';
 import * as FS from '../fullscreen.js?v=shell-r6';
@@ -47,11 +47,11 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r71';
+import * as PWA from '../pwa.js?v=r72';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
-import * as CHAT from '../chat.js?v=r68z31';
+import * as CHAT from '../chat.js?v=r72';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -161,6 +161,10 @@ function connect() {
       if (m.code === 'guest') guestPrompt(m.error);
       S.pending.get(m.r)(m);
       S.pending.delete(m.r);
+    } else if (m.t === 'persona:beaten') {
+      /* R72: هزمت شخصية لأول مرة */
+      toast(`🏆 هزمت ${m.emoji} ${m.name} لأول مرة! +🪙 ${nf(m.reward)}`);
+      HUB.loadPersonas(true);
     } else if (m.t === 'server:restart') {
       /* R71: السيرفر ينزل له تحديث — نطمّن اللاعب ونرجع نتصل بسرعة، ومباراته محفوظة */
       restartNote(true);
@@ -381,6 +385,22 @@ const PROFILE_CHILDREN = new Set(['vip','ranks','rank-rewards','missions','walle
 const SETTINGS_CHILDREN = new Set(['twofa','passkeys','verification','support','privacy','terms','privacy-settings','account-info','devices','hidden-posts','about']);
 const BACK_OF = (r) => (r.name === 'social-room' ? '#/social-rooms' : ['game','hub','city'].includes(r.name) ? '#/games' : r.name === 'room' ? '#/rooms' : PROFILE_CHILDREN.has(r.name) ? '#/profile' : SETTINGS_CHILDREN.has(r.name) ? '#/settings' : '#/');
 
+/* R72: صفحة الدخول السريع من رابط الدعوة */
+const QJ_NAMES = ['ضيف', 'لاعب', 'بطل', 'نجم'];
+function quickJoin(view, code) {
+  const guess = (() => { try { return localStorage.getItem('la3_qjname') || ''; } catch { return ''; } })() || `${QJ_NAMES[Math.floor(Math.random() * QJ_NAMES.length)]} ${Math.floor(100 + Math.random() * 900)}`;
+  const paint = (p) => unifiedPage(view, 'join', `<section class="card qj72">
+    <div class="qj72-ic" aria-hidden="true">${esc(p?.icon || '🎮')}</div>
+    <h1>${p ? `${esc(p.host)} يدعوك تلعب ${esc(p.game)}` : 'تعال العب معنا'}</h1>
+    <p class="muted">${p ? `الطاولة ${esc(code)} · ${p.players} من ${p.seats} لاعبين${p.status === 'playing' ? ' · اللعبة شغالة' : ''}` : 'جاري جلب الطاولة…'}</p>
+    <form data-form="name" class="qj72-f"><label for="qjName">اسمك اللي بيشوفه أصحابك</label>
+      <input id="qjName" name="name" maxlength="20" autocomplete="nickname" value="${esc(guess)}" required>
+      <button class="btn block" type="submit">🎮 ادخل الطاولة الحين</button></form>
+    <p class="hint">بدون تسجيل ولا كلمة مرور. بعد اللعب تقدر تحفظ حسابك بـGoogle.</p></section>`);
+  paint(null);
+  fetch('/api/room-peek?code=' + encodeURIComponent(code), { cache: 'no-store' }).then((r) => r.json()).then((p) => { if (parseRoute().name === 'join' && !S.user) { const v = view.querySelector('#qjName')?.value; paint(p.ok ? p : null); if (!p.ok) view.querySelector('.qj72 .muted').textContent = p.error || 'ما لقينا الطاولة.'; if (v) view.querySelector('#qjName').value = v; } }).catch(() => {});
+}
+
 function needUser(nextHash) {
   if (S.user) return false;
   toast('قبل ما تدخل الغرفة، اكتب الاسم اللي بيظهر لأصحابك.');
@@ -431,7 +451,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r71');
+  const M = await import('../settings-r60.js?v=r72');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -667,7 +687,7 @@ async function render() {
     case 'hub':
       if (isRetiredGame(r.a)) { unifiedPage(view,'hub',retiredGameHTML()); break; }
       if (needUser('#/hub/' + r.a)) return;
-      if (changed) loadOnline(r.a);
+      if (changed) { loadOnline(r.a); HUB.loadPersonas(true).then((l) => { if (l && parseRoute().name === 'hub') render(); }); }
       unifiedPage(view,'hub',HUB.hubHTML(r.a, { nf, esc, coins: S.coins || 0, canClaim: !!S.canClaim, stakes: S.stakes }));
       if (S.user) HUB.loadRating?.(r.a, (u) => fetch(u, { credentials: 'same-origin', cache: 'no-store' }).then((x) => x.json()));
       if (HUB.MM.game === r.a && HUB.MM.seats) HUB.tickTimer();
@@ -800,7 +820,8 @@ async function render() {
       mountGoogle();
       break;
     case 'join': {
-      if (needUser('#/join/' + r.a)) return;
+      /* R72: جاي من رابط دعوة (قروب واتساب) وما عنده حساب: نعرض الطاولة واسم واحد بس ويدخل على طول */
+      if (!S.user) { S.next = '#/join/' + r.a; quickJoin(view, r.a); break; }
       unifiedPage(view,'join',`<div class="card empty-state"><p>جاري الدخول للغرفة…</p></div>`);
       if (S.helloDone) {
         const owner=S.user?.id,generation=roomRequestGeneration;
@@ -809,6 +830,9 @@ async function render() {
         if (res.ok) {
           S.rooms.set(res.room.code, res.room);
           (globalThis.__LA3BAK_NAV__ || location).replace('#/room/' + res.room.code);
+          if (S.guestReadOnly) setTimeout(() => toast('أهلاً فيك 👋 أنت داخل كضيف. احفظ حسابك بـGoogle من «ملفي» عشان تتكلم بالصوت وتنحفظ نتايجك.'), 1800);
+        } else if (res.code === 'guest') {
+          unifiedPage(view,'join',`<section class="card qj72"><h1>🔒 هالغرفة تحتاج حساب</h1><p class="muted">${esc(res.error)}</p><a class="btn block" href="#/profile">احفظ حسابي بـGoogle</a></section>`);
         } else {
           unifiedPage(view,'join',`<section class="card"><p role="alert">${esc(res.error)}</p>${joinFormHTML()}</section>`);const input=view.querySelector('[name=code]');if(input)input.value=r.a;
         }
@@ -1722,7 +1746,9 @@ function receiveRoomReaction(message) {
   const route = parseRoute();
   const room = currentRoom();
   if (route.name !== 'room' || route.a !== message.code || !room || room.code !== message.code) return;
-  if (!gameVoiceUI && !S.accountSettings?.hideChatEffects) CHAT.pop(message.name, message.text, message.from === S.user?.id, message.from, message);
+  /* R72: كلام شخصيات الكمبيوتر يطلع دايماً (حتى بغرف الصوت) */
+  const botTalk = /^bot-\d+$/.test(String(message.from || ''));
+  if ((!gameVoiceUI || botTalk) && !S.accountSettings?.hideChatEffects) CHAT.pop(message.name, message.text, message.from === S.user?.id, message.from, message);
   if (room.game?.game === 'domino') DMV.feedPush(message.name, message.text, message.from === S.user?.id, message.code);
 }
 
@@ -1932,11 +1958,12 @@ const ACTIONS = {
     if (!res.ok) { toast(res.error, true); HUB.reset(); render(); }
   },
   'hub-botlvl'(el) { HUB.setBotLevel(el.dataset.lvl); render(); },
+  'hub-persona'(el) { HUB.setPersona(el.dataset.p); render(); },
   async 'hub-bots'(el) {
     const g = el.dataset.g;
     const seats = HUB.MM.size[g] ?? HUB.HUBS[g].defSize;
     if (g === 'ludo' && !HUB.ldPlayable()) return toast('هذا الوضع قيد التطوير. اختر «كلاسيكي» عشان تلعب.', true);
-    let c = await req('room:create', { gameId: g, mode: 'bots', seats, ...(g === 'ludo' ? { variant: HUB.ldMode() } : {}), ...(HUB.BOT_LEVEL_GAMES?.has(g) && HUB.botLevel() !== 'normal' ? { botLevel: HUB.botLevel() } : {}) });
+    let c = await req('room:create', { gameId: g, mode: 'bots', seats, ...(g === 'ludo' ? { variant: HUB.ldMode() } : {}), persona: HUB.persona() });
     if (!c.ok) return toast(c.error, true);
     S.rooms.set(c.room.code, c.room);
     const st = await req('room:start', { code: c.room.code });
@@ -2040,7 +2067,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69zu', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r72', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },
@@ -2603,6 +2630,7 @@ document.addEventListener('submit', async (e) => {
   if (kind === 'name') {
     const name = form.name.value.trim();
     if (name.length < 2) return toast('اكتب اسم من حرفين على الأقل.', true);
+    try { localStorage.setItem('la3_qjname', name); } catch { /* */ }
     btn.disabled = true;
     const wasUser = !!S.user;
     try {

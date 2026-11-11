@@ -61,3 +61,23 @@ html:not(.lb-dark) :is(.lb-friends-presence-note,.lbw-toolbar .lbw-muted){color:
 /* R71: وضع النت الضعيف: بدون حركات مستمرة ولا ظلال ثقيلة (المحتوى نفسه ما يتغير) */
 html.la69-lite [class*="glow"],html.la69-lite [class*="shine"],html.la69-lite [class*="sparkle"],html.la69-lite [class*="aura"],html.la69-lite [class*="particle"]{animation:none!important;filter:none!important}
 html.la69-lite :is(.lb-unified,.lb-content) *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* R72: اختيار شخصية الخصم */
+.pz72{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 2px}
+.pz72-c{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:10px 4px 8px;border-radius:16px;border:1.5px solid #ffffff22;background:linear-gradient(160deg,#2a1342,#1c0c30);color:#f5e9ff;font:inherit;cursor:pointer;min-width:0}
+.pz72-c b{font-size:14px;line-height:1.4}.pz72-e{font-size:30px;line-height:1.15}
+.pz72-l{font-size:11px;color:#cdb8e6}.pz72-r{font-size:11px;font-weight:800;color:#ffd66b;margin-top:2px}
+html body .pz72 .pz72-c.on{border-color:#ffd66b!important;box-shadow:0 0 0 2px #ffd66b55,0 6px 18px #0006;background:linear-gradient(160deg,#4a1f78,#2a1048)!important;color:#fff!important}
+.pz72-c.won .pz72-r{color:#7ee2a8}
+html:not(.lb-dark) .pz72-c{background:linear-gradient(160deg,#fcf9f4,#efeaf6);color:#2c1a4a;border-color:#d8c8ee}
+html:not(.lb-dark) .pz72-l{color:#6a5a80}html:not(.lb-dark) .pz72-r{color:#8a641f}html:not(.lb-dark) body .pz72 .pz72-c.on{background:linear-gradient(160deg,#f3e7ff,#e6d4fb)!important;border-color:#c49a3a!important;color:#2c1a4a!important}
+html:not(.lb-dark) .pz72-c.won .pz72-r{color:#1e7a4a}
+/* R72: فقاعة كلام شخصيات الكمبيوتر */
+.bot-talk72{position:fixed;z-index:80;inset-inline:0;top:calc(150px + env(safe-area-inset-top,0px));display:grid;justify-items:center;gap:6px;pointer-events:none}
+.bot-talk72 .react-pop.bt72{max-width:min(90vw,360px);padding:9px 16px;border-radius:18px 18px 18px 6px;background:linear-gradient(160deg,#2a1342f2,#1c0c30f2)!important;border:1.5px solid #ffd66b88!important;color:#fff!important;box-shadow:0 10px 26px #0009;animation:bt72in .3s ease-out both}
+.bot-talk72 .bt72 b{color:#ffd66b!important;font-size:13px;white-space:nowrap}.bot-talk72 .bt72 span{font-size:15px!important;font-weight:700;color:#fff!important;line-height:1.5}
+@keyframes bt72in{from{opacity:0;transform:translateY(-8px) scale(.96)}to{opacity:1;transform:none}}
+/* R72: الدخول السريع من رابط الدعوة */
+.qj72{text-align:center;padding:26px 18px!important;margin-top:18px}.qj72 h1{font-size:22px;margin:6px 0 4px;line-height:1.5}
+.qj72-ic{font-size:56px;line-height:1.1}.qj72-f{display:grid;gap:10px;margin:18px 0 8px;text-align:start}.qj72-f label{font-size:13px;font-weight:700}
+.qj72-f input{font-size:17px;padding:12px 14px;border-radius:14px;text-align:center}.qj72-f .btn{font-size:17px;padding:14px}

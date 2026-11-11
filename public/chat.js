@@ -92,11 +92,14 @@ export const currentCode = () => code;
 export function pop(name, text, mine, fromId = '', event = null) {
   ensure();
   if (!addLog({ k: 'react', ts: Number.isFinite(event?.ts) ? event.ts : Date.now(), eventId: event?.eventId, from: { id: mine ? me : fromId, name }, text })) return;
-  const feed = document.getElementById('reactFeed');
+  /* R72: كلام شخصيات الكمبيوتر بفقاعة خاصة تطلع حتى بغرف الصوت */
+  const bot = /^bot-\d+$/.test(String(fromId || ''));
+  let feed = document.getElementById('reactFeed');
+  if (bot) { feed = document.getElementById('botTalk'); if (!feed) { feed = document.createElement('div'); feed.id = 'botTalk'; feed.className = 'bot-talk72'; feed.setAttribute('aria-live', 'polite'); document.body.appendChild(feed); } }
   const el = document.createElement('div');
-  el.className = 'react-pop' + (mine ? ' mine' : '');
+  el.className = 'react-pop' + (mine ? ' mine' : '') + (bot ? ' bt72' : '');
   el.innerHTML = `<b>${esc(mine ? 'أنت' : name)}</b><span>${esc(text)}</span>`;
   feed.appendChild(el);
-  while (feed.children.length > 4) feed.firstChild.remove();
-  setTimeout(() => el.remove(), 3200);
+  while (feed.children.length > (bot ? 2 : 4)) feed.firstChild.remove();
+  setTimeout(() => el.remove(), bot ? 4200 : 3200);
 }
