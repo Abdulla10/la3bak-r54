@@ -11,6 +11,9 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
 const icon = name => renderProfileIcon(name);
 const mounts = new WeakMap();
 const LINKS = Object.freeze([
+  ['home', 'crown', 'الرئيسية'],
+  ['games', 'game', 'الألعاب'],
+  ['community', 'file', 'المنشورات'],
   ['profile', 'person', 'الملف الشخصي'],
   ['wallet', 'coin', 'المحفظة'],
   ['shop', 'shop', 'المتجر'],
