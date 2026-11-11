@@ -13,7 +13,7 @@ import path from 'node:path';
 import { timingSafeEqual, createHash, createHmac, randomInt, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { GiftCatalog, GIFT_CATS, VIRTUAL_CATS, RARITY, validGiftOverrides } from './giftcatalog.js';
-import { WebSocketServer, type WebSocket } from 'ws';
+import { WebSocketServer, type WebSocket, type RawData } from 'ws';
 import { createRegistry, GAME_CATEGORIES } from '../engine/registry.js';
 import { VipMembership, validVipMembership } from './vip-membership.js';
 import { wireRankVipRoutes } from './rank-vip-http.js';
@@ -546,8 +546,9 @@ export async function createApp(
   if (cfg.googleClientId) {
     securityHeaders['Content-Security-Policy'] =
       "default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; " +
-      "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' blob: ws: wss: https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/ https://www.youtube-nocookie.com; " +
-      "media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
+      /* R87: 'self' للخطوط المحفوظة عندنا (/fonts) — بدونه المتصفح كان يمنعها ويطلع خط بديل */
+      "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' blob: ws: wss: https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/ https://www.youtube-nocookie.com; " +
+      "media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'; worker-src 'self'; manifest-src 'self'";
   }
   /* ---- المتجر: كل التحقق بالخادم. العميل يرسل معرّف العنصر ومفتاح الطلب فقط ---- */
   const progress = (id: string) => { const pr = canonicalProfile(id, 0); return { wins: pr.wins, played: pr.played, level: pr.level, progression: progression.view(id) }; };
@@ -2773,7 +2774,7 @@ export async function createApp(
     if (admin.banBlock(user)) return reject('403 Forbidden');
     if ((sockets.get(user.id)?.size ?? 0) >= cfg.maxConnectionsPerUser) return reject('429 Too Many Requests');
     const wip = shieldIp(req), wk = wip ? shield.key(wip) : ''; if (wk && !shield.wsOpenOk(wk)) return reject('429 Too Many Requests');
-    wss.handleUpgrade(req, socket, head, (ws) => { if (wk) ws.once('close', () => shield.wsClosed(wk)); onConnection(ws, user, req.headers.cookie ?? ''); });
+    wss.handleUpgrade(req, socket, head, (ws: WebSocket) => { if (wk) ws.once('close', () => shield.wsClosed(wk)); onConnection(ws, user, req.headers.cookie ?? ''); });
   });
 
   const ERR_RATE = 'بطيء شوي، رسائل كثيرة.';
@@ -2947,7 +2948,7 @@ export async function createApp(
       .then((rooms) => (activity.note(user.id, 'login'), send(ws, { t: 'hello', user, rooms, coins: wallet.balance(user.id), canClaim: wallet.canClaim(user.id), stakes: availableStakes })))
       .catch((e) => { log('connect_error', { message: (e as Error).message });ws.close(4503,'room storage unavailable'); });
 
-    ws.on('message', async (raw) => {
+    ws.on('message', async (raw: RawData) => {
       let m: any;
       try {
         m = JSON.parse(raw.toString());
@@ -3013,9 +3014,9 @@ export async function createApp(
     bulkGrants.close();
     await socialVoice!.close();
     /* R71: نقول للاعبين إنه تحديث (رمز 1012) عشان يرجعون يتصلون بسرعة بدل ما يحسبونه انقطاع */
-    wss.clients.forEach((c) => { try { c.send(JSON.stringify({ t: 'server:restart' })); c.close(1012, 'restart'); } catch { /* */ } });
+    wss.clients.forEach((c: WebSocket) => { try { c.send(JSON.stringify({ t: 'server:restart' })); c.close(1012, 'restart'); } catch { /* */ } });
     if (wss.clients.size) await new Promise((r) => setTimeout(r, 300));
-    wss.clients.forEach((c) => c.terminate());
+    wss.clients.forEach((c: WebSocket) => c.terminate());
     await new Promise<void>((r) => wss.close(() => r()));
     const closed = new Promise<void>((r) => server.close(() => r()));
     if (force) { server.closeIdleConnections(); setTimeout(() => server.closeAllConnections(), 1000).unref(); }

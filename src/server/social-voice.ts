@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Duplex } from 'node:stream';
-import WebSocket, { WebSocketServer, type RawData } from 'ws';
+import { WebSocket, WebSocketServer, type RawData } from 'ws';
 
 export type MediaAccess = { id: string; roomId: string; councilId: string; channel: string; epoch: string | number; muted: boolean; highQuality?: boolean; name: string };
 export type SocialVoiceOptions = {
@@ -180,7 +180,7 @@ export class SocialVoice {
     if (this.records.has(uid) || this.records.size >= VOICE_LIMITS.transports) { deny(429); return true; }
     const t: Transport = { uid, access: a, req, closed: false }; this.records.set(t.uid, t);
     try {
-      this.wss.handleUpgrade(req, socket, head, client => {
+      this.wss.handleUpgrade(req, socket, head, (client: WebSocket) => {
         t.client = client;
         client.on('error', () => { void this.remove(t).catch(() => undefined); });
         client.on('close', () => { void this.remove(t).catch(() => undefined); });
@@ -196,15 +196,15 @@ export class SocialVoice {
         upstream.on('close', () => { void this.remove(t).catch(() => undefined); });
         t.timer = setTimeout(() => { void this.remove(t).catch(() => undefined); }, VOICE_LIMITS.handshakeMs); t.timer.unref();
         upstream.on('open', () => { clearTimeout(t.timer); if (!this.current(t) || t.closed) void this.remove(t).catch(() => undefined); });
-        client.on('message', (data, binary) => {
+        client.on('message', (data: RawData, binary: boolean) => {
           if (!this.current(t) || t.closed) { void this.remove(t).catch(() => undefined); return; }
           if (upstream.readyState !== WebSocket.OPEN || upstream.bufferedAmount > VOICE_LIMITS.buffered) { void this.remove(t).catch(() => undefined); return; }
           if (!validVoiceRequest(raw(data), binary, a.muted)) { void this.remove(t).catch(() => undefined); return; }
-          upstream.send(data, { binary }, e => { if (e) void this.remove(t).catch(() => undefined); });
+          upstream.send(data, { binary }, (e?: Error) => { if (e) void this.remove(t).catch(() => undefined); });
         });
-        upstream.on('message', (data, binary) => {
+        upstream.on('message', (data: RawData, binary: boolean) => {
           if (!this.current(t) || t.closed || client.readyState !== WebSocket.OPEN || client.bufferedAmount > VOICE_LIMITS.buffered) { void this.remove(t).catch(() => undefined); return; }
-          try { const clean = sanitizeVoiceSignal(raw(data), binary); if (clean !== null) client.send(clean, { binary }, e => { if (e) void this.remove(t).catch(() => undefined); }); }
+          try { const clean = sanitizeVoiceSignal(raw(data), binary); if (clean !== null) client.send(clean, { binary }, (e?: Error) => { if (e) void this.remove(t).catch(() => undefined); }); }
           catch { void this.remove(t).catch(() => undefined); }
         });
       });
