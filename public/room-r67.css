@@ -639,3 +639,18 @@ html body .so-page .so-room-detail.r68 form.r68-form input#so-chat-text{flex:1 1
 html body .so-page .so-room-detail.r68 form.r68-form .so-send-button{flex:none!important;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;margin:0!important}
 html body .so-page .so-room-detail.r68 form.r68-form .so-send-button svg{width:18px!important;height:18px!important}
 html body .so-page .so-room-detail.r68 .r68-row:focus-within>.r68-dbtn{display:none!important}
+/* R69zs: الدردشة تبدأ من تحت (جنب مربع الكتابة) مثل باقي التطبيقات */
+.so-page .so-room-detail .so-chat-messages{justify-content:flex-start!important}
+.so-page .so-room-detail .so-chat-messages>:first-child{margin-top:auto!important}
+.so-page .so-room-detail .so-chat-messages .r69-rules-msg p{color:#ffd9a0;font-size:12.5px;line-height:1.5}
+/* R69zs: تحذير عدم الإساءة */
+.rw69{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:20px;background:rgba(8,3,20,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:rw69f .2s ease}
+.rw69-card{width:min(360px,100%);direction:rtl;text-align:right;padding:22px 18px 16px;border-radius:22px;background:linear-gradient(160deg,#2c0f52,#170630);border:1.5px solid #f5c542;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 4px rgba(245,197,66,.12);color:#fff;font-family:inherit}
+.rw69-ic{font-size:40px;text-align:center;line-height:1}
+.rw69-card h2{margin:8px 0 10px;text-align:center;font-size:19px;color:#ffd86b}
+.rw69-card ul{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:8px}
+.rw69-card li{font-size:14.5px;line-height:1.55;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06)}
+.rw69-ok{display:block;width:100%;border:0;border-radius:14px;padding:12px;font:800 16px inherit;font-family:inherit;background:linear-gradient(#ffd86b,#e2a920);color:#2a1500;cursor:pointer}
+@keyframes rw69f{from{opacity:0}}
+/* R69zs: شريط «ارجع للعبة» داخل الغرف الصوتية يطلع فوق (ما يغطي الدردشة) */
+html.lb-social-viewport-r27 .rs69,html.has-game-voice .rs69{bottom:auto!important;top:calc(70px + env(safe-area-inset-top))!important}

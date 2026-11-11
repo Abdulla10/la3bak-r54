@@ -2,7 +2,7 @@
  * والمتصفح يعيد نفس المحاكاة (pool-physics.js) عشان يحرّك الكرات. الطاولة والكرات رسم أصلي (Canvas). */
 import { faceHtml } from './characters.js?v=shell-r6';
 import { avatarArt } from './avatars.js?v=r68z31';
-import { simulate, canPlace, groupOf, W, H, R, HEAD_Y, POCKETS } from './pool-physics.js?v=r68z5';
+import { simulate, canPlace, groupOf, W, H, R, HEAD_Y, POCKETS, POCKET_ART } from './pool-physics.js?v=r69zs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const PL = { room: '', angle: -Math.PI / 2, power: 0, spin: 0, place: null, anim: null, shown: -1, busy: false, dragging: '', send: null, evSeq: -1 };
@@ -43,7 +43,7 @@ function drawTable(ctx) {
   const cw = W + 2 * M, ch = H + 2 * M;
   ctx.clearRect(0, 0, cw, ch);
   const t = img(TABLE_SRC);
-  if (t) { const sx = W / CLOTH.w, sy = H / CLOTH.h; ctx.drawImage(t, M - CLOTH.x * sx, M - CLOTH.y * sy, t.naturalWidth * sx, t.naturalHeight * sy); ctx.strokeStyle = '#ffffff1c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M, M + HEAD_Y); ctx.lineTo(M + W, M + HEAD_Y); ctx.stroke(); return; }
+  if (t) { const sx = W / CLOTH.w, sy = H / CLOTH.h; ctx.drawImage(t, M - CLOTH.x * sx, M - CLOTH.y * sy, t.naturalWidth * sx, t.naturalHeight * sy); smallPockets(ctx); ctx.strokeStyle = '#ffffff1c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M, M + HEAD_Y); ctx.lineTo(M + W, M + HEAD_Y); ctx.stroke(); return; }
   // الإطار
   const rail = ctx.createLinearGradient(0, 0, cw, 0); rail.addColorStop(0, '#1c1c22'); rail.addColorStop(.5, '#34343c'); rail.addColorStop(1, '#1c1c22');
   ctx.fillStyle = rail; roundRect(ctx, 0, 0, cw, ch, 26); ctx.fill();
@@ -59,7 +59,23 @@ function drawTable(ctx) {
   for (let i = 1; i < 4; i++) { const x = M + W * i / 4; dot(ctx, x, M / 2); dot(ctx, x, M + H + M / 2); }
   for (let i = 1; i < 8; i++) { if (i === 4) continue; const y = M + H * i / 8; dot(ctx, M / 2, y); dot(ctx, M + W + M / 2, y); }
   // الجيوب
-  for (const p of POCKETS) { ctx.fillStyle = '#050608'; ctx.beginPath(); ctx.arc(M + Math.min(W + 6, Math.max(-6, p.x)), M + Math.min(H + 6, Math.max(-6, p.y)), p.r, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 2; ctx.stroke(); }
+  for (const p of POCKET_ART) { ctx.fillStyle = '#050608'; ctx.beginPath(); ctx.arc(M + Math.min(W + 6, Math.max(-6, p.x)), M + Math.min(H + 6, Math.max(-6, p.y)), p.r, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 2; ctx.stroke(); }
+}
+/* R69zs: فتحات أصغر فوق فتحات الصورة الكبيرة: طوق ذهبي + فتحة سودا بحجم واقعي */
+const IMG_HOLES = [{ x: 13, y: 15, r: 37 }, { x: 487, y: 15, r: 33 }, { x: -3, y: 500, r: 31 }, { x: 503, y: 500, r: 31 }, { x: 13, y: 985, r: 37 }, { x: 487, y: 985, r: 33 }];
+function smallPockets(ctx) {
+  ctx.save();
+  IMG_HOLES.forEach((h, i) => {
+    const a = POCKET_ART[i], cx = M + h.x, cy = M + h.y;
+    const g = ctx.createRadialGradient(M + a.x, M + a.y, a.r * 0.8, cx, cy, h.r + 2);
+    g.addColorStop(0, '#7a4f12'); g.addColorStop(0.35, '#e9b84a'); g.addColorStop(0.7, '#c08a26'); g.addColorStop(1, '#8a5c17');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, h.r + 1, 0, Math.PI * 2); ctx.fill();
+    const hole = ctx.createRadialGradient(M + a.x - a.r * 0.2, M + a.y - a.r * 0.25, 1, M + a.x, M + a.y, a.r);
+    hole.addColorStop(0, '#1b1b1f'); hole.addColorStop(0.7, '#050507'); hole.addColorStop(1, '#000');
+    ctx.fillStyle = hole; ctx.beginPath(); ctx.arc(M + a.x, M + a.y, a.r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#5a3a0c'; ctx.lineWidth = 2.5; ctx.stroke();
+  });
+  ctx.restore();
 }
 const dot = (ctx, x, y) => { ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); };
 function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }

@@ -3,15 +3,15 @@ let PKLOADED = false;
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69zr';
+import * as UNIFIED from '../unified/shell.js?v=r69zs';
 import * as REF from '../unified/home.js?v=r69z8';
-import * as SOCIAL from '../unified/social.js?v=r69zr';
+import * as SOCIAL from '../unified/social.js?v=r69zs';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
 import {giftArtwork} from '../gift-assets-r27.js?v=r68i-r36';
 /* لعبك — واجهة الموقع. بدون مكتبات، وكل حالة اللعب الحقيقية تجي من الخادم. */
-import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69zo';
+import { GAME_VIEWS, JK, flipSnapshot, flipPlay, FX_GEOM } from '../games.js?v=r69zs';
 import { createEventSync, buildPlan } from '../gameevents.js?v=shell-r6';
 import { runPlan } from '../gamefx.js?v=shell-r6';
 import * as BK from '../backup.js?v=shell-r6';
@@ -33,7 +33,7 @@ import * as AVR from '../avatars.js?v=r68z31';
 import * as DMV from '../domino.js?v=r68z31';
 import * as UNV from '../uno.js?v=r68z31';
 import * as LRV from '../liars.js?v=r68z31';
-import * as PLV from '../pool.js?v=r68z31';
+import * as PLV from '../pool.js?v=r69zs';
 import { showQuitBan } from '../quit-ban-r68.js?v=r68z28';
 import * as CZ68 from '../casino-r68.js?v=r69w';
 import * as AR69 from '../arena-r69.js?v=r69d';
@@ -46,7 +46,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r69zr';
+import * as PWA from '../pwa.js?v=r69zs';
 import * as SFX from '../sfx.js?v=shell-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -415,7 +415,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r69zr');
+  const M = await import('../settings-r60.js?v=r69zs');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -1374,6 +1374,7 @@ function setGameVoiceMode(mode) {
   const room=S.rooms.get(ui.code);document.documentElement.classList.toggle('in-play',mode==='game'&&room?.status!=='lobby');
   CHAT.sync(null,S.user?.id);
   FS.sync(mode==='game'&&room?.status==='playing');
+  if(mode==='room'){try{ui.social?.roomShown?.();}catch{/* */}}
   if(mode==='game'){if(ui.surfaceDirty){ui.surfaceDirty=false;renderRoom(ui.code,true);}const room=S.rooms.get(ui.code);if(room?.gameId==='jackaro'){JK_FIT.clear();jkFitTop(ui.surface);}updateClocks(ui.surface);}
 }
 function ensureGameVoiceUI(room) {
@@ -2018,7 +2019,7 @@ const ACTIONS = {
   },
   'pf-update'() {
     toast('جاري التحقق…');
-    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69zo', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
+    fetch('/app.js', { cache: 'reload' }).then(() => fetch('/games.js?v=r69zs', { cache: 'reload' })).then(() => fetch('/app.css?v=r58q', { cache: 'reload' }))
       .then(() => { toast('اكتملت المزامنة، بنحدّث الصفحة'); setTimeout(() => location.reload(), 700); })
       .catch(() => toast('ما قدرنا نتحقق الحين، جرّب بعد شوي'));
   },
