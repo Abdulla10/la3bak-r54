@@ -95,18 +95,18 @@ export function mountOwnerAdmin(root, { call }) {
   S.grp ??= ls.get(); S.q ??= '';
   function organize() {
     const cards = [...root.querySelectorAll(':scope > section.ad-card')]; if (!cards.length) return;
-    for (const c of cards) c.dataset.owGrp = groupOf(c.querySelector('h2')?.textContent || '');
+    for (const c of cards) c.dataset.owSec = groupOf(c.querySelector('h2')?.textContent || '');
     const nav = document.createElement('div'); nav.className = 'ow-nav'; nav.setAttribute('role', 'tablist');
-    nav.innerHTML = `<input class="ad-in ow-q" type="search" placeholder="🔍 دوّر بالأدوات… (مثل: نسخة، غش، مفتاح)" value="${esc(S.q)}" aria-label="بحث بأدوات المالك"><div class="ow-chips">${GRP.map(([k, t]) => `<button type="button" role="tab" class="ow-chip${S.grp === k ? ' on' : ''}" aria-selected="${S.grp === k}" data-ow-grp="${k}">${t}<small>${k === 'all' ? cards.length : cards.filter((c) => c.dataset.owGrp === k).length}</small></button>`).join('')}</div>`;
+    nav.innerHTML = `<input class="ad-in ow-q" type="search" placeholder="🔍 دوّر بالأدوات… (مثل: نسخة، غش، مفتاح)" value="${esc(S.q)}" aria-label="بحث بأدوات المالك"><div class="ow-chips">${GRP.map(([k, t]) => `<button type="button" role="tab" class="ow-chip${S.grp === k ? ' on' : ''}" aria-selected="${S.grp === k}" data-ow-grp="${k}">${t}<small>${k === 'all' ? cards.length : cards.filter((c) => c.dataset.owSec === k).length}</small></button>`).join('')}</div>`;
     root.insertBefore(nav, cards[0]); apply();
     nav.querySelector('.ow-q').addEventListener('input', (e) => { S.q = e.target.value; apply(); });
   }
   function apply() {
     const q = S.q.trim();
-    for (const c of root.querySelectorAll(':scope > section.ad-card')) { const okG = q ? true : S.grp === 'all' || c.dataset.owGrp === S.grp; const okQ = !q || c.textContent.includes(q); c.hidden = !(okG && okQ); }
+    for (const c of root.querySelectorAll(':scope > section.ad-card')) { const okG = q ? true : S.grp === 'all' || c.dataset.owSec === S.grp; const okQ = !q || c.textContent.includes(q); c.hidden = !(okG && okQ); }
     root.querySelectorAll('.ow-chip').forEach((b) => { const on = !q && b.dataset.owGrp === S.grp; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
   }
-  root.addEventListener('click', (e) => { const b = e.target.closest('[data-ow-grp]'); if (!b) return; S.grp = b.dataset.owGrp; S.q = ''; const q = root.querySelector('.ow-q'); if (q) q.value = ''; ls.set(S.grp); apply(); });
+  root.addEventListener('click', (e) => { const b = e.target.closest('button[data-ow-grp]'); if (!b) return; S.grp = b.dataset.owGrp; S.q = ''; const q = root.querySelector('.ow-q'); if (q) q.value = ''; ls.set(S.grp); apply(); });
   if (!document.querySelector('style[data-ow69nav]')) { const st = document.createElement('style'); st.dataset.ow69nav = '1'; st.textContent = '.ow-nav{position:sticky;top:0;z-index:5;display:grid;gap:8px;margin:0 0 12px;padding:10px;border-radius:16px;background:rgba(20,8,40,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1)}.ow-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.ow-chips::-webkit-scrollbar{display:none}.ow-chip{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit;border-radius:999px;padding:7px 12px;font:600 13.5px inherit;font-family:inherit;cursor:pointer;min-height:36px}.ow-chip small{opacity:.7;font-size:11px;background:rgba(255,255,255,.12);border-radius:999px;padding:1px 6px}.ow-chip.on{background:linear-gradient(#ffd86b,#e2a920);color:#2a1500;border-color:#f5c542}.ow-chip.on small{background:rgba(0,0,0,.12)}.ow-q{width:100%;font-size:16px}'; document.head.appendChild(st); }
   const run = async (fn, ok) => { if (S.busy) return; S.busy = true; S.err = ''; S.msg = ''; try { const j = await fn(); if (j?.panel) S.d = j; S.msg = ok; } catch (e) { S.err = e.message || 'فشل.'; } S.busy = false; paint(); };
   const val = (sel) => root.querySelector(sel)?.value ?? '';
