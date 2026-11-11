@@ -70,3 +70,76 @@ html body .s60 .s60-head h1{font-size:21px!important}
 html body .lb-unified .lb-content .chips .chip-btn{min-height:36px!important;padding:6px 13px!important;font-size:13.5px!important}
 /* الوضع الفاتح: الوصف تحت العنوان كان له إطار يقطع الرأس */
 html body .lb-unified .lb-content .hero :is(.subtitle,p.subtitle,div.subtitle){border:0!important;background:none!important;box-shadow:none!important}
+
+/* ===== صفحة الألعاب: كل الألعاب بمكان واحد (شبكة مرتبة) بدل قائمتين مكررتين وبطايق طويلة ===== */
+html body .lbg-page #featured{display:none!important}
+html body .lbg-page #liveGames > .gcat{padding:10px!important}
+html body .lbg-page #liveGames > .gcat > .gcat-h{font-size:0!important;margin:0 0 8px!important}
+html body .lbg-page #liveGames > .gcat > .gcat-h::before{content:'🎮 كل الألعاب';font-size:16px}
+html body .lbg-page #liveGames > .gcat > .gcat-h small{font-size:12px!important;margin-inline-start:6px}
+html body .lbg-page #liveGames :is(.grid2,.grid){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+html body .lbg-page #liveGames .game-card{display:flex!important;flex-direction:column;align-items:center;gap:4px;padding:8px 6px!important;margin:0!important;text-align:center;border-radius:14px!important;min-height:0!important}
+html body .lbg-page #liveGames .game-card .card-art{width:100%;height:auto!important;margin:0!important;display:grid;place-items:center}
+html body .lbg-page #liveGames .game-card .card-art img{width:62px!important;height:62px!important;object-fit:contain}
+html body .lbg-page #liveGames .game-card .game-head{display:block!important;margin:0!important}
+html body .lbg-page #liveGames .game-card h3{font-size:13.5px!important;line-height:1.3!important;margin:0!important}
+html body .lbg-page #liveGames .game-card :is(p,.lbg-status,.meta .tag + .tag){display:none!important}
+html body .lbg-page #liveGames .game-card .meta{margin:0!important;justify-content:center}
+html body .lbg-page #liveGames .game-card .meta .tag{font-size:10.5px!important;padding:1px 6px!important}
+html body .lbg-page #liveGames .game-card :is(.btn,.gold-btn){min-height:30px!important;padding:4px 8px!important;font-size:12px!important;margin-top:auto!important;width:100%}
+html body .lbg-page .lbg-controls{padding:10px!important}
+html body .lbg-page .lbg-controls .lbg-search-label{display:none}
+html body .lbg-page #liveGames .game-card .game-head :is(.tag,.badge){display:none!important}
+
+/* ===== ألوان: أي كلام على خلفية ملونة يكون واضح ===== */
+/* القائمة الجانبية */
+html.lb-dark .drawer-brand p{color:#cdb8e6!important}
+/* اختيار الخصم: الكلام فوق البطاقة المختارة */
+html body .pz72 .pz72-c.on :is(.pz72-l,.pz72-r,b){color:#fff!important}
+/* الإعدادات: الخروج وحذف الحساب — أحمر أغمق عشان الأبيض يبين */
+html body .s60 .s60-row.is-danger :is(.s60-link,button){background:#b8283f!important}
+/* الملف: زر مساحة CP */
+html body .cp67-open{background:#c2185b!important;color:#fff!important}
+/* الدوري: كلام صغير على البني */
+html.lb-dark body .lb-unified .ar-tier small,html body .ar-tier small{color:#ffe9b0!important}
+/* المحفظة: رقم المرجع وملاحظة الفاضي */
+html.lb-dark body .lb-unified .lbw-reference,html.lb-dark .lbw-reference{color:#a891c8!important}
+html.lb-dark .lbw-note{color:#efe6ff!important}
+/* شارة «أسطورية» على الذهبي */
+html body .lb-unified .rr-chip-legend b,html body .r68-dir-tags .rr-chip-legend b{color:#2a1500!important;text-shadow:none!important}
+/* البلوت: «لهم» و«الموزّع» */
+html.lb-dark .bl2-score .hd .them{color:#c9b6e6!important}
+html body .bl2-badge.green{background:#1d7a3e!important;color:#fff!important}
+/* الصندوق الذهبي: كلام غامق على الذهبي */
+html body button.gc69 > b{color:#2a1500!important;text-shadow:none!important}
+/* المزايا المقفولة بالوضع الفاتح */
+html:not(.lb-dark) .sp74-p:not(.on) .sp74-l{color:#6a5a80!important}
+
+/* المدينة بالوضع الداكن: بطايق الأرقام وخانات اللوحة كانت فاتحة والكلام أبيض */
+html.lb-dark body .ct-hud > div{background:linear-gradient(160deg,#2a1342,#1c0c30)!important;border-color:#ffd66b33!important;color:#f5e9ff!important}
+html.lb-dark body .ct-hud > div :is(b,i){color:#fff!important}html.lb-dark body .ct-hud > div :is(span,small){color:#cdb8e6!important}
+html.lb-dark body .ct-board{background:#1c0c30!important}
+html.lb-dark body .ct-tile{background:#2a1342!important;color:#f5e9ff!important;border-color:#ffffff22!important}
+html.lb-dark body .ct-tile small{color:#d9c8f0!important}
+html.lb-dark body .ct-mult > button{background:#2a0e45!important;color:#fff!important}
+html.lb-dark body #view .rr-chip-legend b,html body #view .rr-chip-legend b{color:#2a1500!important}
+html.lb-dark body #view .ar-tier small{color:#ffe9b0!important}
+html.lb-dark body #view .lbw-reference *{color:#a891c8!important}
+/* غرفة اللعبة (قبل البداية): الشارات وحالة الصوت */
+html.lb-dark body #view .so-rank{background:#2a0e45!important;color:#ffd66b!important;border-color:#ffd66b44!important}
+html.lb-dark body #view .gv-voice-state{color:#e6d6fa!important}
+html.lb-dark body #view .p-tags .badge{background:#2a0e45!important;color:#f5e9ff!important;border-color:#ffffff26!important}
+html.lb-dark body #view .p-tags .badge.you{color:#ffd66b!important}
+/* الألعاب كلها أول وبمكان واحد، وقسم الحظ تحتها */
+html body .lbg-catalogue > .strip{order:0}
+html body .lbg-catalogue > .lbg-controls{order:1}
+html body .lbg-catalogue > #liveGames{order:2}
+html body .lbg-catalogue > .lbg-empty{order:3}
+html body .lbg-catalogue > .gcat.panel{order:4}
+/* ألوان باقية */
+html:not(.lb-dark) body #view .pz72 .pz72-c.on{background:linear-gradient(135deg,#6b2fb3,#8e44d6)!important;border-color:#5a2399!important}
+html body #view .rr-chip.rr-chip-legend{background:linear-gradient(135deg,#ffd66b,#f0b429)!important}
+html body #view .rr-chip.rr-chip-legend b{color:#2a1500!important}
+html.lb-dark body #view .lbw-note{color:#efe4ff!important;background:transparent!important}
+html body .u2-uno{background:#b3261e!important;color:#fff!important}
+html.lb-dark body .u2-pile.can em{color:#d9c8f0!important}

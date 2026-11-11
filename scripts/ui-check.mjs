@@ -36,7 +36,7 @@ const CONTRAST = (minRatio) => {
       if (cs.backgroundImage && cs.backgroundImage !== 'none') {
         if (/url\(/.test(cs.backgroundImage)) return null; // صورة خلفية: ما نقدر نحكم
         const cols = (cs.backgroundImage.match(/rgba?\([^)]*\)/g) || []).map(rgb).filter(Boolean);
-        if (cols.length) { const avg = [0, 1, 2].map((i) => cols.reduce((a, c) => a + c[i], 0) / cols.length).concat(Math.min(...cols.map((c) => c[3]))); stack.push(avg); if (avg[3] > 0.9) break; continue; }
+        if (cols.length) { const avg = [0, 1, 2].map((i) => cols.reduce((a, c) => a + c[i], 0) / cols.length).concat(Math.min(...cols.map((c) => c[3]))); if (avg[3] > 0.9) { bgOf.stops = cols; } stack.push(avg); if (avg[3] > 0.9) break; continue; }
       }
       const c = rgb(cs.backgroundColor); if (c && c[3] > 0) { stack.push(c); if (c[3] > 0.9) break; }
       if (+cs.opacity < 0.5) return null;
@@ -54,8 +54,10 @@ const CONTRAST = (minRatio) => {
     if (el.closest('svg,canvas,[aria-hidden="true"],input,textarea,select,option,[hidden]')) continue;
     const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4 || r.bottom < 0 || r.top > innerHeight * 3) continue;
     const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || +cs.opacity < 0.4 || cs.color === 'transparent' || /text/.test(cs.webkitBackgroundClip || cs.backgroundClip || '')) continue;
-    const fg = rgb(cs.color); const bg = bgOf(el); if (!fg || !bg || fg[3] < 0.3) continue;
-    const f = mix(fg, bg); const a = L(f), b = L(bg); const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    bgOf.stops = null; const fg = rgb(cs.color); const bg = bgOf(el); if (!fg || !bg || fg[3] < 0.3) continue;
+    const f = mix(fg, bg); const cr = (x) => { const a = L(f), b = L(x); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
+    /* تدرّج: نحسب على أسوأ لون فيه (عشان كلام غامق على بنفسجي يبان) */
+    const ratio = Math.min(cr(bg), ...(bgOf.stops || []).filter((c) => c[3] > 0.9).map(cr));
     if (ratio < minRatio) out.push({ ratio: Math.round(ratio * 100) / 100, text: txt.slice(0, 40), sel: [el, el.parentElement, el.parentElement?.parentElement].filter(Boolean).map((n) => n.tagName.toLowerCase() + (typeof n.className === 'string' && n.className.trim() ? '.' + n.className.trim().split(/\s+/).slice(0, 2).join('.') : '')).reverse().join(' > '), fg: cs.color, bg: `rgb(${bg.slice(0, 3).map(Math.round).join(',')})` });
   }
   return out;
