@@ -6,7 +6,7 @@
   const fails = [];
   addEventListener('error', (e) => { const t = e.target; if (t && t !== window && (t.src || t.href)) fails.push('load ' + String(t.src || t.href).replace(location.origin, '')); else if (e.message) fails.push(String(e.message).slice(0, 160)); }, true);
   addEventListener('unhandledrejection', (e) => { const r = e.reason; fails.push('(promise) ' + String((r && r.message) || r).slice(0, 160)); });
-  const ok = () => { const v = document.getElementById('view'); return !!(v && v.children.length); };
+  const ok = () => { const v = document.getElementById('view'); return !!(v && [...v.children].some((c) => !c.hasAttribute('data-skel'))); };
   const report = (stage) => { try { const body = JSON.stringify({ msg: 'boot-guard ' + stage + ': ' + fails.slice(0, 6).join(' | ').slice(0, 280), src: '/boot-guard-r77.js', line: tries, col: 0, stack: fails.join('\n').slice(0, 1200), route: location.hash.slice(0, 40), ua: navigator.userAgent.slice(0, 160), ver: 'r77' }); navigator.sendBeacon && navigator.sendBeacon('/api/client-error', new Blob([body], { type: 'application/json' })); } catch (_) { /* لا شي */ } };
   const clean = () => { if (!tries) return; try { url.searchParams.delete('lg'); url.searchParams.delete('nb'); url.searchParams.delete('fresh'); history.replaceState(history.state, '', url.pathname + (url.search || '') + location.hash); } catch (_) { /* لا شي */ } };
   const heal = async () => {
@@ -25,6 +25,10 @@
     document.body.appendChild(d);
     document.getElementById('la3GuardBtn').onclick = () => { const u = new URL(location.href); u.searchParams.set('lg', '0'); u.searchParams.set('fresh', String(Date.now())); location.replace(u.href); };
   };
+  /* R78: الهيكل المؤقت (يطلع فوراً بدل الشاشة السودا) ينشال أول ما تظهر الصفحة الحقيقية */
+  const dropSkel = () => { const v = document.getElementById('view'); if (!v) return false; if (ok()) { v.querySelectorAll(':scope > [data-skel]').forEach((n) => n.remove()); return true; } return false; };
+  const watchSkel = () => { const v = document.getElementById('view'); if (!v || dropSkel()) return; try { const mo = new MutationObserver(() => { if (dropSkel()) mo.disconnect(); }); mo.observe(v, { childList: true }); } catch (_) { /* لا شي */ } };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watchSkel); else watchSkel();
   let done = false;
   const check = () => { if (done) return; if (ok()) { done = true; clean(); return; } done = true; if (tries < 2) heal(); else showBox(); };
   /* بعد ما يخلص التحميل نعطيه مهلة، وحد أقصى لو التحميل نفسه علّق */

@@ -4,7 +4,7 @@ import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r72';
+import * as UNIFIED from '../unified/shell.js?v=r78';
 import * as REF from '../unified/home.js?v=r69z8';
 import * as SOCIAL from '../unified/social.js?v=r71';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r74';
+import * as PWA from '../pwa.js?v=r78';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -454,7 +454,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r74');
+  const M = await import('../settings-r60.js?v=r78');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -504,12 +504,19 @@ if (typeof window !== 'undefined' && !window.__g60Fetch) {
   window.__g60Fetch = true; const of = window.fetch.bind(window);
   window.fetch = async (...a) => { const r = await of(...a); if (r.status === 403) { try { const j = await r.clone().json(); if (j?.code === 'guest') guestPrompt(j.error); } catch { /* مو JSON */ } } return r; };
 }
+/* R78: لو نفس الصفحة انرسمت بنفس الشكل قبل لحظات (عند فتح الموقع تتحدث البيانات أكثر من مرة ورا بعض)، ما نعيد بناءها كلها.
+   هذا كان يسبب تعليق: الصفحة تنبني 5-7 مرات بأول ثانيتين. بعد 3 ثواني نرجع نرسم عادي عشان أي تحديث يوصل. */
+let lastUnified = { html: '', at: 0, el: null };
 function unifiedPage(view, page, content='', contentOnly=false) {
-  unifiedMount?.destroy?.();
  const ctx=unifiedContext(page,content);
  ctx.contentOnly=contentOnly;
- view.innerHTML=responsiveRoyalScenery(UNIFIED.pageHTML(ctx));
+ const html=responsiveRoyalScenery(UNIFIED.pageHTML(ctx));
+ const sig=html.replace(/\sid="[^"]*"/g,'').replace(/url\(#[^)]*\)/g,'url()'); const first=view.firstElementChild;
+ if (sig === lastUnified.html && first && first === lastUnified.el && first.isConnected && Date.now() - lastUnified.at < 3000 && !content) return;
+ unifiedMount?.destroy?.();
+ view.innerHTML=html;
  unifiedMount=UNIFIED.mount(view,ctx);
+ lastUnified = { html: sig, at: Date.now(), el: view.firstElementChild };
 }
 async function functionalApi(path, method = 'GET', body) {
   const requestOptions = method && typeof method === 'object' ? method : {};

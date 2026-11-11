@@ -1,0 +1,16 @@
+/* R78: إحساس التطبيق — لمس سريع بدون تأخير، ضغطة لها رد فعل، بدون تظليل أزرق ولا تكبير الشاشة عند الكتابة */
+html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{overscroll-behavior-x:none}
+a,button,[role=button],label,summary,select,input,.game-card{touch-action:manipulation}
+button,[role=button],.btn,.lb-bottom a,.game-card,summary,.chip,.tab{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+img{-webkit-user-drag:none;-webkit-touch-callout:none}
+/* ضغطة خفيفة مثل التطبيقات (scale ما يخرب أماكن الأزرار) */
+@media (hover:none){
+  html body :is(.btn,.game-card,.lb-bottom a,.pz72-c,.gc69,.chip,.lb-head-action):active{scale:.95;transition:scale .06s ease-out}
+  html body button:not(:disabled):not(.lb-drawer *):active{scale:.97;transition:scale .06s ease-out}
+}
+/* سفاري الآيفون يكبّر الصفحة إذا الخط أصغر من 16 بكتابة النص */
+@supports (-webkit-touch-callout:none){
+  html body input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),html body select,html body textarea{font-size:16px!important}
+}
+html:not(.lb-dark) body .lb-message-privacy p{color:#2c1a4a!important}

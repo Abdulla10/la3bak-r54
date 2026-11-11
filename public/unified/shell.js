@@ -84,6 +84,6 @@ export function mount(root,ctx){
   const mounted=ctx.contentOnly||(ctx.noCommunity&&protectedRoute('#/'+ctx.page))?null:modules[key]?.mount?.(pageRoot,ctx);const drawerMounted=drawer.mount?.(aside,ctx);
   if(openDrawerScope===scope)open(shell.querySelector('[data-lb-shell="menu"]'));
   // The flat five-item navigation has no central protrusion; reserve measured safe-area height.
-  const footer=shell?.querySelector('.lb-bottom');const size=()=>{if(footer)shell.style.setProperty('--lb-bottom-space',`${Math.ceil(footer.getBoundingClientRect().height)+16}px`);};size();let observer;if(typeof ResizeObserver!=='undefined'&&footer){observer=new ResizeObserver(size);observer.observe(footer);}
+  const footer=shell?.querySelector('.lb-bottom');const size=()=>{if(footer)shell.style.setProperty('--lb-bottom-space',`${Math.ceil(footer.getBoundingClientRect().height)+16}px`);};let observer;/* R78: بدون قياس فوري (كان يجبر المتصفح يرسم الصفحة كلها مرتين) — ResizeObserver يقيس مع أول رسم */if(typeof ResizeObserver!=='undefined'&&footer){observer=new ResizeObserver((en)=>{const h=en[0]?.borderBoxSize?.[0]?.blockSize??en[0]?.contentRect?.height;if(h!=null)shell.style.setProperty('--lb-bottom-space',`${Math.ceil(h)+16}px`);else size();});observer.observe(footer);}else requestAnimationFrame(size);
   return {destroy(){observer?.disconnect();mounted?.destroy?.();drawerMounted?.destroy?.();root.removeEventListener('click',click);root.removeEventListener('keydown',keydown);}};
 }

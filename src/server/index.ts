@@ -1105,8 +1105,15 @@ export async function createApp(
       code = transportError.status;
       body = { error: code === 413 ? 'الطلب كبير.' : 'الطلب غير صالح.' };
     }
+    /* R78: الردود الكبيرة تنضغط (الحساب كان 33KB بكل فتحة → ~5KB) */
+    const text = JSON.stringify(body); const ae = String((res as any).req?.headers?.['accept-encoding'] ?? '');
+    if (text.length > 1400 && /\bgzip\b/.test(ae)) {
+      const z = gzipSync(Buffer.from(text), { level: 5 });
+      res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding', ...securityHeaders, ...headers });
+      res.end(z); return;
+    }
     res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...securityHeaders, ...headers });
-    res.end(JSON.stringify(body));
+    res.end(text);
   };
 
   const staticCache = new Map<string, { size: number; mtime: number; raw: Buffer; gz: Buffer | null }>(); let staticCacheBytes = 0;

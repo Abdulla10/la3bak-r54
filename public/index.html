@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="لعبك">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<script src="/errlog-r69.js?v=r69zz"></script><script src="/boot-guard-r77.js?v=r77"></script><script src="/root-navigation-r50.js?v=back-nav-r51"></script>
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<script src="/errlog-r69.js?v=r69zz"></script><script src="/boot-guard-r77.js?v=r78"></script><script src="/net-r78.js?v=r78"></script><script src="/root-navigation-r50.js?v=back-nav-r51"></script>
 <script src="/boot.js?v=r64a" defer></script>
 <meta name="description" content="لعبك (LA3BAK): جمعتكم تبدأ هنا! منصة ألعاب عربية اجتماعية: لودو وجاكارو وبلوت وغيرها. أنشئ غرفة، أرسل الرمز لأصحابك، والعبوا مع بعض من جوالاتكم.">
 <meta property="og:site_name" content="LA3BAK | لعبك">
@@ -26,11 +26,9 @@
 <meta name="application-name" content="لعبك">
 <title>LA3BAK | لعبك — الملف الشخصي والألعاب</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Exact URLs used by app.js/shell.js: modulepreload warms, never forks module state. -->
-<link rel="modulepreload" href="/preview/app.js?v=r74">
-<link rel="modulepreload" href="/unified/shell.js?v=r72">
+<link rel="modulepreload" href="/preview/app.js?v=r78">
+<link rel="modulepreload" href="/unified/shell.js?v=r78">
 <link rel="modulepreload" href="/unified/home.js?v=r69z8">
 <link rel="modulepreload" href="/preview/profile.js?v=r68z40e">
 <link rel="stylesheet" href="/app.css?v=r58q">
@@ -109,6 +107,20 @@
 <link rel="stylesheet" href="/badge-r64.css?v=r66a">
 <link rel="stylesheet" href="/polish-r69.css?v=r74b">
 <link rel="stylesheet" href="/compact-r75.css?v=r76">
+<link rel="stylesheet" href="/app-feel-r78.css?v=r78">
+<style id="skel-r78">.skel78{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;direction:rtl;pointer-events:none;font-family:system-ui,-apple-system,sans-serif}
+.skel78 .sk-top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;padding-top:env(safe-area-inset-top)}
+.skel78 .sk-logo{font-size:30px;font-weight:900;color:#c79bff}
+.skel78 .sk-c{width:42px;height:42px;border-radius:50%}
+.skel78 .sk-body{flex:1;padding:6px 12px;display:grid;gap:12px;align-content:start}
+.skel78 .sk-b{border-radius:18px;height:120px}.skel78 .sk-b.s{height:64px}.skel78 .sk-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.skel78 .sk-row i{height:96px;border-radius:16px}
+.skel78 .sk-nav{height:66px;margin:0 10px calc(10px + env(safe-area-inset-bottom));border-radius:22px;display:flex;justify-content:space-around;align-items:center}
+.skel78 .sk-nav i{width:34px;height:34px;border-radius:12px}
+.skel78 .sk-c,.skel78 .sk-b,.skel78 .sk-row i,.skel78 .sk-nav i{background:linear-gradient(90deg,#ffffff0d 25%,#ffffff1f 50%,#ffffff0d 75%);background-size:200% 100%;animation:sk78 1.2s linear infinite}
+.skel78 .sk-nav{background:#1c0d30}
+html:not(.lb-dark) .skel78 .sk-c,html:not(.lb-dark) .skel78 .sk-b,html:not(.lb-dark) .skel78 .sk-row i,html:not(.lb-dark) .skel78 .sk-nav i{background:linear-gradient(90deg,#2c1a4a0d 25%,#2c1a4a1c 50%,#2c1a4a0d 75%);background-size:200% 100%}
+html:not(.lb-dark) .skel78 .sk-nav{background:#fff}
+@keyframes sk78{to{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){.skel78 *{animation:none!important}}</style>
 </head>
 <body class="reference-ui">
 <i class="background-glow pink" aria-hidden="true"></i><i class="background-glow cyan" aria-hidden="true"></i>
@@ -154,7 +166,7 @@
 
 <header class="top" id="top"></header>
 
-<main id="view" class="view" tabindex="-1"></main>
+<main id="view" class="view" tabindex="-1"><div class="skel78" data-skel aria-hidden="true"><div class="sk-top"><i class="sk-c"></i><b class="sk-logo">لعبك</b><i class="sk-c"></i></div><div class="sk-body"><i class="sk-b"></i><i class="sk-b s"></i><div class="sk-row"><i></i><i></i><i></i></div><div class="sk-row"><i></i><i></i><i></i></div></div><div class="sk-nav"><i></i><i></i><i></i><i></i><i></i></div></div></main>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <noscript><p style="padding:24px;color:#fffaff">الموقع يحتاج تفعيل JavaScript عشان تشتغل الألعاب.</p></noscript>
 <script type="module" src="/friends-live-r58.js?v=r67p"></script>
@@ -165,10 +177,10 @@
 <script type="module" src="/profile-bg-r67.js?v=r68z40e"></script>
 <script type="module" src="/broadcast-r67.js?v=r67ao"></script>
 <script type="module" src="/gold-chest-r69.js?v=r69za"></script>
-<script type="module" src="/app-r69.js?v=r74"></script>
+<script type="module" src="/app-r69.js?v=r78"></script>
 <script type="module" src="/room-level-r67.js?v=r67av"></script>
 <script type="module" src="/account-delete-r67.js?v=r67at"></script>
 <script type="module" src="/tribe-r58.js?v=r63a"></script>
-<script type="module" src="/preview/app.js?v=r74"></script>
+<script type="module" src="/preview/app.js?v=r78"></script>
 </body>
 </html>
