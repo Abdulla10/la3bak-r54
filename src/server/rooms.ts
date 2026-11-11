@@ -448,6 +448,11 @@ export class RoomService {
           if (p.reconnectUntil !== undefined) continue; // لا نجدد مهلة انتهت قبل إعادة التشغيل
           p.disconnectedAt = this.now(); p.reconnectUntil = p.disconnectedAt + this.graceMs(); changed = true;
         }
+        /* R71: الوقت اللي كان السيرفر فيه طافي (تحديث) ما ينحسب على اللاعب: نعطي الدور الحالي 20 ثانية على الأقل */
+        const st = room.status === 'playing' ? room.state as { endsAt?: unknown; phase?: unknown } | null : null;
+        if (st && typeof st === 'object' && typeof st.endsAt === 'number' && st.endsAt > 0 && st.phase !== 'final' && st.endsAt < this.now() + 20_000) {
+          room.state = { ...st, endsAt: this.now() + 20_000 }; changed = true;
+        }
         if (changed) await this.persist(room);
       });
     }

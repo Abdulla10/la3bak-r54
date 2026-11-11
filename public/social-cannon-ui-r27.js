@@ -1,5 +1,5 @@
 import {bgLayer} from './shop.js?v=r68z40e';
-import {createCannon3D} from './cannon3d-r29.js?v=r68v-cannon-r29';
+import {createCannon3D} from './cannon3d-r29.js?v=r71-cannon-r29';
 import {referenceOf} from './reference-assets.js?v=r68z31';
 /* R58t: مدفع المراحل الخمس برسومات المالك (2D). مدفع v1 (3 مراحل) يبقى ثلاثي الأبعاد مثل ما هو. */
 const isV2=m=>Array.isArray(m?.stages)&&m.stages.length===5;

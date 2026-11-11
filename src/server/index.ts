@@ -118,6 +118,8 @@ import { randomBytes as rb69 } from 'node:crypto';
 import { wireSocialRoutes } from './social-http.js';
 import { wireSocialBenefitsRoutes } from './social-benefits-http.js';
 import { validCannonGiftContext, type CannonGiftContext } from './social-cannon-r27.js';
+import { AvifCache } from './avif-r71.js';
+import { createSeo } from './seo-r71.js';
 
 /** Compatibility wrapper: old generic intents remain valid; optional social payloads fail closed. */
 export function validSocialGiftOutbox(d: Record<string, unknown>): boolean {
@@ -239,6 +241,8 @@ const MIME: Record<string, string> = {
   '.png': 'image/png',
   '.webp': 'image/webp',
   '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.avif': 'image/avif',
   '.ico': 'image/x-icon',
   '.json': 'application/json; charset=utf-8',
   '.webmanifest': 'application/manifest+json',
@@ -1080,6 +1084,11 @@ export async function createApp(
   };
 
   const staticCache = new Map<string, { size: number; mtime: number; raw: Buffer; gz: Buffer | null }>(); let staticCacheBytes = 0;
+  /* R71: نسخ AVIF أخف للصور (تنصنع بالخلفية وتنحفظ بمجلد البيانات) */
+  const avifDir = process.env.AVIF === '0' ? '' : (process.env.DATA_DIR || (cfg.walletFile ? path.dirname(cfg.walletFile) : ''));
+  const avifCache = avifDir ? new AvifCache(path.join(avifDir, 'img-avif'), log) : null;
+  /* R71: صفحات الألعاب لقوقل */
+  const seo = createSeo(PUBLIC_DIR, () => registry.list() as any);
   const pageHash = new Map<string, { mtime: number; h: string }>();
   let bundleMeta: { at: number; mtime: number; pages: Record<string, { src: string }> } | null = null;
   const bundledPage = (page: string): string | null => {
@@ -1113,7 +1122,9 @@ export async function createApp(
     }
     try {
       if (!st || !file) throw new Error('nf');
-      const ext = path.extname(file);
+      let ext = path.extname(file).toLowerCase(); const isImg = !!avifCache && /^\.(webp|png|jpe?g)$/.test(ext);
+      if (isImg && /image\/avif/.test(String(req.headers.accept ?? ''))) { const a = avifCache!.pick(file, st); if (a) { try { st = statSync(a); file = a; ext = '.avif'; } catch { /* */ } } }
+      const vary = isImg ? { Vary: 'Accept' } : {};
       // R60b (السرعة): ETag من الحجم ووقت التعديل → المتصفح يرجع 304 بدون ما ينزّل الملف من جديد
       const tag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
       const noCache = ext === '.html' || ext === '.webmanifest' || path.basename(file) === 'sw.js';
@@ -1123,7 +1134,7 @@ export async function createApp(
       const wantsGz = st.size > 1024 && /\.(js|css|html|svg|webmanifest|json)$/.test(ext) &&/\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
       const etag = wantsGz ? tag.slice(0, -1) + '-gz"' : tag;
       if (String(req.headers['if-none-match'] ?? '').split(/\s*,\s*/).includes(etag)) {
-        res.writeHead(304, { ETag: etag, 'Cache-Control': cacheControl, ...(wantsGz ? { Vary: 'Accept-Encoding' } : {}), ...securityHeaders });
+        res.writeHead(304, { ETag: etag, 'Cache-Control': cacheControl, ...(wantsGz ? { Vary: 'Accept-Encoding' } : vary), ...securityHeaders });
         res.end(); return;
       }
       let body: Buffer; let gz = false;
@@ -1136,7 +1147,7 @@ export async function createApp(
         body = wantsGz && z ? z : raw; gz = wantsGz && !!z;
       }
       res.writeHead(200, {
-        ...(gz ? { 'Content-Encoding': 'gzip' } : {}), ...(wantsGz ? { Vary: 'Accept-Encoding' } : {}),
+        ...(gz ? { 'Content-Encoding': 'gzip' } : {}), ...(wantsGz ? { Vary: 'Accept-Encoding' } : vary),
         'Content-Type': MIME[ext] ?? 'application/octet-stream',
         'Cache-Control': cacheControl, ETag: gz ? etag : tag,
         ...securityHeaders,
@@ -1523,7 +1534,9 @@ export async function createApp(
       return { ok: true, players: ids.map(card) };
     }, 'owner');
     // ---- R68z: لوحة التحكم الرئيسية (تصميم المالك) ----
-    functionalHttp.add('GET', '/api/admin/dash68', ({ url }) => {
+    /* R71: لوحة المالك أسرع: نتيجة لوحة المؤشرات تنحفظ 20 ثانية (مع آلاف اللاعبين الحساب ياخذ وقت) */
+    const dash68Cache = new Map<string, { at: number; v: unknown }>();
+    const dash68Compute = ({ url }: { url: URL }) => {
       const days = url.searchParams.get('days') === '30' ? 30 : 7; const DAY = 86_400_000; const now = Date.now();
       const dubaiDay = (t: number) => new Date(t + 4 * 3_600_000).toISOString().slice(0, 10);
       const from = now - days * DAY, prevFrom = now - 2 * days * DAY;
@@ -1574,7 +1587,8 @@ export async function createApp(
         rate: users ? Math.round(activeNow.size / users * 100) : 0, online,
         chart: dayKeys.map((d) => ({ d, active: actDay.get(d)!.size, games: gamesDay.get(d)!.size })),
         live, games, feed: feed.slice(0, 6), matches: recent, top, bell: community.openReports() };
-    }, 'owner');
+    };
+    functionalHttp.add('GET', '/api/admin/dash68', ({ url }) => { const k = url.searchParams.get('days') === '30' ? '30' : '7'; const c = dash68Cache.get(k); if (c && Date.now() - c.at < 20_000) return c.v as any; const v = dash68Compute({ url }); dash68Cache.set(k, { at: Date.now(), v }); return v; }, 'owner');
     // ---- R68y: (8) كشف الحسابات المشبوهة ----
     const r68Who = (id: string) => { const acc = accounts.all().find((a) => a.id === id); return { id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', since: acc?.since ?? null, banned: platform.isBanned(id), suspect: platform.isSuspect(id), phone: phoneVerify.verified(id), coins: wallet.balance(id) }; };
     const r68GiftVal = (g: { total?: number; price: number; qty?: number; cur?: string }) => (g.total ?? g.price * (g.qty ?? 1)) * (g.cur === 'gems' ? 20 : 1);
@@ -2205,6 +2219,12 @@ export async function createApp(
       if (url.pathname === '/fonts/la3bak.css' && req.method === 'GET') { const css = await fontCache.getCss(); if (!css) { res.writeHead(302, { Location: GOOGLE_FONTS, 'Cache-Control': 'no-store' }); res.end(); return; } res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=86400', ...securityHeaders }); res.end(css); return; }
       { const fm = /^\/fonts\/([0-9a-f]{16}\.woff2)$/.exec(url.pathname); if (fm && req.method === 'GET') { const b = fontCache.file(fm[1]); if (!b) return json(res, 404, { error: 'غير موجود' }); res.writeHead(200, { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable', ...securityHeaders }); res.end(b); return; } }
       /* R69zz: رابط دعوة بمعاينة حلوة بالواتساب (صورة واسم اللعبة)، وبعدين يدخل الغرفة على طول */
+      /* R71: صفحات تعريف الألعاب + sitemap + robots */
+      if ((req.method === 'GET' || req.method === 'HEAD') && !isAdminHost(req) && /^\/(games(\/[a-z0-9-]*)?\/?|sitemap\.xml|robots\.txt)$/.test(url.pathname)) {
+        const host = String(req.headers.host ?? '').replace(/[^\w.:-]/g, '');
+        const out = seo.handle(url.pathname, `${cfg.cookieSecure ? 'https' : 'http'}://${host}`);
+        if (out) { res.writeHead(200, { 'Content-Type': out.type, 'Cache-Control': 'public, max-age=600', ...securityHeaders }); return res.end(req.method === 'HEAD' ? undefined : out.body); }
+      }
       /* R70: لوحة التحكم: على دومينها (ADMIN_HOST) أو على /admin لو ما فيه دومين */
       if ((req.method === 'GET' || req.method === 'HEAD') && !url.pathname.startsWith('/api/')) {
         const onAdmin = isAdminHost(req), adminPath = /^\/(admin|dashboard|panel)\/?$/i.test(url.pathname);
@@ -2855,6 +2875,9 @@ export async function createApp(
     backups?.stop();
     bulkGrants.close();
     await socialVoice!.close();
+    /* R71: نقول للاعبين إنه تحديث (رمز 1012) عشان يرجعون يتصلون بسرعة بدل ما يحسبونه انقطاع */
+    wss.clients.forEach((c) => { try { c.send(JSON.stringify({ t: 'server:restart' })); c.close(1012, 'restart'); } catch { /* */ } });
+    if (wss.clients.size) await new Promise((r) => setTimeout(r, 300));
     wss.clients.forEach((c) => c.terminate());
     await new Promise<void>((r) => wss.close(() => r()));
     const closed = new Promise<void>((r) => server.close(() => r()));

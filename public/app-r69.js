@@ -1,6 +1,6 @@
 // R69za: تحسينات «التطبيق» — رقم الجهاز (لكشف الحسابات الوهمية)، شاشة «ما فيه نت» مع لعبة XO تشتغل بدون نت،
 // بانر «ثبّت لعبك على جوالك»، وعداد الإشعارات على أيقونة التطبيق.
-import * as PWA from './pwa.js?v=r70';
+import * as PWA from './pwa.js?v=r71';
 const KEY_DID = 'la3_did', KEY_DISMISS = 'la3_install_x';
 const CSS = `
 .ap69-off{position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 30px) 18px 24px;background:radial-gradient(circle at 50% 20%,#4a1680,#160530 70%);color:#fff;direction:rtl;font-family:inherit;text-align:center;overflow:auto}
@@ -171,5 +171,11 @@ startApp69();
   const h = document.documentElement;
   const vis = () => h.classList.toggle('la69-hidden', document.visibilityState === 'hidden');
   document.addEventListener('visibilitychange', vis); vis();
-  try { navigator.getBattery?.().then((b) => { const up = () => h.classList.toggle('la69-saver', !b.charging && b.level < 0.2); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); up(); }).catch(() => {}); } catch { /* */ }
+  /* R71: وضع النت الضعيف — لو الجوال على نت بطيء أو «توفير البيانات» شغال: نخفف الحركات ونعرض صور الهدايا بدل المجسمات */
+  try {
+    const c = navigator.connection; const slowNav = () => { try { const n = performance.getEntriesByType('navigation')[0]; return n && n.responseStart > 2500; } catch { return false; } };
+    const lite = () => { const on = !!(c && (c.saveData || /(^|-)2g$|^3g$/.test(c.effectiveType || ''))) || slowNav(); h.classList.toggle('la69-lite', on); h.classList.toggle('la69-saver', on || h.classList.contains('la69-saver')); };
+    lite(); c?.addEventListener?.('change', lite);
+  } catch { /* */ }
+  try { navigator.getBattery?.().then((b) => { const up = () => h.classList.toggle('la69-saver', (!b.charging && b.level < 0.2) || h.classList.contains('la69-lite')); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); up(); }).catch(() => {}); } catch { /* */ }
 })();

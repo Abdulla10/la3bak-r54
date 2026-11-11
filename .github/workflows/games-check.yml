@@ -18,3 +18,31 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npx tsc -p tsconfig.json --noEmit || true
       - run: npx tsx --test test/games-r69.test.ts
+
+  # R71: فحص شكل الصفحات — أخطاء، ملفات ناقصة، صفحات أعرض من الشاشة، وكلام ما يبين (داكن وفاتح)
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund && npm install --no-save --no-audit --no-fund playwright
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/bundle-client.mjs
+      - name: شغّل السيرفر ببيانات تجربة
+        run: |
+          D=$RUNNER_TEMP/la3data; mkdir -p $D
+          export PORT=3000 HOST=127.0.0.1 NODE_ENV=development GUEST_READONLY=0 DATA_DIR=$D BACKUP_ENABLED=0 AI_MOD_MOCK=1 SESSION_BURST=1000
+          export ADMIN_TOKEN=ci-admin-token-0123456789abcdef COOKIE_SECRET=ci-cookie-secret-0123456789abcdef0123
+          for v in ACCOUNTS ACCOUNT_TOOLS COMMUNITY CP_POINTS ECONOMY FUNCTIONAL_OUTBOX IDENTITIES LEADERBOARD MISSIONS PAYMENTS PROGRESSION RANK_REWARDS SERVER_SESSIONS SOCIAL_PRIVATE SOCIAL_ROOMS SUPPORT_NOTIFICATIONS TRIBES TRIBE_TREASURE VIP_MEMBERSHIP WALLET; do export ${v}_FILE=$D/$(echo $v | tr A-Z_ a-z-).json; done
+          export AVATARS_DIR=$D/avatars COMMUNITY_MEDIA_DIR=$D/media
+          nohup npx tsx src/server/index.ts > $RUNNER_TEMP/srv.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/healthz >/dev/null && break; sleep 1; done
+      - run: node scripts/ui-check.mjs --url http://127.0.0.1:3000 --out ui-shots --strict
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-shots
+          path: ui-shots

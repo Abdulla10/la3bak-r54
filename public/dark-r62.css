@@ -34,3 +34,10 @@ html.lb-dark .ps-times{color:#FFD66B!important;background:#2E1050!important;}
 html.lb-dark .lb-content a:not([class]){color:#d2b6ff;}
 html.lb-dark .lb-unified :is(small,summary):not(button *){color:#CDB8E6!important;}
 html.lb-dark .lb-unified :is([class*="pvp-"],[class*="lpu-"]) :is(h2,h3,summary){color:#F5E9FF!important;}
+/* R71: غرف الألعاب بالوضع الداكن — كانت البطايق (كيف ألعب، الأسماء، الأزرار) فاتحة والكلام فاتح فما يبين */
+html[data-theme=emerald].lb-dark :is(.jk-screen.v2,.cr-screen,.cw-screen){--rg-chrome:linear-gradient(160deg,#2a1342,#1c0c30)!important;--rg-surface:#1c0a30!important;--rg-raised:#2a0e45!important}
+html.lb-dark :is(.jk-screen.v2,.cr-screen,.cw-screen) .jk-rules-back{background:#0d0614c7!important}
+html.lb-dark :is(.jk-screen.v2,.cr-screen,.cw-screen) .jk-rules :is(.rc,.steps){background:#2a0e45!important;color:#f5e9ff!important;border-color:#e0a52666!important}
+html.lb-dark :is(.jk-screen.v2,.cr-screen,.cw-screen) .jk-rules :is(.rt,li,p){color:#ece0fb!important}
+html.lb-dark :is(.jk-screen.v2,.cr-screen,.cw-screen) .jk-rules .rn{color:#cdb8e6!important}
+html.lb-dark :is(.jk-screen.v2,.cr-screen,.cw-screen) .timer{background:#1c0a30d9!important;color:#fff!important}

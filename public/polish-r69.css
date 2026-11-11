@@ -39,3 +39,25 @@ img[loading="lazy"]{animation:la69img .3s ease-out}
 /* R69zz: توفير البطارية — لما التطبيق بالخلفية أو البطارية ضعيفة نوقف الحركات الزخرفية المتكررة */
 html.la69-hidden *,html.la69-hidden *::before,html.la69-hidden *::after{animation-play-state:paused!important}
 html.la69-saver .rs69-ic,html.la69-saver [class*="glow"],html.la69-saver [class*="shine"],html.la69-saver [class*="sparkle"],html.la69-saver [class*="aura"]{animation:none!important}
+
+/* R71: تصحيح ألوان كلام ما كان يبين (من فحص الشكل الآلي scripts/ui-check.mjs) */
+html body .s60 .s60-row.is-danger .s60-label{color:#fff!important}
+html body .bd68-tag{color:#2a1500!important}
+html.lb-dark :is(.lb-rank-podium-place span,nav.pagination span){color:#e6d6fa!important}
+html.lb-dark .bl2-score .hd .us{color:#d9b6ff!important}
+html.lb-dark .u2-pile b{color:#2c1a4a!important}
+html body .u2-uno{color:#fff!important}
+/* الوضع الفاتح: كلام أبيض على خلفية فاتحة، أو غامق على شريط داكن */
+html:not(.lb-dark) :is(.hero,section.hero,div.hero) :is(.subtitle,p.subtitle,div.subtitle){color:#6a5a80!important}
+html:not(.lb-dark) body .m68 .lb-message-empty{color:#6a5a80!important}
+html:not(.lb-dark) .lb-message-privacy label{color:#2c1a4a!important}
+html:not(.lb-dark) .lpu-google-details .g-card h2{color:#2c1a4a!important}
+html:not(.lb-dark) body .r23-store .r23-store-tabs>button:not(.on) span{color:#2c1a4a!important}
+html:not(.lb-dark) :is(.lb-friends-presence-note,.lbw-toolbar .lbw-muted){color:#e6d6fa!important}
+
+/* R71: شريط تحديث السيرفر */
+#la3-restart{position:fixed;z-index:9999;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);max-width:calc(100vw - 24px);padding:10px 16px;border-radius:14px;background:#2a0e45f2;color:#fff;border:1px solid #e0a52677;box-shadow:0 8px 24px #0008;font:700 13.5px/1.5 Cairo,system-ui,sans-serif;text-align:center;transition:opacity .35s,transform .35s}#la3-restart.out{opacity:0;transform:translate(-50%,-12px)}
+
+/* R71: وضع النت الضعيف: بدون حركات مستمرة ولا ظلال ثقيلة (المحتوى نفسه ما يتغير) */
+html.la69-lite [class*="glow"],html.la69-lite [class*="shine"],html.la69-lite [class*="sparkle"],html.la69-lite [class*="aura"],html.la69-lite [class*="particle"]{animation:none!important;filter:none!important}
+html.la69-lite :is(.lb-unified,.lb-content) *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}

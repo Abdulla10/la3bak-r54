@@ -1465,6 +1465,13 @@ export class SocialRooms {
       // Reuse the host's existing sweep; idle sweeps do not write or bump versions.
       const probe=structuredClone(this.state);
       if(this.advanceGamesR47(probe,now))return this.tx(d=>{this.advanceGamesR47(d,now);return {ok:true,updated:true};});
+      /* R71: إيصالات التكرار كانت تتراكم بدون حد (كل لعبة تضيف وحدة) ولما توصل 20000 كل أوامر الغرف توقف. نشيل القديمة:
+         ربط لعبة لغرفة انحذفت، وأي إيصال ثاني عمره أكثر من 7 أيام. */
+      { const live=new Set(this.state.rooms.map(r=>r.id)); const keep=(x:Receipt)=>x.command==='game:bind'?live.has(x.key):now-x.at<7*86400000;
+        const stale=this.state.receipts.reduce((n,x)=>n+(keep(x)?0:1),0);
+        /* نفس الشي لسجل الإدارة: المُسلَّم لسجل اللوحة (أقدم من 7 أيام) ما له داعي هني — كان بيوقف كل شي عند 100000 */
+        const oldAudit=this.state.audit.reduce((n,a)=>n+(a.delivered&&now-a.at>=7*86400000?1:0),0);
+        if(stale>=200||oldAudit>=500||(stale>0&&this.state.receipts.length>this.maxReceipts*0.5))return this.tx(d=>{const lv=new Set(d.rooms.map(r=>r.id));d.receipts=d.receipts.filter(x=>x.command==='game:bind'?lv.has(x.key):now-x.at<7*86400000);d.audit=d.audit.filter(a=>!a.delivered||now-a.at<7*86400000);return {ok:true,updated:true};}); }
       await this.deliverAudit();return {ok:true};
     }));
   }

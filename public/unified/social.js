@@ -10,11 +10,11 @@ import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-
 import {framed as frameOwnedPortrait} from '../shop.js?v=r68z40e';
 import { createEntranceFX } from '../entrancefx-r23.js?v=r68z38e';
 import { createSocialChallenge, renderSetup, validateTeams, preserveScorebar } from '../social-challenge.js?v=r57';
-import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r69zz';
+import {attachGiftRuntime,receiveGiftRuntime,clearGiftRuntime,giftRuntimeMetrics,giftArtwork} from '../social-gift-runtime-r27.js?v=r71';
 import {bigGift} from './gift-big-r67.js?v=r69zz';
 import {cinemaHTML,cinemaMount,cinemaUnmount,cinemaPosition,parseYouTube} from './room-cinema-r67.js?v=r67s';
 import {cannon3Shortcut,cannon3Panel,cannon3Blast} from './room-cannon-r59.js?v=r67i';
-import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r68z40e';
+import {cannonPanel,cannonShortcut,createCannonEffects} from '../social-cannon-ui-r27.js?v=r71';
 /* Social rooms only. Parent owns routes, session, authenticated api and shell.
  * The live controller outlives DOM mounts. No implicit room/council join on render. */
 import { mini as avatarMini } from '../avatars.js?v=r68z31';

@@ -1,6 +1,7 @@
 // R69zv: يدمج ملفات الواجهة (أكثر من 190 ملف) في ملفين: كود واحد وتنسيق واحد، مصغّرين.
 // الناتج في public/b/ — والسيرفر يقدّم النسخة المدموجة تلقائياً لو كانت مبنية من نفس صفحات HTML الحالية.
 // تشغيل: node scripts/bundle-client.mjs   (ينضاف تلقائياً مع npm run build)
+import { purgeCss } from './css-purge.mjs';
 import { build, transform } from 'esbuild';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -9,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUB = path.join(ROOT, 'public'), OUT = path.join(PUB, 'b');
+let purged = 0;
 const PAGES = ['index.html', 'preview.html'].filter((p) => existsSync(path.join(PUB, p)));
 const sha = (s) => createHash('sha256').update(s).digest('hex');
 const local = (href) => href && href.startsWith('/') && !href.startsWith('//');
@@ -52,7 +54,9 @@ for (const page of PAGES) {
   }
   // التنسيق: ملف واحد
   let css = ''; for (const [, h] of styles) css += cssOf(fileOf(h));
-  const min = (await transform(css, { loader: 'css', minify: true, target: ['safari15'], legalComments: 'none', charset: 'utf8' })).code;
+  let min = (await transform(css, { loader: 'css', minify: true, target: ['safari15'], legalComments: 'none', charset: 'utf8' })).code;
+  /* R71: نشيل التنسيقات الميتة (كلاسات ما تنذكر بأي مكان بالكود) */
+  if (process.env.CSS_PURGE !== '0') { const p = purgeCss(min, [PUB, path.join(ROOT, 'src')]); purged += min.length - p.css.length; min = p.css; }
   const cssName = `app-${sha(min).slice(0, 10)}.css`; writeFileSync(path.join(OUT, cssName), min);
   // الصفحة: نشيل الروابط القديمة ونحط الملفين
   let out = html; let first = true;
@@ -66,4 +70,4 @@ for (const page of PAGES) {
 }
 writeFileSync(path.join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 1));
 const files = readdirSync(OUT); let bytes = 0; for (const f of files) bytes += readFileSync(path.join(OUT, f)).length;
-console.log(`[bundle] ${PAGES.join(', ')} → ${files.length} files, ${(bytes / 1024).toFixed(0)} KB`, JSON.stringify(Object.fromEntries(Object.entries(manifest.pages).map(([k, v]) => [k, `${v.modules} js + ${v.styles} css`]))));
+console.log(`[bundle] ${PAGES.join(', ')} → ${files.length} files, ${(bytes / 1024).toFixed(0)} KB (−${(purged / 1024).toFixed(0)} KB CSS ميت)`, JSON.stringify(Object.fromEntries(Object.entries(manifest.pages).map(([k, v]) => [k, `${v.modules} js + ${v.styles} css`]))));

@@ -223,6 +223,7 @@ export function createAdmin(d: AdminDeps) {
     const effectiveXp = d.progression.canonicalXp(p.id, rawXp(p.id, p.xp)), level = Math.min(100, 1 + Math.floor(Math.sqrt(effectiveXp / 40)));
     return { id: p.id, playerId: d.accounts.publicPlayerId(p.id), displayPlayerId: d.accounts.displayPlayerId(p.id), name: p.name, since: p.since, level, effectiveXp, points: p.points, wins: p.wins, played: p.played, ...(walletVisible ? { coins: d.wallet.has(p.id) ? d.wallet.balance(p.id) : null, gems: d.wallet.has(p.id) ? d.wallet.gems(p.id) : null } : {}), online: d.sockets.has(p.id), banned: !!ban, role: P.roleOf(p.id) };
   }
+  let playersCache: { k: string; at: number; ids: string[] } | null = null;
   function players(q: URLSearchParams, actor: Actor) {
     const term = clean(q.get('q'), 40).toLowerCase();
     const sort = q.get('sort') ?? 'since';
@@ -230,8 +231,14 @@ export function createAdmin(d: AdminDeps) {
     let list = d.accounts.all();
     if (term) list = list.filter((p) => p.name.toLowerCase().includes(term) || p.id.startsWith(term) || d.accounts.publicPlayerId(p.id) === term || d.accounts.displayPlayerId(p.id) === term);
     const key = sort === 'points' ? (p: (typeof list)[number]) => p.points : sort === 'level' ? (p: (typeof list)[number]) => d.progression.canonicalXp(p.id, rawXp(p.id, p.xp)) : sort === 'played' ? (p: (typeof list)[number]) => p.played : (p: (typeof list)[number]) => p.since;
-    list.sort((a, b) => key(b) - key(a));
-    return { total: list.length, offset, limit, list: list.slice(offset, offset + limit).map((p) => playerRow(p, can(actor.role, 'wallet.view'))) };
+    /* R71: اللوحة أسرع مع آلاف اللاعبين — نحسب قيمة الترتيب مرة وحدة لكل لاعب (مو بكل مقارنة)، ونحفظ الترتيب 15 ثانية للصفحات التالية */
+    const ck = `${sort}|${term}|${list.length}`;
+    let ids: string[];
+    if (playersCache && playersCache.k === ck && now() - playersCache.at < 15_000) ids = playersCache.ids;
+    else { const keyed = list.map((p) => ({ id: p.id, v: key(p) })); keyed.sort((a, b) => b.v - a.v); ids = keyed.map((x) => x.id); playersCache = { k: ck, at: now(), ids }; }
+    const byId = new Map<string, (typeof list)[number]>(); const page = ids.slice(offset, offset + limit); const want = new Set(page);
+    for (const p of list) if (want.has(p.id)) byId.set(p.id, p);
+    return { total: ids.length, offset, limit, list: page.map((id) => byId.get(id)).filter((p): p is (typeof list)[number] => !!p).map((p) => playerRow(p, can(actor.role, 'wallet.view'))) };
   }
   function playerDetail(id: string) {
     const prof = d.accounts.adminProfile(id);

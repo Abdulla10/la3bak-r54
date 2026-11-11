@@ -1,6 +1,6 @@
 /* R29: one real GLB/WebGL view per room controller. Presentation only.
  * No API writes, gift receipts, wallet math, generated assets or static cannon fallback. */
-import {inspectGLB, disposeModel} from './gift3d-r27.js?v=complete-r46';
+import {inspectGLB, disposeModel} from './gift3d-r27.js?v=r71-r46';
 
 const MODEL = '/assets/gifts-r27/royal-cannon.glb';
 const MAX_BYTES = 6 * 1024 * 1024;

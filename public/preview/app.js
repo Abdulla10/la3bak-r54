@@ -4,9 +4,9 @@ import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r68z40e';
-import * as UNIFIED from '../unified/shell.js?v=r69zz';
+import * as UNIFIED from '../unified/shell.js?v=r71';
 import * as REF from '../unified/home.js?v=r69z8';
-import * as SOCIAL from '../unified/social.js?v=r69zz';
+import * as SOCIAL from '../unified/social.js?v=r71';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r68z31';
@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r70';
+import * as PWA from '../pwa.js?v=r71';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r68z40e';
@@ -161,7 +161,11 @@ function connect() {
       if (m.code === 'guest') guestPrompt(m.error);
       S.pending.get(m.r)(m);
       S.pending.delete(m.r);
+    } else if (m.t === 'server:restart') {
+      /* R71: السيرفر ينزل له تحديث — نطمّن اللاعب ونرجع نتصل بسرعة، ومباراته محفوظة */
+      restartNote(true);
     } else if (m.t === 'hello') {
+      restartNote(false);
       S.user = m.user;
       S.coins = m.coins ?? 0;
       S.canClaim = !!m.canClaim;
@@ -299,8 +303,18 @@ function connect() {
     for (const [, cb] of S.pending) cb({ ok: false, uncertain: true, error: 'انقطع الاتصال، جرّب مرة ثانية.' });
     S.pending.clear();
     updateConn();
-    if (S.user) setTimeout(connect, Math.min(1000 * 2 ** S.retry++, 8000));
+    if (ev?.code === 1012) { S.restarting = true; restartNote(true); }
+    if (S.user) setTimeout(connect, S.restarting ? Math.min(1200 + 600 * S.retry++, 3000) : Math.min(1000 * 2 ** S.retry++, 8000));
   };
+}
+/** R71: شريط صغير وقت تحديث السيرفر */
+function restartNote(on) {
+  let el = document.getElementById('la3-restart');
+  if (!on) { S.restarting = false; if (el) { el.classList.add('out'); setTimeout(() => el?.remove(), 400); } return; }
+  if (el) return;
+  el = document.createElement('div'); el.id = 'la3-restart'; el.setAttribute('role', 'status');
+  el.textContent = '⚡ تحديث سريع للموقع… نرجعك خلال ثواني، ومباراتك محفوظة';
+  document.body.appendChild(el);
 }
 
 // المفتاح محفوظ داخل جلسة التبويب فقط؛ لا نخزّن كلمة المرور أو نسخة منها.
@@ -417,7 +431,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r70');
+  const M = await import('../settings-r60.js?v=r71');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

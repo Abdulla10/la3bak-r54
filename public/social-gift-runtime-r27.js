@@ -1,4 +1,4 @@
-import {createSocialGift3D} from './gift3d-r27.js?v=complete-r46';
+import {createSocialGift3D} from './gift3d-r27.js?v=r71-r46';
 import {resolveGiftAsset,giftArtwork} from './gift-assets-r27.js?v=r69zz-r36';
 import {safeGiftArt} from './gift-reward-ui.js?v=r68i';
 const scoped=(c,meta)=>!!c&&!c.ctx?.gameRoom&&c.snapshot?.current?.roomId===c.routeRoom&&c.snapshot?.current?.councilId&&meta?.roomId===c.routeRoom&&meta?.councilId===c.snapshot.current.councilId;

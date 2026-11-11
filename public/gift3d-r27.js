@@ -307,6 +307,8 @@ export class SocialGift3DRenderer {
     let parsed = null;
     try {
       if (!this.alive(a)) return;
+      /* R71: نت ضعيف أو توفير بيانات: نعرض صورة الهدية بدل تنزيل المجسم (ميغات) */
+      if (this.doc.documentElement?.classList.contains('la69-lite')) { this.fallback(a, 'lite-network'); return; }
       const selected = this.assetResolver?.({ gift: a.event.gift });
       a.descriptor = validateAsset(selected);
       if (!a.descriptor) { this.fallback(a, selected ? 'invalid-asset-url-or-descriptor' : 'missing-asset'); return; }
