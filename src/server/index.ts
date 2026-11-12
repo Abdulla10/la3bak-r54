@@ -2396,7 +2396,11 @@ export async function createApp(
     const finish = pendingWrites.begin('http-requests');
     try {
       const url = new URL(req.url ?? '/', 'http://x');
-      if (url.pathname !== '/healthz' && shieldIp(req)) { const sk = shield.key(shieldIp(req)!); const isApi = url.pathname.startsWith('/api/'); if (shield.isBanned(sk) || (isApi && !shield.allow(sk))) { res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60' }); res.end(JSON.stringify({ error: 'طلبات كثيرة. انتظر دقيقة وجرّب.' })); return; } }
+      /* R99: الدخول والإعداد ما ينصدّون أبد (لهم حدودهم الخاصة)، واللي عنده جلسة ينحسب على جلسته مب على الشبكة
+         — عشان لو الموقع ورا بروكسي/شبكة مشتركة ما ينحظر الكل مرة وحدة */
+      const shieldFree = url.pathname === '/healthz' || /^\/api\/(?:auth\/|session$|passkey\/)/.test(url.pathname) || !url.pathname.startsWith('/api/');
+      const sessKey = (() => { try { const u = sessions.cookieUser(req.headers.cookie); return u ? 'u|' + u.id : null; } catch { return null; } })();
+      if (!shieldFree && shieldIp(req)) { const sk = shield.key(sessKey ?? shieldIp(req)!); const isApi = true; if (shield.isBanned(sk) || (isApi && !shield.allow(sk))) { res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60' }); res.end(JSON.stringify({ error: 'طلبات كثيرة. انتظر دقيقة وجرّب.' })); return; } }
       /* R69zz: الخط العربي من سيرفرنا */
       if (url.pathname === '/fonts/la3bak.css' && req.method === 'GET') { const css = await fontCache.getCss(); if (!css) { res.writeHead(302, { Location: GOOGLE_FONTS, 'Cache-Control': 'no-store' }); res.end(); return; } res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=86400', ...securityHeaders }); res.end(css); return; }
       { const fm = /^\/fonts\/([0-9a-f]{16}\.woff2)$/.exec(url.pathname); if (fm && req.method === 'GET') { const b = fontCache.file(fm[1]); if (!b) return json(res, 404, { error: 'غير موجود' }); res.writeHead(200, { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable', ...securityHeaders }); res.end(b); return; } }

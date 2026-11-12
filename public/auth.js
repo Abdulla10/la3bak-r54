@@ -1,15 +1,17 @@
 /* الدخول بـ Google: زر «Sign in with Google» الرسمي يعطينا رمز ID، والخادم هو اللي يتحقق منه ويبني الجلسة.
    ما فيه أسرار هنا: معرّف العميل عام ويجي من /api/auth/config. */
 const A = { cfg: undefined, gsi: null, inited: false };
+const FALLBACK_ID = '122506681992-rfqqr0ji8l7srsbfl1jj6pl5qknsa6jb.apps.googleusercontent.com';
 
 async function config() {
   if (A.cfg !== undefined) return A.cfg;
   /* R98: لو الطلب فشل (شبكة/خادم) ما نحفظ الفشل، نعيد المحاولة مرة ثانية */
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     try { const r = await fetch('/api/auth/config', { cache: 'no-store' }); if (r.ok) { A.cfg = (await r.json()).google || null; return A.cfg; } } catch { /* نعيد */ }
-    await new Promise((ok) => setTimeout(ok, 800 * (i + 1)));
+    await new Promise((ok) => setTimeout(ok, 400));
   }
-  return null;
+  /* R99: لو الخادم ما رد على الإعداد، نستخدم معرّف Google العام (مب سر) عشان الزر يطلع دايماً */
+  return FALLBACK_ID;
 }
 
 function loadGsi() {
