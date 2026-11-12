@@ -312,3 +312,23 @@ html body .ld2 .ld2-dice.can{animation:ld109 1s ease-in-out infinite}
 html body .ld2 .ld2-seat .ld2-av{box-shadow:0 0 0 3px #fff,0 6px 14px rgba(0,0,0,.3)}
 html body .ld2 [class*="ld2-name"],html body .ld2 .ld2-seat b,html body .ld2 .ld2-seat small{background:rgba(10,60,140,.55)!important;color:#fff!important}
 html body .ld2 .jk-bar .notice{background:rgba(10,60,140,.7)!important;color:#fff!important;border-color:#9fdcff!important}
+/* R115: كل نوافذ الغرف داكنة (بدل الأبيض) */
+html body dialog.so-dialog:not(#_){background:#1a0b2e!important;color:#f3e8ff!important;border:1.5px solid #ffffff1f!important}
+html body dialog.so-dialog:not(#_)::backdrop{background:rgba(10,4,20,.75)}
+html body dialog.so-dialog:not(#_) :is(header,footer,form,.so-dialog-body){background:transparent!important;border-color:#ffffff1a!important}
+html body dialog.so-dialog:not(#_) :is(h2,h3,legend,label,.so-check,.so-field,b,strong){color:#fff!important}
+html body dialog.so-dialog:not(#_) h2{outline:0!important;border:0!important;box-shadow:none!important;background:none!important}
+html body dialog.so-dialog:not(#_) :is(p,small,.so-note,span:not(.so-sr)){color:#d9ccef!important}
+html body dialog.so-dialog:not(#_) :is(input:not([type=checkbox]):not([type=radio]),textarea,select){background:#2a1245!important;color:#fff!important;border:1.5px solid #ffffff2e!important}
+html body dialog.so-dialog:not(#_) :is(input,textarea)::placeholder{color:#b9a6d6!important}
+html body dialog.so-dialog:not(#_) .so-error:empty{display:none}
+/* R115: شريط التصنيفات — بدون مربع التوهج المقصوص وراء الزر المختار */
+html body .so-directory-r30 .so-dir-categories:not(#_){padding:6px 4px!important;gap:8px!important}
+html body .so-directory-r30 .so-dir-chip.is-active:not(#_){box-shadow:none!important}
+html body .so-feedback:not(#_) p[role=status]{background:rgba(255,255,255,.07)!important;color:#e9dcff!important;border:1px solid #ffffff1f!important}
+html body .so-feedback:not(#_) p[role=status]:empty{display:none!important}
+/* R115: لوحات الغرفة (الأعضاء، المجالس، الداعمين) داكنة */
+html body .so-room-panel:not(#_),html body .so-room-panel:not(#_) :is(.so-room-panel-heading,.so-room-panel-body){background:#1a0b2e!important;color:#f3e8ff!important;border-color:#ffffff1a!important}
+html body .so-room-panel:not(#_) :is(.so-compact-council,details,article,li){background-color:rgba(255,255,255,.06)!important;border-color:#ffffff1f!important;color:#f3e8ff!important}
+html body .so-room-panel:not(#_) :is(h2,h3,b,strong,summary){color:#fff!important}
+html body .so-room-panel:not(#_) :is(p,small,.so-note){color:#d9ccef!important}

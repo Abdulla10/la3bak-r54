@@ -69,7 +69,7 @@ function newController(ctx) {
   c.challengeUI=createSocialChallenge({getHost:()=>c.challengeHost,getModel:()=>c.challengeModel,renderMember:m=>challengeMemberHTML(m,c)});
   c.cannonFX=!ctx.gameRoom?createCannonEffects(()=>c.ctx.gameRoom?null:c.entranceHost):null;
   c.storageKey = `la3bak:social:pending:${encodeURIComponent(c.uid)}`;
-  try { const p=JSON.parse(storage.get(c.storageKey)||'null'); if(p?.command && typeof p.key==='string' && p.owner===c.uid) c.pending=p; } catch { storage.remove(c.storageKey); }
+  try { const p=JSON.parse(storage.get(c.storageKey)||'null'); if(p?.command==='chat:send') storage.remove(c.storageKey); else if(p?.command && typeof p.key==='string' && p.owner===c.uid) c.pending=p; } catch { storage.remove(c.storageKey); }
   c.creationStorageKey=`la3bak:social:owner-create-r33:${encodeURIComponent(c.uid)}`;
   try {const saved=JSON.parse(storage.get(c.creationStorageKey)||'null');if(saved?.owner===c.uid&&saved?.state?.version===33&&saved.state.keys)c.creationRecord=saved.state;}catch {storage.remove(c.creationStorageKey);}
   c.notify = () => c.listeners.forEach(fn => fn());
@@ -211,7 +211,15 @@ async function toggleAmbient(c) {
   c.ambient=audio;
   try {await audio.play();c.ambientOn=true;c.notify();}catch(e){await stopAmbient(c);throw Error('لم يسمح المتصفح بتشغيل الموسيقى. اضغط تشغيل مرة أخرى.');}
 }
+/* R115: الدردشة ما تتعلق ولا تنقفل لو فيه طلب ثاني شغال (مثل لعبة) — ترسل مباشرة بدون «طلب غير محسوم» */
+const LIGHT_R115=new Set(['chat:send']);
 async function command(c,commandName,fields={},retry=false) {
+  if(retry&&c.pending&&LIGHT_R115.has(c.pending.command)){c.pending=null;storage.remove(c.storageKey);c.notify();return null;}
+  if(!retry&&LIGHT_R115.has(commandName)){
+    const result=await c.api('/api/social/command','POST',{command:commandName,key:uuid(),...fields});
+    if(!result?.ok)throw Error(friendly(result?.error||'ما انرسلت الرسالة، حاول مرة ثانية.'));
+    c.error='';if(c===live){await read(c);c.notify();}return result;
+  }
   if(c.busy) return null;
   if(c.pending && !retry) throw Error('يوجد طلب غير محسوم. أعد المحاولة بالمفتاح نفسه أو تجاهله بعد تحديث الحالة.');
   const payload=retry?c.pending:{owner:c.uid,command:commandName,key:uuid(),...fields};
@@ -226,7 +234,7 @@ async function command(c,commandName,fields={},retry=false) {
     if(!result?.ok) {c.pending=null;storage.remove(c.storageKey);throw Error(payload.command==='room:upgrade'?roomUpgradeErrorR47(result?.error):friendly(result?.error||'لم يقبل الخادم الطلب.'));}
     c.pending=null;storage.remove(c.storageKey);/* R69j: الخادم قبل الطلب، فنمسحه حتى لو انتقلنا لصفحة ثانية */
     if(c!==live || epoch!==c.epoch) return null;
-    c.notice='تم حفظ الإجراء في الخادم.';
+    c.notice='';
     await read(c);if(c!==live||epoch!==c.epoch)return null;return result;
   } catch(e) { if(Number(e.status)>=400 && Number(e.status)<500){c.pending=null;storage.remove(c.storageKey);} if(c===live && epoch===c.epoch) {c.error=e.message || 'تعذر إكمال الطلب.';c.notice=c.pending?'قد يكون الطلب وصل للخادم. حدّث الحالة، ثم أعد المحاولة بنفس المفتاح إن لزم.':'';} throw e; }
   finally {c.busy=false;if(c===live)c.notify();}
