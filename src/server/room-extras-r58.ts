@@ -61,7 +61,7 @@ export const ROOM_TIERS = Object.freeze([
   { id: 'royal', name: 'ملكية', min: 40_000, perks: 9 },
   { id: 'legend', name: 'أسطورية', min: 75_000, perks: 10 },
 ] as const);
-export type RoomMonth = { key: string; pts: number; gifts: number; senders: Record<string, number> };
+export type RoomMonth = { key: string; pts: number; gifts: number; senders: Record<string, number>; floor?: number };
 export const ROOM_MONTH_SENDERS_MAX = 200;
 const GULF_OFFSET = 4 * 3600_000;
 export function monthKeyOf(ms: number): string { const d = new Date(ms + GULF_OFFSET); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`; }
@@ -73,11 +73,14 @@ export function currentRoomMonth(stored: RoomMonth | undefined, now: number): Ro
   if (stored && stored.key === key) return stored;
   const legend = ROOM_TIERS[ROOM_TIERS.length - 1].min;
   const carry = stored && stored.key === prevKey(key) && stored.pts > legend ? Math.min(stored.pts - legend, legend) : 0;
-  return { key, pts: carry, gifts: 0, senders: {} };
+  /* R115: رتبة ثابتة من الإدارة (floor) تنتقل كل شهر */
+  const floor = stored?.floor ?? 0;
+  return { key, pts: Math.max(carry, floor), gifts: 0, senders: {}, ...(floor ? { floor } : {}) };
 }
 export function validRoomMonth(v: any): boolean {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
-  const k = Object.keys(v); if (k.some((x) => !['key', 'pts', 'gifts', 'senders'].includes(x))) return false;
+  const k = Object.keys(v); if (k.some((x) => !['key', 'pts', 'gifts', 'senders', 'floor'].includes(x))) return false;
+  if (v.floor !== undefined && (!Number.isSafeInteger(v.floor) || v.floor < 0)) return false;
   if (typeof v.key !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(v.key)) return false;
   if (!Number.isSafeInteger(v.pts) || v.pts < 0 || !Number.isSafeInteger(v.gifts) || v.gifts < 0) return false;
   if (!v.senders || typeof v.senders !== 'object' || Array.isArray(v.senders)) return false;

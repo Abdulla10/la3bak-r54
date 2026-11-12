@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { FunctionalHttp, FunctionalHttpError } from './functional-http.js';
 import { can, type Platform, type Perm } from './platform.js';
 import type { Actor } from './admin.js';
@@ -75,6 +76,23 @@ export function wireSocialRoutes(http:FunctionalHttp,deps:{onRoomJoin?:(id:strin
   const a=permission(actor,config?'social.configure':'social.moderate');
   if(body.command==='room:owner'&&a.role!=='owner')throw new FunctionalHttpError(403,'نقل الملكية للمالك الإداري فقط.');
   return checked(await deps.rooms.admin(a.id,body.command,target(body)));
+ },'support');
+ /* R115: لوحة التحكم — مميزات الغرفة (ليفل، رتبة ثابتة، آيدي مميز) للمالك فقط */
+ http.add('GET','/api/admin/room-boost',({actor,url})=>{
+  if(permission(actor,'social.view').role!=='owner')throw new FunctionalHttpError(403,'للمالك فقط.');
+  const q=String(url.searchParams.get('q')??'').trim();if(q.length<1)throw new FunctionalHttpError(400,'اكتب آيدي الغرفة.');
+  const r=deps.rooms.findRoom(q);if(!r)throw new FunctionalHttpError(404,'ما لقيت غرفة بهذا الآيدي.');return {ok:true,room:r};
+ },'support');
+ http.add('POST','/api/admin/room-boost',async({actor,body})=>{
+  const a=permission(actor,'social.view');if(a.role!=='owner')throw new FunctionalHttpError(403,'للمالك فقط.');
+  const r=deps.rooms.findRoom(String(body.room??''));if(!r)throw new FunctionalHttpError(404,'ما لقيت الغرفة.');
+  const b:Record<string,unknown>={roomId:r.id,key:randomUUID(),reason:'admin-boost'};
+  if(body.level!==undefined&&body.level!=='')b.level=Number(body.level);
+  if(typeof body.tier==='string')b.tier=body.tier;
+  if(typeof body.vanity==='string')b.vanity=body.vanity;
+  const out=await deps.rooms.admin(a.id,'room:boost',b) as Result;
+  if(!out?.ok){const e=String((out as any)?.error??'');const msg:Record<string,string>={room_vanity_taken:'هذا الآيدي مستخدم لغرفة ثانية.',invalid_vanity:'الآيدي لازم أرقام بس (1 إلى 8 أرقام) وما يبدأ بصفر.',invalid_level:'الليفل من 1 إلى 300.',invalid_tier:'الرتبة غير صحيحة.'};throw new FunctionalHttpError(400,msg[e]||'ما تم الحفظ.');}
+  return {ok:true,room:deps.rooms.findRoom(r.id)};
  },'support');
  return http;
 }

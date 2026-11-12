@@ -5,7 +5,7 @@ const LEGACY_CANNON = false;
 /** R59: صاروخ الغرفة انقفل (انتقل للقبيلة) */
 const ROOM_ROCKET = false;
 import { ROCKET_PLANETS, ROCKET_SENDERS_MAX, ROCKET_LUCK_MIN_MS, currentRocket, rocketBoundaries, validRoomRocket, rocketCampaignId, rocketFingerprint, rocketGrants, rocketWinners, rocketLuckPick, rocketShareOf, rocketGiftArt, type RoomRocket } from './room-rocket-r58.js';
-import { roomCapacityBonus, roomLevelPerks, ROOM_LEVEL_MAX, roomCodeOf, roomLevelOf, ROOM_VANITY, ROOM_ADS_MAX, type RoomAd, currentRoomMonth, roomRankView, validRoomMonth, ROOM_MONTH_SENDERS_MAX, type RoomMonth } from './room-extras-r58.js';
+import { ROOM_LEVELS, ROOM_TIERS, roomCapacityBonus, roomLevelPerks, ROOM_LEVEL_MAX, roomCodeOf, roomLevelOf, ROOM_VANITY, ROOM_ADS_MAX, type RoomAd, currentRoomMonth, roomRankView, validRoomMonth, ROOM_MONTH_SENDERS_MAX, type RoomMonth } from './room-extras-r58.js';
 import { ENTRANCE_ART_PATHS } from './entrance-catalog.js';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { lstatSync } from 'node:fs';
@@ -543,6 +543,8 @@ export class SocialRooms {
   ownedRoomsOf(userId: string) { return this.state.rooms.filter((r) => r.ownerId === userId).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length })); }
   /** R73: المجالس العادية بس (بدون غرف الألعاب) */
   isGameRoom(id: string): boolean { return this.state.receipts.some((x) => !x.admin && x.command === 'game:bind' && x.key === id); }
+  /** R115: إيجاد غرفة بالآيدي الظاهر (#) أو المعرف */
+  findRoom(q: string) { const v = String(q || '').trim().replace(/^#/, ''); const r = this.state.rooms.find((r) => r.id === v || this.roomCode(r) === v || roomCodeOf(r.id) === v); if (!r) return null; const lv = roomLevelOf(r.support ?? 0), rank = roomRankView(r.month, this.clock()); return { id: r.id, name: r.name, code: this.roomCode(r), owner: this.opts.profile(r.ownerId)?.name ?? '', level: lv.level, tier: rank.tier, tierName: rank.tierName, fixedTier: r.month?.floor ? (ROOM_TIERS.find((x) => x.min === r.month!.floor)?.id ?? null) : null, vanity: r.vanity ?? null, members: r.members.length }; }
   liveRooms() { return this.state.rooms.filter((r) => r.members.length > 0).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length, owner: this.opts.profile(r.ownerId)?.name ?? '', video: !!r.video })).sort((a, b) => b.members - a.members); }
   ownerMaxRoomLevel(userId: string): number { let lv = 0; for (const r of this.state.rooms) if (r.ownerId === userId) lv = Math.max(lv, roomLevelOf(r.support ?? 0).level); return lv; }
   /** R58u: يمنح جوائز إطلاقات الصاروخ المعلّقة (معرّف ثابت لكل إطلاق، فإعادة المحاولة ما تكرر). */
@@ -1422,6 +1424,13 @@ export class SocialRooms {
         else {
           const r=this.room(d,b.roomId);targetId=r.id;roomId=r.id;
           if(command==='room:close'){if(r.cannon&&this.cannonPendingFor(r.cannon)>0)fail('cannon_award_pending',409);for(const m of [...r.members])this.remove(d,m.id,media);d.rooms=d.rooms.filter(x=>x.id!==r.id);}
+          /* R115: الإدارة تعطي الغرفة المميزات: ليفل، رتبة ثابتة، آيدي مميز */
+          else if(command==='room:boost'){
+            if(b.level!==undefined){if(!num(b.level,1,ROOM_LEVEL_MAX))fail('invalid_level');const L=b.level as number;r.support=Math.ceil((ROOM_LEVELS[L-1]??0)/20);}
+            if(b.tier!==undefined){const t=String(b.tier);const m=structuredClone(currentRoomMonth(r.month,now));if(t==='none'){delete m.floor;}else{const x=ROOM_TIERS.find(x=>x.id===t);if(!x)fail('invalid_tier');m.floor=x.min;m.pts=Math.max(m.pts,x.min);}r.month=m;}
+            if(b.vanity!==undefined){const v=String(b.vanity).trim();if(!v){delete r.vanity;delete r.vanityItem;}else{if(!ROOM_VANITY.test(v))fail('invalid_vanity');if(d.rooms.some(x=>x.id!==r.id&&(x.vanity===v||roomCodeOf(x.id)===v)))fail('room_vanity_taken',409);r.vanity=v;r.vanityItem='admin';}}
+            this.activity(r,'room:update',now);
+          }
           else if(command==='room:video-off'){if(!r.video)fail('video_not_playing',409);delete r.video;this.activity(r,'video:off',now);}
           else if(command==='room:theme-reset'){r.settings={...r.settings,theme:defaultRoomSettings().theme};this.activity(r,'room:update',now);}
           else if(command==='council:close'){const c=this.council(r,b.councilId);targetId=c.id;this.closeCouncil(d,r,c,media);this.activity(r,command,now);}
