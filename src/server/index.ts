@@ -561,7 +561,7 @@ export async function createApp(
   // R67ae: خصم على قسم كامل (فعالية من اللوحة) لو القطعة ما عليها عرض خاص
   shopcat.offerHook = (id, slot, price) => { const own = offers.forItem(id); if (own) return own; if (!slot || !price) return null; const ev = siteFlags.saleFor(slot); return ev ? { discount: ev.percent ?? 0, startsAt: ev.startsAt, endsAt: ev.endsAt, exclusive: false, live: true } : null; };
   /** R67au: تذكارات CP الجديدة اللي يرسلها المالك تنضاف هنا (فاضي لين توصل رسوماته) */
-  const SOUVENIR_R67 = new Set<string>(Array.from({ length: 20 }, (_, i) => `souv-${i + 29}`)); // R68z40: ساعات وخواتم وشنط وورد
+  const SOUVENIR_R67 = new Set<string>(Array.from({ length: 38 }, (_, i) => `souv-${i + 29}`)); // R106: + 18 تذكار علاقات (souv-49..66) // R68z40: ساعات وخواتم وشنط وورد
   /** R68z: مدة الأغراض بالمتجر — 7 / 15 / 30 يوم / دائم. السعر نسبة من سعر الدائم. */
   const TIMED_SLOTS = new Set(['frame', 'bg', 'chat-bubble', 'board', 'mic-frame', 'title', 'badge', 'room-bg', 'avatar', 'voice-fx', 'entrance']); // R68z32: مؤثرات الصوت بمدة. R68z30: العصي وكور البولينغ دائم بس
   const DURATIONS = [{ days: 7, pct: 25, label: '7 أيام' }, { days: 15, pct: 40, label: '15 يوم' }, { days: 30, pct: 60, label: '30 يوم' }, { days: 0, pct: 100, label: 'دائم' }] as const; // R68z29: مثل فيديو المالك

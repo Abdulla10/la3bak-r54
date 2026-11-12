@@ -299,3 +299,5 @@ a{-webkit-touch-callout:none;text-decoration:none}
 }
 /* R105: الزر العائم «ثبّت كتطبيق» كان يطلع فوق القائمة والمحتوى — بداله شاشة التثبيت */
 html body .install-fab{display:none!important}
+/* R106: شريط خصم VIP بالمتجر — الكلام كان ذهبي على ذهبي */
+html body .lb-store-vipdisc:not(#_){color:#2a1600!important;font-weight:800}

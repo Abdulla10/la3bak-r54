@@ -394,6 +394,25 @@ export const SOUVENIR_ITEMS: ShopItem[] = [
   { ...S('souv-46', 'باقة الورد البنفسجي', 'epic'), art: '/assets/art68/souv/v18.webp', price: 4500 },
   { ...S('souv-47', 'باقة الورد الأبيض', 'rare'), art: '/assets/art68/souv/v19.webp', price: 3000 },
   { ...S('souv-48', 'باقة الورد الوردي', 'premium'), art: '/assets/art68/souv/v20.webp', price: 2000 },
+  // R106: تذكارات العلاقات — حب، صديق، صديقة، أخ، أخت (صور المالك)
+  { ...S('souv-49', 'إطار حب الملكي', 'legendary'), art: '/assets/art68/souv/v21.webp', price: 24000 },
+  { ...S('souv-50', 'إطار حب الورد', 'epic'), art: '/assets/art68/souv/v22.webp', price: 14000 },
+  { ...S('souv-51', 'إطار صديق اللعب', 'epic'), art: '/assets/art68/souv/v23.webp', price: 12000 },
+  { ...S('souv-52', 'إطار صديقة الجيمنج', 'epic'), art: '/assets/art68/souv/v24.webp', price: 12000 },
+  { ...S('souv-53', 'إطار أخ الفارس', 'legendary'), art: '/assets/art68/souv/v25.webp', price: 22000 },
+  { ...S('souv-54', 'إطار أخت الأميرة', 'legendary'), art: '/assets/art68/souv/v26.webp', price: 22000 },
+  { ...S('souv-55', 'إطار صديق الوفاء', 'epic'), art: '/assets/art68/souv/v27.webp', price: 13000 },
+  { ...S('souv-56', 'إطار صديقة الوفاء', 'epic'), art: '/assets/art68/souv/v28.webp', price: 13000 },
+  { ...S('souv-57', 'إطار أخ الأسد', 'legendary'), art: '/assets/art68/souv/v29.webp', price: 23000 },
+  { ...S('souv-58', 'إطار أخت الفراشة', 'epic'), art: '/assets/art68/souv/v30.webp', price: 15000 },
+  { ...S('souv-59', 'إطار حب النار', 'ultra'), art: '/assets/art68/souv/v31.webp', price: 35000 },
+  { ...S('souv-60', 'إطار حب الوردي', 'legendary'), art: '/assets/art68/souv/v32.webp', price: 21000 },
+  { ...S('souv-61', 'إطار القلبين', 'epic'), art: '/assets/art68/souv/v33.webp', price: 14000 },
+  { ...S('souv-62', 'إطار أصحاب العمر', 'epic'), art: '/assets/art68/souv/v34.webp', price: 12000 },
+  { ...S('souv-63', 'إطار أخي', 'legendary'), art: '/assets/art68/souv/v35.webp', price: 20000 },
+  { ...S('souv-64', 'إطار أختي', 'legendary'), art: '/assets/art68/souv/v36.webp', price: 20000 },
+  { ...S('souv-65', 'إطار صديقتي', 'epic'), art: '/assets/art68/souv/v37.webp', price: 13000 },
+  { ...S('souv-66', 'إطار صديقي', 'epic'), art: '/assets/art68/souv/v38.webp', price: 13000 },
 ];
 
 
