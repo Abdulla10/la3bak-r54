@@ -4,8 +4,12 @@ const A = { cfg: undefined, gsi: null, inited: false };
 
 async function config() {
   if (A.cfg !== undefined) return A.cfg;
-  try { A.cfg = (await (await fetch('/api/auth/config', { cache: 'no-store' })).json()).google || null; } catch { A.cfg = null; }
-  return A.cfg;
+  /* R98: لو الطلب فشل (شبكة/خادم) ما نحفظ الفشل، نعيد المحاولة مرة ثانية */
+  for (let i = 0; i < 3; i++) {
+    try { const r = await fetch('/api/auth/config', { cache: 'no-store' }); if (r.ok) { A.cfg = (await r.json()).google || null; return A.cfg; } } catch { /* نعيد */ }
+    await new Promise((ok) => setTimeout(ok, 800 * (i + 1)));
+  }
+  return null;
 }
 
 function loadGsi() {
@@ -40,12 +44,13 @@ function askTotp(msg) {
 }
 export async function mount(el, { onLogin, onError, beforeLogin }) {
   const id = await config();
-  if (!el || !id) { if (el) el.closest('.g-card')?.setAttribute('hidden', ''); return; }
+  if (!el) return;
+  if (!id) { onError('ما قدرنا نوصل للخادم الحين. تأكد من النت واضغط إعادة المحاولة.'); return; }
   try { await loadGsi(); } catch {
     // السبب الفعلي: السكربت من accounts.google.com ما انحمّل (شبكة، DNS، حاجب إعلانات/محتوى، أو متصفح يمنع الطرف الثالث)
     onError(navigator.onLine === false
       ? 'ما فيه اتصال بالإنترنت الحين، فما قدرنا نحمّل زر Google.'
-      : 'ما قدرنا نفتح accounts.google.com من متصفحك أو شبكتك (ممكن حاجب إعلانات أو شبكة مقيّدة). تقدر تكمل كضيف، أو جرّب شبكة ثانية ثم أعد المحاولة.');
+      : 'ما قدرنا نفتح accounts.google.com من متصفحك أو شبكتك (ممكن حاجب إعلانات أو شبكة مقيّدة). جرّب شبكة ثانية ثم أعد المحاولة.');
     return;
   }
   if (!document.body.contains(el)) return;

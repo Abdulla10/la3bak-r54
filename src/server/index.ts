@@ -2797,12 +2797,11 @@ export async function createApp(
           if (code === 'certs_unavailable' || (e as Error).name === 'TimeoutError' || (e as Error).name === 'TypeError') return json(res, 503, { error: 'ما قدرنا نتواصل مع Google للتحقق. جرّب بعد شوي.' });
           return json(res, 401, { error: code === 'expired' ? 'انتهت صلاحية تسجيل الدخول، جرّب مرة ثانية.' : 'تعذّر التحقق من حساب Google.' });
         }
-        const fromG = cleanName(g.name);
-        const gName = fromG.length >= 2 && !nameProblem(fromG) ? fromG : '';
         let name = '';
         let r;
         try { r = identities.resolve(g.sub, user?.id, newUserId, (proposed) => {
-          name = accounts.nameOf(proposed.id) || (proposed.adopted ? user!.name : '') || gName || 'لاعب';
+          /* R98: الحساب الجديد ياخذ اسم عشوائي على طول (يقدر يغيّره بعدين من ملفه) */
+          name = accounts.nameOf(proposed.id) || (proposed.adopted ? user!.name : '') || ('لاعب' + String(1000 + Math.floor(Math.random() * 9000)));
           accounts.ensure(proposed.id, name);
         }); } catch (e) {
           if (e instanceof StorageError) { log('google_link_unsaved', { store: e.store, code: e.code }); return json(res, 503, { error: 'تعذّر حفظ ربط الحساب الآن. جرّب بعد شوي.' }); }

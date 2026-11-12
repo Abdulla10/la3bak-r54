@@ -3,7 +3,7 @@ let PKLOADED = false;
 import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
-import * as PR from './profile.js?v=r97';
+import * as PR from './profile.js?v=r98';
 import * as UNIFIED from '../unified/shell.js?v=r96';
 import * as REF from '../unified/home.js?v=r95';
 import * as SOCIAL from '../unified/social.js?v=r96';
@@ -21,12 +21,12 @@ import { CLOCK, startClocks, updateClocks } from '../turnclock.js?v=shell-r6';
 import { initStatus, checkStatusNow } from '../status.js?v=r68x-navigation-r50';
 import * as LOB from '../lobby.js?v=r91';
 import * as AVT from '../avatar.js?v=shell-r6';
-import * as AUTH from '../auth.js?v=r69a-r6';
+import * as AUTH from '../auth.js?v=r98b-r6';
 import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r97';
+import * as PF from '../profile.js?v=r98';
 import * as SHOP from '../shop.js?v=r91';
 import * as GIFT from '../gifts.js?v=r91';
 import * as GFX from '../giftfx.js?v=r68i';
@@ -47,10 +47,10 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r91';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r97';
+import * as PWA from '../pwa.js?v=r98b';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r97';
+import * as MIS from '../missions.js?v=r98';
 import * as SP from '../social-plus-r73.js?v=r92';
 import '../mute-r88.js?v=r88';
 import * as CHAT from '../chat.js?v=r91';
@@ -409,7 +409,7 @@ function quickJoin(view, code) {
 
 function needUser(nextHash) {
   if (S.user) return false;
-  toast('قبل ما تدخل الغرفة، اكتب الاسم اللي بيظهر لأصحابك.');
+  toast('سجّل دخولك بـ Google أول.');
   S.next = nextHash;
   (globalThis.__LA3BAK_NAV__ || location).hash = '#/profile';
   return true;
@@ -457,7 +457,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r97');
+  const M = await import('../settings-r60.js?v=r98b');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -1410,8 +1410,8 @@ function googleCardInner(linked) {
     return `<section class="card g-card g-ok"><h2>🔗 حسابك مربوط بـ Google</h2><p class="muted">تقدمك وصورتك ورصيدك محفوظة على حسابك، وتدخلها من أي جهاز بنفس حساب Google.</p>
       <button class="btn ghost block" type="button" data-act="auth-logout">تسجيل الخروج</button></section>`;
   }
-  return `<section class="card g-card"><h2>سجّل الدخول بحساب Google</h2><p class="muted">${S.user ? 'اربط حسابك الحالي بـ Google عشان يبقى تقدمك وصورتك ورصيدك وتدخلها من أي جهاز.' : 'ادخل بحساب Google وارجع لتقدمك من أي جهاز. أو اكتب اسمك تحت وابدأ بدون حساب.'}</p>
-    <p class="hint">إذا Google جديد، يرتبط بحساب الضيف الحالي. وإذا مربوط بحساب لعب سابق، بتدخل حسابه السابق بدون دمج أو نقل رصيد الضيف. احتفظ بنسخة الدخول لحسابك قبل التبديل.</p><details class="hint"><summary>مساعدة خطأ origin_mismatch</summary><p>هالخطأ من إعدادات Google للمطور. مصدر JavaScript الحالي لازم يكون مصرحًا في نفس OAuth Client ID، بدون أي مسار بعد الدومين:</p><code dir="ltr">${esc(location.origin)}</code><p>هذا عرض للمصدر، مب تأكيد أن Google سمح به. تسجيله يتم في Google Cloud من المالك.</p></details><div id="gBtn" class="g-btn" aria-label="تسجيل الدخول بحساب Google"></div><div id="gErr" class="pf-note bad" role="alert" hidden></div></section>`;
+  return `<section class="card g-card"><h2>سجّل الدخول بحساب Google</h2><p class="muted">${S.user ? 'اربط حسابك الحالي بـ Google عشان يبقى تقدمك وصورتك ورصيدك وتدخلها من أي جهاز.' : 'ضغطة وحدة وتدخل. نعطيك اسم تلقائي وتقدر تغيّره بعدين من ملفك.'}</p>
+    <p class="hint"${S.user?'':' hidden'}>إذا Google جديد، يرتبط بحساب الضيف الحالي. وإذا مربوط بحساب لعب سابق، بتدخل حسابه السابق بدون دمج أو نقل رصيد الضيف. احتفظ بنسخة الدخول لحسابك قبل التبديل.</p><details class="hint"${S.user?'':' hidden'}><summary>مساعدة خطأ origin_mismatch</summary><p>هالخطأ من إعدادات Google للمطور. مصدر JavaScript الحالي لازم يكون مصرحًا في نفس OAuth Client ID، بدون أي مسار بعد الدومين:</p><code dir="ltr">${esc(location.origin)}</code><p>هذا عرض للمصدر، مب تأكيد أن Google سمح به. تسجيله يتم في Google Cloud من المالك.</p></details><div id="gBtn" class="g-btn" aria-label="تسجيل الدخول بحساب Google"></div><div id="gErr" class="pf-note bad" role="alert" hidden></div></section>`;
 }
 function mountGoogle() {
   const el = $('#gBtn');
