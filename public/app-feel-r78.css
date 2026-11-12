@@ -83,3 +83,4 @@ html body #view button[type=submit].btn,
 html body :is(.gold-btn,.play-now,.m68-claim,.lb-gs-submit):not(#_){background:linear-gradient(135deg,#ffd66b,#f0b429)!important;color:#2a1500!important;border:0!important;box-shadow:0 4px 14px rgba(240,180,41,.28)!important;text-shadow:none!important}
 html body .btn.btn:not(.ghost):not(.danger):not(.secondary):not(.link):disabled,html body .btn.btn:not(.ghost):not(.danger):not(.secondary):not(.link)[aria-disabled=true]{background:linear-gradient(135deg,#4a3d22,#3a2f19)!important;color:#e9dcc0!important;box-shadow:none!important;opacity:1}
 html body #view .btn:not(.ghost):not(.danger) svg{color:#2a1500}
+html body .u2-col[data-c="y"]{color:#2a1500!important;text-shadow:none!important}
