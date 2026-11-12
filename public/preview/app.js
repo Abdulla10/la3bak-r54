@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r91';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r99b';
+import * as PWA from '../pwa.js?v=r100';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r98';
@@ -457,7 +457,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r99b');
+  const M = await import('../settings-r60.js?v=r100');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -740,6 +740,7 @@ async function render() {
       unifiedPage(view,r.name,AR69.arenaHTML(r.name, r.name === 'watch' ? r.a : ''));
       break;
     case 'passkeys':
+      (globalThis.__LA3BAK_NAV__ || location).replace('#/settings'); return;
       if (!S.user) { S.next = '#/' + r.name; (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,r.name,PK.pageHTML());
       if (!PKLOADED) { PKLOADED = true; PK.load(() => { if (parseRoute().name === 'passkeys') render(); }); }
@@ -1400,10 +1401,8 @@ async function loadAcct(redraw = true) {
 }
 
 function googleCard(linked) {
-  if (linked) {
-    return googleCardInner(linked) + (PK.supported() ? `<section class="card"><h2>🔐 الدخول بـ ${PK.bioName()}</h2><p class="muted">ادخل حسابك بوجهك أو بصمتك بدون Google.</p><a class="btn block ghost" href="#/passkeys">فعّلها / الأجهزة</a></section>` : '');
-  }
-  return googleCardInner(linked).replace('</section>', (S.user ? '' : PK.loginButton()) + '</section>') + (S.user && PK.supported() ? `<section class="card"><h2>🔐 احمِ حسابك بـ ${PK.bioName()}</h2><p class="muted">فعّلها عشان ترجع لحسابك بوجهك أو بصمتك حتى لو طلعت أو غيّرت الجهاز (على نفس حساب Apple/Google).</p><a class="btn block ghost" href="#/passkeys">فعّلها</a></section>` : '');
+  /* R100: شلنا الدخول بالبصمة */
+  return googleCardInner(linked);
 }
 function googleCardInner(linked) {
   if (linked) {
