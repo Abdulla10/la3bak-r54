@@ -16,6 +16,8 @@ export interface Room {
   botLevel?: 'easy' | 'normal' | 'pro';
   /** R72: شخصية الكمبيوتر اللي اختارها اللاعب */
   persona?: string;
+  /** R108: وضع اللعب (لودو: classic / quick / magic) */
+  variant?: string;
   gameId: string;
   seats: number;
   status: 'lobby' | 'playing' | 'finished';

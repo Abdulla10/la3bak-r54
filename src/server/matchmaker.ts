@@ -6,7 +6,7 @@ import { StorageError, STORAGE_MSG } from './datafile.js';
 
 interface Entry { user: User; since: number; order: number; cancelled?: boolean }
 const EXPIRED_MSG = 'انتهت مهلة البحث. تقدر تبدأ البحث من يديد.';
-export interface MMStatus { game: string; seats: number; stake: number; waiting: number; since: number }
+export interface MMStatus { game: string; variant?: string; seats: number; stake: number; waiting: number; since: number }
 
 /**
  * مطابقة اللاعبين: طابور لكل (لعبة، عدد لاعبين). لما يكتمل العدد تنبني غرفة وتبدأ فوراً.
@@ -47,15 +47,17 @@ export class Matchmaker {
     return null;
   }
 
-  private key(game: string, seats: number, stake: number) { return `${game}:${seats}:${stake}`; }
+  private key(game: string, seats: number, stake: number, variant = 'classic') { return `${game}${variant && variant !== 'classic' ? '~' + variant : ''}:${seats}:${stake}`; }
+  /** R108: «ludo~quick» → اللعبة والوضع */
+  private gv(g: string) { const [game, variant] = g.split('~'); return { game, variant: variant || 'classic' }; }
   private find(userId: string) {
     for (const [k, list] of this.q) if (list.some((e) => e.user.id === userId)) return k;
     return null;
   }
   private push(k: string) {
     const list = this.q.get(k) ?? [];
-    const [game, seats, stake] = k.split(':');
-    for (const e of list) this.notify(e.user.id, { t: 'mm', game, seats: Number(seats), stake: Number(stake), waiting: list.length, since: e.since });
+    const [gk, seats, stake] = k.split(':'); const { game, variant } = this.gv(gk);
+    for (const e of list) this.notify(e.user.id, { t: 'mm', game, variant, seats: Number(seats), stake: Number(stake), waiting: list.length, since: e.since });
   }
 
   private track(take: Entry[]) {
@@ -84,17 +86,17 @@ export class Matchmaker {
     const k = this.find(userId);
     if (!k) return null;
     const list = this.q.get(k)!;
-    const [game, seats, stake] = k.split(':');
-    return { game, seats: Number(seats), stake: Number(stake), waiting: list.length, since: list.find((e) => e.user.id === userId)!.since };
+    const [gk, seats, stake] = k.split(':'); const { game, variant } = this.gv(gk);
+    return { game, variant, seats: Number(seats), stake: Number(stake), waiting: list.length, since: list.find((e) => e.user.id === userId)!.since };
   }
   /** عدد المنتظرين الحقيقي لعرضه في صفحة اللعبة */
   count(game = ''): number {
     let n = 0;
-    for (const [k, list] of this.q) if (!game || k.startsWith(game + ':')) n += list.length;
+    for (const [k, list] of this.q) if (!game || k.startsWith(game + ':') || k.startsWith(game + '~')) n += list.length;
     return n;
   }
 
-  async join(user: User, gameId: unknown, rawSeats: unknown, rawStake: unknown = 0, prev?: { since: number; order: number }) {
+  async join(user: User, gameId: unknown, rawSeats: unknown, rawStake: unknown = 0, prev?: { since: number; order: number }, variant = 'classic') {
     if (this.pending.has(user.id)) return { ok: false as const, error: 'جاري إنشاء غرفة المطابقة. انتظر لين تخلص المحاولة قبل بحث يديد.' };
     const engine = typeof gameId === 'string' ? this.registry.get(gameId) : undefined;
     if (!engine || engine.info.status !== 'available') return { ok: false as const, error: 'هذي اللعبة مو متاحة الحين.' };
@@ -104,7 +106,7 @@ export class Matchmaker {
     if (!STAKES.includes(stake)) return { ok: false as const, error: 'رسم الدخول غير صحيح.' };
     if (stake > 0 && (!this.wallet || this.wallet.balance(user.id) < stake)) return { ok: false as const, error: `رصيدك ما يكفي لرسم ${stake} عملة. العب غرفة مجانية أو استلم مكافأة اليوم.` };
     this.leave(user.id);
-    const k = this.key(engine.info.id, seats, stake);
+    const k = this.key(engine.info.id, seats, stake, variant);
     const list = this.q.get(k) ?? [];
     list.push(prev ? { user, since: prev.since, order: prev.order } : { user, since: this.now(), order: this.order++ });
     this.q.set(k, list);
@@ -134,7 +136,7 @@ export class Matchmaker {
           }
         }
         // حتى فشل الوعد غير المتوقع لا يترك رسماً بلا استرداد.
-        const res = await this.service.createMatchRoom(take.map((e) => e.user), engine.info.id, seats, false, stake)
+        const res = await this.service.createMatchRoom(take.map((e) => e.user), engine.info.id, seats, false, stake, variant)
           .catch(() => ({ ok: false as const, error: 'صار خطأ، جرّب مرة ثانية.' }));
         if (!res.ok) {
           // Wallet يمنع تكرار نفس الاسترداد ويعيد حفظه بنفس المفتاح عند فشل التخزين.
@@ -171,12 +173,12 @@ export class Matchmaker {
   async fillWithBots(userId: string) {
     const k = this.find(userId);
     if (!k) return { ok: false as const, error: 'ما أنت في طابور مطابقة.' };
-    const [game, seats] = k.split(':'); // مع البوتات: غرفة مجانية دائماً، ما ينخصم شي
+    const [gk, seats] = k.split(':'); const { game, variant } = this.gv(gk); // مع البوتات: غرفة مجانية دائماً، ما ينخصم شي
     const take = this.q.get(k)!;
     this.q.delete(k);
     this.track(take);
     try {
-      const res = await this.service.createMatchRoom(take.map((e) => e.user), game, Number(seats), true, 0)
+      const res = await this.service.createMatchRoom(take.map((e) => e.user), game, Number(seats), true, 0, variant)
         .catch(() => ({ ok: false as const, error: 'صار خطأ، جرّب مرة ثانية.' }));
       if (!res.ok) { this.requeue(k, take); return res; }
       for (const e of take) this.notify(e.user.id, { t: 'mm:found', code: res.room.code, bots: true });
@@ -190,13 +192,13 @@ export class Matchmaker {
   /** R69zn: كل كم ثانية نجرب نطابق من جديد (لأن النطاق يكبر مع الانتظار) */
   async rematch() {
     for (const [k, list] of [...this.q]) {
-      const [game, seatsS, stakeS] = k.split(':'); const seats = Number(seatsS);
+      const [gk, seatsS, stakeS] = k.split(':'); const seats = Number(seatsS); const { game, variant } = this.gv(gk);
       if (list.length < seats || !this.pick(game, list, seats)) continue;
       // نعيد إدخال أقدم واحد بنفس المسار عشان تنفّذ نفس منطق الخصم والإنشاء والاسترداد
       const first = [...list].sort((a, b) => a.order - b.order).find((e) => this.pick(game, list, seats)!.includes(e));
       if (!first) continue;
       const rest = list.filter((e) => e !== first); if (rest.length) this.q.set(k, rest); else this.q.delete(k);
-      await this.join(first.user, game, seats, Number(stakeS), { since: first.since, order: first.order }).catch(() => undefined);
+      await this.join(first.user, game, seats, Number(stakeS), { since: first.since, order: first.order }, variant).catch(() => undefined);
     }
   }
   /** تنظيف: من انتظر أكثر من الحد */

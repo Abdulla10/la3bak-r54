@@ -2885,7 +2885,8 @@ export async function createApp(
   const ERR_RATE = 'بطيء شوي، رسائل كثيرة.';
 
   /** أوضاع اللعب غير المنفّذة (مثل «سهم» و«مداهمات» بلودو) ما تبدأ بها مباراة: الخادم يرفض أي variant غير classic، فالمنع ليس بالواجهة فقط */
-  const variantBlock = (m: any) => (m.variant !== undefined && m.variant !== null && m.variant !== 'classic' ? { ok: false as const, error: 'هذا الوضع قيد التطوير ولا تبدأ فيه مباراة الحين. العب الكلاسيكي.' } : null);
+  /* R108: لودو صار فيه «سريع» و«سحري» — أي وضع ثاني مرفوض */
+  const variantBlock = (m: any) => (m.variant !== undefined && m.variant !== null && m.variant !== 'classic' && !(m.gameId === 'ludo' && (m.variant === 'quick' || m.variant === 'magic')) ? { ok: false as const, error: 'هذا الوضع غير متاح.' } : null);
 
   const voiceBlocked=(error:string)=>({status:'blocked' as const,roomId:null,councilId:null,error});
   const resolveGameVoice=(user:User,code:unknown)=>service.voiceContext(user,code,async ctx=>{
@@ -2927,7 +2928,7 @@ export async function createApp(
       case 'room:create':
         if (typeof m.key!=='string' || !/^[A-Za-z0-9_-]{8,128}$/.test(m.key)) return {ok:false,error:'مفتاح إنشاء الغرفة مطلوب. حدّث الصفحة.'};
         if(m.voice!==undefined&&typeof m.voice!=='boolean')return {ok:false,error:'خيار الصوت غير صالح.'};
-        return variantBlock(m) ?? withGameVoice(user,await service.createRoom(user, { gameId: m.gameId, mode: m.mode, seats: m.seats, key:m.key, visibility:m.visibility, password:m.password, botLevel: m.botLevel, persona: m.persona }),m.voice!==false);
+        return variantBlock(m) ?? withGameVoice(user,await service.createRoom(user, { gameId: m.gameId, mode: m.mode, seats: m.seats, key:m.key, visibility:m.visibility, password:m.password, botLevel: m.botLevel, persona: m.persona, variant: m.variant }),m.voice!==false);
       case 'room:join':
         if(m.voice!==undefined&&typeof m.voice!=='boolean')return {ok:false,error:'خيار الصوت غير صالح.'};
         return withGameVoice(user,await service.joinRoom(user, m.code, m.password),m.voice!==false);
@@ -2957,7 +2958,7 @@ export async function createApp(
         { const vb = variantBlock(m); if (vb) return vb; }
         const stake = Number(m.stake) || 0; // قيمة واحدة تُفحص بالبوابة وتُمرَّر للمطابقة (لا تفسير مختلف بين الاثنين)
         const blocked = stakeGate(user.id, stake);
-        return blocked ? { ok: false, ...blocked } : mm.join(user, m.gameId, m.seats, stake);
+        return blocked ? { ok: false, ...blocked } : mm.join(user, m.gameId, m.seats, stake, undefined, m.gameId === 'ludo' && (m.variant === 'quick' || m.variant === 'magic') ? m.variant : 'classic');
       }
       case 'wallet:get':
         return { ok: true, coins: wallet.balance(user.id), gems: wallet.gems(user.id), canClaim: wallet.canClaim(user.id), stakes: availableStakes };

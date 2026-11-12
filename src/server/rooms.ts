@@ -541,7 +541,7 @@ export class RoomService {
 
   // ---------- الغرف ----------
 
-  createRoom(user: User, p: { gameId: unknown; mode: unknown; seats: unknown; key?: unknown; visibility?: unknown; password?: unknown; botLevel?: unknown; persona?: unknown }): Promise<Res<{ room: Snapshot }>> {
+  createRoom(user: User, p: { gameId: unknown; mode: unknown; seats: unknown; key?: unknown; visibility?: unknown; password?: unknown; botLevel?: unknown; persona?: unknown; variant?: unknown }): Promise<Res<{ room: Snapshot }>> {
     return this.guard(() => this.lock('create:' + user.id, async () => {
       const engine = typeof p.gameId === 'string' ? this.registry.get(p.gameId) : undefined;
       if (!engine || engine.info.status !== 'available') return fail('هذي اللعبة مو متاحة الحين.');
@@ -560,12 +560,14 @@ export class RoomService {
       const password = p.password;
       if (privateRoom && (typeof password !== 'string' || password.length < 8 || password.length > 128 || Buffer.byteLength(password) > 512)) return fail('كلمة مرور الغرفة من 8 إلى 128 حرف.');
       if (!privateRoom && password !== undefined && password !== '') return fail('اختر غرفة خاصة لاستخدام كلمة مرور.');
-      const fingerprint = createHmac('sha256',this.cfg.cookieSecret).update(JSON.stringify([engine.info.id,mode,seats,privateRoom,privateRoom ? password : ''])).digest('hex');
+      const fingerprint = createHmac('sha256',this.cfg.cookieSecret).update(JSON.stringify([engine.info.id,mode,seats,privateRoom,privateRoom ? password : '',String(p.variant ?? 'classic')])).digest('hex');
       const now = this.now();
       const room: Room = { code: await this.newCode(), hostId: user.id, mode, gameId: engine.info.id, seats, status:'lobby',
         players:[{id:user.id,name:user.name,bot:false,ready:true,left:false}],state:null,revision:1,createdAt:now,updatedAt:now,
         creation:{key,fingerprint} };
       if (mode === 'bots' && (p.botLevel === 'easy' || p.botLevel === 'pro')) room.botLevel = p.botLevel;
+      /* R108: وضع اللعب (لودو سريع/سحري) */
+      if (p.variant !== undefined && p.variant !== null && p.variant !== 'classic') { if (!(engine.info.variants ?? []).includes(String(p.variant))) return fail('هذا الوضع غير متاح لهذي اللعبة.'); room.variant = String(p.variant); }
       /* R72: شخصية الخصم تحدد المستوى */
       const persona = mode === 'bots' ? personaOf(p.persona) : null;
       if (persona) { room.persona = persona.id; if (persona.level === 'normal') delete room.botLevel; else room.botLevel = persona.level; }
@@ -600,7 +602,7 @@ export class RoomService {
   }
 
   /** غرفة جاهزة من المطابقة: تبدأ فوراً. لو fillBots نكمّل المقاعد ببوتات (علامة 🤖). */
-  createMatchRoom(users: User[], gameId: string, seats: number, fillBots: boolean, stake = 0): Promise<Res<{ room: Room }>> {
+  createMatchRoom(users: User[], gameId: string, seats: number, fillBots: boolean, stake = 0, variant = 'classic'): Promise<Res<{ room: Room }>> {
     return this.guard(async () => {
       const engine = this.registry.get(gameId);
       if (!engine || engine.info.status !== 'available') return fail('هذي اللعبة مو متاحة الحين.');
@@ -621,10 +623,11 @@ export class RoomService {
         createdAt: now,
         updatedAt: now,
         ...(stake > 0 ? { stake, payers: users.map((u) => u.id) } : {}),
+        ...(variant !== 'classic' && (engine.info.variants ?? []).includes(variant) ? { variant } : {}),
       };
       this.syncBots(room);
       const refs: PlayerRef[] = room.players.map((p) => ({ id: p.id, name: p.name, bot: p.bot }));
-      room.state = engine.init(refs, now, this.cfg.engine);
+      room.state = engine.init(refs, now, { ...this.cfg.engine, variant: room.variant });
       room.status = 'playing';
       room.gameNo = 1;
       if (!(await this.store.create(room))) return fail('صار تعارض في الرمز، جرّب مرة ثانية.');
@@ -725,7 +728,7 @@ export class RoomService {
       const notReady = this.humans(room).filter((p) => p.id !== room.hostId && !p.ready);
       if (notReady.length) return fail('فيه لاعبين ما ضغطوا «جاهز» لسه.');
       const refs: PlayerRef[] = active.map((p) => ({ id: p.id, name: p.name, bot: p.bot }));
-      room.state = engine.init(refs, this.now(), this.cfg.engine);
+      room.state = engine.init(refs, this.now(), { ...this.cfg.engine, variant: room.variant });
       room.status = 'playing';
       room.gameNo = (room.gameNo ?? 0) + 1;
       this.botPlans.forEach((_, k) => k.startsWith(room.code + ':') && this.botPlans.delete(k));

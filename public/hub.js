@@ -17,18 +17,18 @@ HUBS.baloot = {
   sizes: [{ n: 4, label: '4 لاعبين (فريقين)' }], defSize: 4,
   how: ['4 لاعبين في فريقين، وشريكك اللي يقابلك.', 'المزايدة: حكم (نوع الورقة المكشوفة) أو صن أو بس. لو الكل بس تدور مرة ثانية بنوع ثاني.', 'ثمان أكلات: لازم تتبع النوع، وبالحكم تدق وتكبّر لو ما عندك النوع.', 'صاحب العقد لازم تكون نقاطه أكثر من خصمه وإلا ياخذ الخصم كل النقاط. المشاريع (سرا، خمسين، مية) والبلوت (K و Q الحكم +2) تنعلن بالأزرار بدورك. بالحكم تقدر ترفع دبل/ثري/فور قبل أول ورقة. الهدف 152.'],
 };
-/* أوضاع لودو: الكلاسيكي قواعده كاملة. «سهم» و«مداهمات» تصميمهما محفوظ للمعاينة فقط (قريباً): قواعدهما غير مطبّقة، فلا تبدأ مباراة بهما (الخادم يرفض variant غير classic). لتفعيل وضع لاحقاً: قواعده بالمحرك + real:true. */
+/* R108: أوضاع لودو: كلاسيكي، سريع، سحري — كلها مطبّقة بالخادم. (قديماً «سهم» و«مداهمات» تصميمهما محفوظ للمعاينة فقط (قريباً): قواعدهما غير مطبّقة، فلا تبدأ مباراة بهما (الخادم يرفض variant غير classic). لتفعيل وضع لاحقاً: قواعده بالمحرك + real:true. */
 const mi = (body) => `<svg viewBox="0 0 64 64" aria-hidden="true">${body}</svg>`;
 export const LD_MODES = [
   { id: 'classic', name: 'كلاسيكي', real: true,
     icon: mi('<defs><linearGradient id="lmC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb6d4"/><stop offset="1" stop-color="#d9548d"/></linearGradient></defs><circle cx="32" cy="32" r="27" fill="url(#lmC)" stroke="#ffe4ef" stroke-width="4"/><path d="M32 13l5.6 12.2 13.4 1.4-10 9 2.9 13.2L32 41.6 20.1 48.8 23 35.6l-10-9 13.4-1.4z" fill="#fff" opacity=".95"/>'),
     note: 'القواعد الكاملة مطبّقة: زهر من الخادم، 6 تطلّع القطعة، كسر القطع، الخانات الآمنة، ودور إضافي.' },
-  { id: 'arrow', name: 'سهم', real: false,
-    icon: mi('<defs><linearGradient id="lmA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fd0ff"/><stop offset="1" stop-color="#1769d8"/></linearGradient></defs><circle cx="32" cy="32" r="26" fill="#1a2d6b" stroke="#f1c75a" stroke-width="6"/><path d="M18 46L44 20M44 20H27M44 20V37" fill="none" stroke="url(#lmA)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>'),
-    note: 'قريباً — قيد التطوير. هذي معاينة للتصميم فقط، وقواعد «سهم» الخاصة غير مطبّقة بعد، فما تقدر تبدأ مباراة بها الحين. العب الكلاسيكي.' },
-  { id: 'raids', name: 'مداهمات', real: false,
-    icon: mi('<defs><linearGradient id="lmR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd0e6"/><stop offset="1" stop-color="#e0507f"/></linearGradient></defs><circle cx="32" cy="32" r="27" fill="#5a1d4a" stroke="#d6dff7" stroke-width="3" stroke-dasharray="6 3"/><path d="M32 10l16 16-8 26H24l-8-26z" fill="url(#lmR)" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 10v42M16 26h32" stroke="#fff" stroke-width="1.8" opacity=".6"/>'),
-    note: 'قريباً — قيد التطوير. هذي معاينة للتصميم فقط، وقواعد «مداهمات» الخاصة غير مطبّقة بعد، فما تقدر تبدأ مباراة بها الحين. العب الكلاسيكي.' },
+  { id: 'quick', name: 'سريع', real: true,
+    icon: mi('<defs><linearGradient id="lmQ" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fe3ff"/><stop offset="1" stop-color="#1784e8"/></linearGradient></defs><circle cx="32" cy="32" r="27" fill="url(#lmQ)" stroke="#e8f8ff" stroke-width="4"/><rect x="24" y="20" width="22" height="22" rx="5" fill="#fff"/><circle cx="30" cy="26" r="2.4" fill="#1a2d6b"/><circle cx="40" cy="36" r="2.4" fill="#1a2d6b"/><circle cx="35" cy="31" r="2.4" fill="#1a2d6b"/><path d="M8 40h12M12 46h10M10 34h9" stroke="#ff9b2f" stroke-width="3.5" stroke-linecap="round"/><path d="M36 14l-6 8h5l-3 7 8-10h-5z" fill="#ffd34d"/>'),
+    note: 'كل لاعب يبدأ وقطعة برا البيت، والقطعة تطلع بـ 1 أو 6. طريق النهاية مقفول 🔒 لين تكسر قطعة خصم ⚔️. أول واحد يوصّل قطعتين يفوز.' },
+  { id: 'magic', name: 'سحري', real: true,
+    icon: mi('<defs><linearGradient id="lmM" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8a2ff"/><stop offset="1" stop-color="#7b2ff2"/></linearGradient></defs><circle cx="32" cy="32" r="27" fill="url(#lmM)" stroke="#f3e4ff" stroke-width="4"/><path d="M32 12c8 6 10 16 6 26H26c-4-10-2-20 6-26z" fill="#fff"/><path d="M26 38l-6 8h8zM38 38l6 8h-8z" fill="#ff4d6d"/><circle cx="32" cy="26" r="4" fill="#ff4d6d"/><path d="M28 44h8l-4 9z" fill="#ffb02e"/>'),
+    note: 'كلاسيكي بس اللوحة فيها أغراض سحرية: 🚀 صاروخ يقدّمك 6، 🌀 بوابة تنقلك للبوابة اللي قدام، 🎲 زهر دور إضافي، 💣 قنبلة ترجّع قطعتك للبيت، 🧊 ثلج يضيّع دورك الجاي.' },
 ];
 export const ldMode = () => { let m = ''; try { m = localStorage.getItem('qawwi_ld_mode') || ''; } catch { /* خاص */ } return LD_MODES.some((x) => x.id === m) ? m : 'classic'; };
 /** الوضع المسموح اللعب به فعلاً (الحقيقي فقط) — المعاينة شيء ولعب المباراة شيء */
@@ -37,7 +37,7 @@ export const ldPlayMode = () => (ldPlayable() ? ldMode() : 'classic');
 export const setLdMode = (m) => { try { localStorage.setItem('qawwi_ld_mode', m); } catch { /* خاص */ } };
 function ludoModesHTML() {
   const cur = ldMode(), m = LD_MODES.find((x) => x.id === cur);
-  const order = [LD_MODES[2], LD_MODES[1], LD_MODES[0]]; // مداهمات، سهم، كلاسيكي (من اليمين لليسار مثل المرجع)
+  const order = [LD_MODES[0], LD_MODES[1], LD_MODES[2]]; // R108: كلاسيكي، سريع، سحري
   return `<section class="ld-modes" aria-label="وضع اللعب"><p class="ld-modes-h">2 – 4 لاعبين</p>
     <div class="ld-tabs" role="tablist">${order.map((x) => `<button type="button" role="tab" class="${x.id === cur ? 'on' : ''}" aria-selected="${x.id === cur}" data-act="ld-mode" data-m="${x.id}"><i>${x.icon}</i><span>${x.name}</span>${x.real ? '' : '<em class="ld-soon">قريباً</em>'}</button>`).join('')}</div>
     <div class="ld-modeinfo"><b>${m.name}${m.real ? '' : ' <em>قريباً · قيد التطوير</em>'}</b><p>${m.note}</p></div></section>`;

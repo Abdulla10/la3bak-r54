@@ -1,6 +1,6 @@
 import { faceSvg, faceHtml, charOf } from './characters.js?v=shell-r6';
 import { avatarArt } from './avatars.js?v=r107';
-import { ldPlayMode, LD_MODES } from './hub.js?v=r72-r6';
+import { ldPlayMode, LD_MODES } from './hub.js?v=r108-r6';
 import * as SFX from './sfx.js?v=r69zu-r6';
 import { domino } from './domino.js?v=r107';
 import { uno } from './uno.js?v=r107';
@@ -366,6 +366,16 @@ const LD_COL = ['#22c55e', '#ffc21f', '#1e90ff', '#ee4a38'];
 const LD_DK = ['#169a47', '#c99a14', '#1569c4', '#c43a2b'];
 const LD_DD = ['#0f7a35', '#9c7608', '#0f4f98', '#962a1e'];
 const CROWN = 'M-.15 .08L-.17 -.1L-.07 -.02L0 -.14L.07 -.02L.17 -.1L.15 .08Z';
+/* R108: رسوم الأغراض (رسم أصلي بسيط) */
+const LD_ITEM = {
+  dice: '<rect x="-.3" y="-.3" width=".6" height=".6" rx=".12" fill="#ff3b4f" stroke="#fff" stroke-width=".04"/><circle cx="-.13" cy="-.13" r=".06" fill="#fff"/><circle cx=".13" cy=".13" r=".06" fill="#fff"/><circle r=".06" fill="#fff"/>',
+  rocket: '<g transform="rotate(45)"><path d="M0 -.36C.14 -.24 .16 -.04 .1 .14H-.1C-.16 -.04 -.14 -.24 0 -.36Z" fill="#fff" stroke="#c9d3e6" stroke-width=".03"/><path d="M0 -.36C.07 -.3 .1 -.24 .11 -.18H-.11C-.1 -.24 -.07 -.3 0 -.36Z" fill="#ff3b4f"/><circle cy="-.06" r=".06" fill="#3fb7ff"/><path d="M-.1 .04L-.22 .2L-.08 .16ZM.1 .04L.22 .2L.08 .16Z" fill="#ff3b4f"/><path d="M-.06 .15L0 .34L.06 .15Z" fill="#ffb02e"/></g>',
+  portal: '<rect x="-.3" y="-.34" width=".6" height=".66" rx=".28" fill="#8a7a6a" stroke="#5b4d40" stroke-width=".04"/><rect x="-.2" y="-.24" width=".4" height=".5" rx=".2" fill="#2fb6ff"/><path d="M-.08 -.04a.08 .08 0 1 1 .1 .1a.13 .13 0 1 1 -.16 -.16" fill="none" stroke="#d9f6ff" stroke-width=".04"/>',
+  bomb: '<circle cy=".05" r=".25" fill="#3b3550"/><circle cx="-.08" cy="-.03" r=".06" fill="#fff" opacity=".45"/><rect x="-.06" y="-.26" width=".12" height=".08" fill="#6d6880"/><path d="M0 -.26q.1 -.12 .2 -.06" stroke="#c49a3a" stroke-width=".04" fill="none"/><circle cx=".21" cy="-.33" r=".05" fill="#ffb02e"/>',
+  ice: '<rect x="-.28" y="-.28" width=".56" height=".56" rx=".1" fill="#bfe9ff" stroke="#fff" stroke-width=".05"/><path d="M0 -.18V.18M-.16 -.09L.16 .09M-.16 .09L.16 -.09" stroke="#3a9bd6" stroke-width=".05" stroke-linecap="round"/>',
+};
+const LD_LOCK = '<rect x="-.2" y="-.04" width=".4" height=".3" rx=".06" fill="#3a77c4" stroke="#fff" stroke-width=".04"/><path d="M-.12 -.04V-.13a.12 .12 0 0 1 .24 0V-.04" fill="none" stroke="#cfe3ff" stroke-width=".06"/><circle cy=".1" r=".045" fill="#fff"/>';
+const LD_SWORDS = '<g transform="translate(.22 -.3) scale(.8)"><circle r=".2" fill="#b3122b" stroke="#ffd34d" stroke-width=".03"/><path d="M-.12 -.12L.12 .12M.12 -.12L-.12 .12" stroke="#fff" stroke-width=".05" stroke-linecap="round"/></g>';
 function ldToken(seat, mode, x, y, rot, col, dk) {
   let face;
   if (mode === 'arrow') face = `<circle r=".4" fill="#a8740e"/><circle cy="-.04" r=".4" fill="#ffd45a" stroke="#fff3b8" stroke-width=".04"/><path d="M0 .22C-.34 -.02 -.3 -.26 -.14 -.26C-.06 -.26 0 -.2 0 -.14C0 -.2 .06 -.26 .14 -.26C.3 -.26 .34 -.02 0 .22Z" fill="${col}" stroke="${dk}" stroke-width=".04"/><path d="M-.12 -.17q.05 -.06 .1 -.02" stroke="#fff" stroke-width=".05" fill="none" stroke-linecap="round"/>`;
@@ -379,7 +389,7 @@ function ludo(room) {
   const IC = jkIC();
   const pi = g.players.indexOf(room.you);
   const myTurn = g.turnId === room.you && g.phase !== 'final';
-  const mode = ldPlayMode(), modeDef = LD_MODES.find((m) => m.id === mode);
+  const mode = ['quick', 'magic'].includes(g.variant) ? g.variant : 'classic', modeDef = LD_MODES.find((m) => m.id === mode) || LD_MODES[0]; /* R108: الوضع من الخادم */
   const shift = pi >= 0 ? (3 - g.seats[pi] + 4) % 4 : 0; // مقعدك دايماً تحت يسار مثل لودو ستار
   const rot = shift * 90;
   const posOf = (seat) => (seat + shift) % 4;
@@ -401,13 +411,16 @@ function ludo(room) {
     if (sSeat >= 0) b += globe(x, y, dd(sSeat)); else if (isStar) b += star(x, y);
   });
   LUDO_LANE.forEach((l, i) => l.forEach(([x, y]) => (b += cell(x, y, col(i)))));
-  if (mode !== 'classic') LUDO_LANE.forEach((l, i) => {
+  if (mode === 'arrow' || mode === 'raids') LUDO_LANE.forEach((l, i) => {
     const [x, y] = l[0];
     const mark = mode === 'arrow'
       ? `<path d="M-.24 -.1H.04V-.22L.28 0L.04 .22V.1H-.24Z" fill="${dd(i)}"/>`
       : `<circle r=".26" fill="none" stroke="${dd(i)}" stroke-width=".07"/><path d="M-.18 -.18L.18 .18" stroke="${dd(i)}" stroke-width=".07"/>`;
     b += `<g transform="translate(${x + .5} ${y + .5}) rotate(${i * 90})" opacity=".85">${mark}</g>`;
   });
+  /* R108: أغراض الوضع السحري + أقفال طريق النهاية بالسريع */
+  if (Array.isArray(g.items)) for (const it of g.items) { const c = LUDO_PATH[it.abs]; if (!c) continue; b += `<g class="ld-item ld-it-${it.kind}" transform="translate(${c[0] + .5} ${c[1] + .5}) rotate(${-rot}) scale(1.35)">${LD_ITEM[it.kind] || ''}</g>`; }
+  if (mode === 'quick' && Array.isArray(g.unlocked)) g.seats.forEach((seat, p) => { if (g.unlocked[p]) return; const [x, y] = LUDO_LANE[seat][0]; b += `<g transform="translate(${x + .5} ${y + .5}) rotate(${-rot}) scale(1.4)">${LD_LOCK}</g>`; });
   const T = [`6,6 6,9 7.5,7.5`, `6,6 9,6 7.5,7.5`, `9,6 9,9 7.5,7.5`, `6,9 9,9 7.5,7.5`]; // يسار(0) فوق(1) يمين(2) تحت(3)
   T.forEach((pts, i) => (b += `<polygon points="${pts}" fill="${col(i)}" stroke="#2b2b2b" stroke-width=".035"/>`));
   b += '</g></g>';
@@ -421,7 +434,7 @@ function ludo(room) {
     const seat = g.seats[o.p];
     if (!can && myTurn && g.phase === 'move' && o.p === pi) toks += `<circle class="ld-hit" cx="${x}" cy="${y}" r=".6" data-act="ludo-nomove" data-t="${o.t}"/>`;
     if (can) toks += `<circle class="ld-halo" cx="${x}" cy="${y}" r=".62"/>`;
-    toks += `<g class="ld-tok ${can ? 'can' : ''}" data-tk="t${o.p}:${o.t}" data-x="${x}" data-y="${y}">${ldToken(seat, mode, x, y, rot, col(seat), dd(seat))}</g>`;
+    toks += `<g class="ld-tok ${can ? 'can' : ''}" data-tk="t${o.p}:${o.t}" data-x="${x}" data-y="${y}">${ldToken(seat, mode, x, y, rot, col(seat), dd(seat))}${mode === 'quick' && g.unlocked?.[o.p] ? `<g transform="translate(${x} ${y}) rotate(${-rot})">${LD_SWORDS}</g>` : ''}</g>`;
     if (can) toks += `<circle class="ld-hit" cx="${x}" cy="${y}" r=".72" data-act="ludo-move" data-t="${o.t}" role="button" tabindex="0" aria-label="حرّك القطعة ${o.t + 1}"/>`;
   });
   const board = `<svg class="ld2-board" viewBox="0 0 15 15" role="img" aria-label="لوحة لودو (${modeDef.name})">${b}<g class="fx-layer" transform="rotate(${rot} 7.5 7.5)">${toks}</g></svg>`;
@@ -441,7 +454,7 @@ function ludo(room) {
   else if (!myTurn) hint = `دور ${nm(room, g.turnId)}…`;
   else if (g.canRoll) hint = 'دورك: ارمِ الزهر 🎲';
   else hint = 'اختر قطعة مضيئة تحركها، أو اضغط زر الحركة.';
-  const lastTxt = g.last ? `${nm(room, g.players[g.last.by])}: ${g.last.roll} · ${{ roll: 'رمى الزهر', move: 'حرّك', enter: 'طلّع قطعة', capture: 'كسر قطعة! 💥', finish: 'وصّل قطعة للنهاية ⭐', nomove: 'ما فيه حركة', triple: 'ثلاث ستات: ضاع الدور', timeout: 'فاته دوره' }[g.last.kind] ?? ''}` : '';
+  const lastTxt = g.last ? `${nm(room, g.players[g.last.by])}: ${g.last.roll} · ${{ roll: 'رمى الزهر', move: 'حرّك', enter: 'طلّع قطعة', capture: 'كسر قطعة! 💥', finish: 'وصّل قطعة للنهاية ⭐', nomove: 'ما فيه حركة', triple: 'ثلاث ستات: ضاع الدور', timeout: 'فاته دوره', item: ({ rocket: 'صاروخ 🚀 قدّمه 6', portal: 'دخل البوابة 🌀', dice: 'زهر سحري 🎲 دور إضافي', bomb: 'قنبلة 💣 رجعت قطعته للبيت', ice: 'ثلج 🧊 بيضيع دوره الجاي' })[g.last.item] || 'غرض سحري' }[g.last.kind] ?? ''}${g.variant === 'quick' ? ` · الهدف ${g.goal || 2} قطع` : ''}` : '';
   const dieN = g.roll || g.last?.roll || 0;
   const diceFace = dieN ? dieHtml(dieN, g.roll ? 'roll' : 'dim') : '<span class="ld2-q">؟</span>';
   const diceBtn = g.canRoll

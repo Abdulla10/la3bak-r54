@@ -31,8 +31,19 @@ export interface LudoState {
   out: boolean[];
   /** سجل الأحداث للعرض فقط (اختياري لتوافق الحالات المحفوظة قديماً) */
   ev?: EventLog;
-  last: { by: number; roll: number; kind: 'roll' | 'move' | 'enter' | 'capture' | 'finish' | 'nomove' | 'triple' | 'timeout'; token?: number } | null;
+  /** R108: الوضع — classic (افتراضي) / quick / magic */
+  variant?: LudoVariant;
+  /** R108 سريع: كم قطعة توصل عشان تفوز، ومين فتح طريق النهاية (بكسر قطعة خصم) */
+  goal?: number;
+  unlocked?: boolean[];
+  /** R108 سحري: الأغراض على الدائرة (abs = رقم الخانة) + اللاعب المجمّد يضيع دوره الجاي */
+  items?: LudoItem[];
+  frozen?: boolean[];
+  last: { by: number; roll: number; kind: 'roll' | 'move' | 'enter' | 'capture' | 'finish' | 'nomove' | 'triple' | 'timeout' | 'item'; token?: number; item?: LudoItemKind } | null;
 }
+export type LudoVariant = 'classic' | 'quick' | 'magic';
+export type LudoItemKind = 'dice' | 'rocket' | 'portal' | 'bomb' | 'ice';
+export interface LudoItem { abs: number; kind: LudoItemKind }
 export type LudoAction = { type: 'roll' } | { type: 'move'; token: number };
 export interface LudoMove { token: number; to: number; kind: 'enter' | 'move' | 'finish'; captures: { owner: number; token: number }[] }
 
@@ -51,6 +62,7 @@ export const info: GameInfo = {
   idea: 'لكل لاعب أربع قطع. ترمي الزهر وتحرك قطعة بعدد النقاط. 6 تطلّع قطعة من البيت وتعطيك دور إضافي.',
   howToStart: 'أنشئ غرفة من قسم لودو، أو ابحث عن لاعبين، أو العب ضد الكمبيوتر. ما تحتاج تجهّز شي.',
   howToWin: 'أول لاعب توصل قطعه الأربع للنهاية (بالرقم المضبوط) يفوز. النزول فوق قطعة خصم يرجّعها للبيت، وخانات النجمة والبداية آمنة.',
+  variants: ['quick', 'magic'],
 };
 
 export const seatsFor = (n: number): number[] => (n === 2 ? [0, 2] : [0, 1, 2, 3].slice(0, n));
@@ -65,12 +77,15 @@ export function legalMoves(s: LudoState, pi: number): LudoMove[] {
   s.tokens[pi].forEach((p, t) => {
     let to: number;
     if (p === -1) {
-      if (s.roll !== 6) return;
+      // R108 سريع: القطعة تطلع بـ 1 أو 6
+      if (!(s.roll === 6 || (s.variant === 'quick' && s.roll === 1))) return;
       to = 0;
     } else if (p === FINISH) return;
     else {
       to = p + s.roll!;
       if (to > FINISH) return;
+      // R108 سريع: طريق النهاية مقفول لين تكسر قطعة خصم
+      if (s.variant === 'quick' && !s.unlocked?.[pi] && to > 50) return;
     }
     const abs = absOf(s, pi, to);
     const caps: { owner: number; token: number }[] = [];
@@ -85,11 +100,27 @@ export function legalMoves(s: LudoState, pi: number): LudoMove[] {
   return out;
 }
 
+/* ---------- R108: الوضع السحري ---------- */
+const ITEM_SET: LudoItemKind[] = ['portal', 'portal', 'portal', 'portal', 'rocket', 'rocket', 'dice', 'dice', 'bomb', 'bomb', 'ice', 'ice'];
+const freeCell = (s: LudoState, abs: number) => !isSafeAbs(abs) && abs % 13 !== 12 && !(s.items ?? []).some((i) => i.abs === abs);
+function placeItems(rng: Rng): LudoItem[] {
+  // نوزّع الأغراض بشكل متناظر على الأرباع الأربعة (3 لكل ربع) عشان ما يستفيد لاعب أكثر من غيره
+  const offs = [3, 5, 10]; const kinds = shuffle(ITEM_SET.slice(), rng); const out: LudoItem[] = [];
+  for (let q = 0; q < 4; q++) offs.forEach((o, k) => out.push({ abs: q * 13 + o, kind: kinds[q * 3 + k] }));
+  return out;
+}
+function respawn(s: LudoState, kind: LudoItemKind, rng: Rng) {
+  for (let i = 0; i < 40; i++) { const a = Math.floor(rng() * RING); if (freeCell(s, a) && !s.tokens.some((ts, o) => ts.some((q) => absOf(s, o, q) === a))) { s.items!.push({ abs: a, kind }); return; } }
+}
+
 function nextTurn(s: LudoState, now: number, bonus: boolean) {
   if (!bonus) {
     for (let k = 1; k <= s.players.length; k++) {
       const i = (s.turn + k) % s.players.length;
-      if (!s.out[i]) { s.turn = i; break; }
+      if (s.out[i]) continue;
+      // R108 سحري: اللاعب المجمّد يضيع هالدور مرة وحدة
+      if (s.frozen?.[i] && s.players.filter((_, j) => !s.out[j]).length > 1) { s.frozen[i] = false; emit(s, { type: 'frozen', by: i }); continue; }
+      s.turn = i; break;
     }
     s.sixes = 0;
   }
@@ -115,18 +146,43 @@ function doRoll(s: LudoState, pi: number, rng: Rng, now: number) {
   s.endsAt = now + s.turnMs;
 }
 
-function doMove(s: LudoState, pi: number, mv: LudoMove, now: number) {
+const capturesAt = (s: LudoState, pi: number, prog: number) => {
+  const abs = absOf(s, pi, prog); const caps: { owner: number; token: number }[] = [];
+  if (abs === null || isSafeAbs(abs)) return caps;
+  s.players.forEach((_, o) => { if (o !== pi) s.tokens[o].forEach((q, k) => { if (absOf(s, o, q) === abs) caps.push({ owner: o, token: k }); }); });
+  return caps;
+};
+function doMove(s: LudoState, pi: number, mv: LudoMove, now: number, rng: Rng = Math.random) {
   const roll = s.roll!;
   const from = s.tokens[pi][mv.token];
-  const capFrom = mv.captures.map((c) => s.tokens[c.owner][c.token]);
-  s.tokens[pi][mv.token] = mv.to;
-  for (const c of mv.captures) s.tokens[c.owner][c.token] = -1;
-  const kind = mv.captures.length ? 'capture' : mv.kind === 'finish' ? 'finish' : mv.kind === 'enter' ? 'enter' : 'move';
-  s.last = { by: pi, roll, kind, token: mv.token };
+  let to = mv.to, captures = mv.captures, extra = false, item: LudoItemKind | undefined;
+  // R108 سحري: الغرض اللي تنزل عليه يشتغل
+  if (s.variant === 'magic' && s.items) {
+    const abs = absOf(s, pi, to); const hit = abs === null ? -1 : s.items.findIndex((x) => x.abs === abs);
+    if (hit >= 0) {
+      const it = s.items[hit]; item = it.kind;
+      if (it.kind === 'rocket') to = Math.min(to + 6, 50);
+      else if (it.kind === 'portal') { const ahead = s.items.filter((x) => x.kind === 'portal' && x !== it).map((x) => (x.abs - s.seats[pi] * 13 + RING) % RING).filter((pr) => pr > to && pr <= 50).sort((a, b) => a - b); if (ahead.length) to = ahead[0]; }
+      else if (it.kind === 'bomb') to = -1;
+      else if (it.kind === 'ice') { (s.frozen ??= s.players.map(() => false))[pi] = true; }
+      else if (it.kind === 'dice') extra = true;
+      if (it.kind !== 'portal') { s.items.splice(hit, 1); respawn(s, it.kind, rng); }
+      captures = to >= 0 ? capturesAt(s, pi, to) : [];
+      emit(s, { type: 'item', by: pi, token: mv.token, item: it.kind, at: mv.to, to });
+    }
+  }
+  const capFrom = captures.map((c) => s.tokens[c.owner][c.token]);
+  s.tokens[pi][mv.token] = to;
+  for (const c of captures) s.tokens[c.owner][c.token] = -1;
+  if (captures.length && s.variant === 'quick' && s.unlocked && !s.unlocked[pi]) { s.unlocked[pi] = true; emit(s, { type: 'unlock', by: pi }); }
+  const fin = to === FINISH;
+  const kind = captures.length ? 'capture' : item ? 'item' : fin ? 'finish' : mv.kind === 'enter' ? 'enter' : 'move';
+  s.last = { by: pi, roll, kind, token: mv.token, ...(item ? { item } : {}) };
   emit(s, { type: 'move', by: pi, token: mv.token, from, to: mv.to, kind: mv.kind, roll });
-  mv.captures.forEach((c, i) => emit(s, { type: 'capture', by: pi, owner: c.owner, token: c.token, from: capFrom[i] }));
-  if (s.tokens[pi].every((p) => p === FINISH)) { emit(s, { type: 'win', winner: pi }); s.phase = 'final'; s.winner = pi; s.endsAt = 0; s.roll = null; s.ver++; return; }
-  nextTurn(s, now, roll === 6 || mv.captures.length > 0 || mv.kind === 'finish');
+  captures.forEach((c, i) => emit(s, { type: 'capture', by: pi, owner: c.owner, token: c.token, from: capFrom[i] }));
+  const goal = s.goal ?? 4;
+  if (s.tokens[pi].filter((p) => p === FINISH).length >= goal) { emit(s, { type: 'win', winner: pi }); s.phase = 'final'; s.winner = pi; s.endsAt = 0; s.roll = null; s.ver++; return; }
+  nextTurn(s, now, roll === 6 || captures.length > 0 || fin || extra);
 }
 
 export function createLudoEngine(rng: Rng): Engine<LudoState, LudoAction> {
@@ -139,6 +195,9 @@ export function createLudoEngine(rng: Rng): Engine<LudoState, LudoAction> {
     if (m.to >= LANE_START) v += 25;
     const abs = absOf(s, pi, m.to);
     if (abs !== null && isSafeAbs(abs)) v += 15;
+    if (s.variant === 'quick' && !s.unlocked?.[pi]) v += m.captures.length * 60;
+    const it = abs === null ? undefined : s.items?.find((x) => x.abs === abs);
+    if (it) v += it.kind === 'bomb' ? -120 : it.kind === 'ice' ? -25 : it.kind === 'rocket' ? 30 : it.kind === 'dice' ? 35 : 20;
     // قطعة معرّضة قبل الحركة: نهرّبها
     const fa = absOf(s, pi, from);
     if (fa !== null && !isSafeAbs(fa)) v += 10;
@@ -151,10 +210,14 @@ export function createLudoEngine(rng: Rng): Engine<LudoState, LudoAction> {
       if (players.length < 2 || players.length > 4) throw new Error('ludo needs 2-4 players');
       const ids = shuffle(players.map((p) => p.id), rng);
       const turnMs = Math.max(opts?.turnMs ?? 30_000, 15_000);
-      return {
+      const variant: LudoVariant = opts?.variant === 'quick' || opts?.variant === 'magic' ? opts.variant : 'classic';
+      const st: LudoState = {
         ver: 1, turnMs, players: ids, seats: seatsFor(ids.length), tokens: ids.map(() => [-1, -1, -1, -1]), turn: 0, phase: 'roll', roll: null, sixes: 0,
         endsAt: now + turnMs, winner: null, missed: ids.map(() => 0), out: ids.map(() => false), last: null, ev: newLog(),
       };
+      if (variant === 'quick') { st.variant = 'quick'; st.goal = 2; st.unlocked = ids.map(() => false); st.tokens = ids.map(() => [0, -1, -1, -1]); }
+      if (variant === 'magic') { st.variant = 'magic'; st.items = placeItems(rng); st.frozen = ids.map(() => false); }
+      return st;
     },
     apply(state, playerId, action, now): ApplyResult<LudoState> {
       const pi = state.players.indexOf(playerId);
@@ -175,7 +238,7 @@ export function createLudoEngine(rng: Rng): Engine<LudoState, LudoAction> {
         if (!isInt(action.token)) return { ok: false, error: 'حركة غير صالحة.' };
         const mv = legalMoves(s, pi).find((m) => m.token === action.token);
         if (!mv) return { ok: false, error: 'هذي القطعة ما تتحرك بهذا الرقم.' };
-        doMove(s, pi, mv, now);
+        doMove(s, pi, mv, now, rng);
         return { ok: true, state: s };
       }
       return { ok: false, error: 'حركة غير معروفة.' };
@@ -199,7 +262,7 @@ export function createLudoEngine(rng: Rng): Engine<LudoState, LudoAction> {
       if (s.phase === 'roll') doRoll(s, pi, rng, now);
       if (s.phase === 'move') {
         const moves = legalMoves(s, pi);
-        if (moves.length) doMove(s, pi, moves[Math.floor(rng() * moves.length)], now);
+        if (moves.length) doMove(s, pi, moves[Math.floor(rng() * moves.length)], now, rng);
       }
       s.missed[pi] = keep;
       return s;
@@ -213,6 +276,7 @@ export function createLudoEngine(rng: Rng): Engine<LudoState, LudoAction> {
         canRoll: mine && state.phase === 'roll', moves: mine && state.phase === 'move' ? legalMoves(state, pi) : [],
         winner: state.winner === null ? null : state.players[state.winner],
         done: state.tokens.map((t) => t.filter((p) => p === FINISH).length),
+        variant: state.variant ?? 'classic', goal: state.goal ?? 4, unlocked: state.unlocked ?? null, items: state.items ?? null, frozen: state.frozen ?? null,
         ...eventsView(state),
       };
     },

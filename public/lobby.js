@@ -1,5 +1,5 @@
 /* الصالة الموحدة: جاكارو وبلوت ولودو بحساب واحد. كل رقم هنا جاي من الخادم (/api/account و/api/rankings)، ولا يوجد رقم ثابت أو تقريبي. */
-import { HUBS } from './hub.js?v=r72-r6';
+import { HUBS } from './hub.js?v=r108-r6';
 import { mini } from './avatars.js?v=r107';
 import { frameArt, isFrame2 } from './cosmetics.js?v=r107';
 import { referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r107';

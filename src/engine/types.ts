@@ -35,9 +35,13 @@ export interface GameInfo {
   idea: string;
   howToStart: string;
   howToWin: string;
+  /** R108: أوضاع إضافية غير الكلاسيكي (لودو: quick, magic) */
+  variants?: string[];
 }
 
 export interface EngineOpts {
+  /** R108: وضع اللعب الخاص (مثلاً لودو: quick / magic) */
+  variant?: string;
   rounds?: number;
   answerMs?: number;
   resultMs?: number;
