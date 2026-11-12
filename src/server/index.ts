@@ -1244,6 +1244,11 @@ export async function createApp(
   /* R88: «إخفاء قرأ رسالتك» — المرسل ما يشوف إن رسالته انقرت لو المستلم مشغّل الخيار */
   { const conv = social.conversation.bind(social); (social as any).conversation = (me: string, other: string, opts?: any) => { const r = conv(me, other, opts) as any; if (r && Array.isArray(r.list) && privacyOn(other, 'hideRead')) r.list = r.list.map((m: any) => m.mine ? { ...m, read: false, readAt: null } : m); return r; };
     const inbox = social.inbox.bind(social); (social as any).inbox = (me: string, opts?: any) => { const r = inbox(me, opts) as any; if (r && Array.isArray(r.list)) r.list = r.list.map((it: any) => { const o = it?.user?.pub ? community.resolvePublicId(it.user.pub) : null; return o && it.last?.mine && privacyOn(o, 'hideRead') ? { ...it, last: { ...it.last, read: false, readAt: null } } : it; }); return r; }; }
+  /* R119: الرسائل الخاصة لحظية مثل الواتساب — «جاري الكتابة…» وصح/صحين بدون انتظار */
+  const dmPush = (to: string, msg: Record<string, unknown>) => { const raw = JSON.stringify(msg); for (const ws of sockets.get(to) ?? []) { try { if (ws.readyState === 1) ws.send(raw); } catch { /* */ } } };
+  { const send = (social as any).send.bind(social); (social as any).send = (me: string, other: string, input: any) => { const out = send(me, other, input); try { if (out && !out.error && !out.duplicate) dmPush(other, { t: 'dm:new', from: community.pub(me) }); } catch { /* */ } return out; };
+    const mr = social.markRead.bind(social); (social as any).markRead = (me: string, ids: unknown) => { const out = mr(me, ids) as any; try { if (out && !out.error && out.read > 0 && !privacyOn(me, 'hideRead')) { const froms = new Set<string>(); for (const id of ids as number[]) { const m = (social as any).d?.messages?.find((x: any) => x.id === id); if (m && m.to === me) froms.add(m.from); } for (const f of froms) dmPush(f, { t: 'dm:read', by: community.pub(me) }); } } catch { /* */ } return out; }; }
+  const typingAt = new Map<string, number>();
   accounts.xpBoostOf = (id) => perks.xpPct(id);
   const cpPoints = new CpPoints(cpFile, Date.now, storage);
   const bonds = new Bonds(bondsFile, Date.now, storage);
@@ -1581,6 +1586,11 @@ export async function createApp(
       if (out.changed.includes('cinema') && !out.after.cinema) { /* الفيديوهات الشغالة تكمل لين يطفونها؛ ما نقدر نوقف الكل بأمر واحد بأمان */ }
       return { ok: true, flags: out.after, changed: out.changed, auditOk };
     }, 'owner');
+    functionalHttp.add('POST', '/api/social-private/typing', ({ user, body }) => {
+      const to = community.resolvePublicId(body.to); if (!to || to === user.id || platform.isBanned(to) || community.pairBlocked(user.id, to)) return { ok: true };
+      const k = user.id + '>' + to, now = Date.now(); if (now - (typingAt.get(k) ?? 0) < 1500) return { ok: true }; typingAt.set(k, now); if (typingAt.size > 5000) typingAt.clear();
+      dmPush(to, { t: 'dm:typing', from: community.pub(user.id), on: body.on !== false }); return { ok: true };
+    });
     functionalHttp.add('GET', '/api/admin/live', () => { let online = 0; for (const set of sockets.values()) if (set.size) online++; const rooms = socialRooms.liveRooms(); return { ok: true, online, inRooms: rooms.reduce((n, r) => n + r.members, 0), rooms: rooms.slice(0, 50) }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/player-360', ({ url }) => {
       const q = String(url.searchParams.get('q') ?? '').trim(); adminNeed(q.length >= 2, 'اكتب اسم أو رقم لاعب (حرفين على الأقل).');

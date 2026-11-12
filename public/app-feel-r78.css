@@ -381,3 +381,6 @@ html body .so-directory-r30 .so-dir-tabs-mine .so-dir-tab.is-active:not(#_){back
 html body .so-directory-r30 :is(.so-dir-empty,.so-empty) :is(button,a):not(#_){background:rgba(155,69,242,.25)!important;border:1.5px solid #a86bff88!important;color:#fff!important;border-radius:999px!important}
 html body .so-directory-r30 .so-dir-text-button:not(#_){background:rgba(155,69,242,.25)!important;border:1.5px solid #a86bff88!important;color:#fff!important;border-radius:999px!important;padding:10px 18px!important}
 html body .so-directory-r30 .so-dir-create-banner .so-dir-banner-icon:not(#_){opacity:1}
+/* R119: صح وصحين بالرسائل */
+html body .chat-bubble .dm119-tick:not(#_){margin-inline-start:6px;font-weight:900;letter-spacing:-3px;color:#ffffffa0}
+html body .chat-bubble .dm119-tick.is-read:not(#_){color:#4fc3ff}

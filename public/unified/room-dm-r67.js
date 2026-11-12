@@ -1,5 +1,6 @@
 /* R67: الرسائل الخاصة من داخل الغرفة — لوحة تطلع من تحت والغرفة شغالة وراها.
  * نفس خدمة /api/social-private (أصدقاء مقبولين فقط، نص فقط). ما نطلعك من الغرفة ولا نوقف الصوت. */
+import * as E2E from '../e2e-r69.js?v=r69zj';
 const BASE = '/api/social-private/';
 const PUB = /^[A-Za-z0-9_-]{16}$/;
 const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -11,6 +12,12 @@ const X = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="c
 const BACK = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 const SEND = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 3 18 9-18 9 4-9-4-9ZM7 12h14"/></svg>';
 
+const TICK = (read) => `<span class="dm119-tick${read ? ' is-read' : ''}" aria-label="${read ? 'مقروءة' : 'وصلت'}">${read ? '<svg viewBox="0 0 22 14"><path d="M1 7.5 5 11.5 13 2.5M8.5 10l1.5 1.5L18 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg viewBox="0 0 16 14"><path d="M2 7.5 6 11.5 14 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'}</span>`;
+const CSS119 = `.dm119-tick{display:inline-flex;vertical-align:middle;margin-inline-start:4px;color:#ffffffa0}.dm119-tick svg{height:12px;width:auto}.dm119-tick.is-read{color:#4fc3ff}
+.dm67-msg.is-mine p{position:relative}.dm67-msg .dm119-meta{display:block;font-size:10.5px;opacity:.8;margin-top:2px;text-align:end}
+.dm119-typing{display:flex;align-items:center;gap:6px;padding:4px 14px 6px;color:#c8b4ef;font-size:12.5px;font-weight:700}.dm119-typing i{display:inline-flex;gap:3px}.dm119-typing i b{width:6px;height:6px;border-radius:50%;background:#c8b4ef;animation:dm119 1s infinite}.dm119-typing i b:nth-child(2){animation-delay:.15s}.dm119-typing i b:nth-child(3){animation-delay:.3s}
+@keyframes dm119{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.dm67-head small.dm119-sub{display:block;font-size:11.5px;font-weight:700;color:#7ee2a8}`;
 async function call(path, method = 'GET', body) {
   const res = await fetch(BASE + path, { method, credentials: 'same-origin', cache: 'no-store', headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : JSON.stringify(body ?? {}) });
   let data; try { data = await res.json(); } catch { throw Error('تعذّر قراءة رد الخادم.'); }
@@ -55,8 +62,8 @@ export function openRoomDM({ peer = '' } = {}) {
     return `<header class="dm67-head"><span></span><h2>دردشة</h2><button type="button" class="dm67-icon" data-dm="close" aria-label="إغلاق">${X}</button></header>${st.error ? `<p class="dm67-err" role="alert">${esc(st.error)}</p>` : ''}<div class="dm67-scroll">${body}</div>`;
   };
   const chatHTML = () => {
-    const msgs = [...st.msgs].reverse().map(m => `<div class="dm67-msg${m.mine ? ' is-mine' : ''}">${m.mine ? '' : face({ pub: st.peer, name: st.peerName })}<p dir="auto">${esc(m.body)}</p></div>`).join('');
-    return `<header class="dm67-head"><button type="button" class="dm67-icon" data-dm="back" aria-label="رجوع">${BACK}</button><h2>${esc(st.peerName || 'محادثة')}</h2><button type="button" class="dm67-icon" data-dm="close" aria-label="إغلاق">${X}</button></header>${st.error ? `<p class="dm67-err" role="alert">${esc(st.error)}</p>` : ''}<div class="dm67-scroll dm67-thread" data-dm-thread>${msgs || '<p class="dm67-note">قول هلا 👋</p>'}</div><form class="dm67-form" data-dm-form><input name="text" maxlength="2000" autocomplete="off" placeholder="${st.canSend ? 'قل شيئًا…' : 'الرسائل موقوفة لهالمحادثة'}" ${st.canSend ? '' : 'disabled'} dir="auto" enterkeyhint="send"><button type="submit" class="dm67-send" aria-label="إرسال" ${st.canSend ? '' : 'disabled'}>${SEND}</button></form>`;
+    const msgs = [...st.msgs].reverse().map(m => `<div class="dm67-msg${m.mine ? ' is-mine' : ''}">${m.mine ? '' : face({ pub: st.peer, name: st.peerName })}<p dir="auto">${esc(m.body)}${m.mine ? `<span class="dm119-meta">${esc(day(m.at))}${TICK(m.read === true)}</span>` : ''}</p></div>`).join('');
+    return `<header class="dm67-head"><button type="button" class="dm67-icon" data-dm="back" aria-label="رجوع">${BACK}</button><h2>${esc(st.peerName || 'محادثة')}${st.typing ? '<small class="dm119-sub">جاري الكتابة…</small>' : ''}</h2><button type="button" class="dm67-icon" data-dm="close" aria-label="إغلاق">${X}</button></header>${st.error ? `<p class="dm67-err" role="alert">${esc(st.error)}</p>` : ''}<div class="dm67-scroll dm67-thread" data-dm-thread>${msgs || '<p class="dm67-note">قول هلا 👋</p>'}</div>${st.typing ? `<div class="dm119-typing">${esc(st.peerName || '')} يكتب <i><b></b><b></b><b></b></i></div>` : ''}<form class="dm67-form" data-dm-form><input name="text" maxlength="2000" autocomplete="off" placeholder="${st.canSend ? 'قل شيئًا…' : 'الرسائل موقوفة لهالمحادثة'}" ${st.canSend ? '' : 'disabled'} dir="auto" enterkeyhint="send"><button type="submit" class="dm67-send" aria-label="إرسال" ${st.canSend ? '' : 'disabled'}>${SEND}</button></form>`;
   };
   const paint = (keepDraft = true) => {
     if (!alive) return;
@@ -71,6 +78,7 @@ export function openRoomDM({ peer = '' } = {}) {
   const loadList = async () => {
     try {
       const [inbox, friends] = await Promise.all([call('inbox'), call('friends').catch(() => ({ list: [] }))]);
+      for (const it of inbox.list || []) if (it.last && E2E.isSealed(it.last.body)) { try { const o = await E2E.open(it.last.body); it.last.body = o.locked ? '🔒 رسالة مشفّرة' : o.text; } catch { it.last.body = '🔒 رسالة مشفّرة'; } }
       st.inbox = (inbox.list || []).filter(r => PUB.test(r?.user?.pub)); st.friends = (friends.list || []).filter(r => PUB.test(r?.user?.pub));
       st.loaded = true; st.error = ''; setUnread(inbox.unread);
     } catch (e) { st.loaded = true; st.error = e.status === 401 ? 'سجّل دخولك عشان تشوف رسائلك.' : e.message; }
@@ -79,7 +87,8 @@ export function openRoomDM({ peer = '' } = {}) {
     const r = await call(`messages?peer=${encodeURIComponent(st.peer)}`);
     if (!alive || st.view !== 'chat') return;
     const before = st.msgs.length ? st.msgs[0].id : 0;
-    st.msgs = r.list || []; st.canSend = r.canSend === true; st.peerName = r.user?.name || st.peerName; st.error = '';
+    const list = r.list || []; for (const m of list) if (E2E.isSealed(m.body)) { try { const o = await E2E.open(m.body); m.body = o.locked ? '🔒 رسالة مشفّرة' : o.text; } catch { m.body = '🔒 رسالة مشفّرة'; } }
+    st.msgs = list; st.canSend = r.canSend === true; st.peerName = r.user?.name || st.peerName; st.error = '';
     if (!st.msgs.length || st.msgs[0].id !== before || !sheet.querySelector('[data-dm-thread]')) paint();
     for (const m of st.msgs.filter(m => !m.mine && !m.read)) { try { await call(`messages/${m.id}/read`, 'POST', {}); m.read = true; } catch { break; } }
   };
@@ -90,7 +99,7 @@ export function openRoomDM({ peer = '' } = {}) {
     try { await loadChat(); } catch (e) { st.error = e.message; paint(); }
     poll();
   };
-  const close = () => {
+  let close = () => {
     if (!alive) return; alive = false; clearInterval(timer);
     root.classList.add('is-out'); setTimeout(() => root.remove(), 200);
     document.removeEventListener('keydown', onKey); open = null;
@@ -114,6 +123,16 @@ export function openRoomDM({ peer = '' } = {}) {
     } catch (e2) { st.error = e2.message; paint(); }
     finally { st.busy = false; }
   });
+  /* R119: لحظي — رسالة جديدة، قرأها، جاري الكتابة */
+  if (!document.querySelector('style[data-dm119]')) { const st2 = document.createElement('style'); st2.dataset.dm119 = '1'; st2.textContent = CSS119; document.head.append(st2); }
+  let typT = 0, lastTyp = 0;
+  const onDM = (e) => { const m = e.detail || {}; if (!alive) return;
+    if (st.view === 'chat' && m.from === st.peer && m.t === 'dm:typing') { st.typing = m.on !== false; clearTimeout(typT); if (st.typing) typT = setTimeout(() => { st.typing = false; paint(); }, 4500); paint(); return; }
+    if (st.view === 'chat' && (m.from === st.peer || m.by === st.peer)) { if (m.t === 'dm:new') { st.typing = false; clearTimeout(typT); } loadChat().then(() => paint()).catch(() => {}); return; }
+    if (st.view === 'list' && m.t === 'dm:new') loadList().then(() => paint()).catch(() => {}); };
+  addEventListener('la3bak:dm', onDM);
+  root.addEventListener('input', (e) => { if (e.target?.name !== 'text' || st.view !== 'chat' || !st.canSend) return; const now = Date.now(); if (now - lastTyp < 2000 || !e.target.value.trim()) return; lastTyp = now; call('typing', 'POST', { to: st.peer }).catch(() => {}); });
+  const close0 = close; close = () => { removeEventListener('la3bak:dm', onDM); close0(); };
   document.addEventListener('keydown', onKey);
   requestAnimationFrame(() => root.classList.add('is-in'));
   paint();

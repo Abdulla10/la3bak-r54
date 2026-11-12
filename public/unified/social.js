@@ -857,7 +857,7 @@ export function mount(root,ctx={}) {
   const draftKey=(type,mode,actionType,scope=draftScope())=>JSON.stringify([scope,type,mode,actionType]);
   const saveDrafts=()=>host.querySelectorAll('form[data-so-form]').forEach(form=>draftCache.set(draftKey(form.dataset.soForm,form.dataset.mode,form.dataset.type,renderedScope),[...form.elements].filter(e=>e.name&&!(SOCIAL_GAME_LABELS_R47[form.dataset.mode]&&['version','round'].includes(e.name))).map(e=>({name:e.name,value:e.value,checked:e.checked}))));
   const routeRoom=String(ctx.socialRoomId||'');
-  if(routeRoom&&!ctx.gameRoom)import('./room-dm-r67.js?v=r67a').then(m=>m.watchUnread()).catch(()=>{});if(routeRoom&&minimizedRoom){clearMinimized();} else if(!routeRoom&&minimizedRoom&&!ctx.gameRoom){minimizeBubble();}
+  if(routeRoom&&!ctx.gameRoom)import('./room-dm-r67.js?v=r119').then(m=>m.watchUnread()).catch(()=>{});if(routeRoom&&minimizedRoom){clearMinimized();} else if(!routeRoom&&minimizedRoom&&!ctx.gameRoom){minimizeBubble();}
   if(c.routeRoom!==routeRoom) {destroyBenefits(c);c.entranceFX?.cancel();c.challengeUI?.reset();c.challengeUpdates?.clear();c.challengeModel={available:false};c.routeRoom=routeRoom;c.readSeq++;c.loading=false;c.error='';c.snapshot=null;}
   ctx.openBenefits=options=>openOwnBenefits(c,options);
   const focusMark=el=>el&&page.contains(el)?{node:el,action:el.dataset?.soAction,id:el.dataset?.id,panel:el.dataset?.panel,mode:el.dataset?.mode,setting:el.dataset?.setting,value:el.dataset?.value,name:el.name,gift:!!el.closest?.('[data-so-gifts]'),domId:el.id,form:el.closest?.('form')?.dataset.soForm,formMode:el.closest?.('form')?.dataset.mode,formType:el.closest?.('form')?.dataset.type}:null;
@@ -1249,7 +1249,7 @@ export function mount(root,ctx={}) {
       if(action==='rank-close'){ui.rankOpen=false;paint();return;}
       if(action==='rank-view'){ui.rankView=Math.max(0,Math.min(4,Number(id)||0));paint();return;}
       if(action==='rank-tab'){ui.rankTab=id==='monthly'?'monthly':'perks';paint();return;}
-      if(action==='room-dm'){closeDialog(false);import('./room-dm-r67.js?v=r67a').then(m=>m.openRoomDM({peer:target.dataset.peer||''})).catch(reportError);return;}
+      if(action==='room-dm'){closeDialog(false);import('./room-dm-r67.js?v=r119').then(m=>m.openRoomDM({peer:target.dataset.peer||''})).catch(reportError);return;}
       if(action==='broadcast-open'){ui.panel='';paint();return;}
       if(action==='cinema-open'){ui.panel='';ui.cinemaOpen=true;paint();return;}
       if(action==='cinema-close'){ui.cinemaOpen=false;paint();return;}
