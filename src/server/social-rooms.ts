@@ -1271,7 +1271,8 @@ export class SocialRooms {
     if(command==='room:delete') {
       if(!keys(b,['roomId']))fail('invalid_room_delete');
       if(r.ownerId!==id)fail('owner_required',403);
-      if(this.gameBound(d,r))fail('game_room_delete_unavailable',403);
+      /* R101: غرفة اللعب ينحذف لو ما فيها أحد غيرك */
+      if(this.gameBound(d,r)&&r.members.some(m=>m.id!==id))fail('game_room_delete_unavailable',403);
       if(r.cannon&&this.cannonPendingFor(r.cannon)>0)fail('cannon_award_pending',409);
       for(const m of [...r.members])this.remove(d,m.id,media);
       d.rooms=d.rooms.filter(x=>x.id!==r.id);

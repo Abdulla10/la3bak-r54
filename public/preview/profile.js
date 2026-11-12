@@ -13,7 +13,7 @@ import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r93';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r68z31';
 import { nav68HTML } from '../nav-r68.js?v=r79';
 import { officialBadge } from '../official-badge-r67.js?v=r67as';
-import { rankSummary, renderRankOverview } from './rank-overview.js?v=r66b';
+import { rankSummary, renderRankOverview } from './rank-overview.js?v=r101';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const arr = v => Array.isArray(v) ? v : [];

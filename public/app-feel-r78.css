@@ -179,3 +179,73 @@ html body #view [data-lb-page="social"] .lb-copy79,html body #view [data-lb-page
 #view .pf97-head h1{margin:6px 0 4px;font-size:22px}
 #view .pf97-head p{margin:0;opacity:.8;font-size:14px}
 #view .pf97-login .lpu-login{display:grid;gap:14px;margin-top:12px}
+
+/* ===== R101: صفحة الغرف مرتبة ===== */
+html,body{overflow-x:hidden}
+.lb-unified{overflow-x:clip}
+#view .so-directory-r30 .r68-dir-head{gap:4px}
+#view .so-directory-r30 .r68-dir-logo{padding-top:4px!important}
+#view .so-directory-r30 .r68-dir-tools{gap:6px!important;align-items:center}
+#view .so-directory-r30 .r101-menu{order:-1;color:#fff}
+#view .so-directory-r30 [data-h68-banner-host]{display:none!important}
+#view .so-directory-r30 .r68-dir-big{display:flex!important;gap:8px!important;margin:6px 0 10px!important}
+#view .so-directory-r30 .r68-dir-big button{flex:1;height:44px!important;min-height:0!important;border-radius:14px!important;font-size:14px!important;padding:0 12px!important;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:none!important}
+#view .so-directory-r30 .r68-dir-big button b{font-size:14px!important}
+#view .so-directory-r30 .r68-dir-big button span{font-size:20px!important;width:26px!important;height:26px!important;line-height:26px!important;min-width:0!important}
+#view .so-directory-r30 .r68-dir-big .r68-t{font-size:14px!important;border-width:1px!important}
+#view .so-directory-r30 .so-dir-tabs{display:flex!important;gap:4px!important;background:rgba(255,255,255,.06);border-radius:999px;padding:4px!important;border:0!important;margin:4px 0 10px!important;box-shadow:none!important}
+#view .so-directory-r30 .so-dir-tabs button{flex:1;border:0!important;border-radius:999px!important;background:transparent!important;color:#d9ccef!important;font-size:14px!important;padding:8px 6px!important;min-height:0!important;box-shadow:none!important}
+#view .so-directory-r30 .so-dir-tabs button[aria-selected="true"]{background:linear-gradient(90deg,#f5c542,#e0a92e)!important;color:#2a1600!important;font-weight:800}
+#view .so-directory-r30 .so-dir-tabs button::after,#view .so-directory-r30 .so-dir-tabs::after{display:none!important}
+#view .so-directory-r30 .so-dir-categories{margin:0 0 10px!important}
+#view .so-directory-r30 .so-dir-chip{height:34px!important;min-height:0!important;padding:0 14px!important;font-size:13px!important}
+#view .so-directory-r30 .so-dir-create-banner{padding:10px 12px!important;border-radius:16px!important;min-height:0!important}
+#view .so-directory-r30 .so-dir-create-banner b{color:#fff!important;font-size:15px}
+#view .so-directory-r30 .so-dir-create-banner p{color:#cbbbe6!important;margin:2px 0 0!important;font-size:12.5px}
+#view .so-directory-r30 .so-dir-create-banner .so-dir-banner-icon{color:#f5c542}
+#view .so-directory-r30 .so-dir-create-button{background:linear-gradient(90deg,#f5c542,#e0a92e)!important;color:#2a1600!important;border:0!important;font-weight:800;padding:8px 14px!important;border-radius:12px!important}
+#view .so-directory-r30 .so-dir-empty{padding:22px 16px!important}
+#view .so-directory-r30 .so-dir-empty-icon{width:46px!important;height:46px!important;border-radius:14px!important}
+#view .so-directory-r30 .so-dir-empty h2{font-size:16px!important;margin:8px 0 4px!important}
+#view .so-directory-r30 .so-dir-empty p{font-size:13px!important}
+#view .so-directory-r30 .so-dir-empty a,#view .so-directory-r30 .so-dir-empty button{background:transparent!important;color:#f5c542!important;border:1px solid #f5c54288!important;border-radius:12px!important}
+/* صفوف الغرف أصغر */
+#view .so-directory-r30 .so-dir-rooms{gap:8px!important}
+#view .so-directory-r30 .r68-dir-row{position:relative}
+#view .so-directory-r30 .r68-dir-row .so-dir-enter{min-height:0!important;padding:10px!important;gap:10px!important}
+#view .so-directory-r30 .r68-dir-row .so-dir-cover{width:58px!important;height:58px!important;min-width:58px!important;border-radius:14px!important}
+#view .so-directory-r30 .r68-dir-row .so-dir-initial{font-size:26px!important}
+#view .so-directory-r30 .r68-dir-row .so-dir-room-title b{font-size:15px!important}
+#view .so-directory-r30 .r68-dir-row .r68-dir-sub{font-size:12px!important;margin:1px 0 3px!important}
+#view .so-directory-r30 .r101-del{position:absolute;top:50%;left:74px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:1px solid #ff6b8a66;background:#3a0f2a;color:#ff8aa3;display:grid;place-items:center;z-index:2}
+/* صندوق الهدايا العائم أصغر وما يغطي المحتوى */
+.rl69-fab{transform:scale(.62);transform-origin:left bottom}
+/* R101: اللعبة داخل الغرفة تاخذ المساحة الفعلية تحت الشريط (قبل كانت أطول من الشاشة وتنقص من تحت) */
+.gv-game-surface{container-type:size;padding:0!important;background:#140a26!important}
+@supports (height:1cqh){
+  html body .gv-game-surface :is(.jk-screen.v2,.cr-screen,.cw-screen){--rg-height:100cqh;--rg-width:100cqw}
+}
+.gv-game-surface :is(.jk-screen.v2){background:#140a26!important}
+/* ===== R101: الملف الشخصي مرتب ===== */
+#view .pf68 .pf68-av{width:124px!important;height:124px!important;margin:-110px auto 0!important}
+#view .pf68 .pf68-portrait,#view .pf68 .pf68-ring{width:120px!important;height:120px!important}
+#view .pf68 .pf68-ring .avatar-wrap{width:110px!important;height:110px!important;overflow:hidden;border-radius:50%}
+#view .pf68 .pf68-ring .avatar-wrap>svg,#view .pf68 .pf68-ring .avatar-wrap>img,#view .pf68 .pf68-ring .avatar-wrap .avatar-svg{width:100%!important;height:100%!important;object-fit:cover;border-radius:50%}
+#view .pf68 .pf68-cam{width:30px!important;height:30px!important}
+/* الاسم في سطر لحاله تحت الصورة، وتحته الأزرار */
+#view .pf68 .pf68-mid{grid-template-columns:auto 1fr auto!important;grid-template-areas:"who who who" "lv . edit"!important;row-gap:10px!important;padding:14px 14px 0!important;margin-top:4px}
+#view .pf68 .pf68-who{grid-area:who;min-width:0}
+#view .pf68 .pf68-lv{grid-area:lv;justify-self:start!important}
+#view .pf68 .pf68-edit{grid-area:edit;justify-self:end;height:34px!important;min-height:0!important;padding:0 12px!important;font-size:13px!important}
+#view .pf68 .pf68-name{font-size:20px!important;flex-wrap:wrap;row-gap:4px}
+#view .pf68 .pf68-name>span{max-width:220px!important}
+#view .pf68 .pf68-vip{font-size:12px!important;padding:1px 8px!important}
+#view .pf68 .pf68-id{font-size:14px!important;margin-top:6px!important}
+#view .pf68 .pf68-id .aid68{transform:scale(.78);transform-origin:center}
+#view .pf68 .pf68-lvmedal{width:40px!important;height:40px!important}
+#view .pf68 .pf68-lvmedal i{top:-11px!important;font-size:15px!important}
+#view .pf68 .pf68-lvmedal small{font-size:8px!important}
+#view .pf68 .pf68-lvmedal b{font-size:14px!important}
+#view .pf68 .pf68-bio{margin-top:10px!important}
+/* شاراتي: الصورة كاملة بدون قص */
+#view .pf68 :is(.pf68-badges,[class*="badge"]) img{object-fit:contain!important;background:transparent!important}

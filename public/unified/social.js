@@ -4,7 +4,7 @@ import {createRoomToolsR33} from '../social-room-tools-r33.js?v=r58p';
 import {SOCIAL_GAME_LABELS_R47,renderSocialGame,normalizeSocialGameActionR47,createSocialGamesR47} from '../social-games-r47.js?v=r58p';
 import {renderUpgradePanel,roomUpgradeConfirmationR47,roomUpgradeErrorR47} from '../room-upgrade-r47.js?v=build-all-r47';
 import {roomPhotoFields,createRoomPhotoPicker} from '../room-photo-r31.js?v=room-photo-r31';
-import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r95';
+import {renderDirectory,renderCreateFields,validateCreate} from '../social-directory-r30.js?v=r101';
 import {createOwnerRoomStart,confirmedOwnerSeat,startOwnerVoice,ownerStartFeedback} from '../room-start-r33.js?v=room-owner-start-r33';
 import {themeName,themeCards,applyRoomTheme,seatLockCards} from '../social-room-controls-r27.js?v=r67al';
 import {framed as frameOwnedPortrait} from '../shop.js?v=r91';
@@ -441,7 +441,7 @@ function roomMenuGridHTML(c,ui,council){
     !c.ctx.gameRoom?panelTile('supporters','heart','الداعمين'):'',
     tile('info','info','معلومات الغرفة'),
     !joined?tile('join-room','plus','دخول الغرفة','','is-primary'):'',
-    mine&&!c.ctx.gameRoom?tile('room-delete','trash','حذف الغرفة','','is-danger'):'',
+    mine?tile('room-delete','trash','حذف الغرفة','','is-danger'):'',
   ].filter(Boolean).join('');
   return `<nav class="so-menu-grid-r55" data-so-room-tools aria-label="قائمة الغرفة">${tiles}</nav>`;
 }
@@ -641,6 +641,8 @@ function chatBase69(c,council){
 }
 /* R69zs: تحذير عدم الإساءة أول ما تدخل أي غرفة صوتية */
 function roomWarn69(c,force){
+  /* R101: بدل النافذة اللي تسكّر الشاشة، القوانين تطلع كرسالة إعلان داخل الدردشة */
+  return;
   const id=c.snapshot?.room?.id;if(!id||c.warn69===id||c.snapshot?.current?.roomId!==id)return;if(!force&&c.ctx.gameRoom&&document.documentElement.classList.contains('gv-game-open'))return;c.warn69=id;
   queueMicrotask(()=>{
     document.querySelector('.rw69')?.remove();
@@ -1227,6 +1229,8 @@ export function mount(root,ctx={}) {
       if(action==='seat'&&c.snapshot.preferences?.adultAcknowledged!==true)return requireAdult(async()=>{await ensureSeat();await voiceConnect(c);});
       if(action==='seat') {const council=arr(c.snapshot?.room?.councils).find(x=>x.id===id);if(!council)throw Error('المجلس غير متاح.');const seats=Number(council.seats),count=Math.max(Number(council.count)||0,arr(council.members).length);if(!Number.isFinite(seats)||count>=seats)throw Error('لا يوجد مقعد متاح الآن. حدّث الحالة.');if(currentCouncil(c)?.id===id){if(councilModerator(c)){return openDialog('دعوة صديق إلى مقعد متاح',field('targetId','رقم اللاعب العام أو المميز','text','',64)+'<p class="so-note">الدعوة لا تحجز مقعدًا ولا تتجاوز السعة أو إعدادات اللاعب.</p>',async f=>command(c,'council:invite',{roomId:c.routeRoom,councilId:id,targetId:f.elements.targetId.value.trim()}),'إرسال الدعوة');}return openDialog('أنت في المجلس بالفعل','<p>لديك مقعد في هذا المجلس. لا يمكن أخذ مقعد ثانٍ. يمكنك مشاركة رابط الغرفة أو انتظار انضمام صديق.</p><div class="so-actions">'+button('share','مشاركة رابط الغرفة')+'</div>',null,'إغلاق');}if(council.canJoin){await command(c,'council:join',{roomId:c.routeRoom,councilId:id});if(currentCouncil(c))await voiceConnect(c);return;}if(council.canRequest)return command(c,'council:request',{roomId:c.routeRoom,councilId:id});throw Error('لا يمكنك الانضمام إلى هذا المجلس حاليًا.');}
       if(action==='refresh') return read(c);
+      /* R101: حذف غرفتك من القائمة مباشرة */
+      if(action==='dir-delete'){const room=arr(c.list?.rooms).find(item=>item.id===id);if(!room)throw Error('الغرفة لم تعد متاحة؛ حدّث القائمة.');return openDialog('حذف الغرفة',`<p>متأكد تبي تحذف «${esc(room.name||'الغرفة')}» نهائيًا؟</p>`,async()=>{await command(c,'room:delete',{roomId:id});c.notice='انحذفت الغرفة ✅';c.notify();},'حذف نهائي');}
       if(action==='retry') {
         if(!ctx.gameRoom&&c.creationRecord&&Object.values(c.creationRecord.keys||{}).includes(c.pending?.key))return requireAdult(openOwnerCreation);
         const resume=async()=>{const name=c.pending?.command;const result=await command(c,'',{},true);if(result?.roomId&&['room:create','room:join','council:return'].includes(name)&&result.roomId!==c.routeRoom){if(alive)(globalThis.__LA3BAK_NAV__ || location).hash=roomURL(result.roomId);return;}if(result&&['council:join','council:return'].includes(name)&&currentCouncil(c))await voiceConnect(c);};

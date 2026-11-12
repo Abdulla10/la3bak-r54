@@ -40,7 +40,7 @@ export function rankBadgeArt(system, rawValue) {
   // R65: شارات المالك — 9 للنوبل و15 للـVIP، شارة خاصة لكل رتبة
   if (system === 'noble') return `/preview/assets/profile/ranks/r65/noble-n${rank}.webp?v=r65a`;
   if (system === 'vip') return `/preview/assets/profile/ranks/r65/vip-v${rank}.webp?v=r65a`;
-  return `/preview/assets/profile/ranks/${system}-${rankTheme(system, rawValue)}.png?v=r58b`;
+  return `/preview/assets/profile/ranks/${system}-${rankTheme(system, rawValue)}.png?v=r101`;
 }
 
 /** Stable CSS accent token; invalid values are neutral, never a rank. */

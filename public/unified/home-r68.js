@@ -1,5 +1,5 @@
 /* R68c: الصفحة الرئيسية بتصميم المالك — رأس، بنرات من لوحة التحكم، اختصارات، الألعاب المتاحة، غرف مباشرة، الآن في اللعب. */
-import { rankSummary } from '../preview/rank-overview.js?v=r66b';
+import { rankSummary } from '../preview/rank-overview.js?v=r101';
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const arr = (v) => (Array.isArray(v) ? v : []);
 const short = (v) => { const n = Number(v); if (!Number.isFinite(n)) return '—'; return n >= 1e9 ? +(n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? +(n / 1e6).toFixed(2) + 'M' : new Intl.NumberFormat('en-US').format(n); };
