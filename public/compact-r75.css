@@ -111,7 +111,7 @@ html body .lb-unified .rr-chip-legend b,html body .r68-dir-tags .rr-chip-legend 
 html.lb-dark .bl2-score .hd .them{color:#c9b6e6!important}
 html body .bl2-badge.green{background:#1d7a3e!important;color:#fff!important}
 /* الصندوق الذهبي: كلام غامق على الذهبي */
-html body button.gc69 > b{color:#2a1500!important;text-shadow:none!important}
+html body .gc69 b{color:#2a1500!important;text-shadow:none!important}
 /* المزايا المقفولة بالوضع الفاتح */
 html:not(.lb-dark) .sp74-p:not(.on) .sp74-l{color:#6a5a80!important}
 

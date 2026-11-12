@@ -3,8 +3,12 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const nf = (n) => Number(n || 0).toLocaleString('en-US');
 const IMG = '/assets/art68/casino/chest-3.webp?v=r69z9';
 const CSS = `
-.gc69{position:fixed;z-index:9000;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);width:104px;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;padding:0;cursor:pointer;direction:rtl;font-family:inherit;color:#fff;animation:gc69in .6s cubic-bezier(.2,1.6,.4,1) both}
+.gc69{position:fixed;z-index:9000;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);width:104px;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;padding:0;direction:rtl;font-family:inherit;color:#fff;animation:gc69in .6s cubic-bezier(.2,1.6,.4,1) both}
 .gc69[hidden]{display:none}
+.gc69-open{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;padding:0;margin:0;cursor:pointer;font-family:inherit;color:#fff}
+.gc69-x{position:absolute;z-index:2;top:-4px;left:-2px;width:28px;height:28px;display:grid;place-items:center;padding:0;border-radius:50%;border:2px solid #ffd76a;background:#1a0733;color:#ffd76a;font:900 15px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 3px 8px #000a}
+.gc69-x:active{scale:.9}
+.gc69-card .gc69-cx{position:absolute;z-index:2;top:10px;left:10px;width:32px;height:32px;margin:0;padding:0;display:grid;place-items:center;border-radius:50%;border:2px solid #ffd76a;background:#12041f;color:#ffd76a;font:900 17px/1 system-ui,sans-serif}
 .gc69 .glow{position:absolute;top:-6px;left:50%;width:120px;height:120px;transform:translateX(-50%);border-radius:50%;background:conic-gradient(from 0deg,#ffd76a00,#ffd76acc,#ffd76a00,#ffb21fcc,#ffd76a00,#ffe7a8cc,#ffd76a00);filter:blur(4px);animation:gc69spin 3s linear infinite;opacity:.9}
 .gc69 img{position:relative;width:92px;height:auto;filter:drop-shadow(0 8px 12px #000a) drop-shadow(0 0 10px #ffd76a);animation:gc69bob 1s ease-in-out infinite}
 .gc69 b{position:relative;margin-top:-6px;padding:3px 10px;border-radius:99px;background:linear-gradient(180deg,#ffe07a,#ffb21f);color:#3a1600;font-size:12.5px;font-weight:900;box-shadow:0 3px 8px #0008;white-space:nowrap}
@@ -36,9 +40,11 @@ let started = false;
 export function startGoldChest() {
   if (started) return; started = true;
   if (!document.querySelector('style[data-gc69]')) { const s = document.createElement('style'); s.dataset.gc69 = '1'; s.textContent = CSS; document.head.append(s); }
-  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'gc69'; btn.hidden = true; btn.setAttribute('aria-label', 'صندوق ذهبي! اضغطه بسرعة');
-  btn.innerHTML = `<i class="glow" aria-hidden="true"></i><img src="${IMG}" alt="" decoding="async"><b>صندوق ذهبي! افتحه</b><small data-gc-left></small>`;
+  /* R115: غلاف فيه زر الفتح + علامة ✕ للإغلاق */
+  const btn = document.createElement('div'); btn.className = 'gc69'; btn.hidden = true;
+  btn.innerHTML = `<button type="button" class="gc69-x" data-gc-x aria-label="إغلاق الصندوق">✕</button><button type="button" class="gc69-open" aria-label="صندوق ذهبي! اضغطه بسرعة"><i class="glow" aria-hidden="true"></i><img src="${IMG}" alt="" decoding="async"><b>صندوق ذهبي! افتحه</b><small data-gc-left></small></button>`;
   document.body.append(btn);
+  btn.querySelector('[data-gc-x]').addEventListener('click', (e) => { e.stopPropagation(); if (S.chest) S.tried.add(S.chest.id); paint(); });
   const S = { chest: null, at: 0, busy: false, tried: new Set() };
   const api = (u, body) => fetch(u, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin', cache: 'no-store' })
     .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) throw new Error(j.error || 'تعذّر الطلب.'); return j; });
@@ -53,7 +59,7 @@ export function startGoldChest() {
   function rain() { const c = document.createElement('div'); c.className = 'gc69-coins'; c.innerHTML = Array.from({ length: 34 }, () => `<i style="left:${Math.random() * 100}%;animation-duration:${1.6 + Math.random() * 1.6}s;animation-delay:${Math.random() * 0.6}s">🪙</i>`).join(''); document.body.append(c); setTimeout(() => c.remove(), 4000); }
   function reveal(r, winners) {
     const n = document.createElement('div'); n.className = 'gc69-pop'; n.setAttribute('role', 'dialog'); n.setAttribute('aria-label', 'جائزة الصندوق');
-    n.innerHTML = `<div class="gc69-card"><i class="gc69-rays" aria-hidden="true"></i><img src="${IMG}" alt=""><h3>فتحت الصندوق الذهبي! 🎉</h3>
+    n.innerHTML = `<div class="gc69-card"><button type="button" class="gc69-cx" data-gc-close aria-label="إغلاق">✕</button><i class="gc69-rays" aria-hidden="true"></i><img src="${IMG}" alt=""><h3>فتحت الصندوق الذهبي! 🎉</h3>
       <div class="gc69-prize">${r.itemName ? `🖼️ ${esc(r.itemName)}` : `+${nf(r.coins)} 🪙`}</div>
       <p>${r.itemName ? 'الإطار انضاف لمقتنياتك، تقدر تلبسه من ملفك.' : 'انضافت العملات لرصيدك على طول.'}</p>
       ${winners?.length ? `<ul class="gc69-win">${winners.map((w) => `<li><b>${esc(w.name)}</b><span>${w.itemName ? '🖼️ ' + esc(w.itemName) : nf(w.coins) + ' 🪙'}</span></li>`).join('')}</ul>` : ''}
@@ -61,7 +67,7 @@ export function startGoldChest() {
     n.addEventListener('click', (e) => { if (e.target === n || e.target.closest('[data-gc-close]')) n.remove(); });
     document.body.append(n); if (!r.itemName) rain(); try { navigator.vibrate?.([60, 40, 120]); } catch { /* */ }
   }
-  btn.addEventListener('click', async () => {
+  btn.querySelector('.gc69-open').addEventListener('click', async () => {
     const c = S.chest; if (!c || S.busy) return; S.busy = true;
     try { const r = await api('/api/chest/claim', { id: c.id }); S.tried.add(c.id); paint(); const v = await api('/api/chest').catch(() => null); reveal(r, v?.chest?.winners); }
     catch (e) { S.tried.add(c.id); paint(); toast(e.message || 'راح الصندوق!'); }
