@@ -52,6 +52,7 @@
       else { saveScroll(); history.pushState({ [KEY]: next, [DEPTH]: depthOf(current) + 1, [FROM]: before }, '', ROOT); }
     } catch (_) { return false; }
     route = next;
+    win.__la3NavDir = options.replace ? 'replace' : 'fwd'; /* R105: اتجاه حركة الصفحة مثل التطبيقات */
     announce(before, next);
     return true;
   }
@@ -77,6 +78,7 @@
     pendingScroll = Number.isFinite(y) && y > 0 ? y : null;
     try { history.replaceState(stateFor(next), '', ROOT); } catch (_) { return; }
     route = next;
+    win.__la3NavDir = 'back';
     announce(before, next);
   });
   // Accept legacy native hash navigation from an old cached tab or browser action.

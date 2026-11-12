@@ -1,6 +1,6 @@
 // R69za: تحسينات «التطبيق» — رقم الجهاز (لكشف الحسابات الوهمية)، شاشة «ما فيه نت» مع لعبة XO تشتغل بدون نت،
 // بانر «ثبّت لعبك على جوالك»، وعداد الإشعارات على أيقونة التطبيق.
-import * as PWA from './pwa.js?v=r104b';
+import * as PWA from './pwa.js?v=r105';
 const KEY_DID = 'la3_did', KEY_DISMISS = 'la3_install_x';
 const CSS = `
 .ap69-off{position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 30px) 18px 24px;background:radial-gradient(circle at 50% 20%,#4a1680,#160530 70%);color:#fff;direction:rtl;font-family:inherit;text-align:center;overflow:auto}
@@ -153,6 +153,26 @@ export function startApp69() {
   setTimeout(badge, 4000); setInterval(badge, 60_000);
   addEventListener('visibilitychange', () => { if (!document.hidden) { badge(); devicePing(); } });
 }
+/* ---------- R105: حركة الصفحات مثل التطبيقات ----------
+   الصفحة الجديدة تدخل من اليسار (لأن الواجهة عربية)، والرجوع يدخل من اليمين. ما نحرّك الغرف والألعاب. */
+(() => {
+  const NO = /^#\/(room|social-room|game|slot|foodwheel|watch)\b/;
+  let last = String((globalThis.__LA3BAK_NAV__ || location).hash || '#/');
+  addEventListener('hashchange', () => {
+    const dir = globalThis.__la3NavDir || 'fwd'; globalThis.__la3NavDir = '';
+    const now = String((globalThis.__LA3BAK_NAV__ || location).hash || '#/');
+    const prev = last; last = now;
+    if (dir === 'replace' || now === prev || NO.test(now) || NO.test(prev) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const v = document.getElementById('view'); if (!v) return;
+      v.classList.remove('pg105-fwd', 'pg105-back'); void v.offsetWidth;
+      v.classList.add(dir === 'back' ? 'pg105-back' : 'pg105-fwd');
+      setTimeout(() => v.classList.remove('pg105-fwd', 'pg105-back'), 400);
+    }));
+  });
+  /* اهتزاز خفيف مع الضغط (أندرويد) مثل التطبيقات */
+  addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && e.target.closest?.('button,[role=button],.btn,a.game-card') && navigator.vibrate) { try { navigator.vibrate(6); } catch { /* */ } } }, { passive: true });
+})();
 startApp69();
 
 /* R69zw: انتقال ناعم بين الصفحات (بس لما تتغير الصفحة، مو مع كل تحديث) */

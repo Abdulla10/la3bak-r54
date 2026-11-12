@@ -280,3 +280,22 @@ html body .rs69:not(#_) button{padding:7px 12px}
 .lb-unified ul.players .player .badge.you{background:#f5c54233;color:#ffd977}
 .lb-unified ul.players .player .badge.live{background:#2fbf7133;color:#7dffb3}
 .lb-unified ul.players .player .badge.soon{background:#ff6b8a26;color:#ffb3c4}
+/* ===== R105: إحساس التطبيق الأصلي داخل المتصفح ===== */
+@keyframes pg105f{from{transform:translateX(-28px);opacity:.35}to{transform:none;opacity:1}}
+@keyframes pg105b{from{transform:translateX(28px);opacity:.35}to{transform:none;opacity:1}}
+#view.pg105-fwd{animation:pg105f .26s cubic-bezier(.2,.8,.2,1) both}
+#view.pg105-back{animation:pg105b .26s cubic-bezier(.2,.8,.2,1) both}
+/* بدون ارتداد الصفحة وبدون أشرطة تمرير — مثل التطبيقات */
+html,body{overscroll-behavior:none}
+html{scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar,#view ::-webkit-scrollbar{display:none;width:0;height:0}
+#view *{scrollbar-width:none}
+/* الضغط المطوّل ما يطلّع تحديد كلام ولا قائمة الروابط (إلا بالكتابة والدردشة والمنشورات) */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+:is(input,textarea,[contenteditable="true"],.so-chat-message p,.cm-post-body,.cm-post p,.lb-messages .msg p,.dm-msg p,.legal p,.lb-legal p,code){-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+a{-webkit-touch-callout:none;text-decoration:none}
+/* ضغطة فيها رد فعل لكل البطاقات والصفوف */
+@media (hover:none){
+  html body :is(.so-dir-enter,.h95-room,.lb-drawer a,.s60 a,.s60 button,.pf68-stat,.cm-post,.lb-noti-item,.sp73-row):active{scale:.975;transition:scale .07s ease-out}
+}
+/* R105: الزر العائم «ثبّت كتطبيق» كان يطلع فوق القائمة والمحتوى — بداله شاشة التثبيت */
+html body .install-fab{display:none!important}
