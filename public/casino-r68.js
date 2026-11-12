@@ -16,13 +16,16 @@ const ROWS = 4;
 const SL = { st: null, bet: 0, busy: false, last: null, auto: false };
 const TIERS = ['MINI', 'MAJOR', 'GRAND', 'MEGA'], TIER_PCT = [5, 15, 40, 100];
 const spinLabel = () => SL.st?.free ? 'مجاني' : SL.auto ? 'إيقاف' : 'تدوير';
+/* R69m + R102: قائمة الفايزين (كل فوز يطلع، مب بس الكبير) وتتحدث بعد كل لفة */
+function slFeedHTML(st) {
+  const feedRows = (st.feed || []).slice(0, 10).map((f) => `<p><i class="sl-av">${esc([...String(f.name || '؟')][0])}</i><bdi>${esc(f.name)}</bdi> فاز بـ <em>${nf(f.win)}</em>${COIN}${f.kind === 'jack' ? ' 🏆' : ''}</p>`).join('');
+  return !(st.feed || []).length ? '<p class="cz-dim">أول فائز يطلع هنا</p>' : st.feed.length < 3 ? feedRows : `<div class="sl-feedtrack" style="--n:${Math.min(10, st.feed.length)}">${feedRows}${feedRows}</div>`;
+}
 function slotHTML() {
   const st = SL.st; if (!st) return '<p class="cz-load">جاري التحميل…</p>';
   const lineBet = st.bets[SL.bet], total = lineBet * st.lines, free = st.free;
   const grid = SL.last?.grid || [0, 1, 2, 3, 4].map((r) => [0, 1, 2, 3].map((i) => KEYS[(r * 3 + i * 5) % 9]));
-  const feedRows = st.feed.slice(0, 10).map((f) => `<p><i class="sl-av">${esc([...String(f.name || '؟')][0])}</i><bdi>${esc(f.name)}</bdi> فاز بـ <em>${nf(f.win)}</em>${COIN}${f.kind === 'jack' ? ' 🏆' : ''}</p>`).join('');
-  /* R69m: بطاقة الفايزين أكبر وتتحرك لفوق بشكل مستمر */
-  const feed = !st.feed.length ? '<p class="cz-dim">أول فائز كبير يطلع هنا</p>' : st.feed.length < 3 ? feedRows : `<div class="sl-feedtrack" style="--n:${Math.min(10, st.feed.length)}">${feedRows}${feedRows}</div>`;
+  const feed = slFeedHTML(st);
   return `<div class="cz cz-slot" dir="rtl">
   <header class="sl-head"><button type="button" class="sl-ic" data-cz="close" aria-label="إغلاق">✕</button><h1 class="sl-logo"><span>جاكبوت</span><span>لعبك</span></h1><button type="button" class="sl-ic sl-help" data-cz="help" aria-label="الشرح"><img src="${ART}sl-wheel.webp" alt=""></button></header>
   <section class="sl-feed">${feed}</section>
@@ -52,7 +55,8 @@ async function slotSpin(root) {
   }
   await sleep(1400);
   reels.forEach((rl, i) => { const s = rl.querySelector('.cz-strip'); s.innerHTML = r.grid[i].map(tile).join(''); s.style.transition = 'none'; s.style.transform = 'none'; });
-  SL.last = r; SL.st = { ...SL.st, jackpot: r.jackpot, coins: r.coins, free: r.free };
+  SL.last = r; SL.st = { ...SL.st, jackpot: r.jackpot, coins: r.coins, free: r.free, ...(r.feed ? { feed: r.feed } : {}) };
+  if (r.feed) { const fd = root.querySelector('.sl-feed'); if (fd) fd.innerHTML = slFeedHTML(SL.st); }
   const svg = root.querySelector('.cz-lines'); const cols = ['#ffe14d', '#7dff6b', '#ff6bd5', '#6bc8ff', '#ff9a4d'];
   svg.innerHTML = r.wins.slice(0, 12).map((w, k) => `<polyline points="${SL.st.lineMap[w.line].map((row, c) => `${50 + c * 100},${50 + row * 100}`).join(' ')}" fill="none" stroke="${cols[k % 5]}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
   const hit = new Set(); r.wins.forEach((w) => SL.st.lineMap[w.line].slice(0, w.count).forEach((row, c) => hit.add(c + ':' + row)));
@@ -91,8 +95,11 @@ function foodHTML() {
   const hubLbl = s.phase === 'bet' ? 'حدد الوقت' : FW.spinning ? 'النتيجة قادمة' : 'وقت العرض';
   const veg = s.foods.map((f, i) => f.mult === 5 ? i : -1).filter((i) => i >= 0), meat = s.foods.map((f, i) => f.mult !== 5 ? i : -1).filter((i) => i >= 0);
   const mineSum = s.mine.reduce((a, b) => a + b, 0);
-  const pod = s.top.length ? [1, 0, 2].filter((k) => s.top[k]).map((k) => `<div class="fw-p fw-p${k + 1}"><span class="fw-pa">${esc([...String(s.top[k].name || '؟')][0])}<i>${k + 1}</i></span><bdi>${esc(s.top[k].name)}</bdi><b>${nf(s.top[k].win)}</b></div>`).join('') : '<p class="fw-none">ما فيه فايزين هالجولة</p>';
-  const modal = res !== null ? `<div class="fw-modal" role="dialog" aria-label="نتيجة الجولة"><span class="fw-mt">(${sec}) ثانية</span><div class="fw-mrow"><div class="fw-mtx"><h3>${FIMG(s.foods[res].id, 'fw-mi')} نتيجة الجولة <bdi>${nf(s.round)}</bdi></h3><p>رهانك في هذه الجولة: <b>${nf(mineSum)}</b></p><p>الفائز في هذه الجولة: <b>${nf(s.myWin || 0)}</b></p></div><img class="fw-mcat" src="${ART}fw-cat.webp" alt=""></div><h4>الفائز الأكبر لهذه الجولة</h4><div class="fw-pod">${pod}</div></div>` : '';
+  /* R102: إعلان النتيجة مثل الأصل: الأكلة الفايزة بالنص، رهانك وفوزك، كم لاعب راهن وكم فاز، وأكبر 3 فايزين بتيجان */
+  const CROWN = ['👑', '🥈', '🥉'];
+  const pod = s.top.length ? [1, 0, 2].filter((k) => s.top[k]).map((k) => `<div class="fw-p fw-p${k + 1}"><span class="fw-crown">${CROWN[k]}</span><span class="fw-pa">${esc([...String(s.top[k].name || '؟')][0])}<i>${k + 1}</i></span><bdi class="fw-rib">${esc(s.top[k].name)}</bdi><b>${COIN}${nf(s.top[k].win)}</b></div>`).join('') : '<p class="fw-none">ما فيه فايزين هالجولة</p>';
+  const stx = s.stats ? `<p class="fw-mstats">👥 راهن <b>${nf(s.stats.players)}</b> لاعب · 🏆 فاز <b>${nf(s.stats.winners)}</b></p>` : '';
+  const modal = res !== null ? `<div class="fw-modal" role="dialog" aria-label="نتيجة الجولة"><span class="fw-mt">(${sec}) ثانية</span><div class="fw-mhero"><i class="fw-cf" aria-hidden="true"></i><span class="fw-ut" aria-hidden="true">🍴</span>${FIMG(s.foods[res].id, 'fw-mbig')}<span class="fw-ut" aria-hidden="true">🔪</span></div><div class="fw-mrow"><div class="fw-mtx"><h3>${FIMG(s.foods[res].id, 'fw-mi')} نتيجة الجولة <bdi>${nf(s.round)}</bdi></h3><p>رهانك في هذه الجولة: <b>${nf(mineSum)}</b></p><p>الفائز في هذه الجولة: <b>${nf(s.myWin || 0)}</b></p>${stx}</div><img class="fw-mcat" src="${ART}fw-cat.webp" alt=""></div><h4>الفائز الأكبر لهذه الجولة</h4><div class="fw-pod">${pod}</div></div>` : '';
   return `<div class="cz cz-food" dir="rtl">
   <header class="fw-head"><button type="button" class="fw-ic" data-cz="fwhelp" aria-label="الشرح">?</button><h1 class="fw-ttl">عجلة الأكل</h1><span class="fw-rnd"><small>جولة</small><b>${nf(s.round)}</b></span><button type="button" class="fw-ic fw-x" data-cz="close" aria-label="إغلاق">✕</button></header>
   <section class="fw-stage" style="background-image:url(${ART}fw-wheel2.webp)">
@@ -103,17 +110,36 @@ function foodHTML() {
    <button type="button" class="fw-side fw-pizza" data-fw-group="${meat.join(',')}" ${s.phase !== 'bet' ? 'disabled' : ''}><img class="fw-sideimg" src="${ART}fw-pizza.webp" alt=""><b>البيتزا</b></button>
    </section>
   ${modal}<section class="fw-panel"><div class="fw-autot"><button type="button" role="switch" aria-checked="${FW.auto}" class="fw-sw${FW.auto ? ' on' : ''}" data-fw-auto aria-label="الرهان التلقائي"></button><span>وضع الرهان التلقائي (متابعة الجولة السابقة)</span></div>
-   <div class="fw-chips" role="radiogroup" aria-label="قيمة الرهان">${s.chips.map((c, i) => `<button type="button" role="radio" aria-checked="${FW.chip === i}" class="fw-chip${FW.chip === i ? ' on' : ''}" data-fw-chip="${i}">${stackHTML(i + 1)}<b>${nf(c)}</b></button>`).join('')}<button type="button" class="fw-chip fw-rep" data-fw-repeat ${!FW.prev.length || s.phase !== 'bet' ? 'disabled' : ''}><span class="fw-repi">↻</span><b>وضع رهان</b></button></div></section>
+   <div class="fw-chips" role="radiogroup" aria-label="قيمة الرهان">${s.chips.map((c, i) => `<button type="button" role="radio" aria-checked="${FW.chip === i}" class="fw-chip${FW.chip === i ? ' on' : ''}" data-fw-chip="${i}">${stackHTML(Math.min(i + 1, 5))}<b>${c >= 1e6 ? kf(c) : nf(c)}</b></button>`).join('')}<button type="button" class="fw-chip fw-rep" data-fw-repeat ${!FW.prev.length || s.phase !== 'bet' ? 'disabled' : ''}><span class="fw-repi">↻</span><b>وضع رهان</b></button></div></section>
   <section class="fw-red"><div class="fw-pills"><span><small>فائز اليوم</small><b>${nf(s.today)}</b></span><span><small>رهانك بالجولة</small><b>${nf(mineSum)}</b></span><span><small>العملات المتبقية</small><b>${COIN}${nf(s.coins)}</b></span></div>
    <div class="fw-chests">${(s.chests || []).map((c, i) => { const got = (s.chestsGot || []).includes(i), ready = !got && s.today >= c.need; return `<button type="button" class="fw-chest${ready ? ' ready' : ''}${got ? ' got' : ''}" data-fw-chest="${i}" ${ready ? '' : 'disabled'} aria-label="صندوق ${kf(c.need)} مكافأته ${nf(c.reward)}"><img src="${ART}chest-${i + 1}.webp" alt="">${got ? '<i>✓</i>' : ''}<b>${kf(c.need)}</b></button>`; }).join('')}<span class="fw-cbar"><i style="width:${Math.min(100, Math.round((s.chests?.length ? (() => { const n = s.chests.map((c) => c.need); let k = n.findIndex((v) => s.today < v); if (k < 0) return 1; const lo = k ? n[k - 1] : 0; return (k + (s.today - lo) / (n[k] - lo)) / n.length; })() : 0) * 100))}%"></i></span></div>
    <p class="cz-msg" role="status">${esc(FW.msg)}</p>
    <div class="fw-hist"><small>النتيجة:</small><div>${s.history.map((h, k) => `<span class="${k === 0 ? 'new' : ''}">${FIMG(s.foods[h].id)}${k === 0 ? '<i>NEW</i>' : ''}</span>`).join('')}</div></div></section>
   <p class="cz-note">كل جولة 30 ثانية رهان. اختار قيمة الرهان واضغط على الأكلة. احتمال الأكلة أقل كل ما كان مضاعفها أكبر.</p></div>`;
 }
+/* R102: بدل ما نعيد رسم الصفحة كلها كل ثانية (يسبب رمشة وكأنها معلّقة) نبدّل بس الأجزاء اللي تغيّرت */
+function fwRender(root) {
+  if (!root.isConnected) return;
+  const cur = root.querySelector('.cz-food');
+  if (!cur) { root.innerHTML = foodHTML(); return; }
+  const t = document.createElement('template'); t.innerHTML = foodHTML().trim();
+  const next = t.content.querySelector('.cz-food'); if (!next) { root.innerHTML = foodHTML(); return; }
+  const sync = (a, b) => {
+    const ak = [...a.children], bk = [...b.children];
+    if (ak.length !== bk.length || ak.some((x, i) => x.tagName !== bk[i].tagName || x.className.split(' ')[0] !== bk[i].className.split(' ')[0])) { a.replaceWith(b); return; }
+    for (const at of [...a.attributes]) if (!b.hasAttribute(at.name)) a.removeAttribute(at.name);
+    for (const at of [...b.attributes]) if (a.getAttribute(at.name) !== at.value) a.setAttribute(at.name, at.value);
+    ak.forEach((x, i) => { const y = bk[i]; if (x.outerHTML === y.outerHTML) return; if (x.matches('.fw-stage,.fw-panel,.fw-red,.fw-chips,.fw-pills,.fw-chests')) sync(x, y); else x.replaceWith(y); });
+  };
+  sync(cur, next);
+}
 async function placeBets(root, list) {
-  if (FW.placing || !list.length) return; FW.placing = true;
+  if (FW.placing || !list.length) return;
+  { const max = FW.st?.maxPicks || 6; const have = new Set(FW.st.mine.map((v, i) => v ? i : -1).filter((i) => i >= 0)); const want = new Set([...have, ...list.map((b) => b.item)]);
+    if (want.size > max) { FW.msg = `لا يمكنك المراهنة على أكثر من ${max} أكلات بالجولة.`; fwRender(root); const m = root.querySelector('.cz-msg'); m?.classList.remove('fw-shake'); void m?.offsetWidth; m?.classList.add('fw-shake'); return; } }
+  FW.placing = true;
   for (const b of list) { const r = await api('/api/foodwheel/bet', { item: b.item, chip: b.chip }); if (r.ok) { FW.st = r; FW.msg = ''; FW.cur.list.push(b); } else { FW.msg = r.error || 'تعذّر.'; break; } }
-  FW.placing = false; if (root.isConnected && !FW.spinning) root.innerHTML = foodHTML();
+  FW.placing = false; if (root.isConnected && !FW.spinning) fwRender(root);
 }
 async function foodLoad(root) {
   const s = await api('/api/foodwheel'); if (!root.isConnected) return;
@@ -123,13 +149,15 @@ async function foodLoad(root) {
     if (s.phase === 'show' && FW.shownRound !== s.round && prev && prev.round === s.round && prev.phase === 'bet') { FW.shownRound = s.round; spinAnim(root); return; }
     if (s.phase === 'show') FW.shownRound = s.round; if (s.phase === 'bet' && prev?.phase === 'show') FW.msg = '';
   }
-  if (!FW.spinning) root.innerHTML = foodHTML();
+  if (!FW.spinning) fwRender(root);
 }
 async function spinAnim(root) {
-  FW.spinning = true; root.innerHTML = foodHTML();
-  const its = [...root.querySelectorAll('.fw-it')]; const N = its.length, target = FW.st.result; let k = 0; const steps = N * 3 + target;
-  for (let i = 0; i <= steps; i++) { its.forEach((e) => e.classList.remove('lit')); its[k % N]?.classList.add('lit'); k++; await sleep(60 + Math.pow(i / steps, 3) * 260); }
-  await sleep(500); FW.spinning = false; if (root.isConnected) root.innerHTML = foodHTML();
+  FW.spinning = true; fwRender(root);
+  /* R102: الضوء يلف حول العجلة بسرعة ويهدى على النتيجة (حوالي ثانيتين ونص) */
+  const its = [...root.querySelectorAll('.fw-it')]; const N = its.length, target = FW.st.result; const steps = N * 3 + target;
+  root.querySelector('.fw-stage')?.classList.add('fw-run');
+  for (let i = 0; i <= steps; i++) { its.forEach((e) => e.classList.remove('lit')); its[i % N]?.classList.add('lit'); await sleep(35 + Math.pow(i / steps, 3) * 220); }
+  await sleep(250); root.querySelector('.fw-stage')?.classList.remove('fw-run'); FW.spinning = false; if (root.isConnected) fwRender(root);
 }
 
 /* ======================= التركيب ======================= */
@@ -143,14 +171,14 @@ function mount(root) {
     const a = b.dataset.cz;
     if (a === 'close') { SL.auto = false; history.length > 1 ? history.back() : ((globalThis.__LA3BAK_NAV__ || location).hash = '#/games'); return; }
     if (a === 'help') { const m = root.querySelector('[data-cz-msg]'); if (m) m.textContent = `50 خط. 3 رموز FREE = 8 لفات مجانية. 5 رموز JACKPOT = ${TIER_PCT[SL.bet]}% من الجاكبوت.`; return; }
-    if (a === 'fwhelp') { FW.msg = 'اختار قيمة الرهان واضغط على الأكلة. «السلطة» تراهن على كل أكلات ×5، و«البيتزا» على الباقي.'; root.innerHTML = foodHTML(); return; }
+    if (a === 'fwhelp') { FW.msg = 'اختار قيمة الرهان واضغط على الأكلة. «السلطة» تراهن على كل أكلات ×5، و«البيتزا» على الباقي. تقدر تراهن على 6 أكلات بالكثير.'; fwRender(root); return; }
     if (a === 'spin') { if (SL.auto) { SL.auto = false; b.textContent = spinLabel(); root.querySelector('[data-cz="auto"]')?.classList.remove('on'); return; } return slotSpin(root); }
     if (a === 'auto') { SL.auto = !SL.auto; b.classList.toggle('on', SL.auto); const sb = root.querySelector('[data-cz="spin"]'); if (sb) { sb.textContent = spinLabel(); sb.removeAttribute('disabled'); } if (SL.auto) slotSpin(root); return; }
     if (a === 'bet-' || a === 'bet+') { if (SL.busy) return; SL.bet = Math.max(0, Math.min(SL.st.bets.length - 1, SL.bet + (a === 'bet+' ? 1 : -1))); root.innerHTML = slotHTML(); return; }
-    if (b.dataset.fwChip !== undefined) { FW.chip = Number(b.dataset.fwChip); root.innerHTML = foodHTML(); return; }
-    if (b.dataset.fwAuto !== undefined) { FW.auto = !FW.auto; root.innerHTML = foodHTML(); return; }
+    if (b.dataset.fwChip !== undefined) { FW.chip = Number(b.dataset.fwChip); fwRender(root); return; }
+    if (b.dataset.fwAuto !== undefined) { FW.auto = !FW.auto; fwRender(root); return; }
     if (b.dataset.fwRepeat !== undefined) return placeBets(root, FW.prev);
-    if (b.dataset.fwChest !== undefined) { const r = await api('/api/foodwheel/chest', { i: Number(b.dataset.fwChest) }); if (r.ok) { FW.st = r; FW.msg = `فتحت الصندوق وأخذت ${nf(r.reward)} عملة 🎉`; } else FW.msg = r.error || 'تعذّر.'; if (!FW.spinning) root.innerHTML = foodHTML(); return; }
+    if (b.dataset.fwChest !== undefined) { const r = await api('/api/foodwheel/chest', { i: Number(b.dataset.fwChest) }); if (r.ok) { FW.st = r; FW.msg = `فتحت الصندوق وأخذت ${nf(r.reward)} عملة 🎉`; } else FW.msg = r.error || 'تعذّر.'; if (!FW.spinning) fwRender(root); return; }
     if (b.dataset.fwGroup !== undefined) { const c = FW.st.chips[FW.chip]; return placeBets(root, b.dataset.fwGroup.split(',').map((i) => ({ item: Number(i), chip: c }))); }
     if (b.dataset.fwItem !== undefined) return placeBets(root, [{ item: Number(b.dataset.fwItem), chip: FW.st.chips[FW.chip] }]);
   });
@@ -260,11 +288,11 @@ html:has(.cz-ov[data-casino=food]) .cz-ov{background:#c3122f}
 .fw-modal h4{margin:1cqw 0;text-align:center;font-size:3.8cqw;color:#ffe9a0}
 .fw-pod{display:flex;justify-content:center;align-items:flex-end;gap:4cqw}.fw-p{display:flex;flex-direction:column;align-items:center;gap:.4cqw;min-width:18cqw}.fw-p bdi{font-size:3.2cqw;font-weight:900;max-width:22cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fw-p b{font:900 3.4cqw/1 Arial,sans-serif;color:#fff;direction:ltr}
 .fw-pa{position:relative;width:12cqw;height:12cqw;border-radius:50%;display:grid;place-items:center;font-size:5cqw;font-weight:900;background:linear-gradient(#5a4a8a,#2a1a5a);border:.7cqw solid #c0c8d8}.fw-p1 .fw-pa{width:15cqw;height:15cqw;border-color:#ffd34d;box-shadow:0 0 3cqw #ffd34d}.fw-p3 .fw-pa{border-color:#e09a5a}
-.fw-pa i{position:absolute;bottom:-1.5cqw;width:5cqw;height:5cqw;border-radius:50%;background:#ffd34d;color:#5a2a00;font:normal 900 3cqw/5cqw Arial,sans-serif;text-align:center}.fw-none{margin:0;text-align:center;font-size:3.4cqw;opacity:.8}
+.fw-pa i{position:absolute;bottom:-1.5cqw;width:5cqw;height:5cqw;border-radius:50%;background:#ffd34d;color:#5a2a00;font:normal 900 3cqw/5cqw Arial,sans-serif;text-align:center}.fw-none{margin:0;text-align:center;font-size:3.4cqw;opacity:.8}.fw-modal{top:auto!important;bottom:0;left:0!important;right:0!important;position:fixed!important;max-width:520px;margin:0 auto;padding:3cqw 5cqw calc(5cqw + env(safe-area-inset-bottom))!important;border-radius:6cqw 6cqw 0 0!important;box-shadow:0 -2cqw 6cqw #0006;animation:fwup .35s cubic-bezier(.2,.9,.3,1.1) both!important;z-index:20!important}@keyframes fwup{from{transform:translateY(100%)}to{transform:none}}.fw-mhero{position:relative;display:flex;align-items:center;justify-content:center;gap:5cqw;margin:1cqw 0 2cqw}.fw-mbig{width:22cqw;height:22cqw;object-fit:contain;filter:drop-shadow(0 1.5cqw 2cqw #0006);animation:fwpop .5s .1s both}@keyframes fwpop{from{transform:scale(.3)}70%{transform:scale(1.15)}to{transform:scale(1)}}.fw-ut{font-size:9cqw;filter:grayscale(1) brightness(1.8)}.fw-cf{position:absolute;inset:-2cqw 0;background:radial-gradient(circle,#ff4d6d 0 .8cqw,transparent 1cqw) 10% 20%/14cqw 12cqw,radial-gradient(circle,#ffe14d 0 .8cqw,transparent 1cqw) 60% 70%/17cqw 13cqw,radial-gradient(circle,#5dff9a 0 .7cqw,transparent .9cqw) 30% 50%/11cqw 15cqw;opacity:.9;pointer-events:none;animation:fwcf 1.6s linear infinite}@keyframes fwcf{to{background-position:10% 120%,60% 170%,30% 150%}}.fw-mstats{font-size:3.4cqw!important;color:#d8e2ff}.fw-mstats b{color:#ffe14d}.fw-crown{font-size:6cqw;line-height:1;margin-bottom:-1.5cqw;position:relative;z-index:2}.fw-p1 .fw-crown{font-size:8cqw}.fw-rib{background:linear-gradient(180deg,#ffe58a,#f0b52a);color:#5a2a00!important;padding:.6cqw 3cqw;border-radius:1cqw;clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%);margin-top:1cqw}.fw-p2 .fw-rib{background:linear-gradient(180deg,#f3f4f8,#b9c0cf)}.fw-p3 .fw-rib{background:linear-gradient(180deg,#ffd0a0,#e08a3a)}.fw-p b{display:flex;align-items:center;gap:1cqw;font-size:3.8cqw!important;margin-top:.8cqw}.fw-p b img,.fw-p b svg{width:4cqw;height:4cqw}
 .fw-panel{margin-top:-1px;padding:8px 8px 10px;background:linear-gradient(180deg,#e9c389,#d9a965);border-top:3px solid #9a5a22;border-radius:0 0 14px 14px}
 .fw-autot span{color:#4a2200!important}.fw-autot{display:flex;align-items:center;justify-content:center;gap:8px;color:#4a2200;font-weight:800;font-size:13px}
 .fw-sw{position:relative;width:40px;height:22px;border-radius:99px;border:0;background:#b9a48a;cursor:pointer}.fw-sw::after{content:"";position:absolute;top:2px;inset-inline-end:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s}.fw-sw.on{background:#16a314}.fw-sw.on::after{inset-inline-end:20px}
-.fw-chips{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:8px}
+.fw-chips{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-top:8px}.cz-msg.fw-shake{animation:fwshake .4s}@keyframes fwshake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}.cz-food .cz-msg:not(:empty){background:#fff3dc;color:#8a1020!important;font-weight:800;border-radius:12px;padding:6px 10px;margin:6px 0}
 .fw-chip{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;aspect-ratio:.86;padding:4px 2px;border-radius:10px;border:3px solid #fff3dc;background:#fff3dc;cursor:pointer;color:#3a1800}
 .fw-chip b{max-width:100%;color:#3a1800!important;font:900 10.5px/1 Arial,sans-serif;padding:3px 4px;border-radius:99px;background:#fff;border:1.5px solid #8b4a1f}
 .fw-chip.on{border-color:#3ad11f;background:#5a3410;box-shadow:0 0 0 2px #3ad11f88}.fw-chip.on b{background:#fff}
