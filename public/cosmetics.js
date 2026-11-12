@@ -225,14 +225,51 @@ function rankFrameInner(css) {
   if (t >= 5) s += `<rect class="cx-shine" x="-60" y="0" width="30" height="120" fill="rgba(255,255,255,.22)" transform="skewX(-20)"/>`;
   return s;
 }
+/* R90: تصاميم استوديو لعبك — المواصفات مشفّرة بالمفتاح st~… ونرسمها هنا (ألوان ونقشة ثابتة، ما فيه كود من اللاعب) */
+const ST_HEX = /^#[0-9a-f]{6}$/, ST_PAT = ['plain', 'stars', 'dots', 'waves', 'diamonds', 'hearts', 'crowns', 'sparkle'];
+const stEsc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+export function studioSpec(css) {
+  if (typeof css !== 'string' || !css.startsWith('st~') || css.length > 400) return null;
+  try {
+    const b = css.slice(3).replace(/-/g, '+').replace(/_/g, '/'); const raw = decodeURIComponent(escape(atob(b + '==='.slice((b.length + 3) % 4))));
+    const [k, c1, c2, c3, p, t, g] = JSON.parse(raw);
+    if ((k !== 'frame' && k !== 'bg') || ![c1, c2, c3].every((c) => ST_HEX.test(c)) || !ST_PAT.includes(p) || typeof t !== 'string' || t.length > 12) return null;
+    return { k, c1, c2, c3, p, t, g: g === 1 };
+  } catch { return null; }
+}
+const stMotif = (p, x, y, r, c) => p === 'stars' ? star4(x, y, r, c) : p === 'dots' ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * .45).toFixed(1)}" fill="${c}"/>`
+  : p === 'diamonds' ? `<path d="M${x.toFixed(1)} ${(y - r).toFixed(1)}l${(r * .6).toFixed(1)} ${r.toFixed(1)}-${(r * .6).toFixed(1)} ${r.toFixed(1)}-${(r * .6).toFixed(1)}-${r.toFixed(1)}z" fill="${c}"/>`
+  : p === 'hearts' ? `<path d="M${x.toFixed(1)} ${(y + r * .8).toFixed(1)}c-${(r * 1.4).toFixed(1)}-${r.toFixed(1)}-${(r * .9).toFixed(1)}-${(r * 2).toFixed(1)} 0-${(r * 1.1).toFixed(1)}c${(r * .9).toFixed(1)}-${(r * .9).toFixed(1)} ${(r * 1.4).toFixed(1)} ${(r * .1).toFixed(1)} 0 ${(r * 1.9).toFixed(1)}z" fill="${c}"/>`
+  : p === 'crowns' ? `<path d="M${(x - r).toFixed(1)} ${(y + r * .5).toFixed(1)}l${(r * .2).toFixed(1)}-${(r * 1.2).toFixed(1)} ${(r * .5).toFixed(1)} ${(r * .6).toFixed(1)} ${(r * .3).toFixed(1)}-${(r * .9).toFixed(1)} ${(r * .3).toFixed(1)} ${(r * .9).toFixed(1)} ${(r * .5).toFixed(1)}-${(r * .6).toFixed(1)} ${(r * .2).toFixed(1)} ${(r * 1.2).toFixed(1)}z" fill="${c}"/>`
+  : p === 'sparkle' ? star4(x, y, r * 1.3, c, 'cx-tw') : '';
+function studioFrame(s) {
+  const g = nid('st'); let o = `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s.c1}"/><stop offset="1" stop-color="${s.c2}"/></linearGradient>${s.g ? `<radialGradient id="${g}h"><stop offset=".6" stop-color="${s.c1}" stop-opacity="0"/><stop offset=".85" stop-color="${s.c1}" stop-opacity=".55"/><stop offset="1" stop-color="${s.c1}" stop-opacity="0"/></radialGradient>` : ''}</defs>`;
+  if (s.g) o += `<circle cx="60" cy="60" r="60" fill="url(#${g}h)"/>`;
+  o += `<circle cx="60" cy="60" r="48" fill="none" stroke="url(#${g})" stroke-width="8"/><circle cx="60" cy="60" r="43.5" fill="none" stroke="${s.c3}" stroke-width="1.2" opacity=".9"/><circle cx="60" cy="60" r="52.5" fill="none" stroke="${s.c3}" stroke-width="1" opacity=".7"/>`;
+  if (s.p === 'waves') o += `<circle cx="60" cy="60" r="48" fill="none" stroke="${s.c3}" stroke-width="2" stroke-dasharray="6 5" opacity=".85"/>`;
+  else if (s.p !== 'plain') for (let i = 0; i < 12; i++) { if (s.t && i >= 5 && i <= 7) continue; const [x, y] = polar(48, i * 30 - 90); o += stMotif(s.p, x, y, 3.6, s.c3); }
+  if (s.t) { const w = Math.max(30, [...s.t].length * 7.5 + 14); o += `<rect x="${60 - w / 2}" y="100" width="${w}" height="15" rx="7.5" fill="url(#${g})" stroke="${s.c3}" stroke-width="1"/><text x="60" y="111" text-anchor="middle" font-size="9" font-weight="800" fill="${s.c3}" font-family="system-ui,sans-serif">${stEsc(s.t)}</text>`; }
+  return `<svg class="cx-frame st-frame" viewBox="0 0 120 120" direction="ltr" aria-hidden="true" focusable="false">${o}</svg>`;
+}
+function studioBg(s, cls = '') {
+  const g = nid('sb'); let o = `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s.c1}"/><stop offset="1" stop-color="${s.c2}"/></linearGradient></defs><rect width="400" height="160" fill="url(#${g})"/>`;
+  let r = 17; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+  if (s.p === 'waves') o += [40, 80, 120].map((y, i) => `<path d="M0 ${y}q50-${14 + i * 4} 100 0t100 0 100 0 100 0" fill="none" stroke="${s.c3}" stroke-width="${3 - i * .6}" opacity="${.5 - i * .1}"/>`).join('');
+  else if (s.p !== 'plain') for (let i = 0; i < 22; i++) o += stMotif(s.p, 10 + rnd() * 380, 10 + rnd() * 140, 3 + rnd() * 5, s.c3).replace('<path ', `<path opacity="${(.35 + rnd() * .5).toFixed(2)}" `).replace('<circle ', `<circle opacity="${(.35 + rnd() * .5).toFixed(2)}" `);
+  if (s.g) o += `<rect x="4" y="4" width="392" height="152" rx="10" fill="none" stroke="${s.c3}" stroke-width="2.4"/>`;
+  if (s.t) o += `<text x="200" y="92" text-anchor="middle" font-size="40" font-weight="900" fill="${s.c3}" opacity=".22" font-family="system-ui,sans-serif">${stEsc(s.t)}</text>`;
+  return `<svg class="cx-bg st-bg ${cls}" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" direction="ltr" aria-hidden="true" focusable="false">${o}</svg>`;
+}
+export const studioArt = (css, cls = '') => { const s = studioSpec(css); return !s ? '' : s.k === 'frame' ? studioFrame(s) : studioBg(s, cls); };
 /** إطار جديد كطبقة SVG تنحط فوق الصورة (الحاوية لازم position:relative) */
 export function frameArt(css) {
+  if (typeof css === 'string' && css.startsWith('st~')) { const sp = studioSpec(css); return sp?.k === 'frame' ? studioFrame(sp) : ''; }
   if (referenceOf(css)?.slot === 'frame') return referenceImage(css, String(referenceOf(css).src).includes('/art58/rank/') ? 'cx-frame ref-frame art58-rank' : 'cx-frame ref-frame');
   if (!FR[css]) return '';
   if (RANK_FR[css]) return `<svg class="cx-frame r-${FR[css].r} rk-frame t${RANK_FR[css].t}" viewBox="-4 -6 128 132" direction="ltr" aria-hidden="true" focusable="false">${rankFrameInner(css)}</svg>`;
   return `<svg class="cx-frame r-${FR[css].r}" viewBox="0 0 120 120" direction="ltr" aria-hidden="true" focusable="false">${frameInner(css)}</svg>`;
 }
-export const isFrame2 = (css) => referenceOf(css)?.slot === 'frame' || !!FR[css];
+export const isFrame2 = (css) => referenceOf(css)?.slot === 'frame' || !!FR[css] || studioSpec(css)?.k === 'frame';
 
 /* ---------- الخلفيات: مشاهد SVG ‎400×160‎ ---------- */
 const sky = (g, a, b) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="400" height="160" fill="url(#${g})"/>`;
@@ -302,8 +339,9 @@ function bgInner(css) {
 }
 /** مشهد الخلفية كـSVG يغطي الحاوية */
 export function bgArt(css, cls = '') {
+  if (typeof css === 'string' && css.startsWith('st~')) { const sp = studioSpec(css); return sp?.k === 'bg' ? studioBg(sp, cls) : ''; }
   if (referenceOf(css)?.slot === 'bg') return referenceImage(css, 'cx-fill ref-background');
   if (!BG[css]) return '';
   return `<svg class="cx-bg r-${BG[css].r} ${cls}" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" direction="ltr" aria-hidden="true" focusable="false">${bgInner(css)}</svg>`;
 }
-export const isBg2 = (css) => referenceOf(css)?.slot === 'bg' || !!BG[css];
+export const isBg2 = (css) => referenceOf(css)?.slot === 'bg' || !!BG[css] || studioSpec(css)?.k === 'bg';

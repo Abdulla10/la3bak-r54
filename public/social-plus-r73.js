@@ -78,7 +78,7 @@ async function recordFlow(btn, max, send) {
 /* ---------- الصفحات ---------- */
 const S = { groups: null, group: null, gid: '', addOpen: false, membersOpen: false, lfg: null, lfgForm: { gameId: 'baloot', need: 1, note: 'جاهز الحين' }, maj: null, majI: '', vibe: null, vibeI: 'chill', vibePoll: 0, friends: null };
 const shell = (title, sub, body, back = '#/friends') => `<div class="sp73"><header class="sp73-h"><a class="sp73-back" href="${back}" aria-label="رجوع">‹</a><div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div></header>${body}</div>`;
-export const ROUTES = new Set(['groups', 'group', 'lfg', 'majalis', 'vibe', 'perks']);
+export const ROUTES = new Set(['groups', 'group', 'lfg', 'majalis', 'vibe', 'perks', 'studio']);
 
 export function render(view, r, ctx = {}) {
   toast = ctx.toast || toast;
@@ -90,6 +90,7 @@ export function render(view, r, ctx = {}) {
   if (r.name === 'majalis') return majPage(view);
   if (r.name === 'vibe') return vibePage(view);
   if (r.name === 'perks') return perksPage(view);
+  if (r.name === 'studio') return import('./studio-r90.js?v=r90').then((m) => m.page(view, { toast })).catch(() => { view.innerHTML = shell('🎨 استوديو التصميم', '', '<p class="sp73-empty">تعذّر التحميل، حدّث الصفحة.</p>', '#/perks'); });
 }
 let RENDER = () => {};
 const rerender = () => RENDER();
@@ -218,7 +219,8 @@ function settings88(d) {
   const left = pf.nextIdAt && pf.nextIdAt > Date.now() ? Math.ceil((pf.nextIdAt - Date.now()) / 86400000) : 0;
   const pick = has('pickId') ? `<form class="sp73-card" data-sp73f="pick88"><b>🆔 اختر آيديك المميز</b><small class="sp73-t">${left ? `تقدر تغيّره بعد ${left} يوم` : '4 أرقام من 1000 لين 9999 — لو فاضي يصير لك على طول'}</small><input name="v" inputmode="numeric" pattern="[1-9][0-9]{3}" maxlength="4" placeholder="مثلاً 7777" dir="ltr" ${left ? 'disabled' : ''}><button class="btn block" type="submit" ${left ? 'disabled' : ''}>احجزه</button></form>` : '';
   const priv = d.list.find((p) => p.key === 'dmEdit')?.open || d.vip >= 4 || d.noble >= 3 ? `<a class="sp73-card sp88-link" href="#/privacy-settings"><b>👁️ إخفاء «قرأ رسالتك» وآخر ظهور</b><small class="sp73-t">من إعدادات الخصوصية</small></a>` : '';
-  return nums || mute || pick || priv ? `<h2 class="sp73-sec">⚙️ مزاياك الحين</h2>${nums ? `<div class="sp88-nums">${nums}</div>` : ''}${mute}${pick}${priv}` : '';
+  const studio = `<a class="sp73-card sp88-link st90-entry" href="#/studio"><b>🎨 استوديو التصميم ${has('studio') ? '' : '🔒'}</b><small class="sp73-t">${has('studio') ? 'صمّم إطارك وخلفيتك وبيعها للاعبين' : 'التصميم لنوبل 5 وفوق — والسوق مفتوح للكل'}</small></a>`;
+  return `<h2 class="sp73-sec">⚙️ مزاياك الحين</h2>${nums ? `<div class="sp88-nums">${nums}</div>` : ''}${studio}${mute}${pick}${priv}`;
 }
 function banner(m) {
   let el = document.getElementById('sp74-bc'); if (el) el.remove();

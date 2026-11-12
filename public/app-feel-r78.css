@@ -84,3 +84,38 @@ html body :is(.gold-btn,.play-now,.m68-claim,.lb-gs-submit):not(#_){background:l
 html body .btn.btn:not(.ghost):not(.danger):not(.secondary):not(.link):disabled,html body .btn.btn:not(.ghost):not(.danger):not(.secondary):not(.link)[aria-disabled=true]{background:linear-gradient(135deg,#4a3d22,#3a2f19)!important;color:#e9dcc0!important;box-shadow:none!important;opacity:1}
 html body #view .btn:not(.ghost):not(.danger) svg{color:#2a1500}
 html body .u2-col[data-c="y"]{color:#2a1500!important;text-shadow:none!important}
+/* R90: استوديو التصميم */
+html body .st90-tabs{margin:4px 0 10px}
+html body .st90-kinds{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+html body .st90-kinds button{padding:10px;border-radius:14px;border:1px solid #ffffff26;background:rgba(255,255,255,.06);color:#f3eaff;font-weight:800}
+html body .st90-kinds button.on{background:linear-gradient(135deg,#ffd66b,#f0b429);color:#2a1500;border-color:transparent}
+html body .st90-prev{display:grid;place-items:center;padding:12px;border-radius:16px;background:rgba(0,0,0,.25);margin-bottom:10px;min-height:150px}
+html body .st90-av{position:relative;display:inline-grid;place-items:center;width:64px;height:64px;flex:none}
+html body .st90-av.big{width:130px;height:130px}
+html body .st90-face{width:72%;height:72%;border-radius:50%;background:#3a1a66;display:grid;place-items:center;font-size:24px}
+html body .st90-av.big .st90-face{font-size:46px}
+html body .st90-av .cx-frame{position:absolute;inset:-10%;width:120%;height:120%;pointer-events:none}
+html body .st90-bg{display:block;width:150px;height:60px;border-radius:12px;overflow:hidden;flex:none}
+html body .st90-bg.big{width:100%;height:auto;aspect-ratio:400/160}
+html body .st90-bg svg{display:block;width:100%;height:100%}
+html body .st90-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+html body .st90-cols label{display:grid;gap:4px;font-size:11px;text-align:center;color:#e6d6fa}
+html body .st90-cols input{width:100%;height:40px;border-radius:10px;border:1px solid #ffffff33;background:none;padding:2px}
+html body .st90-presets{display:flex;gap:8px;margin:8px 0 4px;flex-wrap:wrap}
+html body .st90-presets button{width:32px;height:32px;border-radius:50%;border:2px solid #ffffff55}
+html body .st90-row{display:grid;gap:4px;margin:10px 0;font-size:12px;color:#e6d6fa}
+html body .st90-row input,html body .st90-price input{border-radius:10px;border:1px solid #ffffff33;background:rgba(0,0,0,.25);color:#fff;padding:9px;font:inherit}
+html body .st90-check{display:flex;gap:8px;align-items:center;margin:6px 0 12px;color:#f3eaff}
+html body .st90-item{display:flex;gap:12px;align-items:center}
+html body .st90-meta{display:grid;gap:4px;min-width:0;flex:1}
+html body .st90-meta small{color:#d9c8f0}
+html body .st90-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+html body .st90-price{display:flex;gap:6px}
+html body .st90-price input{width:90px;padding:6px}
+html body .st90-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+html body .st90-mk{display:grid;gap:6px;justify-items:center;text-align:center}
+html body .st90-mk small{color:#d9c8f0;font-size:11px}
+html body .st90-own{color:#7ee2a8!important;font-weight:800}
+html:not(.lb-dark) body :is(.st90-cols label,.st90-row,.st90-check,.st90-meta small,.st90-mk small){color:#4a3a60}
+html:not(.lb-dark) body .st90-kinds button{color:#2c1a4a;background:#fff}
+html:not(.lb-dark) body :is(.st90-row input,.st90-price input){background:#fff;color:#2c1a4a}

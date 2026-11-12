@@ -3,7 +3,7 @@
 import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 
 export type PerkKey = 'bigGroups' | 'quitPass' | 'mmPriority' | 'roomFull' | 'rankShield' | 'support' | 'reqNote' | 'seat' | 'broadcast' | 'noKick' | 'stealth'
-  | 'salary' | 'muteWords' | 'shopDiscount' | 'pinChats' | 'dmEdit' | 'visitors' | 'xpBoost' | 'pickId';
+  | 'salary' | 'muteWords' | 'shopDiscount' | 'pinChats' | 'dmEdit' | 'visitors' | 'xpBoost' | 'pickId' | 'studio';
 /** alt: مستوى النوبل اللي يفتح نفس ميزة الـVIP (اختياري) */
 export type PerkDef = { key: PerkKey; system: 'vip' | 'noble'; level: number; icon: string; name: string; desc: string; alt?: number };
 export const PERK_DEFS: PerkDef[] = [
@@ -27,6 +27,7 @@ export const PERK_DEFS: PerkDef[] = [
   { key: 'visitors', system: 'vip', level: 6, icon: '👁️', name: 'مين زار ملفي', desc: 'تشوف أسماء وصور اللي زاروا ملفك ومتى.' },
   { key: 'xpBoost', system: 'vip', level: 8, alt: 4, icon: '⚡', name: 'مضاعف الخبرة', desc: 'خبرة إضافية من كل مباراة: من 24% لين 50% حسب مستواك.' },
   { key: 'pickId', system: 'vip', level: 11, alt: 5, icon: '🆔', name: 'آيدي مميز تختاره', desc: 'تختار آيدي من 4 أرقام فاضي (مثل 7777) بنفسك — تغيير مرة كل 30 يوم.' },
+  { key: 'studio', system: 'noble', level: 5, icon: '🎨', name: 'استوديو التصميم', desc: 'تصمم إطارك وخلفيتك بنفسك (ألوان ونقشة واسمك)، وتلبسها أو تبيعها للاعبين بالعملات.' },
 ];
 PERK_DEFS.sort((a, b) => (a.system === b.system ? 0 : a.system === 'vip' ? -1 : 1) || a.level - b.level);
 export const PICK_ID_EVERY = 30 * 86400_000, EDIT_WINDOW = 10 * 60_000;

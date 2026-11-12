@@ -123,6 +123,7 @@ import { createSeo } from './seo-r71.js';
 import { PERSONAS, personaOf } from './personas-r72.js';
 import { Social73 } from './social-r73.js';
 import { Perks, PERK_DEFS, EDIT_WINDOW } from './perks-r74.js';
+import { Studio, STUDIO_SELLER_SHARE } from './studio-r90.js';
 
 /** Compatibility wrapper: old generic intents remain valid; optional social payloads fail closed. */
 export function validSocialGiftOutbox(d: Record<string, unknown>): boolean {
@@ -588,6 +589,9 @@ export async function createApp(
   const tierOf = (id: string) => { const p = progression.view(id); return { vip: p.vip.enabled && p.vip.value ? Number(p.vip.value.slice(1)) || 0 : 0, noble: p.noble.enabled && p.noble.value ? Number(p.noble.value.slice(1)) || 0 : 0 }; };
   /* R74: مزايا عملية لـ VIP والنوبل */
   const perks = new Perks(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'perks74.json') : '', tierOf, Date.now, storage);
+  /* R90: استوديو التصميم — التصاميم تصير عناصر st-<رقم> تنلبس وتنعرض بكل مكان مثل عناصر المتجر */
+  const studio = new Studio(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'studio90.json') : '', Date.now, storage, (t) => profanityOnly(t));
+  { const baseGet = shopcat.get.bind(shopcat); (shopcat as any).get = (id: unknown) => baseGet(id) ?? (studio.asItem(id) as any); }
   const PRIVACY_GATES: Record<string, { on: boolean; vip: number; noble: number | null; msg: string; level?: number }> = {
     showPresence: { on: false, vip: 4, noble: 3, msg: 'إخفاء حالة الاتصال يحتاج VIP 4 أو نبيل 3.' },
     hideEntrances: { on: true, vip: 6, noble: 8, msg: 'إخفاء الدخولية يحتاج VIP 6 أو نبيل 8.' },
@@ -1967,6 +1971,39 @@ export async function createApp(
     functionalHttp.add('GET', '/api/perks', ({ user }) => ({ ok: true, ...perks.view(user.id), broadcastLeft: perks.broadcastLeft(user.id) }));
     functionalHttp.add('GET', '/api/admin/perks', () => ({ ok: true, ...perks.adminList() }), 'owner');
     /* R88: إعدادات مزاياي — كتم كلمات، تثبيت محادثات، آيدي مختار، تعديل/حذف الرسائل */
+    /* R90: استوديو التصميم */
+    const studioNeed = (id: string) => { if (!perks.has(id, 'studio')) throw new FunctionalHttpError(403, `استوديو التصميم يحتاج نوبل ${perks.level('studio')}.`); };
+    const studioWallet = (id: string) => ({ coins: wallet.balance(id), equipped: wallet.equipped(id), owned: wallet.owned(id).filter((x) => x.startsWith('st-')) });
+    functionalHttp.add('GET', '/api/studio', ({ user, url }) => ({ ok: true, can: perks.has(user.id, 'studio'), need: perks.level('studio'), share: STUDIO_SELLER_SHARE,
+      mine: studio.mine(user.id).map((d) => studio.view(d, user.id)), market: studio.market(url.searchParams.get('kind')).map((d) => ({ ...studio.view(d, user.id), by: cpPerson(d.by) })),
+      bought: wallet.owned(user.id).filter((x) => x.startsWith('st-')).map((x) => studio.asItem(x)).filter(Boolean), ...studioWallet(user.id) }));
+    functionalHttp.add('POST', '/api/studio', ({ user, body }) => {
+      studioNeed(user.id); const d = studio.create(user.id, body.name, body.spec);
+      const it = studio.asItem(`st-${d.id}`)!; wallet.buy(user.id, { id: it.id, slot: it.slot, price: 0, currency: 'coins', permanent: true }, `studio-own-${d.id}`);
+      return { ok: true, design: studio.view(d, user.id), ...studioWallet(user.id) };
+    });
+    functionalHttp.add('POST', '/api/studio/:id/price', ({ user, params, body }) => { studioNeed(user.id); return { ok: true, design: studio.view(studio.setPrice(user.id, params.id, body.price), user.id) }; });
+    functionalHttp.add('POST', '/api/studio/:id/delete', ({ user, params }) => studio.remove(user.id, params.id));
+    functionalHttp.add('POST', '/api/studio/:id/buy', ({ user, params, body }) => {
+      const d = studio.get(params.id); if (!d || d.price <= 0) throw new FunctionalHttpError(404, 'التصميم مو معروض للبيع.');
+      if (d.by === user.id) throw new FunctionalHttpError(409, 'هذا تصميمك.');
+      if (Number(body.seen) !== d.price) throw new FunctionalHttpError(409, 'السعر تغيّر، حدّث الصفحة.');
+      const it = studio.asItem(`st-${d.id}`)!; const key = String(body.key ?? '');
+      if (!/^[A-Za-z0-9_-]{8,64}$/.test(key)) throw new FunctionalHttpError(400, 'مفتاح الطلب غير صالح.');
+      const r = wallet.buy(user.id, { id: it.id, slot: it.slot, price: d.price, currency: 'coins', permanent: true }, key);
+      if (!r.ok) throw new FunctionalHttpError(409, r.code === 'owned' ? 'عندك هذا التصميم.' : r.code === 'poor' ? 'عملاتك ما تكفي.' : 'تعذّر الشراء.');
+      if (!r.dup) { studio.sold(d.id); const cut = Math.floor(d.price * STUDIO_SELLER_SHARE); try { if (cut > 0) wallet.grant(d.by, 'coins', cut, `🎨 بيع تصميمك «${d.name}»`, `studio-sale:${d.id}:${user.id}`); } catch { /* يتسجل بالسجل */ }
+        sendToUser(d.by, { t: 'wallet', coins: wallet.balance(d.by), gems: wallet.gems(d.by), won: 0 }); }
+      return { ok: true, ...studioWallet(user.id) };
+    });
+    functionalHttp.add('POST', '/api/studio/wear', ({ user, body }) => {
+      const iid = body.item === null ? null : String(body.item ?? ''); const slot = String(body.slot ?? '');
+      if (slot !== 'frame' && slot !== 'bg') throw new FunctionalHttpError(400, 'خانة غير صالحة.');
+      if (iid !== null) { const it = studio.asItem(iid); if (!it || it.slot !== slot) throw new FunctionalHttpError(404, 'التصميم غير موجود.'); }
+      if (!wallet.equip(user.id, slot, iid)) throw new FunctionalHttpError(403, 'ما تملك هذا التصميم.');
+      return { ok: true, ...studioWallet(user.id) };
+    });
+    functionalHttp.add('POST', '/api/admin/studio/:id/hide', ({ params }) => studio.adminHide(params.id), 'owner');
     functionalHttp.add('POST', '/api/perks/mute-words', ({ user, body }) => perks.setMuteWords(user.id, body.words));
     functionalHttp.add('POST', '/api/perks/pin', ({ user, body }) => perks.togglePin(user.id, body.pub));
     functionalHttp.add('GET', '/api/perks/pick-id', ({ user, url }) => {

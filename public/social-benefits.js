@@ -3,8 +3,8 @@
  * R13 prepaid redemption displays only supplied server reward quotes; no wallet mutation. */
 import { giftArt } from './giftart.js?v=r68i-r14';
 import { giftRewardQuote, giftRewardEventQuote, giftRewardCard } from './gift-reward-ui.js?v=r68i';
-import { frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r68z31';
-import { avatarArt } from './avatars.js?v=r68z31';
+import { frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r90';
+import { avatarArt } from './avatars.js?v=r90';
 import { backgroundVisual, isSuppliedBackground } from './background-art.js?v=r58p';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

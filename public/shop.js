@@ -1,6 +1,6 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r68z31';
-import { avatarArt } from './avatars.js?v=r68z31';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r90';
+import { avatarArt } from './avatars.js?v=r90';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r68z31';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';

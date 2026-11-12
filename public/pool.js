@@ -1,7 +1,7 @@
 /* ٨ بول — الواجهة (R68z). الخادم يحاكي كل ضربة ويقرر النتيجة (src/engine/pool.ts)،
  * والمتصفح يعيد نفس المحاكاة (pool-physics.js) عشان يحرّك الكرات. الطاولة والكرات رسم أصلي (Canvas). */
 import { faceHtml } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=r68z31';
+import { avatarArt } from './avatars.js?v=r90';
 import { simulate, canPlace, groupOf, W, H, R, HEAD_Y, POCKETS, POCKET_ART } from './pool-physics.js?v=r69zt';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

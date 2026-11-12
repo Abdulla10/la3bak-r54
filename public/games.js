@@ -1,13 +1,13 @@
 import { faceSvg, faceHtml, charOf } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=r68z31';
+import { avatarArt } from './avatars.js?v=r90';
 import { ldPlayMode, LD_MODES } from './hub.js?v=r72-r6';
 import * as SFX from './sfx.js?v=r69zu-r6';
-import { domino } from './domino.js?v=r68z31';
-import { uno } from './uno.js?v=r68z31';
-import { liars } from './liars.js?v=r68z31';
-import { pool } from './pool.js?v=r69zt';
-import { bowling } from './bowling.js?v=r69zu';
-import { carrom } from './carrom.js?v=r68z31';
+import { domino } from './domino.js?v=r90';
+import { uno } from './uno.js?v=r90';
+import { liars } from './liars.js?v=r90';
+import { pool } from './pool.js?v=r90';
+import { bowling } from './bowling.js?v=r90';
+import { carrom } from './carrom.js?v=r90';
 import { minaboli } from './minaboli-r47.js?v=r57';
 /* واجهات الألعاب بالدور والتصويت. كل دالة تأخذ الغرفة وترجع HTML.
    الأزرار ترسل حركتها عبر data-a (JSON) والخادم هو اللي يتحقق منها. */
