@@ -3,7 +3,7 @@ let PKLOADED = false;
 import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
-import * as PR from './profile.js?v=r93';
+import * as PR from './profile.js?v=r97';
 import * as UNIFIED from '../unified/shell.js?v=r96';
 import * as REF from '../unified/home.js?v=r95';
 import * as SOCIAL from '../unified/social.js?v=r96';
@@ -26,7 +26,7 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r93';
+import * as PF from '../profile.js?v=r97';
 import * as SHOP from '../shop.js?v=r91';
 import * as GIFT from '../gifts.js?v=r91';
 import * as GFX from '../giftfx.js?v=r68i';
@@ -47,10 +47,10 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r91';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r96';
+import * as PWA from '../pwa.js?v=r97';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r93';
+import * as MIS from '../missions.js?v=r97';
 import * as SP from '../social-plus-r73.js?v=r92';
 import '../mute-r88.js?v=r88';
 import * as CHAT from '../chat.js?v=r91';
@@ -457,7 +457,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r96');
+  const M = await import('../settings-r60.js?v=r97');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -659,7 +659,7 @@ async function render() {
       { const inp = view.querySelector('[data-ids-q]'); if (inp && !inp.dataset.bound) { inp.dataset.bound = '1'; inp.addEventListener('input', () => { SHOP.SH.idsQ = inp.value; const b = view.querySelector('.ids-body'); if (b) b.outerHTML = SHOP.idsBodyHTML(SHOP.SH.data, SHOP.SH.idsTab || 'special-id'); }); if (SHOP.SH.idsFocus) { SHOP.SH.idsFocus = false; inp.focus(); } } }
       break;
     case 'wheel':
-      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      if (!S.user) { S.next = '#/' + r.name; (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,'wheel','<div data-wheel68></div>');
       import('../wheel-r68.js?v=r68z').then(({mountWheel})=>{const el=view.querySelector('[data-wheel68]');if(el&&parseRoute().name==='wheel')mountWheel(el,{api:functionalApi});}).catch(()=>{});
       break;
@@ -713,7 +713,7 @@ async function render() {
       break;
     case 'ranks':
     case 'vip':
-      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      if (!S.user) { S.next = '#/' + r.name; (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,r.name);
       break;
     case 'leaderboard':
@@ -736,17 +736,17 @@ async function render() {
     case 'league':
     case 'watch':
     case 'twofa':
-      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      if (!S.user) { S.next = '#/' + r.name; (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,r.name,AR69.arenaHTML(r.name, r.name === 'watch' ? r.a : ''));
       break;
     case 'passkeys':
-      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      if (!S.user) { S.next = '#/' + r.name; (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,r.name,PK.pageHTML());
       if (!PKLOADED) { PKLOADED = true; PK.load(() => { if (parseRoute().name === 'passkeys') render(); }); }
       break;
     case 'slot':
     case 'foodwheel':
-      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      if (!S.user) { S.next = '#/' + r.name; (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,r.name,CZ68.casinoHTML(r.name === 'slot' ? 'slot' : 'food'));
       break;
     case 'themes':
@@ -757,7 +757,7 @@ async function render() {
     case 'account-info':
     case 'devices':
     case 'hidden-posts':
-      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      if (!S.user) { S.next = '#/' + r.name; (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       S.pf.sec = 'settings';
       void settingsR60(view, r.name);
       break;
@@ -803,7 +803,7 @@ async function render() {
       unifiedPage(view,'u',COM.userPageHTML(!!S.user, (id) => gameInfo(id)?.name ?? id));
       break;
     case 'notifications':
-      if (!S.user) { (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
+      if (!S.user) { S.next = '#/' + r.name; (globalThis.__LA3BAK_NAV__ || location).replace('#/account'); return; }
       unifiedPage(view,'notifications');
       break;
     case 'voice': case 'vroom':

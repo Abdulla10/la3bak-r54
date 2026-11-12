@@ -171,3 +171,11 @@ html body .so-chat-system.r96-enter{animation:r96in .35s ease-out}
 html body #view .so-chat .so-chat-messages article.so-chat-system.r96-sys:not(#_)::before,html body #view .so-chat .so-chat-messages article.so-chat-system.r96-sys:not(#_)::after{display:none!important}
 /* الحقوق ما تطلع داخل الغرف والألعاب */
 html body #view [data-lb-page="social"] .lb-copy79,html body #view [data-lb-page="room"] .lb-copy79,html body #view .lb-content[data-lb-page="social"] .lb-copy79{display:none!important}
+
+/* R97: صفحة الدخول للضيف */
+#view .pf97-login{max-width:520px;margin:0 auto;padding:18px 14px 30px}
+#view .pf97-head{text-align:center;padding:18px 8px 8px}
+#view .pf97-logo{font-size:34px;font-weight:900;color:#f5c542;letter-spacing:.5px}
+#view .pf97-head h1{margin:6px 0 4px;font-size:22px}
+#view .pf97-head p{margin:0;opacity:.8;font-size:14px}
+#view .pf97-login .lpu-login{display:grid;gap:14px;margin-top:12px}
