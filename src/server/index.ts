@@ -830,6 +830,11 @@ export async function createApp(
   /* R73: يتعبّى بعدين (يحتاجه هوك نهاية اللعبة) */
   const s73Ref: { v: Social73 | null } = { v: null };
   onlineNow = (id) => (sockets.get(id)?.size ?? 0) > 0;
+  /* R116: أي إعلان أو بنر ينشر من الإدارة يوصل للكل على طول بدون تحديث */
+  const pushAllLive = (msg: Record<string, unknown>) => { const raw = JSON.stringify(msg); for (const set of sockets.values()) for (const ws of set) { try { if (ws.readyState === 1) ws.send(raw); } catch { /* */ } } };
+  { let tm: ReturnType<typeof setTimeout> | null = null; const ping = (what: string) => { if (tm) clearTimeout(tm); tm = setTimeout(() => { tm = null; pushAllLive({ t: 'site:refresh', what }); }, 300); };
+    for (const k of ['addNotice', 'updateNotice', 'deleteNotice'] as const) { const orig = (platform as any)[k].bind(platform); (platform as any)[k] = (...a: unknown[]) => { const r = orig(...a); ping('notices'); return r; }; }
+    for (const k of ['upsert', 'remove', 'move'] as const) { const orig = (homeBanners as any)[k].bind(homeBanners); (homeBanners as any)[k] = (...a: unknown[]) => { const r = orig(...a); ping('banners'); return r; }; } }
   /* R62: دقايق المايك للمهام — عينة كل دقيقة، وتنحفظ دفعة كل 5 دقايق */
   const micBatch = new Map<string, number>(); let micTicks = 0;
   const micTimer = setInterval(() => {

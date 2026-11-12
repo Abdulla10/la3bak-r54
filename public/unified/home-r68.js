@@ -126,6 +126,8 @@ function fillHosts() {
   if (!bannerFetch) bannerFetch = getJSON('/api/home-banners').then((j) => { if (j?.ok) bannerCache = arr(j.list); setTimeout(() => { bannerFetch = null; }, 60000); return bannerCache; });
   bannerFetch.then(apply);
 }
+/* R116: بنر جديد من الإدارة يطلع على طول */
+if (typeof addEventListener !== 'undefined') addEventListener('la3bak:site-refresh', (e) => { if (e.detail?.what !== 'banners') return; bannerFetch = null; document.querySelectorAll('[data-h68-banner-host][data-h68-filled]').forEach((h) => { delete h.dataset.h68Filled; }); fillHosts(); });
 function scan() { document.querySelectorAll('[data-h68-banners]:not([data-h68-bound])').forEach(bindBanners); fillHosts(); }
 if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined' && !globalThis.__h68obs) {
   globalThis.__h68obs = new MutationObserver(() => { if (document.querySelector('[data-h68-banners]:not([data-h68-bound]),[data-h68-banner-host]:not([data-h68-filled])')) scan(); });

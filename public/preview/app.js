@@ -4,9 +4,9 @@ import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r103-search-r17';
 import * as PR from './profile.js?v=r107';
-import * as UNIFIED from '../unified/shell.js?v=r115';
-import * as REF from '../unified/home.js?v=r101';
-import * as SOCIAL from '../unified/social.js?v=r115';
+import * as UNIFIED from '../unified/shell.js?v=r116';
+import * as REF from '../unified/home.js?v=r116';
+import * as SOCIAL from '../unified/social.js?v=r116';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r107';
@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r107';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r115';
+import * as PWA from '../pwa.js?v=r116';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r107';
@@ -108,7 +108,7 @@ function toast(msg, isErr = false) {
 /* ---------------- الاتصال ---------------- */
 function updateConn() {
   const el = $('#conn');
-  if(el){el.hidden=!S.user;el.classList.toggle('off',!S.online);const label=el.querySelector('b');if(label)label.textContent=S.online?'متصل':'جاري الاتصال…';}
+  if(el){el.hidden=!S.user;clearTimeout(S.connT);if(!S.online&&S.user){S.connT=setTimeout(()=>{if(!S.online){el.classList.add('off');const l=el.querySelector('b');if(l)l.textContent='جاري الاتصال…';}},2500);el.classList.toggle('off',false);const l0=el.querySelector('b');if(l0)l0.textContent='متصل';patchLive();return;}el.classList.toggle('off',!S.online);const label=el.querySelector('b');if(label)label.textContent=S.online?'متصل':'جاري الاتصال…';}
   patchLive();
 }
 
@@ -146,7 +146,7 @@ addEventListener('hashchange', () => { try { RES.hide(); } catch { /* */ } });
 /* R69zk: رجوع للعبة بعد انقطاع */
 RESUME.init({ rooms: () => [...S.rooms.values()], me: () => S.user?.id, now: () => Date.now() + (S.offset || 0), gameName: (id) => S.games?.find((g) => g.id === id)?.name || '',
   go: (code) => { (globalThis.__LA3BAK_NAV__ || location).hash = '#/room/' + code; },
-  reconnect: (force) => { if (!S.user) return; if (S.ws && S.ws.readyState === 1) { if (force) { S.retry = 0; try { S.ws.close(); } catch { /* */ } } return; } if (S.ws && S.ws.readyState === 0) return; S.retry = 0; connect(); } });
+  reconnect: (force) => { if (!S.user) return; if (S.ws && S.ws.readyState === 1) { if (force) { S.retry = 0; S.fastRe = true; try { S.ws.close(); } catch { /* */ } } return; } if (S.ws && S.ws.readyState === 0) return; S.retry = 0; connect(); } });
 function connect() {
   if (!S.user) return;
   if (S.ws && S.ws.readyState <= 1) return;
@@ -215,6 +215,10 @@ function connect() {
       if (S.user && S.ws === ws && m.delta) setTimeout(() => { if (!RES.rating(m)) toast(`${m.icon} تصنيفك ${m.delta > 0 ? '+' + m.delta : m.delta} ← ${m.rating} (${m.tier})`, m.delta < 0); }, 1500);
     } else if (m.t === 'spy') {
       if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:spy', { detail: m }));
+    } else if (m.t === 'site:refresh') {
+      /* R116: إعلان أو بنر جديد من الإدارة — يوصل على طول بدون تحديث */
+      window.dispatchEvent(new CustomEvent('la3bak:site-refresh', { detail: m }));
+      if (m.what === 'notices') { checkStatusNow(); fetch('/api/status',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{ if(j){ REF_STATE.notices=j.notices||[]; if(parseRoute().name==='home') render(); } }).catch(()=>{}); }
     } else if (m.t === 'account:purged') {
       /* R114: الإدارة حذفت الحساب نهائياً */
       const n = document.createElement('div'); n.setAttribute('role', 'alertdialog'); n.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:#0b0218f2;color:#fff;direction:rtl;padding:24px;text-align:center;font:700 17px/1.8 system-ui,sans-serif';
@@ -322,6 +326,8 @@ function connect() {
     S.pending.clear();
     updateConn();
     if (ev?.code === 1012) { S.restarting = true; restartNote(true); }
+    /* R116: رجعت للموقع بعد ما طلعت — نتصل على طول بدل ما ننتظر ثانية (كان يحسّ تعليق) */
+    if (S.user && S.fastRe) { S.fastRe = false; connect(); return; }
     if (S.user) setTimeout(connect, S.restarting ? Math.min(1200 + 600 * S.retry++, 3000) : Math.min(1000 * 2 ** S.retry++, 8000));
   };
 }
@@ -465,7 +471,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r115');
+  const M = await import('../settings-r60.js?v=r116');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
