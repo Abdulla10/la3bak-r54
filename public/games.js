@@ -356,7 +356,7 @@ const PIPS = ['', '5', '19', '159', '1379', '13579', '134679'];
 const dieHtml = (n, cls = '') => `<div class="die ${cls}" role="img" aria-label="الزهر ${n}">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => `<i class="${PIPS[n].includes(String(i)) ? 'on' : ''}"></i>`).join('')}</div>`;
 function ludoPos(g, pi, prog, t) {
   const seat = g.seats[pi];
-  if (prog === -1) { const [cx, cy] = LUDO_YARD[seat]; return [cx + (t % 2 ? 0.79 : -0.79), cy + (t > 1 ? 0.79 : -0.79)]; }
+  if (prog === -1) { const [cx, cy] = LUDO_YARD[seat]; return [cx + (t % 2 ? 1 : -1), cy + (t > 1 ? 1 : -1) + 0.05]; }
   if (prog <= 50) { const c = LUDO_PATH[(seat * 13 + prog) % 52]; return [c[0] + 0.5, c[1] + 0.5]; }
   if (prog <= 55) { const c = LUDO_LANE[seat][prog - 51]; return [c[0] + 0.5, c[1] + 0.5]; }
   const [fx, fy] = LUDO_FIN[seat]; return [fx + (t % 2 ? 0.22 : -0.22) * (seat % 2 ? 1 : 0.0), fy + (t > 1 ? 0.22 : -0.22) * (seat % 2 ? 0 : 1)];
