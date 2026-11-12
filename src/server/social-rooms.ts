@@ -32,6 +32,8 @@ export interface SocialRoomsOptions {
   file: string;
   /** R74: مزايا VIP/النوبل: دخول المجالس الممتلئة، الحماية من الطرد والكتم، المقاعد المحجوزة */
   perk?: (id: string, k: 'roomFull' | 'noKick' | 'seat') => boolean;
+  /** R120: يقدر ينشر صور بالدردشة (VIP 5+ أو نوبل) */
+  canChatImage?: (id: string) => boolean;
   profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null } } | null;
   blocked: (a: string, b: string) => boolean;
   eligible: (id: string) => boolean;
@@ -1089,6 +1091,8 @@ export class SocialRooms {
       this.ready();this.actor(userId);if(!isObj(body)||!jsonSafe(body)||Buffer.byteLength(canonical(body))>24000||typeof command!=='string'||command.length>80)fail('invalid_command');
       if(!ident(body.key)||body.key.length>96)fail('idempotency_key_required');
       const input=Object.fromEntries(Object.entries(body).filter(([k])=>k!=='key'&&k!=='command'));
+      /* R120: رسالة صورة بالدردشة لأصحاب الميزة فقط */
+      if(command==='chat:send'&&typeof input.text==='string'&&/\[img:/.test(input.text)&&(!/^\[img:[a-f0-9]{24}\]$/.test(input.text)||this.opts.canChatImage?.(userId)!==true))fail('chat_image_not_allowed',403);
       const passwordCommand=['room:create','room:update','room:join','council:join','council:return'].includes(command);
       if(Object.hasOwn(input,'password')&&(!passwordCommand||!validPasswordInputR30(input.password)))fail('invalid_room_password');
       const old=this.state.receipts.find(r=>!r.admin&&r.actor===userId&&r.command===command&&r.key===body.key);

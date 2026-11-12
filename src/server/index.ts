@@ -30,6 +30,7 @@ import { STAKE_OPTIONS, SiteFlagsStore } from './site-flags-r67.js';
 import { roomOwnerGift } from './room-extras-r58.js';
 import { AccountDeletion, DELETION_GRACE_MS } from './account-deletion-r67.js';
 import { HomeBanners, HomeBannerError } from './home-banners-r68.js';
+import { RoomChatImages, CHAT_IMG_MAX } from './room-chat-img-r120.js';
 import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
@@ -407,6 +408,7 @@ export async function createApp(
   const deletion = new AccountDeletion(functionalFile(undefined, 'account-deletion'), Date.now, storage);
   accounts.hiddenFilter = (id) => deletion.hidden(id);
   const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
+  const roomChatImages = new RoomChatImages(socialRoomsFile ? path.join(path.dirname(socialRoomsFile), 'room-chat-img') : '');
   const homeBanners = new HomeBanners(functionalFile(undefined, 'home-banners'), Date.now, storage);
   const expTimer = setInterval(() => { try { for (const x of wallet.expireDue()) { const names = x.items.map((i) => shopcat.get(i)?.name ?? i).join('، '); try { support.announce([x.id], '⏰ انتهت مدة أغراضك', `خلصت مدة: ${names}. تقدر تجددها من المتجر.`, 'المتجر', `exp-${x.id.slice(0, 8)}-${Date.now()}`); } catch { /* التنبيه اختياري */ } sendToUser(x.id, { t: 'wallet', coins: wallet.balance(x.id), gems: wallet.gems(x.id), won: 0 }); } } catch (e) { log('expire_failed', { error: String(e).slice(0, 100) }); } }, 60_000); expTimer.unref?.();
   const replays = new Replays(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'replays') : '', Date.now);
@@ -1267,7 +1269,8 @@ export async function createApp(
   }, Date.now, storage);
   const socialEligible=(id:string)=>accounts.has(id)&&!platform.isBanned(id)&&(accounts.socialAge(id)===null||Number(accounts.socialAge(id))>=18);
   let socialVoice:SocialVoice|null=null;
-  const socialRooms=new SocialRooms({file:socialRoomsFile,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
+  const chatImgOk=(id:string)=>{const p=progression.view(id);const vip=p.vip.value&&/^V(?:[1-9]|1[0-5])$/.test(p.vip.value)?Number(p.vip.value.slice(1)):0;const noble=p.noble.value&&/^N[1-9]$/.test(p.noble.value)?Number(p.noble.value.slice(1)):0;return vip>=5||noble>=1||!!platform.roleOf(id);};
+  const socialRooms=new SocialRooms({file:socialRoomsFile,canChatImage:chatImgOk,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
     cannon:{wallet,catalog:shopcat,pendingCount:id=>outbox.pending().filter(i=>i.payload.kind==='gift'&&validCannonGiftContext(i.payload.cannonSupport)&&i.payload.cannonSupport.cannonId===id).length,
       onAward:(id,eventId)=>{sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id),won:0});support.announce([id],'مكافأة مدفع الغرفة','تمت إضافة الإطار والخلفية الدائمين إلى ملكيتك. حدّث المتجر لعرضهما.','room-cannon-r27','cannon:'+eventId);}},
     pendingChallengeGift:id=>outbox.pending().some(intent=>intent.payload.kind==='gift'&&validGiftSupportContext(intent.payload.socialSupport)&&intent.payload.socialSupport.challengeId===id),
@@ -2582,6 +2585,28 @@ export async function createApp(
         if (mb) return json(res, 503, { error: mb, maintenance: true });
         const bb = admin.banBlock(user);
         if (bb) return json(res, 403, { error: bb, banned: true });
+      }
+      /* R120: صور دردشة الغرفة */
+      const chatImgGet = /^\/api\/social\/chat-img\/([a-f0-9]{24})\.webp$/.exec(url.pathname);
+      if (chatImgGet && (req.method === 'GET' || req.method === 'HEAD')) { const b = roomChatImages.get(chatImgGet[1]); if (!b) return json(res, 404, { error: 'غير موجودة.' }); res.writeHead(200, { ...securityHeaders, 'Content-Type': 'image/webp', 'Content-Length': b.length, 'Cache-Control': 'private, max-age=31536000, immutable' }); return res.end(req.method === 'HEAD' ? undefined : b); }
+      const chatImgPost = /^\/api\/social\/rooms\/([0-9a-f-]{36})\/chat-image$/.exec(url.pathname);
+      if (chatImgPost) {
+        const ph = { 'Cache-Control': 'private, no-store' };
+        if (!user) return json(res, 401, { error: 'سجّل دخولك.' }, ph);
+        if (req.method !== 'POST') return json(res, 405, { error: 'الطريقة غير مسموحة.' }, ph);
+        if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' }, ph);
+        if (!chatImgOk(user.id)) return json(res, 403, { error: 'نشر الصور لأصحاب VIP 5 وفوق أو النوبل.' }, ph);
+        if (!socialRooms.quizAccess(user.id, chatImgPost[1])) return json(res, 403, { error: 'لازم تكون داخل الغرفة.' }, ph);
+        if (!avatarLimiter.allow(`chat-img:${user.id}`)) return json(res, 429, { error: 'شوي شوي، جرّب بعد لحظات.' }, ph);
+        const ct = String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(ct)) return json(res, 415, { error: 'المسموح: JPG وPNG وWebP.' }, ph);
+        if (Number(req.headers['content-length'] ?? 0) > CHAT_IMG_MAX) { req.resume(); return json(res, 413, { error: 'الصورة كبيرة (الحد 6 ميغا).' }, ph); }
+        const input = await new Promise<Buffer | null>((resolve, reject) => { const chunks: Buffer[] = []; let size = 0, big = false; req.on('data', (c: Buffer) => { size += c.length; if (size > CHAT_IMG_MAX) { big = true; chunks.length = 0; } else if (!big) chunks.push(c); }); req.once('end', () => resolve(big ? null : Buffer.concat(chunks))); req.once('error', reject); });
+        if (!input) return json(res, 413, { error: 'الصورة كبيرة (الحد 6 ميغا).' }, ph);
+        try {
+          const why = await imageBlocked(input, user.id, 'صورة دردشة غرفة'); if (why) return json(res, 400, { error: why }, ph);
+          const id = await roomChatImages.save(input); return json(res, 200, { ok: true, id, token: `[img:${id}]` }, ph);
+        } catch { return json(res, 400, { error: 'الصورة ما تنقرى، جرّب صورة ثانية.' }, ph); }
       }
       const coverRoute = /^\/api\/social\/rooms\/([^/]+)\/cover$/.exec(url.pathname);
       if (coverRoute) {

@@ -638,7 +638,7 @@ html body .so-page .so-room-detail.r68 form.r68-form .r68-emoji{flex:none!import
 html body .so-page .so-room-detail.r68 form.r68-form input#so-chat-text{flex:1 1 auto!important;min-width:0!important;width:auto!important;height:40px!important;padding:0 6px!important;font-size:16px!important}
 html body .so-page .so-room-detail.r68 form.r68-form .so-send-button{flex:none!important;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;margin:0!important}
 html body .so-page .so-room-detail.r68 form.r68-form .so-send-button svg{width:18px!important;height:18px!important}
-html body .so-page .so-room-detail.r68 .r68-row:focus-within>.r68-dbtn{display:none!important}
+html body .so-page .so-room-detail.r68 .r68-row:has(input[name=text]:focus)>.r68-dbtn{display:none!important}
 /* R69zs: الدردشة تبدأ من تحت (جنب مربع الكتابة) مثل باقي التطبيقات */
 .so-page .so-room-detail .so-chat-messages{justify-content:flex-start!important}
 .so-page .so-room-detail .so-chat-messages>:first-child{margin-top:auto!important}

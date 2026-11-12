@@ -384,3 +384,11 @@ html body .so-directory-r30 .so-dir-create-banner .so-dir-banner-icon:not(#_){op
 /* R119: صح وصحين بالرسائل */
 html body .chat-bubble .dm119-tick:not(#_){margin-inline-start:6px;font-weight:900;letter-spacing:-3px;color:#ffffffa0}
 html body .chat-bubble .dm119-tick.is-read:not(#_){color:#4fc3ff}
+/* R120: صور الدردشة */
+html body .so-chat-message .r120-pic:not(#_){padding:4px!important;background:none!important;border:0!important;box-shadow:none!important}
+html body .so-chat-message .r120-pic img{display:block;max-width:min(220px,62vw);max-height:260px;border-radius:14px;object-fit:cover;box-shadow:0 4px 14px #0008;cursor:zoom-in;background:#ffffff14}
+.r120-cam{flex:none;width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:linear-gradient(135deg,#ffd76a,#f0a91f);color:#3a1600;cursor:pointer;margin-inline-end:4px}
+.r120-cam svg{width:20px;height:20px}
+.r120-view{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(0,0,0,.92)}
+.r120-view img{max-width:96vw;max-height:88vh;border-radius:12px}
+.r120-view button{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;width:42px;height:42px;border-radius:50%;border:0;background:#ffffff26;color:#fff;font-size:20px}
