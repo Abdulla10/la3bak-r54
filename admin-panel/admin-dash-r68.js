@@ -11,7 +11,7 @@ const up = (ch) => `<em class="d68-ch ${ch < 0 ? 'dn' : ''}">${ch < 0 ? '↓' : 
 export const GROUPS68 = [
   ['overview', 'لوحة التحكم', '🏠', ['overview']],
   ['stats', 'إحصائيات المنصة', '📊', ['watch', 'health']],
-  ['players', 'إدارة اللاعبين', '👥', ['players', 'player-log', 'ids3', 'owner-tools', 'verification', 'bulk']],
+  ['players', 'إدارة اللاعبين', '👥', ['players', 'miners', 'player-log', 'ids3', 'owner-tools', 'verification', 'bulk']],
   ['economy', 'المحفظة والعملات', '🪙', ['economy', 'pricing', 'payments', 'tuning']],
   ['shop', 'المتجر والمنتجات', '🛒', ['shop', 'gifts', 'auction', 'home-banners']],
   ['games', 'إدارة الألعاب', '🎮', ['games-control', 'luck', 'achievements']],

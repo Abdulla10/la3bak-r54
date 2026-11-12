@@ -392,3 +392,12 @@ html body .so-chat-message .r120-pic img{display:block;max-width:min(220px,62vw)
 .r120-view{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(0,0,0,.92)}
 .r120-view img{max-width:96vw;max-height:88vh;border-radius:12px}
 .r120-view button{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;width:42px;height:42px;border-radius:50%;border:0;background:#ffffff26;color:#fff;font-size:20px}
+/* R121: شارة المنجم */
+.mn121{display:inline-flex;align-items:center;gap:2px;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:900;line-height:18px;white-space:nowrap;margin-inline-start:4px;vertical-align:middle}
+.mn121-1{background:linear-gradient(180deg,#9fb3c8,#5f7488);color:#fff}
+.mn121-2{background:linear-gradient(180deg,#5fd0ff,#2b6fd6);color:#fff;box-shadow:0 0 8px #4fc3ff88}
+.mn121-3{background:linear-gradient(180deg,#ffe07a,#f0a91f);color:#3a1600;box-shadow:0 0 10px #ffc83d;animation:mn121g 2s ease-in-out infinite}
+@keyframes mn121g{50%{box-shadow:0 0 16px #ffd76a}}
+html body dialog.so-dialog:not(#_) .mc117 .mc117-send span:not(.so-sr){color:#fff!important}
+html body :is(dialog.so-dialog,#view):not(#_) .mn121-1,html body :is(dialog.so-dialog,#view):not(#_) .mn121-2{color:#fff!important}
+html body :is(dialog.so-dialog,#view):not(#_) .mn121-3{color:#3a1600!important}

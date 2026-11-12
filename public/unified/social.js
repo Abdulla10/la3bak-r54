@@ -248,8 +248,9 @@ const select = (name,label,options,value) => `<label class="so-field">${esc(labe
 const selfId = c => String(c.snapshot?.selfId || c.list?.selfId || c.uid);
 const RANK_CHIP=(key,n)=>key==='vip'&&n>=1&&n<=15?`/assets/art58/chips/vip${n}.webp?v=r58o`:key==='noble'&&n>=1&&n<=9?`/assets/art58/chips/n${n}.webp?v=r58o`:key==='room'&&n>=1&&n<=300?roomChipArt(n):'';
 function rankBadges(m) {
-  if(m?.ranks?.official===true)return officialBadge(16)+rankBadgesBase(m);
-  return rankBadgesBase(m);
+  const mn=Number(m?.ranks?.miner);const miner=mn>=1&&mn<=3?`<small class="mn121 mn121-${mn}" dir="rtl">⛏️ منجم ${mn}</small>`:'';
+  if(m?.ranks?.official===true)return officialBadge(16)+rankBadgesBase(m)+miner;
+  return rankBadgesBase(m)+miner;
 }
 function rankBadgesBase(m) {
   const rank=[['vip','VIP',15],['noble','N',9],['level','LV',100]].find(([key,,max])=>Number.isInteger(m.ranks?.[key])&&m.ranks[key]>0&&m.ranks[key]<=max);

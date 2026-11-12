@@ -34,7 +34,7 @@ export interface SocialRoomsOptions {
   perk?: (id: string, k: 'roomFull' | 'noKick' | 'seat') => boolean;
   /** R120: يقدر ينشر صور بالدردشة (VIP 5+ أو نوبل) */
   canChatImage?: (id: string) => boolean;
-  profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null } } | null;
+  profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null; miner?: number } } | null;
   blocked: (a: string, b: string) => boolean;
   eligible: (id: string) => boolean;
   /** Optional non-player platform admin identity, authenticated/authorized by parent HTTP only. */
@@ -1502,7 +1502,7 @@ export class SocialRooms {
   private who(id:string) {
     const p=this.opts.profile(id);if(!p)return null;
     const r=p.ranks;
-    const ranks=r?{level:num(r.level,1,100)?r.level:null,vip:num(r.vip,0,15)?r.vip:null,noble:num(r.noble,0,9)?r.noble:null,...((r as {nameOff?:boolean}).nameOff===true?{nameOff:true}:{}),...((r as {official?:boolean}).official===true?{official:true}:{})}:undefined;
+    const ranks=r?{level:num(r.level,1,100)?r.level:null,vip:num(r.vip,0,15)?r.vip:null,noble:num(r.noble,0,9)?r.noble:null,...((r as {nameOff?:boolean}).nameOff===true?{nameOff:true}:{}),...((r as {official?:boolean}).official===true?{official:true}:{}),...(num((r as {miner?:number}).miner,1,3)?{miner:(r as {miner?:number}).miner}:{})}:undefined;
     const frame=typeof p.frame==='string'&&/^[A-Za-z_][A-Za-z0-9_-]{0,79}$/.test(p.frame)?p.frame:null;
     const cosmetic=(v:unknown)=>typeof v==='string'&&/^[a-z][a-z0-9-]{0,39}$/.test(v)?v:null;
     const bubble=cosmetic(p.bubble),board=cosmetic(p.board),micFrame=cosmetic(p.micFrame),voiceFx=typeof p.voiceFx==='string'&&/^vfx\d\d$/.test(p.voiceFx)?p.voiceFx:null;
