@@ -1598,11 +1598,24 @@ export async function createApp(
       const k = user.id + '>' + to, now = Date.now(); if (now - (typingAt.get(k) ?? 0) < 1500) return { ok: true }; typingAt.set(k, now); if (typingAt.size > 5000) typingAt.clear();
       dmPush(to, { t: 'dm:typing', from: community.pub(user.id), on: body.on !== false }); return { ok: true };
     });
-    /* R121: المناجم من لوحة التحكم (المالك) */
+    /* R122: المناجم — اشتراك شهري بالعملات + المالك يعطيه ويغيّر الأسعار */
     const minerFind = (q: string) => { const v = String(q || '').trim().replace(/^#/, ''); if (!v) return null; if (/^[0-9a-f-]{36}$/.test(v) && accounts.has(v)) return v; const byId = (accounts as any).findByDisplayPlayerId?.(v); if (byId) return byId as string; const byName = accounts.all().find((a) => accounts.nameOf(a.id) === v); return byName?.id ?? null; };
-    const minerRow = (id: string) => ({ id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', level: miners.level(id) });
-    functionalHttp.add('GET', '/api/admin/miners', ({ url }) => { const q = String(url.searchParams.get('q') ?? ''); const found = q ? minerFind(q) : null; return { ok: true, tiers: MINER_TIERS, found: found ? minerRow(found) : null, notFound: !!q && !found, list: miners.list().map((r) => ({ ...minerRow(r.id), at: r.at, by: r.by })) }; }, 'owner');
-    functionalHttp.add('POST', '/api/admin/miners', ({ actor, body }) => { const id = minerFind(String(body.player ?? '')); adminNeed(!!id, 'ما لقيت اللاعب. اكتب الآيدي أو الاسم بالضبط.'); const lvl = Number(body.level); adminNeed([0, 1, 2, 3].includes(lvl), 'المنجم من 0 إلى 3.'); miners.set(id!, lvl, actor!.name); admin.audit(actor!, 'player.miner', id!, lvl ? `منجم ${lvl}` : 'إزالة المنجم'); return { ok: true, row: minerRow(id!) }; }, 'owner');
+    const minerRow = (id: string) => ({ id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', level: miners.level(id), until: miners.until(id) });
+    functionalHttp.add('GET', '/api/admin/miners', ({ url }) => { const q = String(url.searchParams.get('q') ?? ''); const found = q ? minerFind(q) : null; return { ok: true, tiers: miners.tiers(), found: found ? minerRow(found) : null, notFound: !!q && !found, list: miners.list().map((r) => ({ ...minerRow(r.id), at: r.at, by: r.by })) }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/miners', ({ actor, body }) => { const id = minerFind(String(body.player ?? '')); adminNeed(!!id, 'ما لقيت اللاعب. اكتب الآيدي أو الاسم بالضبط.'); const lvl = Number(body.level); adminNeed([0, 1, 2, 3].includes(lvl), 'المنجم من 0 إلى 3.'); miners.grant(id!, lvl, actor!.name, Number(body.months) || 1); admin.audit(actor!, 'player.miner', id!, lvl ? `منجم ${lvl} (شهر)` : 'إزالة المنجم'); return { ok: true, row: minerRow(id!) }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/miners/config', ({ actor, body }) => { const l = Number(body.level) as 1 | 2 | 3; try { miners.setCfg(l, Number(body.price), Number(body.daily)); } catch (e) { throw new FunctionalHttpError(400, (e as Error).message); } admin.audit(actor!, 'miner.config', String(l), `${body.price} / ${body.daily}`); return { ok: true, tiers: miners.tiers() }; }, 'owner');
+    functionalHttp.add('GET', '/api/miner', ({ user }) => ({ ok: true, level: miners.level(user.id), until: miners.until(user.id), tiers: miners.tiers(), coins: wallet.balance(user.id) }));
+    functionalHttp.add('POST', '/api/miner/subscribe', ({ user, body }) => {
+      if (isGuest(user.id)) throw new FunctionalHttpError(403, 'سجّل دخولك أول.');
+      const l = Number(body.level); if (![1, 2, 3].includes(l)) throw new FunctionalHttpError(400, 'اختر منجم 1 أو 2 أو 3.');
+      const cur = miners.level(user.id); if (cur && cur > l) throw new FunctionalHttpError(409, `عندك منجم ${cur} شغال. تقدر تجدده أو تنتظر لين يخلص.`);
+      const key = String(body.key ?? ''); if (!/^[A-Za-z0-9-]{8,64}$/.test(key)) throw new FunctionalHttpError(400, 'مفتاح الطلب ناقص.');
+      const t = miners.tier(l as 1 | 2 | 3); const pay = wallet.spendService(user.id, t.price, `اشتراك ${t.name} (شهر) ⛏️`, `miner122:${user.id}:${key}`);
+      if (!pay.ok) throw new FunctionalHttpError(400, pay.code === 'poor' ? `رصيدك ما يكفي. تحتاج ${t.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
+      if (!pay.dup) miners.grant(user.id, l, 'اشتراك');
+      sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id) });
+      return { ok: true, level: miners.level(user.id), until: miners.until(user.id), coins: pay.coins };
+    });
     functionalHttp.add('GET', '/api/admin/live', () => { let online = 0; for (const set of sockets.values()) if (set.size) online++; const rooms = socialRooms.liveRooms(); return { ok: true, online, inRooms: rooms.reduce((n, r) => n + r.members, 0), rooms: rooms.slice(0, 50) }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/player-360', ({ url }) => {
       const q = String(url.searchParams.get('q') ?? '').trim(); adminNeed(q.length >= 2, 'اكتب اسم أو رقم لاعب (حرفين على الأقل).');
@@ -3149,7 +3162,7 @@ export async function createApp(
         // R88: راتب VIP/نوبل اليومي (مفتاح ثابت لليوم — ما يتكرر)
         let salary = 0; { const amt = perks.salaryOf(user.id); if (amt > 0) { const dk = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10); try { if (wallet.grant(user.id, 'coins', amt, 'راتب VIP اليومي 👑', `salary88:${dk}`)) { salary = amt; extra += amt; } } catch { /* الراتب يتأجل؛ ما يوقف المكافأة */ } } }
         // R121: تعدين المنجم اليومي
-        { const amt = miners.daily(user.id); if (amt > 0) { const dk = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10); try { if (wallet.grant(user.id, 'coins', amt, `تعدين ${MINER_TIERS[miners.level(user.id) as 1|2|3].name} ⛏️`, `miner121:${dk}`)) { salary += amt; extra += amt; } } catch { /* */ } } }
+        { const amt = miners.daily(user.id); if (amt > 0) { const dk = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10); try { if (wallet.grant(user.id, 'coins', amt, `تعدين ${miners.tier(miners.level(user.id) as 1|2|3).name} ⛏️`, `miner121:${dk}`)) { salary += amt; extra += amt; } } catch { /* */ } } }
         return { ok: true, got: n + extra, base: n, bonus: extra, salary, gems: gemsGot, streakDay: day, coins: wallet.balance(user.id), gemBalance: wallet.gems(user.id) };
       }
       case 'mm:leave':

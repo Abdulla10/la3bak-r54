@@ -1,6 +1,7 @@
-// R121: المناجم — المالك يعطي أي لاعب منجم 1 أو 2 أو 3 (أو يشيله). كل منجم له مزايا، و3 أقواها.
+// R122: المناجم اشتراك شهري — المالك يعطي منجم لشهر، ويغيّر سعر الاشتراك والتعدين اليومي.
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nf = (n) => Number(n || 0).toLocaleString('en-US');
+const day = (t) => t ? new Date(t + 4 * 3600_000).toISOString().slice(0, 10) : '';
 const COL = { 1: '#9fb3c8', 2: '#4fc3ff', 3: '#ffc83d' };
 export function mountMiners(root, { call }) {
   if (!document.querySelector('style[data-mn121a]')) { const st = document.createElement('style'); st.dataset.mn121a = '1'; st.textContent = `
@@ -16,18 +17,20 @@ export function mountMiners(root, { call }) {
   const paint = () => {
     const d = S.d; if (!d) { root.innerHTML = '<p class="ad-muted">جاري التحميل…</p>'; return; }
     const f = d.found;
-    root.innerHTML = `<div class="mn121a"><section class="ad-card"><h2>⛏️ المناجم</h2><p class="ad-muted">اختر اللاعب وأعطه منجم 1 أو 2 أو 3. المزايا تشتغل على طول.</p>
-      <div class="tiers">${[1, 2, 3].map((l) => `<div class="tier" style="--c:${COL[l]}"><h3>⛏️ ${esc(d.tiers[l].name)}</h3><ul>${d.tiers[l].perks.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></div>`).join('')}</div></section>
+    root.innerHTML = `<div class="mn121a"><section class="ad-card"><h2>⛏️ المناجم</h2><p class="ad-muted">المنجم اشتراك شهري: اللاعب يشتريه بالعملات من ملفه، ويخلص بعد 30 يوم ويرجع يشترك. هنا تقدر تعطيه شهر مجاناً أو تشيله، وتغيّر الأسعار.</p>
+      <div class="tiers">${[1, 2, 3].map((l) => `<div class="tier" style="--c:${COL[l]}"><h3>⛏️ ${esc(d.tiers[l].name)}</h3><ul>${d.tiers[l].perks.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><form data-mn="cfg" data-l="${l}" class="ad-form col"><label>سعر الاشتراك الشهري (عملة)<input class="ad-in" name="price" type="number" min="1000" value="${d.tiers[l].price}" dir="ltr"></label><label>التعدين اليومي (عملة)<input class="ad-in" name="daily" type="number" min="0" value="${d.tiers[l].daily}" dir="ltr"></label><button class="ad-btn" type="submit">حفظ</button></form></div>`).join('')}</div></section>
       <section class="ad-card"><form data-mn="find" class="row"><input class="ad-in" name="q" placeholder="آيدي اللاعب أو اسمه" value="${esc(S.q)}" required style="flex:1"><button class="ad-btn" type="submit">بحث</button></form>
       ${S.err ? `<p class="err">${esc(S.err)}</p>` : ''}${S.msg ? `<p class="ok">${esc(S.msg)}</p>` : ''}
-      ${f ? `<div class="who"><b>${esc(f.name)} <small dir="ltr">#${esc(f.displayId)}</small></b><small>الحين: ${f.level ? 'منجم ' + f.level : 'بدون منجم'}</small>
-        <div class="pick">${[0, 1, 2, 3].map((l) => `<button type="button" data-mn-set="${l}" class="${f.level === l ? 'on' : ''}" style="--c:${COL[l] || '#ff7d8c'}"${S.busy ? ' disabled' : ''}>${l ? '⛏️ منجم ' + l : 'إزالة'}</button>`).join('')}</div></div>` : ''}</section>
-      <section class="ad-card"><h2>أصحاب المناجم (${nf(d.list.length)})</h2>${d.list.length ? d.list.map((r) => `<div class="li"><span>${esc(r.name)} <small dir="ltr">#${esc(r.displayId)}</small></span><b style="color:${COL[r.level]}">⛏️ منجم ${r.level}</b></div>`).join('') : '<p class="ad-muted">ما فيه أحد للحين.</p>'}</section></div>`;
+      ${f ? `<div class="who"><b>${esc(f.name)} <small dir="ltr">#${esc(f.displayId)}</small></b><small>الحين: ${f.level ? 'منجم ' + f.level + ' — يخلص ' + day(f.until) : 'بدون منجم'}</small>
+        <div class="pick">${[0, 1, 2, 3].map((l) => `<button type="button" data-mn-set="${l}" class="${f.level === l ? 'on' : ''}" style="--c:${COL[l] || '#ff7d8c'}"${S.busy ? ' disabled' : ''}>${l ? '⛏️ منجم ' + l + ' (شهر)' : 'إزالة'}</button>`).join('')}</div></div>` : ''}</section>
+      <section class="ad-card"><h2>أصحاب المناجم (${nf(d.list.length)})</h2>${d.list.length ? d.list.map((r) => `<div class="li"><span>${esc(r.name)} <small dir="ltr">#${esc(r.displayId)}</small></span><b style="color:${COL[r.level]}">⛏️ منجم ${r.level} <small>لين ${day(r.until)}</small></b></div>`).join('') : '<p class="ad-muted">ما فيه أحد للحين.</p>'}</section></div>`;
   };
-  root.addEventListener('submit', (e) => { const f = e.target.closest('[data-mn=find]'); if (!f) return; e.preventDefault(); S.q = f.q.value.trim(); S.msg = ''; load(); });
+  root.addEventListener('submit', async (e) => {
+    const c = e.target.closest('[data-mn=cfg]'); if (c) { e.preventDefault(); try { await call('miners/config', { method: 'POST', body: { level: Number(c.dataset.l), price: Number(c.price.value), daily: Number(c.daily.value) } }); S.msg = 'تم ✅ انحفظت الأسعار.'; S.err = ''; } catch (er) { S.err = er.message; } return load(); }
+    const f = e.target.closest('[data-mn=find]'); if (!f) return; e.preventDefault(); S.q = f.q.value.trim(); S.msg = ''; load(); });
   root.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-mn-set]'); if (!b || !S.d?.found || S.busy) return;
-    const lvl = Number(b.dataset.mnSet); if (!confirm(lvl ? `تعطي ${S.d.found.name} منجم ${lvl}؟` : `تشيل المنجم من ${S.d.found.name}؟`)) return;
+    const lvl = Number(b.dataset.mnSet); if (!confirm(lvl ? `تعطي ${S.d.found.name} منجم ${lvl} لمدة شهر؟` : `تشيل المنجم من ${S.d.found.name}؟`)) return;
     S.busy = true; paint();
     try { await call('miners', { method: 'POST', body: { player: S.d.found.id, level: lvl } }); S.msg = lvl ? `تم ✅ صار منجم ${lvl}.` : 'تم ✅ انشال المنجم.'; } catch (er) { S.err = er.message; }
     S.busy = false; await load();
