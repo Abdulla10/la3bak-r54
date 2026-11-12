@@ -13,7 +13,7 @@ export function init(cb) {
   onChange = cb;
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     // R60b: لو الصفحة خلصت تحميل قبل ما يوصل هالسطر، حدث load ما يرجع يصير — فنسجّل على طول (قبل كان الـ SW أحيانًا ما يتسجل أبدًا)
-    const reg = () => navigator.serviceWorker.register('/sw.js?v=r103').catch(() => {});
+    const reg = () => navigator.serviceWorker.register('/sw.js?v=r104b').catch(() => {});
     if (document.readyState === 'complete') reg(); else window.addEventListener('load', reg);
     /* R69zz: لما تنزل نسخة جديدة من الموقع، نقول للاعب بدل ما يظل على القديمة */
     const hadController = !!navigator.serviceWorker.controller; let shown = false;
@@ -43,6 +43,19 @@ export function init(cb) {
     onChange();
   });
   refreshFab();
+  /* R104: لو فاتح من أيقونة الجوال (تطبيق) نعلّم الصفحة، ولو من المتصفح نعرض شرح التثبيت مرة كل يومين */
+  if (isStandalone()) document.documentElement.classList.add('is-app');
+  else setTimeout(autoSheet, 6000);
+}
+const SEEN = 'la3_install_seen_v1';
+const mobile = () => isIOS || /android/i.test(ua);
+function autoSheet() {
+  if (isStandalone() || !mobile() || dialog) return;
+  let last = 0; try { last = Number(localStorage.getItem(SEEN)) || 0; } catch { /* */ }
+  if (Date.now() - last < 2 * 86400_000) return;
+  if (/^#\/(room|social-room|game|slot|foodwheel)\//.test(String((globalThis.__LA3BAK_NAV__ || location).hash || ''))) return;
+  try { localStorage.setItem(SEEN, String(Date.now())); } catch { /* */ }
+  openDialog(isIOS ? 'ios' : 'generic');
 }
 
 export const canInstall = () => !isStandalone();
@@ -60,24 +73,54 @@ export async function install() {
   openDialog(isIOS ? 'ios' : 'generic');
 }
 
+const SHARE_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ADD_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+/* R104: شاشة تثبيت مثل التطبيقات — خطوات واضحة بالصور، وعلى أندرويد زر تثبيت مباشر */
 export function openDialog(kind) {
   closeDialog();
+  const inSafari = isIOS && !/crios|fxios|edgios/i.test(ua);
   dialog = document.createElement('div');
-  dialog.className = 'modal-back';
-  dialog.dataset.act = 'install-close-bg';
-  const body =
-    kind === 'ios'
-      ? `<div class="big-emoji" aria-hidden="true">🍎</div>
-         <h3 id="instTitle">ثبّت اللعبة على iPhone</h3>
-         <p class="step-box">اضغط زر المشاركة في أسفل المتصفح، ثم اختر: «إضافة إلى الشاشة الرئيسية»</p>
-         <p class="note">ستظهر اللعبة كتطبيق على شاشة جوالك مباشرة</p>`
-      : `<div class="big-emoji" aria-hidden="true">📲</div>
-         <h3 id="instTitle">ثبّت اللعبة كتطبيق</h3>
-         <p class="step-box">افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»</p>
-         <p class="note">إذا ما ظهر الخيار، جرّب متصفح كروم أو سفاري.</p>`;
-  dialog.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="instTitle"><button class="x" type="button" data-act="install-close" aria-label="إغلاق">✕</button>${body}</div>`;
+  dialog.className = 'ins104';
+  const steps = kind === 'ios'
+    ? `<li><i>${SHARE_SVG}</i><span>اضغط زر <b>المشاركة</b> ${inSafari ? 'تحت في سفاري' : 'في المتصفح'}</span></li>
+       <li><i>${ADD_SVG}</i><span>اختر <b>«إضافة إلى الشاشة الرئيسية»</b></span></li>
+       <li><i>✓</i><span>اضغط <b>«إضافة»</b>، وافتح لعبك من أيقونته على شاشتك</span></li>`
+    : `<li><i>⋮</i><span>افتح قائمة المتصفح (الثلاث نقاط)</span></li>
+       <li><i>${ADD_SVG}</i><span>اختر <b>«تثبيت التطبيق»</b> أو «إضافة إلى الشاشة الرئيسية»</span></li>
+       <li><i>✓</i><span>افتح لعبك من أيقونته على شاشتك</span></li>`;
+  dialog.innerHTML = `<div class="ins104-sheet" role="dialog" aria-modal="true" aria-labelledby="ins104t">
+    <button class="ins104-x" type="button" aria-label="إغلاق">✕</button>
+    <img class="ins104-ic" src="/icon-192.png" alt="" width="76" height="76">
+    <h3 id="ins104t">ثبّت لعبك كتطبيق</h3>
+    <p class="ins104-sub">يفتح بشاشة كاملة مثل التطبيق، بدون شريط المتصفح، وأسرع.</p>
+    ${deferred ? '<button class="ins104-go" type="button" data-ins="go">📲 ثبّت الحين</button>' : `<ol class="ins104-steps">${steps}</ol>`}
+    <button class="ins104-later" type="button">لاحقاً</button>
+  </div>${kind === 'ios' && inSafari ? '<div class="ins104-arrow" aria-hidden="true">⬇</div>' : ''}`;
+  const close = () => closeDialog();
+  dialog.addEventListener('click', (e) => { if (e.target === dialog || e.target.closest('.ins104-x,.ins104-later')) close(); else if (e.target.closest('[data-ins="go"]')) { close(); install(); } });
   document.body.appendChild(dialog);
-  dialog.querySelector('.x').focus();
+  ensureCss();
+  dialog.querySelector('.ins104-x').focus({ preventScroll: true });
+}
+function ensureCss() {
+  if (document.getElementById('ins104css')) return;
+  const st = document.createElement('style'); st.id = 'ins104css';
+  st.textContent = `.ins104{position:fixed;inset:0;z-index:2147483000;background:rgba(8,2,18,.66);display:flex;align-items:flex-end;justify-content:center;direction:rtl;animation:ins104f .25s ease both}
+  @keyframes ins104f{from{opacity:0}}@keyframes ins104u{from{transform:translateY(100%)}}
+  .ins104-sheet{position:relative;width:min(100%,480px);background:linear-gradient(180deg,#2b0f52,#170733);border-top:1.5px solid #f5c54288;border-radius:24px 24px 0 0;padding:22px 20px calc(18px + env(safe-area-inset-bottom));color:#fff;text-align:center;animation:ins104u .35s cubic-bezier(.2,.9,.3,1.1) both;box-shadow:0 -12px 40px rgba(0,0,0,.5)}
+  .ins104-ic{width:76px;height:76px;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  .ins104 h3{margin:10px 0 4px;font-size:21px;color:#ffd977}
+  .ins104-sub{margin:0 0 14px;color:#e2d6f5;font-size:14px;line-height:1.6}
+  .ins104-steps{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:8px;text-align:right}
+  .ins104-steps li{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.07);border:1px solid #ffffff1f;border-radius:14px;padding:10px 12px;font-size:14.5px;line-height:1.5}
+  .ins104-steps i{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#fff;color:#1a73e8;font-style:normal;font-weight:900;font-size:18px}
+  .ins104-steps b{color:#ffd977}
+  .ins104-go{width:100%;border:0;border-radius:14px;padding:14px;font:800 16px inherit;background:linear-gradient(90deg,#f5c542,#e0a92e);color:#2a1600;margin-bottom:8px;cursor:pointer}
+  .ins104-later{border:0;background:transparent;color:#cdb8e6;font:700 14px inherit;padding:8px 16px;cursor:pointer}
+  .ins104-x{position:absolute;top:12px;left:12px;width:34px;height:34px;border-radius:50%;border:1px solid #ffffff33;background:rgba(255,255,255,.08);color:#fff;font-size:16px;cursor:pointer}
+  .ins104-arrow{position:fixed;bottom:calc(4px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font-size:30px;color:#ffd977;animation:ins104b 1s ease-in-out infinite alternate;z-index:1;pointer-events:none;display:none}
+  @keyframes ins104b{to{transform:translate(-50%,8px)}}`;
+  document.head.appendChild(st);
 }
 export function closeDialog() {
   dialog?.remove();

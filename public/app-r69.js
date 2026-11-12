@@ -1,6 +1,6 @@
 // R69za: تحسينات «التطبيق» — رقم الجهاز (لكشف الحسابات الوهمية)، شاشة «ما فيه نت» مع لعبة XO تشتغل بدون نت،
 // بانر «ثبّت لعبك على جوالك»، وعداد الإشعارات على أيقونة التطبيق.
-import * as PWA from './pwa.js?v=r103';
+import * as PWA from './pwa.js?v=r104b';
 const KEY_DID = 'la3_did', KEY_DISMISS = 'la3_install_x';
 const CSS = `
 .ap69-off{position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 30px) 18px 24px;background:radial-gradient(circle at 50% 20%,#4a1680,#160530 70%);color:#fff;direction:rtl;font-family:inherit;text-align:center;overflow:auto}
@@ -148,7 +148,8 @@ export function startApp69() {
   addEventListener('online', () => check('silent'));
   clearInterval(offTimer); offTimer = setInterval(() => { if (off && !off.hidden) check(); else if (navigator.onLine === false) check(); }, 5000);
   setTimeout(devicePing, 2500); setInterval(devicePing, 10 * 60_000);
-  setTimeout(maybeInstall, 25_000);
+  /* R104: تسجيل التطبيق (Service Worker) + شاشة «ثبّت لعبك كتطبيق» الجديدة بدل البانر الصغير */
+  try { PWA.init(() => {}); } catch { /* */ }
   setTimeout(badge, 4000); setInterval(badge, 60_000);
   addEventListener('visibilitychange', () => { if (!document.hidden) { badge(); devicePing(); } });
 }
