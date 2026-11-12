@@ -157,7 +157,7 @@ html body .h95-guest{display:grid;gap:6px;text-align:center;padding:8px 4px}
 html body .h95-guest b{font-size:16px;color:#ffd66b}
 html body .h95-guest small{color:#e6d6fa}
 html:not(.lb-dark) body .h95-room{background:#fff;color:#2c1a4a;border-color:#c49a3a44}
-html:not(.lb-dark) body .h95-txt small,html:not(.lb-dark) body .h95-guest small,html:not(.lb-dark) body .h95-rooms .h68-all{color:#5a4a70}
+html:not(.lb-dark) body .h95-txt small{color:#5a4a70}
 html:not(.lb-dark) body .h95-guest b{color:#8a641f}
 html body .h95-txt small span{display:inline-flex!important;align-items:center;gap:3px}
 html body .h95-txt small span svg{display:inline-block!important;flex:none}
