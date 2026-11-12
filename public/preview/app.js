@@ -47,11 +47,11 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r91';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r91';
+import * as PWA from '../pwa.js?v=r92c';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r91';
-import * as SP from '../social-plus-r73.js?v=r91';
+import * as SP from '../social-plus-r73.js?v=r92';
 import '../mute-r88.js?v=r88';
 import * as CHAT from '../chat.js?v=r91';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
@@ -163,7 +163,7 @@ function connect() {
       if (m.code === 'guest') guestPrompt(m.error);
       S.pending.get(m.r)(m);
       S.pending.delete(m.r);
-    } else if (typeof m.t === 'string' && /^(group|friend|lfg|vibe|broadcast)(:|$)/.test(m.t) && SP.onEvent(m)) {
+    } else if (typeof m.t === 'string' && /^(group|friend|lfg|vibe|broadcast|gift:pop)(:|$)/.test(m.t) && SP.onEvent(m)) {
       /* R73: أحداث التواصل */
     } else if (m.t === 'persona:beaten') {
       /* R72: هزمت شخصية لأول مرة */
@@ -258,7 +258,7 @@ function connect() {
       if (CHAT.currentCode() === m.code) CHAT.addGift(m.ev);
       if (m.ev.to.id === S.user?.id) { SFX.play('win'); GIFT.G.log = null; }
     } else if (m.t === 'gift') {
-      if (S.accountSettings?.notifications) toast(`🎁 وصلتك هدية: ${m.gift.name} من ${m.gift.from}${m.gift.recv ? ` (+${nf(m.gift.recv)} 🪙)` : ''}`);
+      /* R92: النافذة المنبثقة (gift:pop) تغني عن التنبيه الصغير */
       SFX.play('tap'); GIFT.G.log = null;
       const rn = parseRoute().name;
       if (['account','profile'].includes(rn))void loadAcct();
@@ -455,7 +455,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r91');
+  const M = await import('../settings-r60.js?v=r92c');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

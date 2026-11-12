@@ -778,6 +778,7 @@ export async function createApp(
     const ev=giftEvent(r.rec,!!trustedSocial);
     if(!r.dup){
       cpGift(id,to,r.rec);
+      try{const gq=Number(r.rec.qty??1);giftNotice([to],`🎁 وصلتك هدية من ${fromName}`,`${fromName} أرسل لك ${r.rec.name}${gq>1?` ×${gq}`:''}.`,'pg:'+r.rec.id,{icon:String(r.rec.icon||'🎁')},fromName,!room&&!trustedSocial);}catch{/* */}
       sendToUser(id,{t:'wallet',coins:r.coins,gems:r.gems,won:0});sendToUser(to,{t:'wallet',coins:r.toCoins,gems:r.toGems,won:0});
       if(room){pushChat(room.code,ev);for(const p of room.players)sendToUser(p.id,{t:'roomgift',code:room.code,ev});}
       else sendToUser(to,{t:'gift',gift:giftPub(wallet.giftsOf(to,'in',1)[0]!),ev:{...ev,from:{id:trustedSocial?community.pub(id):'',name:fromName}}});
@@ -872,6 +873,14 @@ export async function createApp(
     catch { ws.close(4503,'session storage unavailable'); return; }
     send(ws,msg);
   });
+  /* R92: «وصلتك هدية» — رسالة بقسم الإشعارات (من الإدارة) + نافذة منبثقة فورية لو متصل */
+  const giftNotice = (ids: string[], title: string, body: string, ref: string, look: { icon?: string; itemId?: string } = {}, from = 'الإدارة', pop = true) => {
+    const list = [...new Set(ids)].filter((x) => accounts.has(x)); if (!list.length) return;
+    try { support.announce(list, title, body, from, 'gift92-' + createHash('sha256').update(ref).digest('hex').slice(0, 32)); } catch (e) { log('gift_notice_failed', { err: String((e as Error)?.message ?? e).slice(0, 80) }); }
+    const it = look.itemId ? shopcat.get(look.itemId) : undefined;
+    const popMsg = { t: 'gift:pop', title, body, from, icon: look.icon ?? it?.icon ?? '🎁', item: it ? { name: it.name, slot: it.slot, css: it.css ?? null, art: it.art ?? null } : null };
+    if (pop) for (const id of list) sendToUser(id, popMsg);
+  };
 
   /** R58f: تنبيهات الأصدقاء (دخل الموقع / دخل غرفة). للأصدقاء المقبولين المتصلين بس، وما تطلع إذا الشخص قفّل «إظهار التواجد» بنفسه. */
   const friendNoticeAt = new Map<string, number>();
@@ -1357,7 +1366,7 @@ export async function createApp(
     const players = sockets.size;
     return { ok: true, at: Date.now(), uptimeSec: Math.floor((Date.now() - bootAt) / 1000), players, rooms: (({ rooms, councils, members }) => ({ rooms, councils, members }))(socialRooms.health() as any), guests: { readOnly: GUEST_READONLY, lockAt: guestLockAt }, backups: b ?? null, checks, overall: checks.some((c) => c.state === 'bad') ? 'bad' : checks.some((c) => c.state === 'warn') ? 'warn' : 'ok' };
   }
-  const admin = createAdmin({ panelGate: (req, a) => ownerOps.gate(a.token ? 'token' : a.id, String(req.headers['x-adm-2fa'] ?? '')), staffDayLimit: (id) => ownerOps.limitOf(id), community, giftcat, economy, payments, offers, backups: backups ?? undefined, health: healthReport,
+  const admin = createAdmin({ onGift: (ids, title, body, ref, look) => giftNotice(ids, title, body, ref, look), panelGate: (req, a) => ownerOps.gate(a.token ? 'token' : a.id, String(req.headers['x-adm-2fa'] ?? '')), staffDayLimit: (id) => ownerOps.limitOf(id), community, giftcat, economy, payments, offers, backups: backups ?? undefined, health: healthReport,
     platform, shopcat, wallet, accounts, board, progression, accountTools, service, bulkGrants, store, storage, cfg, registry, sockets, log, json, readBody: appReadBody, sameOrigin, ipOf,
     kick: (id, why) => sockets.get(id)?.forEach((ws) => ws.close(why === 'banned' ? 4403 : 4503, why)),
     walletChanged: id => sendToUser(id, { t: 'wallet', coins: wallet.balance(id), gems: wallet.gems(id), won: 0 }),
@@ -1697,6 +1706,7 @@ export async function createApp(
       adminNeed(!!target, 'ما لقيت لاعب بهالرقم.'); adminNeed(!owner || owner === target, 'هذا الأيدي مع لاعب ثاني، اسحبه أول.');
       try { accounts.setSpecialPlayerId(target!, v); } catch (e) { throw new FunctionalHttpError(409, 'تعذّر إعطاء الأيدي.'); }
       admin.audit(actor!, 'ids3.give', target!, `${v} — ${reason}`);
+      giftNotice([target!], '🎁 وصلك آيدي مميز من الإدارة', `صار آيديك ${v} 🆔 — يطلع جنب اسمك بكل مكان.`, `ids3:${v}:${target}:${Date.now()}`, { icon: '🆔' });
       return { ok: true, item: ids3View(v) };
     }, 'owner');
     // ---- R68y: (10) سجل اللاعب الكامل ----
@@ -2362,7 +2372,13 @@ export async function createApp(
   });
   await vipMembership.sweep();
 
-  const ownerTools = new OwnerPlayerTools({ accounts, accountTools, progression, wallet, shopcat, platform });
+  const ownerTools = new OwnerPlayerTools({ accounts, accountTools, progression, wallet, shopcat, platform, onGranted: (id, action, p, ref) => {
+    if (action === 'special-id' && typeof p.value === 'string') giftNotice([id], '🎁 وصلك آيدي مميز من الإدارة', `صار آيديك ${p.value} 🆔 — يطلع جنب اسمك بكل مكان.`, ref, { icon: '🆔' });
+    else if (action === 'verification' && p.kind) giftNotice([id], '✅ انوثّق حسابك', p.kind === 'administration' ? 'حسابك صار موثّق كحساب إداري رسمي.' : 'حسابك صار موثّق — العلامة تطلع جنب اسمك بكل مكان.', ref, { icon: '✅' });
+    else if (action === 'rank' && Number(p.points) > 0) giftNotice([id], '👑 وصلتك نقاط من الإدارة', `انضافت لك ${Number(p.points).toLocaleString('en')} نقطة ${p.system === 'vip' ? 'VIP' : p.system === 'noble' ? 'نوبل' : 'مستوى'}.`, ref, { icon: '👑' });
+    else if (action === 'item' && typeof p.itemId === 'string') { const it = shopcat.get(p.itemId); giftNotice([id], '🎁 وصلتك هدية من الإدارة', `وصلك «${it?.name ?? 'مقتنى'}»${p.equip === true ? ' وانلبس لك على طول' : ' — تلقاه بمقتنياتك'}.`, ref, { itemId: p.itemId }); }
+    else if (action === 'role' && typeof p.role === 'string') giftNotice([id], '🛡️ صرت من فريق الإدارة', 'انضفت لفريق إدارة لعبك. افتح لوحة التحكم من القائمة.', ref, { icon: '🛡️' });
+  } });
   ownerTools.wire(functionalHttp.allowFallback('/api/admin/players'));
   await ownerTools.resumePending();
   replayIntents(); await Promise.all(supportJobs.values()); await socialRooms.sweep(); await missions.retry(); await rankRewards.retryPending();

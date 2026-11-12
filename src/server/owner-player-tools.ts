@@ -7,7 +7,9 @@ import type { ShopCatalog } from './shopcatalog.js';
 import { ROLES, type Platform, type OwnerOperation, type Role } from './platform.js';
 import { FunctionalHttp, FunctionalHttpError, type FunctionalContext } from './functional-http.js';
 
-interface Deps { accounts: Accounts; accountTools: AccountTools; progression: Progression; wallet: Wallet; shopcat: ShopCatalog; platform: Platform }
+interface Deps { accounts: Accounts; accountTools: AccountTools; progression: Progression; wallet: Wallet; shopcat: ShopCatalog; platform: Platform;
+  /** R92: إشعار اللاعب باللي وصله من الإدارة */
+  onGranted?: (id: string, action: string, plan: Record<string, unknown>, ref: string) => void }
 const digest = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).digest('hex');
 function need(v: unknown, text: string, status = 400): asserts v { if (!v) throw new FunctionalHttpError(status, text); }
 const ownKey = (actor: string, key: string) => 'owner_' + digest([actor, key]);
@@ -114,6 +116,7 @@ export class OwnerPlayerTools {
     }
     const result = { ok: true, dup: false, operationId: op.key, action: op.action, grantedPoints };
     d.platform.finishOwnerOperation(op.id, result);
+    try { d.onGranted?.(id, op.action, p as Record<string, unknown>, op.id); } catch { /* الإشعار ما يوقف العملية */ }
     return { ...result, view: this.view(id) };
   }
   async resumePending() {

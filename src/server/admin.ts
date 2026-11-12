@@ -67,6 +67,8 @@ export class AdminBulkStore {
   retry() { this.disk.retry(); }
 }
 export interface AdminDeps {
+  /** R92: إشعار «وصلتك هدية من الإدارة» (رسالة + نافذة منبثقة) */
+  onGift?: (ids: string[], title: string, body: string, ref: string, look?: { icon?: string; itemId?: string }) => void;
   /** R69: بوابة اللوحة — التحقق بخطوتين وإيقاف المشرفين (null = مسموح) */
   panelGate?: (req: http.IncomingMessage, actor: Actor) => null | 'need2fa' | 'suspended';
   /** R69: حد يومي خاص لمشرف (عملات) */
@@ -170,6 +172,7 @@ export function createAdmin(d: AdminDeps) {
     if (!r.ok) return P.finishAdj(rid, { ok: false, note: r.code === 'poor' ? 'الرصيد لا يكفي وقت التنفيذ' : 'تعديل غير صالح' }, au('wallet.approve-failed', ''));
     const finished = P.finishAdj(rid, { ok: true, before: r.before, after: r.after }, au('wallet.adjust', ` · قبل ${r.before} ← بعد ${r.after}${resumed || r.dup ? ' · (استُكمل بعد انقطاع)' : ''}`));
     notifyWallet(rq.target);
+    if (rq.delta > 0 && !r.dup && !resumed) { try { d.onGift?.([rq.target], '🎁 وصلتك هدية من الإدارة', `انضاف لرصيدك ${rq.delta.toLocaleString('en')} ${rq.cur === 'coins' ? 'عملة' : 'جوهرة'}.`, 'req:' + rq.id, { icon: '🪙' }); } catch { /* الإشعار ما يوقف العملية */ } }
     return finished;
   }
   /** يستكمل كل الموافقات العالقة (approving). يُنادى عند الإقلاع ومع إعادة محاولة التخزين. يرجع عدد المستكمل */
@@ -519,6 +522,7 @@ export function createAdmin(d: AdminDeps) {
         const res = { ok: true, coins: r.coins, gems: r.gems, before: r.before, after: r.after, auditOk };
         try { P.finishAdjKey(key, fp, res); } catch { /* التنفيذ محمي بمفتاح المحفظة؛ إعادة الإرسال ترجع نفس النتيجة */ }
         notifyWallet(id);
+        if (delta > 0 && !r.dup) { try { d.onGift?.([id], '🎁 وصلتك هدية من الإدارة', `انضاف لرصيدك ${delta.toLocaleString('en')} ${cur === 'coins' ? 'عملة' : 'جوهرة'}.`, 'adj:' + key, { icon: '🪙' }); } catch { /* */ } }
         return out(res), true;
       }
       if (a === 'adjustments' && !id && req.method === 'GET') {
@@ -617,6 +621,7 @@ export function createAdmin(d: AdminDeps) {
           const final: Record<string, unknown> = { ...result, auditOk, fingerprint: frozen.fingerprint, recipients: frozen.recipients,
             successes: frozen.recipients.filter((p) => !failed.has(p.id)), failures: result.failures.map((f) => ({ ...f, name: frozen.recipients.find((p) => p.id === f.id)?.name ?? '—' })) };
           frozen.state = 'done'; frozen.result = final;
+          if (!result.duplicate) { try { const ok = frozen.recipients.filter((p) => !failed.has(p.id)).map((p) => p.id); const parts = frozen.rewards.map((r) => r.type === 'currency' ? `${r.amount.toLocaleString('en')} ${r.cur === 'coins' ? 'عملة' : 'جوهرة'}` : (d.shopcat.get(r.itemId)?.name ?? 'مقتنى')); const first = frozen.rewards.find((r) => r.type === 'item') as { itemId?: string } | undefined; if (ok.length) d.onGift?.(ok, '🎁 وصلتك هدية من الإدارة', `وصلك: ${parts.join('، ')}.`, 'bulk:' + operationId, first?.itemId ? { itemId: first.itemId } : { icon: '🪙' }); } catch { /* */ } }
           try { bulkStore.put(frozen); } catch (e) {
             if (!(e instanceof StorageError)) throw e;
             d.log('admin_bulk_result_unsaved', { operationId });

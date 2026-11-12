@@ -222,6 +222,17 @@ function settings88(d) {
   const studio = `<a class="sp73-card sp88-link st90-entry" href="#/studio"><b>🎨 استوديو التصميم ${has('studio') ? '' : '🔒'}</b><small class="sp73-t">${has('studio') ? 'صمّم إطارك وخلفيتك وبيعها للاعبين' : 'التصميم لنوبل 5 وفوق — والسوق مفتوح للكل'}</small></a>`;
   return `<h2 class="sp73-sec">⚙️ مزاياك الحين</h2>${nums ? `<div class="sp88-nums">${nums}</div>` : ''}${studio}${mute}${pick}${priv}`;
 }
+/* R92: نافذة «وصلتك هدية» (من الإدارة أو لاعب) — تنحفظ نسخة بقسم الإشعارات */
+async function giftPop(m) {
+  document.getElementById('gp92')?.remove();
+  let art = '';
+  if (m.item && (m.item.slot === 'frame' || m.item.slot === 'bg') && m.item.css) { try { const c = await import('./cosmetics.js?v=r91'); art = m.item.slot === 'frame' ? `<span class="gp92-av"><span>🙂</span>${c.frameArt(m.item.css)}</span>` : `<span class="gp92-bg">${c.bgArt(m.item.css)}</span>`; } catch { /* نكتفي بالأيقونة */ } }
+  const el = document.createElement('div'); el.id = 'gp92'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'وصلتك هدية');
+  el.innerHTML = `<div class="gp92-box"><div class="gp92-burst" aria-hidden="true"></div>${art || `<div class="gp92-ic">${esc(m.icon || '🎁')}</div>`}<h2>${esc(m.title)}</h2><p>${esc(m.body)}</p>${m.from ? `<small>من: ${esc(m.from)}</small>` : ''}<div class="gp92-acts"><button type="button" class="btn" data-gp="ok">تمام 🤍</button><a class="btn ghost" href="#/notifications" data-gp="go">إشعاراتي</a></div></div>`;
+  el.addEventListener('click', (e) => { if (e.target === el || e.target.closest('[data-gp]')) el.remove(); });
+  document.body.appendChild(el);
+  try { navigator.vibrate?.([30, 40, 30]); } catch { /* */ }
+}
 function banner(m) {
   let el = document.getElementById('sp74-bc'); if (el) el.remove();
   el = document.createElement('div'); el.id = 'sp74-bc'; el.setAttribute('role', 'status');
@@ -290,6 +301,7 @@ export function onEvent(m) {
   if (m.t === 'lfg:new') { toast(`🙋 ${m.from} يدوّر شريك ${m.game} — «${m.note}» · افتح «أبي شريك»`); if (curHash() === '#/lfg') { S.lfg = null; rerender(); } return true; }
   if (m.t === 'lfg:joined') { toast(`🙋 ${m.name} دخل طاولتك!`); return true; }
   if (m.t === 'broadcast') { banner(m); return true; }
+  if (m.t === 'gift:pop') { void giftPop(m); return true; }
   if (m.t === 'friend:note') { toast(`💌 ${m.from} أرسل لك طلب صداقة مع رسالة: «${m.text}»`); return true; }
   if (m.t === 'vibe:match') { if (S.vibe) { S.vibe = null; clearInterval(S.vibePoll); toast('لقينا لك ناس! ☕'); go('#/room/' + m.code); } return true; }
   return false;
