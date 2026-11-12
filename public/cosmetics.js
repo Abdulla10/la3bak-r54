@@ -232,9 +232,9 @@ export function studioSpec(css) {
   if (typeof css !== 'string' || !css.startsWith('st~') || css.length > 400) return null;
   try {
     const b = css.slice(3).replace(/-/g, '+').replace(/_/g, '/'); const raw = decodeURIComponent(escape(atob(b + '==='.slice((b.length + 3) % 4))));
-    const [k, c1, c2, c3, p, t, g] = JSON.parse(raw);
-    if ((k !== 'frame' && k !== 'bg') || ![c1, c2, c3].every((c) => ST_HEX.test(c)) || !ST_PAT.includes(p) || typeof t !== 'string' || t.length > 12) return null;
-    return { k, c1, c2, c3, p, t, g: g === 1 };
+    const [k, c1, c2, c3, p, t, g, i] = JSON.parse(raw);
+    if ((k !== 'frame' && k !== 'bg') || ![c1, c2, c3].every((c) => ST_HEX.test(c)) || !ST_PAT.includes(p) || typeof t !== 'string' || t.length > 12 || (i !== undefined && !/^[0-9a-f]{24}$/.test(i))) return null;
+    return { k, c1, c2, c3, p, t, g: g === 1, i };
   } catch { return null; }
 }
 const stMotif = (p, x, y, r, c) => p === 'stars' ? star4(x, y, r, c) : p === 'dots' ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * .45).toFixed(1)}" fill="${c}"/>`
@@ -245,14 +245,16 @@ const stMotif = (p, x, y, r, c) => p === 'stars' ? star4(x, y, r, c) : p === 'do
 function studioFrame(s) {
   const g = nid('st'); let o = `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s.c1}"/><stop offset="1" stop-color="${s.c2}"/></linearGradient>${s.g ? `<radialGradient id="${g}h"><stop offset=".6" stop-color="${s.c1}" stop-opacity="0"/><stop offset=".85" stop-color="${s.c1}" stop-opacity=".55"/><stop offset="1" stop-color="${s.c1}" stop-opacity="0"/></radialGradient>` : ''}</defs>`;
   if (s.g) o += `<circle cx="60" cy="60" r="60" fill="url(#${g}h)"/>`;
-  o += `<circle cx="60" cy="60" r="48" fill="none" stroke="url(#${g})" stroke-width="8"/><circle cx="60" cy="60" r="43.5" fill="none" stroke="${s.c3}" stroke-width="1.2" opacity=".9"/><circle cx="60" cy="60" r="52.5" fill="none" stroke="${s.c3}" stroke-width="1" opacity=".7"/>`;
-  if (s.p === 'waves') o += `<circle cx="60" cy="60" r="48" fill="none" stroke="${s.c3}" stroke-width="2" stroke-dasharray="6 5" opacity=".85"/>`;
+  if (s.i) o += `<clipPath id="${g}c"><path d="M60 4a56 56 0 1 0 .01 0zM60 17a43 43 0 1 1-.01 0z" fill-rule="evenodd" clip-rule="evenodd"/></clipPath><image href="/api/studio/img/${s.i}.jpg" x="4" y="4" width="112" height="112" preserveAspectRatio="xMidYMid slice" clip-path="url(#${g}c)"/><circle cx="60" cy="60" r="56" fill="none" stroke="${s.c3}" stroke-width="1.4"/><circle cx="60" cy="60" r="43" fill="none" stroke="${s.c3}" stroke-width="1.4"/>`;
+  else o += `<circle cx="60" cy="60" r="48" fill="none" stroke="url(#${g})" stroke-width="8"/><circle cx="60" cy="60" r="43.5" fill="none" stroke="${s.c3}" stroke-width="1.2" opacity=".9"/><circle cx="60" cy="60" r="52.5" fill="none" stroke="${s.c3}" stroke-width="1" opacity=".7"/>`;
+  if (s.i && s.p !== 'plain') { for (let i = 0; i < 12; i++) { if (s.t && i >= 5 && i <= 7) continue; const [x, y] = polar(56, i * 30 - 90); o += stMotif(s.p === 'waves' ? 'dots' : s.p, x, y, 3.2, s.c3); } }
+  else if (s.p === 'waves') o += `<circle cx="60" cy="60" r="48" fill="none" stroke="${s.c3}" stroke-width="2" stroke-dasharray="6 5" opacity=".85"/>`;
   else if (s.p !== 'plain') for (let i = 0; i < 12; i++) { if (s.t && i >= 5 && i <= 7) continue; const [x, y] = polar(48, i * 30 - 90); o += stMotif(s.p, x, y, 3.6, s.c3); }
   if (s.t) { const w = Math.max(30, [...s.t].length * 7.5 + 14); o += `<rect x="${60 - w / 2}" y="100" width="${w}" height="15" rx="7.5" fill="url(#${g})" stroke="${s.c3}" stroke-width="1"/><text x="60" y="111" text-anchor="middle" font-size="9" font-weight="800" fill="${s.c3}" font-family="system-ui,sans-serif">${stEsc(s.t)}</text>`; }
   return `<svg class="cx-frame st-frame" viewBox="0 0 120 120" direction="ltr" aria-hidden="true" focusable="false">${o}</svg>`;
 }
 function studioBg(s, cls = '') {
-  const g = nid('sb'); let o = `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s.c1}"/><stop offset="1" stop-color="${s.c2}"/></linearGradient></defs><rect width="400" height="160" fill="url(#${g})"/>`;
+  const g = nid('sb'); let o = `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s.c1}"/><stop offset="1" stop-color="${s.c2}"/></linearGradient></defs><rect width="400" height="160" fill="url(#${g})"/>${s.i ? `<image href="/api/studio/img/${s.i}.jpg" width="400" height="160" preserveAspectRatio="xMidYMid slice"/>` : ''}`;
   let r = 17; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
   if (s.p === 'waves') o += [40, 80, 120].map((y, i) => `<path d="M0 ${y}q50-${14 + i * 4} 100 0t100 0 100 0 100 0" fill="none" stroke="${s.c3}" stroke-width="${3 - i * .6}" opacity="${.5 - i * .1}"/>`).join('');
   else if (s.p !== 'plain') for (let i = 0; i < 22; i++) o += stMotif(s.p, 10 + rnd() * 380, 10 + rnd() * 140, 3 + rnd() * 5, s.c3).replace('<path ', `<path opacity="${(.35 + rnd() * .5).toFixed(2)}" `).replace('<circle ', `<circle opacity="${(.35 + rnd() * .5).toFixed(2)}" `);

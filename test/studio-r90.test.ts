@@ -36,3 +36,16 @@ test('حد التصاميم لكل لاعب', () => {
   for (let i = 0; i < 20; i++) st.create('u', 'x' + i, spec);
   assert.throws(() => st.create('u', 'زيادة', spec), /20/);
 });
+
+test('R91: صورة من الجهاز بمقاس ثابت', async () => {
+  const { jpegSize, Studio: S2 } = await import('../src/server/studio-r90.js');
+  const fake = (w: number, h: number) => Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, h >> 8, h & 255, w >> 8, w & 255, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xd9]);
+  assert.deepEqual(jpegSize(fake(512, 512)), [512, 512]); assert.deepEqual(jpegSize(fake(1000, 400)), [1000, 400]);
+  assert.equal(jpegSize(Buffer.from('not an image')), null);
+  const st = new S2('');
+  assert.equal(st.checkImage('frame', fake(512, 512)), 'frame');
+  assert.throws(() => st.checkImage('bg', fake(512, 512)), /1000×400/);
+  const id = st.saveImage('u1', fake(1000, 400)); assert.match(id, /^[0-9a-f]{24}$/);
+  assert.throws(() => st.create('u2', 'x', { ...spec, k: 'bg', i: id }), /ارفع الصورة/, 'صورة لاعب ثاني');
+  const d = st.create('u1', 'منظر', { ...spec, k: 'bg', i: id }); assert.equal(d.spec.i, id);
+});

@@ -90,7 +90,7 @@ export function render(view, r, ctx = {}) {
   if (r.name === 'majalis') return majPage(view);
   if (r.name === 'vibe') return vibePage(view);
   if (r.name === 'perks') return perksPage(view);
-  if (r.name === 'studio') return import('./studio-r90.js?v=r90').then((m) => m.page(view, { toast })).catch(() => { view.innerHTML = shell('🎨 استوديو التصميم', '', '<p class="sp73-empty">تعذّر التحميل، حدّث الصفحة.</p>', '#/perks'); });
+  if (r.name === 'studio') return import('./studio-r90.js?v=r91').then((m) => m.page(view, { toast })).catch(() => { view.innerHTML = shell('🎨 استوديو التصميم', '', '<p class="sp73-empty">تعذّر التحميل، حدّث الصفحة.</p>', '#/perks'); });
 }
 let RENDER = () => {};
 const rerender = () => RENDER();

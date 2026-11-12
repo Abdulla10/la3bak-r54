@@ -123,7 +123,7 @@ import { createSeo } from './seo-r71.js';
 import { PERSONAS, personaOf } from './personas-r72.js';
 import { Social73 } from './social-r73.js';
 import { Perks, PERK_DEFS, EDIT_WINDOW } from './perks-r74.js';
-import { Studio, STUDIO_SELLER_SHARE } from './studio-r90.js';
+import { Studio, STUDIO_SELLER_SHARE, STUDIO_IMG_MAX } from './studio-r90.js';
 
 /** Compatibility wrapper: old generic intents remain valid; optional social payloads fail closed. */
 export function validSocialGiftOutbox(d: Record<string, unknown>): boolean {
@@ -2430,6 +2430,21 @@ export async function createApp(
         if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); if (!s73Ref.v) return json(res, 503, { error: 'جرّب بعد شوي.' });
         try { const v = s73Ref.v.readVoice(user.id, vm[1]); res.writeHead(200, { 'Content-Type': v.mime, 'Content-Length': v.buf.length, 'Cache-Control': 'private, max-age=86400', ...securityHeaders }); return res.end(v.buf); }
         catch (e) { const er = e as { status?: number; message?: string }; return json(res, er.status ?? 404, { error: er.message ?? 'مب موجودة.' }); }
+      } }
+      /* R91: صور استوديو التصميم (رفع من جهاز اللاعب بمقاس ثابت + عرض للكل) */
+      if (url.pathname === '/api/studio/img' && req.method === 'POST') {
+        if (!user) return json(res, 401, { error: 'سجّل دخولك.' }); if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' });
+        if (!perks.has(user.id, 'studio')) return json(res, 403, { error: `استوديو التصميم يحتاج نوبل ${perks.level('studio')}.` });
+        if (Number(req.headers['content-length'] ?? 0) > STUDIO_IMG_MAX) { req.resume(); return json(res, 413, { error: 'الصورة كبيرة.' }); }
+        const buf = await new Promise<Buffer | null>((resolve) => { const ch: Buffer[] = []; let n = 0, big = false; req.on('data', (c: Buffer) => { n += c.length; if (n > STUDIO_IMG_MAX) { big = true; ch.length = 0; } else if (!big) ch.push(c); }); req.on('end', () => resolve(big ? null : Buffer.concat(ch))); req.on('error', () => resolve(null)); });
+        if (!buf) return json(res, 413, { error: 'الصورة كبيرة.' });
+        try { studio.checkImage(url.searchParams.get('kind'), buf); } catch (e) { const er = e as { status?: number; message?: string }; return json(res, er.status ?? 400, { error: er.message ?? 'صورة غير صالحة.' }); }
+        const bad = await imageBlocked(buf, user.id, 'صورة تصميم'); if (bad) return json(res, 400, { error: bad });
+        return json(res, 200, { ok: true, id: studio.saveImage(user.id, buf) });
+      }
+      { const sm = /^\/api\/studio\/img\/([0-9a-f]{24})\.jpg$/.exec(url.pathname); if (sm && req.method === 'GET') {
+        const b = studio.readImage(sm[1]); if (!b) return json(res, 404, { error: 'مو موجودة.' });
+        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Length': b.length, 'Cache-Control': 'public, max-age=31536000, immutable', ...securityHeaders }); return res.end(b);
       } }
       /* R72: معاينة غرفة من رابط الدعوة (اسم اللعبة والمضيف وعدد اللاعبين) — بدون أي معلومات خاصة */
       if (url.pathname === '/api/room-peek' && req.method === 'GET') {

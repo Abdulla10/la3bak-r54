@@ -1,6 +1,6 @@
 /* R90: صفحة «استوديو التصميم» (#/studio) — نوبل 5 وفوق يصمم إطار أو خلفية، يلبسها، أو يبيعها بالعملات.
  * الرسم كله من cosmetics.js (studioArt) بنفس مفتاح st~ اللي يرجعه الخادم. */
-import { studioArt } from './cosmetics.js?v=r90';
+import { studioArt } from './cosmetics.js?v=r91';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const nf = (n) => Number(n || 0).toLocaleString('en');
@@ -16,7 +16,7 @@ async function api(path, method = 'GET', body) {
   return j;
 }
 /* نفس ترميز الخادم: st~ + base64url(JSON) */
-const cssOf = (s) => { const raw = JSON.stringify([s.k, s.c1, s.c2, s.c3, s.p, s.t, s.g ? 1 : 0]); return 'st~' + btoa(unescape(encodeURIComponent(raw))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const cssOf = (s) => { const raw = JSON.stringify([s.k, s.c1, s.c2, s.c3, s.p, s.t, s.g ? 1 : 0, ...(s.i ? [s.i] : [])]); return 'st~' + btoa(unescape(encodeURIComponent(raw))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
 const preview = (css, kind, big = false) => kind === 'frame'
   ? `<span class="st90-av${big ? ' big' : ''}"><span class="st90-face">🙂</span>${studioArt(css)}</span>`
   : `<span class="st90-bg${big ? ' big' : ''}">${studioArt(css)}</span>`;
@@ -28,6 +28,8 @@ function makeHTML() {
   return `<div class="sp73-card st90-maker">
     <div class="st90-kinds"><button type="button" class="${s.k === 'frame' ? 'on' : ''}" data-st="kind" data-v="frame">🖼️ إطار</button><button type="button" class="${s.k === 'bg' ? 'on' : ''}" data-st="kind" data-v="bg">🌄 خلفية</button></div>
     <div class="st90-prev" data-st-prev>${preview(cssOf(s), s.k, true)}</div>
+    <div class="st90-photo"><label class="btn ghost block st90-pick">📷 ${s.i ? 'غيّر الصورة' : 'حط صورة من جهازك'}<input type="file" accept="image/*" data-st-file hidden></label>${s.i ? '<button class="btn sm ghost" type="button" data-st="noimg">🗑️ شيل الصورة</button>' : ''}
+      <small class="sp73-t">${s.k === 'frame' ? 'للإطار: الموقع ياخذ مربع من نص صورتك ويلفّه حول الصورة الشخصية. الأفضل صورة فيها نقشة أو ألوان، مو وجه.' : 'للخلفية: الموقع يقص صورتك بالعرض (2.5 × 1) من النص. الأفضل صورة عريضة مثل منظر أو سماء.'} نضبط المقاس تلقائي.</small></div>
     <p class="sp73-l">الألوان</p>
     <div class="st90-cols"><label>الأساسي<input type="color" data-st-c="c1" value="${s.c1}"></label><label>الثاني<input type="color" data-st-c="c2" value="${s.c2}"></label><label>النقشة والكتابة<input type="color" data-st-c="c3" value="${s.c3}"></label></div>
     <div class="st90-presets">${PRESETS.map((p, i) => `<button type="button" data-st="preset" data-v="${i}" aria-label="ألوان جاهزة ${i + 1}" style="background:linear-gradient(135deg,${p[0]},${p[1]})"></button>`).join('')}</div>
@@ -69,6 +71,28 @@ const refreshPrev = () => { const el = VIEW?.querySelector('[data-st-prev]'); if
 async function load() { try { S.d = await api('/api/studio'); S.err = ''; } catch (e) { S.err = e.message; } paint(); }
 const run = async (fn, ok) => { if (S.busy) return; S.busy = true; try { await fn(); if (ok) toast(ok); } catch (e) { toast('⚠️ ' + e.message); } finally { S.busy = false; paint(); } };
 
+/* R91: صورة من الجهاز — نقصّها بالمقاس المطلوب (إطار 512×512، خلفية 1000×400) ونحولها JPEG قبل الرفع */
+const SIZES = { frame: [512, 512], bg: [1000, 400] };
+async function uploadPhoto(file, kind) {
+  if (!/^image\//.test(file.type || 'image/')) throw new Error('اختار صورة.');
+  if (file.size > 25_000_000) throw new Error('الصورة كبيرة مرة.');
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('ما قدرنا نقرا الصورة. جرّب صورة ثانية (JPG أو PNG).')); i.src = url; });
+    const [W, H] = SIZES[kind]; const r = W / H, iw = img.naturalWidth, ih = img.naturalHeight;
+    if (iw < 200 || ih < 120) throw new Error('الصورة صغيرة، اختار صورة أوضح.');
+    let sw = iw, sh = iw / r; if (sh > ih) { sh = ih; sw = ih * r; }
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    g.fillStyle = '#1a0a2e'; g.fillRect(0, 0, W, H); g.imageSmoothingQuality = 'high';
+    g.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, W, H);
+    let blob = null; for (const q of [0.86, 0.75, 0.62, 0.5]) { blob = await new Promise((ok) => c.toBlob(ok, 'image/jpeg', q)); if (blob && blob.size <= 650_000) break; }
+    if (!blob || blob.size > 650_000) throw new Error('ما قدرنا نصغّر الصورة.');
+    const res = await fetch('/api/studio/img?kind=' + kind, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'image/jpeg' }, body: blob });
+    let j = {}; try { j = await res.json(); } catch { /* */ }
+    if (!res.ok || !j.id) throw new Error(j.error || 'ما انرفعت الصورة.');
+    return j.id;
+  } finally { URL.revokeObjectURL(url); }
+}
 let wired = false;
 function wire() {
   if (wired) return; wired = true;
@@ -76,8 +100,9 @@ function wire() {
     const b = e.target.closest?.('[data-st]'); if (!b || !VIEW?.contains(b)) return;
     const a = b.dataset.st, v = b.dataset.v;
     if (a === 'tab') { S.tab = v; paint(); }
-    else if (a === 'kind') { S.spec.k = v; paint(); }
+    else if (a === 'kind') { if (S.spec.k !== v) delete S.spec.i; S.spec.k = v; paint(); }
     else if (a === 'pat') { S.spec.p = v; VIEW.querySelectorAll('[data-st="pat"]').forEach((x) => x.classList.toggle('on', x === b)); refreshPrev(); }
+    else if (a === 'noimg') { delete S.spec.i; paint(); }
     else if (a === 'preset') { const p = PRESETS[Number(v)]; if (p) { [S.spec.c1, S.spec.c2, S.spec.c3] = p; paint(); } }
     else if (a === 'create') run(async () => { const r = await api('/api/studio', 'POST', { name: S.name, spec: S.spec }); S.d.mine = [r.design, ...(S.d.mine || [])]; Object.assign(S.d, { coins: r.coins, equipped: r.equipped, owned: r.owned }); S.tab = 'mine'; S.name = ''; }, '🎨 انحفظ تصميمك');
     else if (a === 'wear') run(async () => { const slot = b.dataset.slot, item = b.dataset.item; const r = await api('/api/studio/wear', 'POST', { slot, item: isOn(slot, item) ? null : item }); S.d.equipped = r.equipped; }, '✅ تم');
@@ -91,7 +116,11 @@ function wire() {
     else if (t.hasAttribute('data-st-t')) { S.spec.t = t.value.slice(0, 12); refreshPrev(); }
     else if (t.hasAttribute('data-st-name')) S.name = t.value.slice(0, 24);
   });
-  document.addEventListener('change', (e) => { const t = e.target; if (VIEW?.contains(t) && t.hasAttribute('data-st-g')) { S.spec.g = t.checked; refreshPrev(); } });
+  document.addEventListener('change', (e) => {
+    const t = e.target; if (!VIEW?.contains(t)) return;
+    if (t.hasAttribute('data-st-g')) { S.spec.g = t.checked; refreshPrev(); }
+    else if (t.hasAttribute('data-st-file') && t.files?.[0]) { const f = t.files[0]; t.value = ''; run(async () => { S.spec.i = await uploadPhoto(f, S.spec.k); }, '📷 انحطت الصورة'); }
+  });
   document.addEventListener('submit', (e) => {
     const f = e.target.closest?.('[data-st-price]'); if (!f || !VIEW?.contains(f)) return; e.preventDefault();
     const price = Number(String(f.p.value).replace(/[^\d]/g, '')); run(async () => { await api(`/api/studio/${f.dataset.stPrice}/price`, 'POST', { price }); await load(); }, price ? `🛍️ معروض بـ ${nf(price)} عملة` : 'وقف البيع');

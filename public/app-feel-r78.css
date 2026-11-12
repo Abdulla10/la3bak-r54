@@ -119,3 +119,5 @@ html body .st90-own{color:#7ee2a8!important;font-weight:800}
 html:not(.lb-dark) body :is(.st90-cols label,.st90-row,.st90-check,.st90-meta small,.st90-mk small){color:#4a3a60}
 html:not(.lb-dark) body .st90-kinds button{color:#2c1a4a;background:#fff}
 html:not(.lb-dark) body :is(.st90-row input,.st90-price input){background:#fff;color:#2c1a4a}
+html body .st90-photo{display:grid;gap:6px;margin:0 0 10px}
+html body .st90-pick{cursor:pointer;text-align:center}
