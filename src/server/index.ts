@@ -544,6 +544,8 @@ export async function createApp(
   const guestHttpAllowed = (p: string) => /^\/api\/(auth\/|logout$|account-tools\/settings$|profile\/visitors\/seen$|profile\/invites\/claim$|notifications|push\/|devices\/)/.test(p);
   const googleKeys = opts.googleKeys ?? googleKeyFetcher();
   const authLimiter = new KeyedLimiter(30, 30 / 60);
+  /** R112: تذاكر دخول Google بطريقة التحويل (بالذاكرة، 5 دقايق) */
+  const gTickets = new Map<string, { cred: string; at: number }>();
   // زر Google يحتاج هذي المصادر بالضبط (حسب توثيق Google)؛ ما نفتحها إلا إذا الدخول بـ Google مفعّل
   if (cfg.googleClientId) {
     securityHeaders['Content-Security-Policy'] =
@@ -2827,13 +2829,29 @@ export async function createApp(
         } catch (e) { if (e instanceof PasskeyError) return json(res, 400, { error: e.message }); if (e instanceof StorageError) return json(res, 503, { error: 'تعذّر الحفظ الحين، جرّب بعد شوي.' }); throw e; }
       }
       if (url.pathname === '/api/auth/config' && req.method === 'GET') return json(res, 200, { google: cfg.googleClientId || null });
+      /* R112: الدخول بـ Google بطريقة «التحويل» (للجوال وتطبيقات التواصل اللي النافذة المنبثقة فيها تطلع بيضا).
+         Google يرسل الرمز هنا بـ POST، نتحقق من CSRF (كوكي = حقل)، ونحفظه بتذكرة تنستخدم مرة وحدة لمدة 5 دقايق،
+         ونرجّع المستخدم للموقع. الموقع بعدها يكمّل الدخول العادي (ربط الضيف، التحقق بخطوتين) بنفس /api/auth/google */
+      if (url.pathname === '/api/auth/google/redirect' && req.method === 'POST') {
+        if (!cfg.googleClientId) return json(res, 404, { error: 'الدخول بـ Google غير مفعّل.' });
+        if (!authLimiter.allow('gr:' + ipOf(req))) return json(res, 429, { error: 'محاولات كثيرة، جرّب بعد شوي.' });
+        let form: URLSearchParams; try { form = new URLSearchParams(await appReadBody(req, 8192)); } catch { return json(res, 400, { error: 'الطلب غير صالح.' }); }
+        const cookieTok = /(?:^|;\s*)g_csrf_token=([^;]+)/.exec(String(req.headers.cookie ?? ''))?.[1] ?? '';
+        const bodyTok = form.get('g_csrf_token') ?? '';
+        const cred = form.get('credential') ?? '';
+        const back = (q: string) => { res.writeHead(303, { Location: '/', 'Cache-Control': 'no-store', 'Set-Cookie': q }); res.end(); };
+        if (!cookieTok || cookieTok !== bodyTok || !cred || cred.length > 4096) { log('google_redirect_bad', {}); return back(`g_err=1; Path=/; Max-Age=120; SameSite=Lax${cfg.cookieSecure ? '; Secure' : ''}`); }
+        const tk = randomUUID().replace(/-/g, ''); gTickets.set(tk, { cred, at: Date.now() });
+        for (const [k, v] of gTickets) if (Date.now() - v.at > 5 * 60_000) gTickets.delete(k);
+        return back(`g_tk=${tk}; Path=/; Max-Age=300; SameSite=Lax${cfg.cookieSecure ? '; Secure' : ''}`);
+      }
       if (url.pathname === '/api/auth/google' && req.method === 'POST') {
         if (!cfg.googleClientId) return json(res, 404, { error: 'الدخول بـ Google غير مفعّل.' });
         if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' });
         if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) return json(res, 415, { error: 'نوع الطلب غير مدعوم.' });
         if (!authLimiter.allow(ipOf(req))) return json(res, 429, { error: 'محاولات كثيرة، جرّب بعد شوي.' });
-        let credential: unknown; let totpCode: unknown;
-        try { const gb = JSON.parse(await appReadBody(req, 8192)); credential = gb.credential; totpCode = gb.totp; } catch { return json(res, 400, { error: 'الطلب غير صالح.' }); }
+        let credential: unknown; let totpCode: unknown; let usedTicket = '';
+        try { const gb = JSON.parse(await appReadBody(req, 8192)); credential = gb.credential; totpCode = gb.totp; if (typeof gb.ticket === 'string') { const t = gTickets.get(gb.ticket); if (!t || Date.now() - t.at > 5 * 60_000) return json(res, 401, { error: 'انتهت صلاحية تسجيل الدخول، جرّب مرة ثانية.' }); credential = t.cred; usedTicket = gb.ticket; } } catch { return json(res, 400, { error: 'الطلب غير صالح.' }); }
         let g;
         try {
           g = await verifyGoogleToken(credential, cfg.googleClientId, googleKeys);
@@ -2861,6 +2879,7 @@ export async function createApp(
         const next: User = { id: r.id, name };
         accounts.noteActivity(next.id);
         log('google_login', { created: r.created, adopted: r.adopted });
+        if (usedTicket) gTickets.delete(usedTicket);
         const cookie=issueSession(next);
         if (user && user.id!==next.id) { sessions.revokeCookie(req.headers.cookie);closeSessionSockets(req.headers.cookie); }
         return json(res, 200, { user: next, google: true, created: r.created }, { 'Set-Cookie': cookie });

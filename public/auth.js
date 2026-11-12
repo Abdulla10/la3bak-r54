@@ -25,6 +25,36 @@ function loadGsi() {
   return A.gsi;
 }
 
+const UA = navigator.userAgent || '';
+const useRedirect = () => /iphone|ipad|ipod|android|mobile|FBAN|FBAV|Instagram|Snapchat|TikTok|Line\/|WhatsApp|Telegram|wv\)/i.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+const cookieGet = (k) => (document.cookie.match(new RegExp('(?:^|;\\s*)' + k + '=([^;]+)')) || [])[1] || '';
+const cookieDel = (k) => { document.cookie = `${k}=; Path=/; Max-Age=0; SameSite=Lax`; };
+function note(msg) {
+  const n = document.createElement('div'); n.setAttribute('role', 'alert');
+  n.style.cssText = 'position:fixed;z-index:2147483600;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,#3b0a6b,#1d0638);border:1.5px solid #f5c542;color:#fff;font:700 14px system-ui,sans-serif;direction:rtl;box-shadow:0 10px 30px rgba(0,0,0,.5);text-align:center';
+  n.textContent = msg; n.onclick = () => n.remove(); document.body.append(n); setTimeout(() => n.remove(), 6000);
+}
+/** R112: نكمّل دخول Google بعد ما يرجع من صفحة Google (التذكرة بكوكي قصير) */
+async function resumeRedirect() {
+  if (cookieGet('g_err')) { cookieDel('g_err'); note('تعذّر تسجيل الدخول بـ Google، جرّب مرة ثانية.'); return; }
+  const ticket = cookieGet('g_tk'); if (!ticket) return; cookieDel('g_tk');
+  try {
+    let body = { ticket };
+    let r = await fetch('/api/auth/google', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    let j = await r.json().catch(() => ({}));
+    while (!r.ok && j.need2fa) {
+      const code = await askTotp(j.error); if (!code) throw new Error('ألغيت تسجيل الدخول.');
+      body = { ticket, totp: code };
+      r = await fetch('/api/auth/google', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      j = await r.json().catch(() => ({}));
+    }
+    if (!r.ok) throw new Error(j.error || 'فشل تسجيل الدخول.');
+    try { sessionStorage.setItem('la3_after_login', '1'); } catch { /* */ }
+    location.replace('/#/profile'); setTimeout(() => location.reload(), 50);
+  } catch (e) { note(e.message || 'فشل تسجيل الدخول.'); }
+}
+if (typeof document !== 'undefined') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', resumeRedirect, { once: true }); else setTimeout(resumeRedirect, 0); }
+
 export async function enabled() { return !!(await config()); }
 
 /** يعرض زر Google داخل el. onLogin(user) بعد نجاح الخادم، onError(msg) عند الفشل */
@@ -58,7 +88,9 @@ export async function mount(el, { onLogin, onError, beforeLogin }) {
   if (!document.body.contains(el)) return;
   window.google.accounts.id.initialize({
     client_id: id,
-    ux_mode: 'popup',
+    /* R112: بالجوال وداخل تطبيقات التواصل النافذة المنبثقة تطلع بيضا — نستخدم التحويل للصفحة بدالها */
+    ux_mode: useRedirect() ? 'redirect' : 'popup',
+    ...(useRedirect() ? { login_uri: location.origin + '/api/auth/google/redirect' } : {}),
     auto_select: false,
     callback: async (resp) => {
       try {
