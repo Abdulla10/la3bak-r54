@@ -169,6 +169,7 @@ function mount(root) {
   root.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-cz],[data-fw-item],[data-fw-chip],[data-fw-auto],[data-fw-repeat],[data-fw-group],[data-fw-chest]'); if (!b || b.disabled) return;
     const a = b.dataset.cz;
+    if (a === 'close' && root.dataset.embed) { SL.auto = false; document.querySelectorAll('.cz-host[data-embed]').forEach((h) => h.remove()); return; } /* R110: داخل الغرفة: نسكّر بس، ما نطلع من الغرفة */
     if (a === 'close') { SL.auto = false; history.length > 1 ? history.back() : ((globalThis.__LA3BAK_NAV__ || location).hash = '#/games'); return; }
     if (a === 'help') { const m = root.querySelector('[data-cz-msg]'); if (m) m.textContent = `50 خط. 3 رموز FREE = 8 لفات مجانية. 5 رموز JACKPOT = ${TIER_PCT[SL.bet]}% من الجاكبوت.`; return; }
     if (a === 'fwhelp') { FW.msg = 'اختار قيمة الرهان واضغط على الأكلة. «السلطة» تراهن على كل أكلات ×5، و«البيتزا» على الباقي. تقدر تراهن على 6 أكلات بالكثير.'; fwRender(root); return; }
@@ -190,9 +191,9 @@ if (typeof document !== 'undefined' && !globalThis.__CZ68__) {
     const ovs = [...document.querySelectorAll('body > .cz-ov')];
     document.querySelectorAll('.cz-host[data-casino]').forEach((ph) => {
       if (ph._ov && ph._ov.isConnected) return;
-      const reuse = ovs.find((o) => o.dataset.casino === ph.dataset.casino && ![...document.querySelectorAll('.cz-host')].some((x) => x !== ph && x._ov === o));
+      const reuse = ovs.find((o) => o.dataset.casino === ph.dataset.casino && !!o.dataset.embed === !!ph.dataset.embed && ![...document.querySelectorAll('.cz-host')].some((x) => x !== ph && x._ov === o));
       if (reuse) { ph._ov = reuse; return; }
-      const ov = document.createElement('div'); ov.className = 'cz-ov'; ov.dataset.casino = ph.dataset.casino; document.body.append(ov); ph._ov = ov; mount(ov); document.documentElement.classList.add('cz-open');
+      const ov = document.createElement('div'); ov.className = 'cz-ov'; ov.dataset.casino = ph.dataset.casino; if (ph.dataset.embed) ov.dataset.embed = '1'; document.body.append(ov); ph._ov = ov; mount(ov); document.documentElement.classList.add('cz-open');
     });
     for (const ov of document.querySelectorAll('body > .cz-ov')) { if (![...document.querySelectorAll('.cz-host')].some((x) => x._ov === ov)) { ov.remove(); if (ov.dataset.casino === 'slot') SL.auto = false; else clearInterval(FW.poll); } }
     if (!document.querySelector('body > .cz-ov')) document.documentElement.classList.remove('cz-open');

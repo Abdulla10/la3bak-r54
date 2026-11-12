@@ -439,6 +439,7 @@ function roomMenuGridHTML(c,ui,council){
     council?tile('room-clear-chat','broom','مسح الدردشة'):'',
     !c.ctx.gameRoom?tile('rank-open','star','رتبة الغرفة'):'',
     !c.ctx.gameRoom?panelTile('supporters','heart','الداعمين'):'',
+    !c.ctx.gameRoom?tile('food-wheel','gift','عجلة الأكل 🍗'):'',
     tile('info','info','معلومات الغرفة'),
     !joined?tile('join-room','plus','دخول الغرفة','','is-primary'):'',
     mine?tile('room-delete','trash','حذف الغرفة','','is-danger'):'',
@@ -1226,6 +1227,8 @@ export function mount(root,ctx={}) {
       if(action==='member-profile'){if(!/^[A-Za-z0-9_-]{16}$/.test(String(id)))return;closeDialog(false);const room=c.snapshot?.room;if(room&&c.snapshot?.current?.roomId===room.id&&!c.ctx.gameRoom){minimizedRoom={uid:c.uid,roomId:room.id,name:room.name,photo:room.photo||null};minimizeBubble();}(globalThis.__LA3BAK_NAV__?.go?globalThis.__LA3BAK_NAV__.go(`#/u/${id}`):(location.hash=`#/u/${id}`));return;}
       if(action==='member-gift'){closeDialog(false);return openPanel('gifts',target);}
       if(action==='share') {const room=c.snapshot?.room;if(!room)throw Error('معلومات الغرفة غير متاحة.');const url=new URL(roomURL(room.id),location.href).href;c.notice='';if(typeof navigator.share==='function'){try{await navigator.share({title:`لعبك · ${room.name}`,text:room.description||room.name,url});}catch(e){if(e.name!=='AbortError')throw e;}return;}if(!navigator.clipboard?.writeText)throw Error('المشاركة والنسخ غير متاحين في هذا المتصفح.');await navigator.clipboard.writeText(url);c.notice='تم نسخ رابط الغرفة.';c.notify();return;}
+      /* R110: عجلة الأكل داخل الغرفة الصوتية — تفتح فوق الغرفة والصوت والغرفة مستمرين */
+      if(action==='food-wheel'){closeDialog?.(false);await import('../casino-r68.js?v=r110');if(!document.querySelector('.cz-host[data-embed]')){const h=document.createElement('div');h.className='cz-host';h.dataset.casino='food';h.dataset.embed='1';h.hidden=true;document.body.append(h);}return;}
       if(action==='info') {const room=c.snapshot?.room;if(!room)return;return openDialog('معلومات الغرفة',`<h3>${esc(room.name)}</h3>${room.description?`<p>${esc(room.description)}</p>`:''}<p dir="ltr">#${esc(room.id)}</p><p>${room.privacy==='private'?'غرفة خاصة':'غرفة عامة'} · ${esc(Number.isInteger(room.count)?room.count:arr(room.members).length)} موجودون${Number.isInteger(room.maxMembers)?' / '+room.maxMembers:''}</p>${room.owner?`<p>مالك الغرفة: ${esc(room.owner.name)}</p>`:''}${room.host?`<p>المضيف: ${esc(room.host.name)}</p>`:''}<p class="so-note">لكل مجلس صوته ومحادثته المستقلة. لا تسجيل للصوت ولا تشغيل للمايك دون إذنك.</p><div class="so-actions">${button('refresh','تحديث الحالة')}${c.snapshot.current?.roomId===room.id?button('leave-room','مغادرة الغرفة'):button('join-room','الانضمام للغرفة','',true)}</div>`,null,'إغلاق');}
       if(action==='seat'&&target.dataset.seatIndex!==undefined)return requireAdult(async()=>{const index=Number(target.dataset.seatIndex),previous=currentCouncil(c)?.id;if(!Number.isInteger(index))throw Error('المقعد غير صالح.');await command(c,'council:join',{roomId:c.routeRoom,councilId:id,seatIndex:index});if(previous!==id&&currentCouncil(c))await voiceConnect(c);});
       if(action==='seat'&&c.snapshot.preferences?.adultAcknowledged!==true)return requireAdult(async()=>{await ensureSeat();await voiceConnect(c);});
