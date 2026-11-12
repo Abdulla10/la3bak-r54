@@ -633,12 +633,14 @@ function chatMessageHTML(c,m) {
   return `<article class="so-chat-message${fx.bubble?' rp-bubble-'+fx.bubble:''}" data-so-message-id="${esc(m.id)}"><header><span class="so-chat-author"><span class="so-chat-avatar" ${author.id!=null?`data-so-member-id="${esc(author.id)}"`:''}>${portraitHTML(author,36)}</span><b${fx.name?` class="rp-name-${fx.name}"`:''}>${esc(author.name)}</b>${rankBadges(author)}</span>${valid?`<time datetime="${date.toISOString()}" dir="ltr">${esc(date.toLocaleTimeString('ar-u-nu-latn',{hour:'2-digit',minute:'2-digit'}))}</time>`:''}</header><p dir="auto">${esc(m.text)}</p><details class="so-chat-message-actions"><summary aria-label="خيارات الرسالة">${icon('info')}</summary>${button('report-chat','إبلاغ',`data-id="${esc(m.id)}"`)}</details></article>`;
 }
 /* R69zs: كل دخول للغرفة يبدأ بدردشة نظيفة — الرسائل اللي قبل دخولك ما تطلع */
+/* R103: الأساس يتحسب مرة وحدة لكل غرفة (كل مجالسها) — قبل كان لكل مجلس، فلو انتقلت لمجلس ثاني (مثلاً بعد أول رسالة) رسالتك تنحسب «قديمة» وتختفي */
 function chatBase69(c,council){
-  const key=(c.snapshot?.room?.id||'')+'/'+council.id;
+  const key=String(c.snapshot?.room?.id||'');
   c.chatBase69??=new Map();
-  if(!c.chatBase69.has(key))c.chatBase69.set(key,new Set(arr(council.chat).map(m=>m.id)));
+  if(!c.chatBase69.has(key))c.chatBase69.set(key,new Set(arr(c.snapshot?.room?.councils).flatMap(x=>arr(x.chat)).concat(arr(council?.chat)).map(m=>m.id)));
   return c.chatBase69.get(key);
 }
+const mineMsg103=(c,m)=>String(m.author?.id||m.actorId||m.senderId||'')===selfId(c);
 /* R69zs: تحذير عدم الإساءة أول ما تدخل أي غرفة صوتية */
 function roomWarn69(c,force){
   /* R101: بدل النافذة اللي تسكّر الشاشة، القوانين تطلع كرسالة إعلان داخل الدردشة */
@@ -657,7 +659,7 @@ function chatHTML(c,council,ui) {
   const joined=c.snapshot?.current?.roomId===c.snapshot?.room?.id;
   const giftEvents=council&&typeof c.ctx.socialGifts?.events==='function'?c.ctx.socialGifts.events(c.snapshot,{compact:!c.ctx.gameRoom&&c.challengeModel?.challenge?.status==='active'}):'';
   const notice=council?'أنت عضو في هذا المجلس. شارك باحترام؛ المقعد لا يعني أن المايك يعمل.':joined?'أنت عضو في الغرفة، ولم تأخذ مقعدًا بعد. اختر مجلسًا لبدء الحديث.':'أنت تشاهد الغرفة فقط، ولست عضوًا فيها. التخطيط معاينة؛ الدخول والمقعد باختيارك.';
-  return `<section class="so-chat" data-so-chat-region aria-labelledby="so-chat-title"><h2 id="so-chat-title" class="so-sr">محادثة المجلس</h2><div class="so-chat-messages" role="log" aria-live="polite" aria-label="رسائل المجلس"><article class="so-chat-system r68-welcome-msg r96-sys" data-so-local-notice><i class="r96-ic" aria-hidden="true">🔔</i><p>مرحباً بكم في ${esc(c.snapshot?.room?.name||'الغرفة')}. يرجى احترام بعضنا البعض والدردشة باحترام 💜</p></article><article class="so-chat-system r69-rules-msg r96-sys" data-so-local-notice><i class="r96-ic" aria-hidden="true">🛡️</i><p>ممنوع السب والإساءة والكلام الخادش. الغرفة مراقبة، والمخالف ينكتم وينحظر.</p></article>${entries96HTML(c)}${council?arr(council.chat).filter(m=>{const cut=Number(storage.get(`la3bak:social:cleared:${c.snapshot?.room?.id}:${council.id}`));return (!Number.isFinite(cut)||!(Number(m.at)<=cut))&&!chatBase69(c,council).has(m.id);}).map(m=>chatMessageHTML(c,m)).join(''):''}${giftEvents}</div></section>`;
+  return `<section class="so-chat" data-so-chat-region aria-labelledby="so-chat-title"><h2 id="so-chat-title" class="so-sr">محادثة المجلس</h2><div class="so-chat-messages" role="log" aria-live="polite" aria-label="رسائل المجلس"><article class="so-chat-system r68-welcome-msg r96-sys" data-so-local-notice><i class="r96-ic" aria-hidden="true">🔔</i><p>مرحباً بكم في ${esc(c.snapshot?.room?.name||'الغرفة')}. يرجى احترام بعضنا البعض والدردشة باحترام 💜</p></article><article class="so-chat-system r69-rules-msg r96-sys" data-so-local-notice><i class="r96-ic" aria-hidden="true">🛡️</i><p>ممنوع السب والإساءة والكلام الخادش. الغرفة مراقبة، والمخالف ينكتم وينحظر.</p></article>${entries96HTML(c)}${council?arr(council.chat).filter(m=>{const cut=Number(storage.get(`la3bak:social:cleared:${c.snapshot?.room?.id}:${council.id}`));return (!Number.isFinite(cut)||!(Number(m.at)<=cut))&&(!chatBase69(c,council).has(m.id)||mineMsg103(c,m));}).map(m=>chatMessageHTML(c,m)).join(''):''}${giftEvents}</div></section>`;
 }
 function roomDockExtras(c) {
   if(c.ctx.gameRoom)return '';

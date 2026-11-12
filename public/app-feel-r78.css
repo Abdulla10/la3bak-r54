@@ -249,3 +249,34 @@ html,body{overflow-x:hidden}
 #view .pf68 .pf68-bio{margin-top:10px!important}
 /* شاراتي: الصورة كاملة بدون قص */
 #view .pf68 :is(.pf68-badges,[class*="badge"]) img{object-fit:contain!important;background:transparent!important}
+html:has(.gv-game-surface) .fs-btn{display:none!important}
+/* R103: مينابولي — نص الدور واضح على البنفسجي */
+.mn-game .mn-status{color:#fff!important;font-weight:800}
+.mn-game .mn-center small,.mn-game .mn-center p{color:#f6edff!important}
+/* R103: نافذة إنشاء الغرفة — كانت خلفيتها فاتحة والكلام فاتح ما ينقرا */
+html body dialog.so-dialog.so-create-room-r30:not(#_){background:#1a0b2e!important;color:#f3e8ff!important}
+html body dialog.so-dialog.so-create-room-r30:not(#_)::backdrop{background:rgba(10,4,20,.75)}
+html body dialog.so-create-room-r30:not(#_) :is(.so-owner-create-consent-r33,.so-dir-check,.so-room-photo-r31,.so-room-photo-preview,.so-dir-password-group,.so-dir-choice,.so-dir-mode-help){background:rgba(255,255,255,.06)!important;border-color:#ffffff26!important;color:#f3e8ff!important}
+html body dialog.so-create-room-r30:not(#_) .so-dir-choice.is-active{background:linear-gradient(90deg,#f5c542,#e0a92e)!important;color:#2a1600!important;border-color:#f5c542!important}
+html body dialog.so-create-room-r30:not(#_) :is(h2,h3,legend,.so-dir-field,label){color:#fff!important}
+html body dialog.so-create-room-r30:not(#_) :is(p,small,.so-dir-field-help){color:#d9ccef!important}
+html body dialog.so-create-room-r30:not(#_) :is(header,footer,.so-dialog-head,.so-dialog-actions){background:#1a0b2e!important;border-color:#ffffff1f!important}
+html body dialog.so-create-room-r30:not(#_) input[type=file]{color:transparent!important;max-width:150px;background:transparent!important;border:0!important}
+html body dialog.so-create-room-r30:not(#_) input[type=file]::file-selector-button{background:linear-gradient(90deg,#f5c542,#e0a92e);color:#2a1600;border:0;border-radius:12px;padding:9px 14px;font-weight:800;font-family:inherit;cursor:pointer}
+/* زر الصورة بالعربي بدل Choose File: نخفي حقل الملف ونخلي العنوان نفسه زر */
+.so-room-photo-r31 input[type=file][data-so-room-photo-input]{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}
+.so-room-photo-r31 .so-room-photo-label{position:relative;display:inline-flex!important;align-items:center;gap:6px;background:linear-gradient(90deg,#f5c542,#e0a92e)!important;color:#2a1600!important;border-radius:12px;padding:10px 16px!important;font-weight:800;cursor:pointer;border:0!important}
+.so-room-photo-r31 .so-room-photo-label::before{content:"📷"}
+.so-room-photo-r31 .so-room-photo-preview{color:#d9ccef!important}
+html body dialog.so-create-room-r30:not(#_) .so-room-photo-r31 label.so-room-photo-label{color:#2a1600!important}
+html body dialog.so-create-room-r30:not(#_) .so-room-photo-r31 .so-room-photo-preview span{color:#d9ccef!important}
+/* R103: شريط «عندك مباراة شغالة» — ما يغطي محتوى الصفحة: تحت وصغير (الشريط السفلي انشال) */
+html body .rs69:not(#_){top:auto!important;bottom:calc(14px + env(safe-area-inset-bottom))!important;padding:7px 10px!important;max-width:460px;margin:0 auto;border-radius:14px!important}
+html.lb-social-viewport-r27 body .rs69:not(#_),html.has-game-voice body .rs69:not(#_){bottom:calc(88px + env(safe-area-inset-bottom))!important}
+html body .rs69:not(#_) i{font-size:20px}
+html body .rs69:not(#_) button{padding:7px 12px}
+/* R103: شارات اللاعب بالغرفة (المضيف/أنت/جاهز) داخل سطره، مب فوق بعض بزاوية البطاقة */
+.lb-unified ul.players .player .badge{position:static!important;display:inline-block;margin:2px 3px 0 0;font:700 11px/1.4 inherit;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.1);color:#f3e8ff}
+.lb-unified ul.players .player .badge.you{background:#f5c54233;color:#ffd977}
+.lb-unified ul.players .player .badge.live{background:#2fbf7133;color:#7dffb3}
+.lb-unified ul.players .player .badge.soon{background:#ff6b8a26;color:#ffb3c4}

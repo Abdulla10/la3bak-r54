@@ -187,7 +187,9 @@ export function createGlobalSearch({ getContext, root = document } = {}) {
     reset(); trigger = button;
     const ctx = context(); scope = scopeOf(ctx);
     access = !ctx.user || ctx.user.id == null ? 'guest' : ctx.noCommunity ? 'locked' : 'ready';
-    viewport(); dialog.showModal(); draw();
+    /* R103: لو الصفحة انرسمت من جديد والنافذة انفصلت، نرجعها للصفحة قبل ما نفتحها */
+    if (!dialog.isConnected) document.body.appendChild(dialog);
+    viewport(); try { dialog.showModal(); } catch { dialog.setAttribute('open', ''); } draw();
     syncTriggers();
     (access === 'ready' ? input : closeButton).focus({ preventScroll: true });
   };
