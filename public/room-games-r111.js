@@ -202,10 +202,48 @@ body:has(.so-room-panel[data-so-open-panel]) .rg-pill{display:none!important}
 .ml.is-lock::after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle,transparent 40%,#000a);animation:wfbeat 1.2s infinite;z-index:2}
 .ml .ml-tools{display:flex;gap:8px}
 .ml .ml-tools .rg-btn{padding:11px}
+/* ===== R113: لمسات «واو» ===== */
+.rg-snd{width:40px;height:40px;border-radius:50%;border:1.5px solid #ffffff55;background:#0006;color:#fff;font-size:17px;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px)}
+.rg-shake{animation:rgshake .45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes rgshake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+.rg-flash{position:fixed;inset:0;z-index:98;pointer-events:none;animation:rgflash .9s ease-out forwards}
+@keyframes rgflash{0%{opacity:0}8%{opacity:1}20%{opacity:.2}30%{opacity:.9}100%{opacity:0}}
+.rg-pop{position:fixed;z-index:99;pointer-events:none;font:900 20px/1 inherit;color:#5dff8a;text-shadow:0 2px 8px #000,0 0 14px #5dff8a;animation:rgpopup 1.4s ease-out forwards}
+@keyframes rgpopup{from{transform:translate(-50%,0) scale(.6);opacity:0}20%{transform:translate(-50%,-14px) scale(1.25);opacity:1}to{transform:translate(-50%,-70px) scale(1);opacity:0}}
+.rg-coins{position:fixed;inset:0;pointer-events:none;z-index:99;overflow:hidden}
+.rg-coins i{position:absolute;top:-40px;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6c0,#ffd34d 40%,#d08a0a 75%,#8a5600);box-shadow:inset 0 0 0 3px #f5b82a,0 3px 6px #0007;animation:rgcoin linear forwards}
+.rg-coins i::after{content:"$";position:absolute;inset:0;display:grid;place-items:center;font:900 15px/1 Arial;color:#8a5600}
+@keyframes rgcoin{to{transform:translateY(115vh) rotateY(1080deg)}}
+.rg-tw{white-space:pre-wrap;display:inline}
+html:has(.rg-ov:not([hidden])) :is(.gc69,.rl69-fab,.rl69-bar,.bm69-pill,.sp69-float,.rq68-fab,.react-dock,.rs69,.cz-ov){display:none!important}
+.rg-tw .c{opacity:0;animation:rgtw .01s forwards}
+@keyframes rgtw{to{opacity:1}}
+.wf .wf-howl{position:absolute;left:5%;top:calc(env(safe-area-inset-top) + 58px);width:64px;height:64px;z-index:1;pointer-events:none;opacity:0}
+.wf.is-howl .wf-howl{animation:wfhowl 3.2s ease-out forwards}
+@keyframes wfhowl{0%{opacity:0;transform:translateY(16px) scale(.9)}20%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0}}
+.wf .wf-eyes2{position:absolute;bottom:22%;z-index:2;display:flex;gap:7px;pointer-events:none;animation:wfeyes 7s ease-in-out infinite}
+.wf .wf-eyes2 i{width:8px;height:5px;border-radius:50%;background:#ffde59;box-shadow:0 0 8px #ffbf1f}
+@keyframes wfeyes{0%,40%,100%{opacity:0}48%,62%{opacity:.9}52%{opacity:.1}56%{opacity:.9}}
+.wf.is-day .wf-eyes2{display:none}
+.ml .ml-intro .ml-logo{animation:mlzoom 2.2s cubic-bezier(.2,1,.3,1) both}
+@keyframes mlzoom{0%{transform:scale(.25) rotate(-20deg);opacity:0;filter:blur(6px)}60%{transform:scale(1.12);opacity:1;filter:none}100%{transform:scale(1)}}
+.ml .ml-intro::before{content:"";position:fixed;inset:0;z-index:0;background:conic-gradient(from 0deg at 50% 30%,#ffffff00 0deg,#9fd0ff40 8deg,#ffffff00 16deg,#ffffff00 90deg,#9fd0ff40 98deg,#ffffff00 106deg,#ffffff00 180deg,#9fd0ff40 188deg,#ffffff00 196deg,#ffffff00 270deg,#9fd0ff40 278deg,#ffffff00 286deg);animation:mlspin 2.4s ease-out forwards;pointer-events:none}
+@keyframes mlspin{from{transform:rotate(-90deg);opacity:1}to{transform:rotate(30deg);opacity:0}}
+.ml .ml-ladder li.now{animation:mlclimb .8s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes mlclimb{from{transform:translateY(16px) scale(.9);opacity:.3}}
+.ml.is-lock .ml-o.lock{animation:mlpulse 1s ease-in-out infinite}
+@keyframes mlpulse{50%{filter:brightness(1.35)}}
+.fq .fq-q{animation:fqflip .6s cubic-bezier(.2,1.3,.4,1) both!important;transform-origin:50% 0}
+@keyframes fqflip{from{transform:perspective(600px) rotateX(-80deg);opacity:0}}
+.fq .fq-o{animation:fqin .45s cubic-bezier(.2,1.3,.4,1) both}
+.fq .fq-o.c1{animation-delay:.06s}.fq .fq-o.c2{animation-delay:.12s}.fq .fq-o.c3{animation-delay:.18s}
+@keyframes fqin{from{transform:scale(.6);opacity:0}}
+.fq .fq-strip .streak{color:#ff9a3c;font-size:11px}
 @media (prefers-reduced-motion:reduce){.rg-ov *,.wf-card *{animation:none!important}}
 `;
 
 const TREES = `<svg class="wf-trees" viewBox="0 0 400 140" preserveAspectRatio="none" aria-hidden="true"><path fill="#04060f" d="M0 140V92l10-22 8 20 6-34 9 30 7-18 10 30 4-46 10 40 8-24 7 28 12-40 9 34 6-16 9 24 11-50 10 44 7-20 8 26 13-38 9 36 8-22 10 30 6-44 11 40 9-18 7 24 12-36 9 32 8-26 10 30 7-48 10 44 8-20 9 26 12-34 10 36 7-14 8 20 11-42 9 38 8-22 9 28 10-30 V140z"/><path fill="#070a1c" d="M0 140v-26l20-14 24 10 30-16 26 14 34-12 30 16 34-14 28 12 32-16 30 14 34-10 28 12 30-10v40z"/></svg>`;
+const HOWL = `<svg class="wf-howl" viewBox="0 0 64 64" aria-hidden="true"><path fill="#05070f" d="M14 60c2-8 4-14 9-18-2-4-2-8 0-11l-3-9 6 5c2-3 5-5 9-6l4-12 3 11c3 2 5 6 5 10l6 4-5 1c-1 4-4 7-8 9 2 5 3 10 2 16H39c0-4-1-7-3-9-3 2-6 4-6 9z"/></svg>`;
 const ROLE = { wolf: ['🐺', 'ذيب', 'كل ليلة تتفق أنت والذيابة على ضحية. بالنهار تظاهر إنك قروي بريء.'], doctor: ['🩺', 'الطبيب', 'كل ليلة تختار شخص تحميه من الذيابة (تقدر تحمي نفسك، بس مب نفس الشخص ليلتين).'], seer: ['🔮', 'العرّاف', 'كل ليلة تكشف شخص وتعرف إذا هو ذيب ولا لا. استخدم معلوماتك بذكاء.'], villager: ['🧑‍🌾', 'قروي', 'ما عندك قدرة بالليل. بالنهار ناقش وصوّت عشان تطلّعون الذيابة.'] };
 const SHAPES = ['▲', '◆', '●', '■'];
 const LETTERS = ['أ', 'ب', 'ج', 'د'];
@@ -218,6 +256,43 @@ export function startRoomGames() {
   const roomId = () => { const m = /^#\/social-room\/([0-9a-f-]{36})/i.exec((globalThis.__LA3BAK_NAV__ || location).hash); return m ? m[1] : ''; };
   let ac = null; const tone = (f = 660, d = 0.1, type = 'sine', v = 0.05) => { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = f; g.gain.value = v; g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + d); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + d); } catch { /* */ } };
   const howl = () => { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(300, ac.currentTime); o.frequency.linearRampToValueAtTime(620, ac.currentTime + 0.6); o.frequency.linearRampToValueAtTime(420, ac.currentTime + 1.8); g.gain.setValueAtTime(0.0001, ac.currentTime); g.gain.linearRampToValueAtTime(0.03, ac.currentTime + 0.3); g.gain.linearRampToValueAtTime(0.0001, ac.currentTime + 1.9); const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; o.connect(f).connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 2); } catch { /* */ } };
+  /* ---------- R113: محرك الصوت: موسيقى خلفية + راوي بالعربي ---------- */
+  const SND = { on: (() => { try { return localStorage.getItem('rg_snd') !== '0'; } catch { return true; } })(), amb: null, mood: '' };
+  const ctx = () => { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume().catch(() => {}); return ac; };
+  function ambStop() { const a = SND.amb; SND.amb = null; SND.mood = ''; if (!a) return; try { a.g.gain.linearRampToValueAtTime(0.0001, a.c.currentTime + 0.6); setTimeout(() => { a.nodes.forEach((n) => { try { n.stop(); } catch { /* */ } }); clearInterval(a.iv); }, 700); } catch { /* */ } }
+  function ambStart(mood) {
+    if (!SND.on || SND.mood === mood) return; ambStop(); let c; try { c = ctx(); } catch { return; }
+    const g = c.createGain(); g.gain.value = 0.0001; g.connect(c.destination); g.gain.linearRampToValueAtTime(mood === 'fast' ? 0.05 : 0.07, c.currentTime + 1.2);
+    const nodes = []; let iv = 0;
+    const noise = () => { const b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const n = c.createBufferSource(); n.buffer = b; n.loop = true; return n; };
+    if (mood === 'night') { // ريح + صراصير
+      const n = noise(), f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 380; const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.12; lg.gain.value = 180; lfo.connect(lg).connect(f.frequency); n.connect(f).connect(g); n.start(); lfo.start(); nodes.push(n, lfo);
+      iv = setInterval(() => { if (Math.random() < 0.6) for (let k = 0; k < 3; k++) { const o = c.createOscillator(), og = c.createGain(); o.frequency.value = 4200 + Math.random() * 400; og.gain.setValueAtTime(0.0001, c.currentTime + k * 0.07); og.gain.linearRampToValueAtTime(0.25, c.currentTime + k * 0.07 + 0.01); og.gain.linearRampToValueAtTime(0.0001, c.currentTime + k * 0.07 + 0.045); o.connect(og).connect(g); o.start(c.currentTime + k * 0.07); o.stop(c.currentTime + k * 0.07 + 0.06); } }, 900);
+    } else if (mood === 'day') { // طيور خفيفة
+      iv = setInterval(() => { if (Math.random() < 0.5) { const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; const t0 = c.currentTime; o.frequency.setValueAtTime(2400, t0); o.frequency.exponentialRampToValueAtTime(3600, t0 + 0.08); o.frequency.exponentialRampToValueAtTime(2600, t0 + 0.16); og.gain.setValueAtTime(0.0001, t0); og.gain.linearRampToValueAtTime(0.18, t0 + 0.02); og.gain.linearRampToValueAtTime(0.0001, t0 + 0.18); o.connect(og).connect(g); o.start(t0); o.stop(t0 + 0.2); } }, 1300);
+    } else if (mood === 'tense') { // درون التوتر (المليون)
+      [55, 82.4, 110.3].forEach((f, i) => { const o = c.createOscillator(); o.type = i ? 'sine' : 'sawtooth'; o.frequency.value = f; const og = c.createGain(); og.gain.value = i ? 0.35 : 0.12; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500; o.connect(lp).connect(og).connect(g); o.start(); nodes.push(o); });
+      let beat = 0; iv = setInterval(() => { beat++; const o = c.createOscillator(), og = c.createGain(); o.frequency.value = beat % 4 ? 70 : 90; og.gain.setValueAtTime(0.9, c.currentTime); og.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.25); o.connect(og).connect(g); o.start(); o.stop(c.currentTime + 0.3); }, 750);
+    } else if (mood === 'fast') { // إيقاع مسابقة
+      let st = 0; iv = setInterval(() => { st++; const t0 = c.currentTime;
+        if (st % 2 === 1) { const o = c.createOscillator(), og = c.createGain(); o.frequency.setValueAtTime(150, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + 0.12); og.gain.setValueAtTime(1, t0); og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.15); o.connect(og).connect(g); o.start(t0); o.stop(t0 + 0.16); }
+        const h = noise(), hf = c.createBiquadFilter(), hg = c.createGain(); hf.type = 'highpass'; hf.frequency.value = 7000; hg.gain.setValueAtTime(0.35, t0); hg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05); h.connect(hf).connect(hg).connect(g); h.start(t0); h.stop(t0 + 0.06);
+        if (st % 8 === 5) { const o = c.createOscillator(), og = c.createGain(); o.type = 'triangle'; o.frequency.value = [523, 659, 784][st % 3]; og.gain.setValueAtTime(0.25, t0); og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.2); o.connect(og).connect(g); o.start(t0); o.stop(t0 + 0.22); } }, 250);
+    }
+    SND.amb = { c, g, nodes, iv }; SND.mood = mood;
+  }
+  let voice = null; const pickVoice = () => { try { const vs = speechSynthesis.getVoices(); voice = vs.find((v) => /^ar/i.test(v.lang) && /maged|tarik|majed|male/i.test(v.name)) || vs.find((v) => /^ar/i.test(v.lang)) || null; } catch { /* */ } };
+  try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch { /* */ }
+  function say(text, { rate = 0.95, pitch = 0.9 } = {}) {
+    if (!SND.on || !text || typeof speechSynthesis === 'undefined') return;
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(String(text).replace(/[🐺🩸🌙☀️⚡💰👥🔒✅❌🎯😬🤝🏡🌅]/gu, '')); u.lang = voice?.lang || 'ar-SA'; if (voice) u.voice = voice; u.rate = rate; u.pitch = pitch; speechSynthesis.speak(u); } catch { /* */ }
+  }
+  const buzz = (ms = 30) => { try { navigator.vibrate?.(ms); } catch { /* */ } };
+  const shake = (s) => { const el = s.ov.querySelector('.rg-in'); if (!el) return; el.classList.remove('rg-shake'); void el.offsetWidth; el.classList.add('rg-shake'); buzz([40, 30, 60]); };
+  const flash = (color) => { const f = document.createElement('div'); f.className = 'rg-flash'; f.style.background = color; document.body.append(f); setTimeout(() => f.remove(), 1000); };
+  const coins = (n = 45) => { const c = document.createElement('div'); c.className = 'rg-coins'; c.innerHTML = Array.from({ length: n }, () => `<i style="left:${Math.random() * 96}%;animation-duration:${1.6 + Math.random() * 1.8}s;animation-delay:${Math.random() * 1}s;transform:scale(${0.6 + Math.random() * 0.7})"></i>`).join(''); document.body.append(c); setTimeout(() => c.remove(), 4200); tone(1568, 0.08, 'triangle', 0.04); setTimeout(() => tone(2093, 0.12, 'triangle', 0.04), 120); };
+  const typewrite = (el) => { if (!el || el.dataset.tw) return; el.dataset.tw = '1'; const t = el.textContent; el.innerHTML = `<span class="rg-tw">${[...t].map((ch, i) => `<span class="c" style="animation-delay:${i * 28}ms">${esc(ch)}</span>`).join('')}</span>`; };
+  const pops = (s, x) => { s.ov.querySelectorAll('.fq-strip>div').forEach((el) => { const gain = el.querySelector('.gain'); if (!gain) return; const r = el.getBoundingClientRect(); const p = document.createElement('div'); p.className = 'rg-pop'; p.textContent = gain.textContent; p.style.left = r.left + r.width / 2 + 'px'; p.style.top = r.top + 'px'; document.body.append(p); setTimeout(() => p.remove(), 1500); }); };
   const confetti = () => { const c = document.createElement('div'); c.className = 'rg-confetti'; const cols = ['#ffd76a', '#ff5a4e', '#b06bff', '#4ee6ff', '#5dff8a']; c.innerHTML = Array.from({ length: 80 }, () => `<i style="left:${Math.random() * 100}%;background:${cols[Math.floor(Math.random() * 5)]};animation-duration:${2 + Math.random() * 2}s;animation-delay:${Math.random() * 0.8}s"></i>`).join(''); document.body.append(c); setTimeout(() => c.remove(), 5000); };
   const ring = (left, total, col = '#ffd76a') => { const r = 32, C = 2 * Math.PI * r, f = total ? Math.max(0, Math.min(1, left / total)) : 0; return `<div class="rg-ring"><svg viewBox="0 0 74 74"><circle cx="37" cy="37" r="${r}" fill="#0007" stroke="#ffffff22" stroke-width="7"/><circle data-rg-arc cx="37" cy="37" r="${r}" fill="none" stroke="${f < 0.25 ? '#ff3b5c' : col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - f)}" data-c="${C}" data-total="${total}"/></svg><b data-rg-t>${mmss(left)}</b></div>`; };
 
@@ -227,6 +302,7 @@ export function startRoomGames() {
     mil: { title: '💰 من سيربح المليون', cls: 'ml' },
   };
   const ST = {};
+  addEventListener('pointerdown', () => { try { if (ac && ac.state === 'suspended') ac.resume(); } catch { /* */ } }, { passive: true });
   for (const k of Object.keys(KINDS)) {
     const ov = document.createElement('div'); ov.className = `rg-ov ${KINDS[k].cls}`; ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', KINDS[k].title);
     const pill = document.createElement('button'); pill.type = 'button'; pill.className = 'rg-pill'; pill.hidden = true;
@@ -318,7 +394,7 @@ export function startRoomGames() {
   function fastBody(s, x) {
     const c = s.d.can;
     if (!x) return emptyView(s, FINTRO);
-    const strip = `<div class="fq-strip">${[...x.players].sort((a, b) => b.score - a.score).map((p) => `<div class="${p.done ? 'done' : ''}">${av(p)}<span>${p.me ? 'أنت' : esc(p.name)}</span><b>${nf(p.score)}</b>${p.gain ? `<span class="gain">+${p.gain}</span>` : ''}</div>`).join('')}</div>`;
+    const strip = `<div class="fq-strip">${[...x.players].sort((a, b) => b.score - a.score).map((p) => `<div class="${p.done ? 'done' : ''}">${av(p)}<span>${p.me ? 'أنت' : esc(p.name)}</span><b>${nf(p.score)}</b>${p.gain ? `<span class="gain">+${p.gain}</span>` : ''}${p.streak >= 3 ? `<span class="streak">🔥×${p.streak}</span>` : ''}</div>`).join('')}</div>`;
     if (x.phase === 'lobby') {
       const ed = c.settings ? '' : 'disabled';
       return `<section class="rg-card"><h3>👥 المتسابقين (${x.players.length})</h3>${slots(x, 16)}</section>
@@ -387,16 +463,19 @@ export function startRoomGames() {
     const x = g(s), K = KINDS[s.k];
     s.pill.hidden = !(room && x && !s.open && x.phase !== 'done' && !Object.values(ST).some((o) => o.open));
     if (!s.pill.hidden) s.pill.textContent = x.phase === 'lobby' ? `${K.title} · ${s.k === 'mil' ? 'مين يقعد على الكرسي؟' : 'انضم'} 👈` : `${K.title} شغالة · افتح 👈`;
-    if (!s.open || !room) { s.ov.hidden = true; return; }
+    if (!s.open || !room) { s.ov.hidden = true; if (!Object.values(ST).some((o) => o.open)) { ambStop(); try { speechSynthesis.cancel(); } catch { /* */ } } return; }
     s.ov.hidden = false;
+    { const mood = !x || x.phase === 'lobby' || x.phase === 'done' ? '' : s.k === 'wolf' ? (['night', 'reveal'].includes(x.phase) ? 'night' : 'day') : s.k === 'mil' ? 'tense' : 'fast'; if (mood) ambStart(mood); else ambStop(); }
     s.ov.classList.toggle('is-day', s.k === 'wolf' && !!x && ['day', 'vote', 'verdict'].includes(x.phase) || (s.k === 'wolf' && x?.phase === 'done' && x.winner === 'village'));
     s.ov.classList.toggle('is-dawn', s.k === 'wolf' && x?.phase === 'dawn');
     s.ov.classList.toggle('is-vote', s.k === 'wolf' && x?.phase === 'vote');
     s.ov.classList.toggle('is-lock', s.k === 'mil' && x?.phase === 'locked');
-    const bg = s.k === 'wolf' ? `<div class="rg-bg"></div><div class="wf-moon"></div><div class="wf-fog"></div>${TREES}` : '<div class="rg-bg"></div>';
+    const bg = s.k === 'wolf' ? `<div class="rg-bg"></div><div class="wf-moon"></div>${HOWL}<div class="wf-fog"></div>${TREES}<div class="wf-eyes2" style="left:18%"><i></i><i></i></div><div class="wf-eyes2" style="right:22%;animation-delay:3.4s"><i></i><i></i></div>` : '<div class="rg-bg"></div>';
     const sc = s.ov.querySelector('.rg-scroll')?.scrollTop ?? 0;
-    s.ov.innerHTML = `${bg}<div class="rg-scroll"><div class="rg-in"><header class="rg-top"><button type="button" class="rg-x" data-a="close" aria-label="رجوع للغرفة">✕</button><h2>${K.title}</h2><span style="width:40px"></span></header>${BODY[s.k](s, x)}</div></div>`;
+    s.ov.innerHTML = `${bg}<div class="rg-scroll"><div class="rg-in"><header class="rg-top"><button type="button" class="rg-x" data-a="close" aria-label="رجوع للغرفة">✕</button><h2>${K.title}</h2><button type="button" class="rg-snd" data-a="snd" aria-label="الصوت">${SND.on ? '🔊' : '🔇'}</button></header>${BODY[s.k](s, x)}</div></div>`;
     const ns = s.ov.querySelector('.rg-scroll'); if (ns) ns.scrollTop = sc;
+    if (s.k === 'mil' && x?.phase === 'question') { const q = s.ov.querySelector('.ml-q>div'); const id = x.level + ':' + x.q; if (q && s.seen.tw !== id) { s.seen.tw = id; typewrite(q); } else if (q) { q.dataset.tw = '1'; } }
+    if (s.k === 'mil' && x?.phase === 'intro') s.ov.querySelector('.rg-in')?.classList.add('ml-intro');
   }
   function tick(s) {
     const l = left(s); if (l === null) return;
@@ -409,21 +488,26 @@ export function startRoomGames() {
     const ph = x.phase, was = prev?.phase;
     if (ph === was && prev?.idx === x.idx && prev?.level === x.level) return;
     if (s.k === 'wolf') {
-      if (ph === 'reveal' && s.d.me.role && s.seen.card !== x.id + ':' + x.day) { s.seen.card = x.id + ':' + x.day; const [ic, nm, tx] = ROLE[s.d.me.role]; const n = document.createElement('div'); n.className = 'wf-card' + (s.d.me.role === 'wolf' ? ' wolf' : ''); n.innerHTML = `<div class="c"><small>دورك السري</small><div class="ic">${ic}</div><b>${nm}</b><p>${tx}</p><small style="opacity:.7">اضغط للإغلاق · لا تقول لأحد!</small></div>`; n.onclick = () => n.remove(); document.body.append(n); setTimeout(() => n.remove(), 8500); s.show = true; }
-      if (ph === 'night') howl();
-      if (ph === 'dawn') tone(880, 0.3);
-      if (ph === 'done') { confetti(); tone(990, 0.4); }
+      if (ph === 'reveal' && s.d.me.role && s.seen.card !== x.id + ':' + x.day) { s.seen.card = x.id + ':' + x.day; const [ic, nm, tx] = ROLE[s.d.me.role]; const n = document.createElement('div'); n.className = 'wf-card' + (s.d.me.role === 'wolf' ? ' wolf' : ''); n.innerHTML = `<div class="c"><small>دورك السري</small><div class="ic">${ic}</div><b>${nm}</b><p>${tx}</p><small style="opacity:.7">اضغط للإغلاق · لا تقول لأحد!</small></div>`; n.onclick = () => n.remove(); document.body.append(n); setTimeout(() => n.remove(), 8500); s.show = true; say('كل واحد يشوف دوره بالسر. لا تقولون لأحد'); buzz(60); }
+      if (ph === 'night') { howl(); flash('radial-gradient(circle,#c9d4ff55,#0000)'); setTimeout(() => { s.ov.classList.add('is-howl'); setTimeout(() => s.ov.classList.remove('is-howl'), 3300); }, 50); say(x.day <= 1 ? 'حل الليل. القرية تنام. يا ذيابة اصحوا واختاروا ضحيتكم' : 'الليل رجع. انتبهوا'); }
+      if (ph === 'dawn') { const N = x.news; if (N?.kind === 'killed') { flash('radial-gradient(circle,#ff1a3a66,#5a000aaa)'); tone(90, 0.8, 'sawtooth', 0.05); buzz([80, 40, 120]); say(`طلع الصبح. للأسف ${N.name} انقتل بالليل`); } else if (N?.kind === 'saved') { tone(880, 0.3); say('طلع الصبح. الطبيب أنقذ الضحية'); } else say('طلع الصبح. ليلة هادية'); }
+      if (ph === 'day') say('تناقشوا بالمايك. مين الذيب؟');
+      if (ph === 'vote') { say('حان وقت التصويت'); buzz(40); }
+      if (ph === 'verdict') { const N = x.news; if (N?.kind === 'lynched') { flash(N.role === 'wolf' ? 'radial-gradient(circle,#ffd76a66,#0000)' : 'radial-gradient(circle,#ff1a3a55,#0000)'); say(N.role === 'wolf' ? `القرية طلعت ${N.name} وطلع ذيب` : `القرية طلعت ${N.name} وكان بريء`); } else say('الأصوات تعادلت'); }
+      if (ph === 'done') { confetti(); tone(990, 0.4); say(x.winner === 'village' ? 'فازت القرية' : 'فازت الذيابة'); if ((x.prizes || []).some((z) => z.amt > 0 && x.players.find((p) => p.me && p.name === z.name))) coins(); }
     }
     if (s.k === 'fast') {
-      if (ph === 'reveal') { const ok = x.mine && x.mine.pick === x.correct; tone(ok ? 1046 : 220, ok ? 0.25 : 0.35, ok ? 'triangle' : 'square', 0.04); }
-      if (ph === 'question' && (was !== 'question' || prev?.idx !== x.idx)) tone(740, 0.12);
-      if (ph === 'done') confetti();
+      if (ph === 'reveal') { const ok = x.mine && x.mine.pick === x.correct; tone(ok ? 1046 : 220, ok ? 0.25 : 0.35, ok ? 'triangle' : 'square', 0.04); if (ok) { setTimeout(() => tone(1318, 0.2, 'triangle', 0.04), 120); buzz(25); } else shake(s); setTimeout(() => pops(s, x), 60); if (x.fastest) say(`أسرع واحد ${x.fastest}`, { rate: 1.05, pitch: 1 }); }
+      if (ph === 'question' && (was !== 'question' || prev?.idx !== x.idx)) { tone(740, 0.12); if (x.q && x.q.length < 70) say(x.q, { rate: 1.05, pitch: 1 }); }
+      if (ph === 'ready') say('استعدوا', { rate: 1, pitch: 1.1 });
+      if (ph === 'done') { confetti(); const top = [...x.players].sort((a, b) => b.score - a.score)[0]; if (top) say(`الفايز ${top.name}`); if (top?.me) coins(); }
     }
     if (s.k === 'mil') {
-      if (ph === 'locked') { tone(110, 2.5, 'sawtooth', 0.025); }
-      if (ph === 'reveal') { const ok = x.pick === x.correct; tone(ok ? 1046 : 160, ok ? 0.6 : 0.8, ok ? 'triangle' : 'square', 0.05); if (ok) setTimeout(() => tone(1318, 0.5, 'triangle', 0.05), 180); }
-      if (ph === 'question' && was !== 'question') tone(440, 0.4, 'triangle', 0.03);
-      if (ph === 'done' && x.result?.won) confetti();
+      if (ph === 'intro') { tone(220, 1.2, 'triangle', 0.04); setTimeout(() => tone(330, 1.2, 'triangle', 0.04), 400); setTimeout(() => tone(440, 1.4, 'triangle', 0.05), 800); say(`أهلاً فيك يا ${x.seatName} في من سيربح المليون`, { rate: 0.9, pitch: 0.85 }); }
+      if (ph === 'locked') { tone(110, 2.5, 'sawtooth', 0.025); say('إجابة نهائية؟', { rate: 0.85, pitch: 0.8 }); buzz(50); }
+      if (ph === 'reveal') { const ok = x.pick === x.correct; tone(ok ? 1046 : 160, ok ? 0.6 : 0.8, ok ? 'triangle' : 'square', 0.05); if (ok) { setTimeout(() => tone(1318, 0.5, 'triangle', 0.05), 180); flash('radial-gradient(circle,#3fdb8a44,#0000)'); say('إجابة صحيحة', { rate: 0.95, pitch: 0.9 }); } else { flash('radial-gradient(circle,#ff1a3a55,#0000)'); shake(s); say('للأسف إجابة خاطئة', { rate: 0.9, pitch: 0.8 }); } }
+      if (ph === 'question' && (was !== 'question' || prev?.level !== x.level)) { tone(440, 0.4, 'triangle', 0.03); setTimeout(() => say(`السؤال ${x.level + 1}. على ${nf(x.ladder[x.level])}. ${x.q || ''}`, { rate: 0.95, pitch: 0.85 }), 300); }
+      if (ph === 'done') { const w = x.result?.won || 0; if (w) { confetti(); coins(x.result?.reason === 'win' ? 90 : 45); } say(x.result?.reason === 'win' ? 'مبروك! ربحت المليون' : w ? `ربحت ${nf(w)}` : 'حظ أوفر المرة الجاية', { rate: 0.9, pitch: 0.85 }); }
     }
   }
   function apply(s, d) {
@@ -447,6 +531,7 @@ export function startRoomGames() {
   function onClick(s, e) {
     const b = e.target.closest('[data-a]'); if (!b || b.disabled) return; const a = b.dataset.a;
     if (a === 'close') { s.open = false; s.err = ''; for (const o of Object.values(ST)) paint(o); return; }
+    if (a === 'snd') { SND.on = !SND.on; try { localStorage.setItem('rg_snd', SND.on ? '1' : '0'); } catch { /* */ } if (!SND.on) { ambStop(); try { speechSynthesis.cancel(); } catch { /* */ } } s.key = ''; paint(s); return; }
     if (a === 'peek') { s.show = !s.show; s.key = ''; paint(s); return; }
     if (a === 'set') return run(s, 'settings', { [b.dataset.k]: Number(b.dataset.v) });
     if (a === 'act' || a === 'vote') return run(s, a, { target: b.dataset.id });
