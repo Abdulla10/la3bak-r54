@@ -337,3 +337,39 @@ html body .nt-bar:not(#_){background:transparent!important}
 html body .nt-bar:not(#_) .nt-row{background:linear-gradient(90deg,#3b0a6b,#1d0638)!important;color:#fff!important;border-bottom:1.5px solid #f5c542!important;padding-top:calc(8px + env(safe-area-inset-top))}
 html body .nt-bar:not(#_) .nt-row.event{background:linear-gradient(90deg,#ffe07a,#f0b429)!important;color:#2a1500!important}
 html body .nt-bar:not(#_) .nt-row button{background:#ffffff22!important;color:inherit!important}
+/* R117: بطاقة العضو — تطلع من تحت مثل التطبيقات */
+html body dialog.so-dialog:has(.mc117):not(#_){position:fixed!important;inset:auto 0 0 0!important;margin:0!important;width:100%!important;max-width:560px!important;margin-inline:auto!important;max-height:86vh!important;padding:0!important;border-radius:26px 26px 0 0!important;border:0!important;border-top:1.5px solid #a86bff66!important;background:linear-gradient(180deg,#2a0f4a,#14062a 70%)!important;overflow:visible!important;z-index:9500!important;animation:mc117up .26s cubic-bezier(.2,.9,.3,1) both}
+html body dialog.so-dialog:has(.mc117):not(#_)::backdrop{background:rgba(5,2,12,.6)}
+@keyframes mc117up{from{transform:translateY(100%)}}
+html body dialog.so-dialog:has(.mc117):not(#_) form{overflow:visible!important;padding:0!important;margin:0!important}
+html body dialog.so-dialog:has(.mc117):not(#_) header{position:absolute!important;top:10px;left:12px;z-index:3;padding:0!important;border:0!important;background:none!important}
+html body dialog.so-dialog:has(.mc117):not(#_) header h2{display:none!important}
+html body dialog.so-dialog:has(.mc117):not(#_) footer,html body dialog.so-dialog:has(.mc117):not(#_) .so-error:empty{display:none!important}
+html body dialog.so-dialog:has(.mc117):not(#_) .so-dialog-body{padding:0!important;overflow:visible!important;max-height:none!important}
+.mc117{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 16px calc(12px + env(safe-area-inset-bottom));text-align:center;color:#fff}
+.mc117-face{margin-top:-56px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;filter:drop-shadow(0 8px 18px #000a)}
+.mc117-face .so-avatar{display:block;width:104px;height:104px;border-radius:50%;box-shadow:0 0 0 4px #1d0638,0 0 0 6px #f5c542}
+.mc117-face .so-avatar :is(img,svg){width:100%;height:100%;border-radius:50%;object-fit:cover}
+html body .mc117 .mc117-name:not(#_){margin:2px 0 0;font-size:20px;font-weight:900;color:#fff!important}
+html body .mc117 .mc117-id:not(#_){margin:0;font-size:13px;color:#cdb8f0!important;min-height:16px;letter-spacing:.3px}
+.mc117-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.mc117-chips span{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800}
+html body .mc117-chips .mc117-role:not(#_){background:linear-gradient(180deg,#ffd76a,#f0a91f);color:#3a1600!important}
+html body .mc117-chips .mc117-muted:not(#_){background:#7f1d1d;color:#fff!important}
+.mc117-ranks{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+html body .mc117 .mc117-full:not(#_){border:0;background:none;color:#e4c8ff!important;font:700 13px inherit;cursor:pointer;padding:2px 8px}
+.mc117-quick{display:flex;align-items:center;gap:10px;width:100%;margin-top:6px}
+.mc117-send{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border:0;border-radius:99px;background:linear-gradient(90deg,#ff7aa8,#ff5d8f);color:#fff;font:900 17px inherit;cursor:pointer;box-shadow:0 6px 16px #ff5d8f55}
+.mc117-send svg{width:22px;height:22px}
+.mc117-q{flex:none;width:48px;height:48px;display:grid;place-items:center;border-radius:50%;border:1.5px solid #ffffff26;background:#ffffff12;color:#fff;cursor:pointer}
+.mc117-q svg{width:24px;height:24px}
+.mc117-tools{display:grid;grid-template-columns:repeat(var(--n),1fr);width:calc(100% + 32px);margin:8px -16px 0;padding:10px 6px 2px;border-top:1px solid #ffffff1a}
+.mc117-t{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;border:0;background:none;color:#e9dcff;font:700 12px inherit;cursor:pointer;min-width:0}
+.mc117-t svg{width:26px;height:26px}
+.mc117-t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;color:inherit!important}
+.mc117-t:first-child{color:#ffb547}
+.mc117-t.is-off{opacity:.38}
+.mc117 .so-button:active,.mc117 button:active{scale:.95}
+html body .mc117 .mc117-send span:not(#_){color:#fff!important}
+html body .mc117 .mc117-t span:not(#_){white-space:normal;font-size:11.5px;line-height:1.25;text-align:center}
+html body .mc117 .mc117-t:first-child span:not(#_){color:#ffb547!important}

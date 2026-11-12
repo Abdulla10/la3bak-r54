@@ -97,6 +97,7 @@ export interface CommunityDeps {
   animTier?(id: string): number;
   phoneOk?(id: string): boolean;
   adminIdOf?(id: string): string | null;
+  displayIdOf?(id: string): string | null;
   privacyOf?(id: string): { gender: string | null; hideLists: boolean; gifts: { sent: number; recv: number } | null; noFollow: boolean; hideWealth: boolean; vip: number } | null;
   profileBg?(id: string): { id: string; css?: string; art?: string; rarity?: string; full: boolean } | null;
 }
@@ -229,8 +230,8 @@ export class Community {
     const posts = allPosts.filter((p) => p.id < b);
     const page = posts.slice(-PAGE - 1).reverse();
     if (iBlocked) return { user: { ...this.who(id), stats: null, ...counts, followers, following, followed: false, me: false, posts: 0, blocked: true, muted: iMuted }, posts: [], more: false };
-    if (this.priv(me, id)) return { user: { ...this.who(id), anim: this.dep.animTier?.(id) ?? 0, phone: this.dep.phoneOk?.(id) ?? false, adminId: this.dep.adminIdOf?.(id) ?? null, ...this.privView(id, me), stats: this.wealthStats(id, me), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: false, posts: 0, blocked: false, muted: iMuted, postsHidden: true, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: [], more: false };
-    return { user: { ...this.who(id), anim: this.dep.animTier?.(id) ?? 0, phone: this.dep.phoneOk?.(id) ?? false, adminId: this.dep.adminIdOf?.(id) ?? null, ...this.privView(id, me), stats: this.wealthStats(id, me), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: me === id, posts: allPosts.length, blocked: false, muted: iMuted, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: page.slice(0, PAGE).map((p) => this.postView(p, me)), more: page.length > PAGE };
+    if (this.priv(me, id)) return { user: { ...this.who(id), anim: this.dep.animTier?.(id) ?? 0, phone: this.dep.phoneOk?.(id) ?? false, adminId: this.dep.adminIdOf?.(id) ?? null, displayId: this.dep.displayIdOf?.(id) ?? null, ...this.privView(id, me), stats: this.wealthStats(id, me), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: false, posts: 0, blocked: false, muted: iMuted, postsHidden: true, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: [], more: false };
+    return { user: { ...this.who(id), anim: this.dep.animTier?.(id) ?? 0, phone: this.dep.phoneOk?.(id) ?? false, adminId: this.dep.adminIdOf?.(id) ?? null, displayId: this.dep.displayIdOf?.(id) ?? null, ...this.privView(id, me), stats: this.wealthStats(id, me), ...counts, followers, following, followed: !!me && (this.d.follows[me] ?? []).includes(id), me: me === id, posts: allPosts.length, blocked: false, muted: iMuted, bg: this.dep.profileBg?.(id) ?? null, official: this.dep.official?.(id) === true }, posts: page.slice(0, PAGE).map((p) => this.postView(p, me)), more: page.length > PAGE };
   }
   followList(pub: unknown, which: 'followers' | 'following', me: string | null = null) {
     const id = this.idOfPub(pub); if (!id || this.dep.isBanned(id) || this.dep.hidden?.(id)) throw new CommunityError(404, 'الحساب غير موجود.');

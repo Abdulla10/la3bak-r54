@@ -1350,6 +1350,11 @@ export class SocialRooms {
       if(kind==='private'&&p!=='private')fail('invalid_privacy');
       const c:Council={id:randomUUID(),name:text(b.name,80),description:text(b.description,400,true),kind,privacy:p,ownerId:id,hostId:null,seats:this.seats(d,kind,b.seats),locked:false,allowRequests:b.allowRequests===undefined?kind==='private':boolean(b.allowRequests),invites:[],requests:[],channel:randomUUID(),createdAt:now,modeEnabled:Object.fromEntries(SOCIAL_MODE_IDS.map(mode=>[mode,true])) as Council['modeEnabled'],modes:Object.fromEntries(SOCIAL_MODE_IDS.map(mode=>[mode,SOCIAL_MODES[mode].initial()])) as Council['modes'],chat:[]};
       r.councils.push(c);this.enterCouncil(d,r,c,id,media,now);this.activity(r,command,now);return success({roomId:r.id,councilId:c.id});
+    } else if(command==='member:unseat') {
+      /* R117: المشرف ينزّل عضو من المقعد (يبقى بالغرفة) */
+      this.requireMod(r,id,undefined,'moderation');const t=this.target(d,b.targetId);if(t===r.ownerId||r.moderators.includes(t)&&r.ownerId!==id)fail('protected_member',403);
+      const m=r.members.find(m=>m.id===t);if(!m)fail('member_not_found',404);if(!m.councilId)fail('council_membership_required',409);
+      this.previous(d,t,r,m.councilId);m.councilId=null;delete m.seatIndex;m.epoch=randomUUID();this.clearMic(r,t);media.add(t);this.audit(d,id,command,t,'unseat',now,r.id);this.activity(r,command,now);return success({roomId:r.id,left:true});
     } else if(command==='member:mute'||command==='member:kick'||command==='member:ban'||command==='member:unban') {
       this.requireMod(r,id,undefined,'moderation');const t=this.target(d,b.targetId);if(t===id||t===r.ownerId||r.moderators.includes(t)&&r.ownerId!==id)fail('protected_member',403);if(command!=='member:unban'&&r.ownerId!==id&&this.opts.perk?.(t,'noKick'))fail('protected_member',403);
       const m=r.members.find(m=>m.id===t);if(!m&&command!=='member:ban'&&command!=='member:unban')fail('member_not_found',404);

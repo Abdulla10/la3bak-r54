@@ -466,14 +466,43 @@ function sheet67(inner,cls=''){return new Promise(resolve=>{const root=document.
 function choiceSheet(title,options,current){return sheet67(`<h3 class="st67-title">${esc(title)}</h3><div class="st67-list">${options.map(([v,label])=>`<button type="button" class="st67-opt" data-st67-v="${esc(v)}" role="radio" aria-checked="${String(v===current)}"><span>${esc(label)}</span>${v===current?'<i aria-hidden="true">✓</i>':''}</button>`).join('')}</div><button type="button" class="st67-cancel" data-st67="cancel">إلغاء</button>`);}
 function seatLayout67(n){const cols=n<=4?n:n<=9?(n===6?3:n===8?4:n===9?3:5):n<=16?4:n<=20?5:6;return `<span class="st67-dots" style="--cols:${cols}">${Array.from({length:n},()=>'<i></i>').join('')}</span>`;}
 function seatSheet(current,min,max){const opts=[...new Set([2,3,4,5,6,8,10,12,14,16,20,24,current])].filter(n=>n>=min&&n<=max).sort((a,b)=>b-a);return sheet67(`<h3 class="st67-title">عدد المقاعد</h3><div class="st67-grid">${opts.map(n=>`<button type="button" class="st67-seat" data-st67-v="${n}" aria-checked="${String(n===current)}" aria-label="${n} مقاعد">${seatLayout67(n)}<b>${n}</b></button>`).join('')}</div><button type="button" class="st67-ok" data-st67="ok">حسنًا</button>`,'is-grid').then(v=>v==null?null:Number(v));}
+/* R117: بطاقة العضو مثل التطبيقات — تطلع من تحت: الصورة (اضغطها = الملف الكامل)، الاسم والآيدي والرتب، أزرار سريعة، وتحت أدوات الإدارة */
+const MC_IC={gift:'<svg viewBox="0 0 24 24"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-4-6-1s4 1 6 1c2 0 6 2 6-1s-4-3-6 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',chat:'<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="9" cy="10.5" r="1.2" fill="currentColor"/><circle cx="15" cy="10.5" r="1.2" fill="currentColor"/></svg>',at:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.6 12v1.4a2.6 2.6 0 0 0 5.2 0V12A8.8 8.8 0 1 0 17 19.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',more:'<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>',role:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',seat:'<svg viewBox="0 0 24 24"><path d="M6 11V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5M4 11h16v5H4zM6 16v4M18 16v4M12 13V7m0 6-2.5-2.5M12 13l2.5-2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',kick:'<svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M9 8l-4 4 4 4M5 12h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',mute:'<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m10 8.5 4 4m0-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'};
 function memberCardHTML(c,m){
   const mine=String(m.id)===selfId(c),canMod=moderator(c)&&!mine,isOwner=owner(c)&&!mine,role=publicRole(m,c);
-  const portrait=portraitHTML(m,84),frame=typeof m.frame==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(m.frame)?m.frame:null,face=frame?frameOwnedPortrait(frame,portrait,'so-owned-seat-frame'):portrait;
+  const portrait=portraitHTML(m,96),frame=typeof m.frame==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(m.frame)?m.frame:null,face=frame?frameOwnedPortrait(frame,portrait,'so-owned-seat-frame'):portrait;
   const pub=/^[A-Za-z0-9_-]{16}$/.test(String(m.id))?String(m.id):'';
-  return `<div class="so-member-card-r55"><div class="so-member-card-face"><span class="so-avatar">${face}</span></div><h3${rankEffects(m.ranks).name?` class="rp-name-${rankEffects(m.ranks).name}"`:''}>${esc(m.name||'عضو')}</h3><p class="so-member-card-role">${esc(ROLE_NAMES[role]||'عضو')}</p><div class="so-member-card-ranks">${rankBadges(m)}</div>
-  <div class="so-member-card-actions">${pub?`<button type="button" class="so-button so-primary" data-so-action="member-profile" data-id="${esc(pub)}">الملف الشخصي</button>`:''}${pub&&!mine&&!c.ctx.gameRoom?`<button type="button" class="so-button" data-so-action="room-dm" data-peer="${esc(pub)}">رسالة خاصة</button>`:''}${!mine&&typeof c.ctx.socialGifts?.render==='function'?button('member-gift',icon('gift')+' إرسال هدية',`data-id="${esc(m.id)}"`):''}${!mine?button('report-member','إبلاغ',`data-id="${esc(m.id)}"`):''}</div>
-  ${canMod?`<div class="so-member-card-mod"><small>إدارة العضو</small><div class="so-actions">${button('mute',m.muted?'إلغاء الكتم':'كتم',`data-id="${esc(m.id)}" data-enabled="${!m.muted}"`)}${button('kick','طرد',`data-id="${esc(m.id)}"`)}${button('ban','حظر',`data-id="${esc(m.id)}"`)}${isOwner?button('moderator',m.role==='moderator'?'إزالة الإشراف':'تعيين مشرف',`data-id="${esc(m.id)}" data-enabled="${m.role!=='moderator'}"`):''}</div></div>`:''}</div>`;
+  const seated=m.seatIndex!==null&&m.seatIndex!==undefined, seatedSelf=mine&&!!currentCouncil(c);
+  const protectedM=m.role==='owner'||(m.role==='moderator'&&!owner(c));
+  const quick=[
+    !mine&&typeof c.ctx.socialGifts?.render==='function'?`<button type="button" class="mc117-send" data-so-action="member-gift" data-id="${esc(m.id)}">${MC_IC.gift}<span>إرسال</span></button>`:'',
+    pub&&!mine&&!c.ctx.gameRoom?`<button type="button" class="mc117-q" data-so-action="room-dm" data-peer="${esc(pub)}" aria-label="رسالة خاصة">${MC_IC.chat}</button>`:'',
+    !mine?`<button type="button" class="mc117-q" data-so-action="mc-mention" data-name="${esc(m.name||'')}" aria-label="منشن">${MC_IC.at}</button>`:'',
+    !mine?`<button type="button" class="mc117-q" data-so-action="report-member" data-id="${esc(m.id)}" aria-label="إبلاغ">${MC_IC.more}</button>`:'',
+  ].join('');
+  const tool=(act,ic,label,attrs='',dis=false)=>`<button type="button" class="mc117-t${dis?' is-off':''}" data-so-action="${act}" ${attrs}${dis?' aria-disabled="true"':''}>${MC_IC[ic]}<span>${label}</span></button>`;
+  const cid=currentCouncil(c)?.id||'';
+  const tools=mine?[
+    tool('microphone','mic','تشغيل المايك','',!seatedSelf),
+    seatedSelf?tool('council-leave','seat','مغادرة المقعد',`data-id="${esc(cid)}"`):'',
+  ]:canMod?[
+    isOwner?tool('mc-role','role','تعيين دور',`data-id="${esc(m.id)}" data-enabled="${m.role!=='moderator'}"`):'',
+    tool('mc-mic','mic','تشغيل المايك',`data-id="${esc(m.id)}" data-muted="${!!m.muted}"`,!seated||protectedM),
+    tool('mc-unseat','seat','مغادرة المقعد',`data-id="${esc(m.id)}"`,!seated||protectedM),
+    tool('kick','kick','طرد',`data-id="${esc(m.id)}"`,protectedM),
+    tool('mute','mute',m.muted?'إلغاء الكتم':'كتم',`data-id="${esc(m.id)}" data-enabled="${!m.muted}"`,protectedM),
+  ]:[];
+  return `<div class="mc117" data-mc117-pub="${esc(pub)}"><button type="button" class="mc117-face" ${pub?`data-so-action="member-profile" data-id="${esc(pub)}" aria-label="الملف الكامل"`:'disabled'}><span class="so-avatar">${face}</span></button>
+  <h3 class="mc117-name${rankEffects(m.ranks).name?` rp-name-${rankEffects(m.ranks).name}`:''}">${esc(m.name||'عضو')}</h3>
+  <p class="mc117-id" data-mc117-id dir="ltr">${pub?'ID: …':''}</p>
+  <div class="mc117-chips">${role!=='member'?`<span class="mc117-role">${esc(ROLE_NAMES[role]||'عضو')}</span>`:''}${m.muted?'<span class="mc117-muted">مكتوم</span>':''}</div>
+  <div class="mc117-ranks">${rankBadges(m)}</div>
+  ${pub?`<button type="button" class="mc117-full" data-so-action="member-profile" data-id="${esc(pub)}">عرض الملف الكامل ›</button>`:''}
+  ${quick?`<div class="mc117-quick">${quick}</div>`:''}
+  ${tools.filter(Boolean).length?`<nav class="mc117-tools" style="--n:${tools.filter(Boolean).length}">${tools.join('')}</nav>`:''}</div>`;
 }
+/* R117: نجيب رقم الآيدي الظاهر للعضو بعد ما تفتح البطاقة */
+function fillMemberCard117(){const el=document.querySelector('.mc117[data-mc117-pub]');const pub=el?.dataset.mc117Pub;if(!pub)return;fetch('/api/community/user/'+pub,{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(j=>{const u=j?.user||j||{};const id=u.displayId??u.code??u.number??u.uid??null;const t=el.querySelector('[data-mc117-id]');if(t)t.textContent=id?`ID: ${id}`:'';}).catch(()=>{const t=el.querySelector('[data-mc117-id]');if(t)t.textContent='';});}
 /* تصغير الغرفة: تبقى عضو ويكمل الصوت وأنت تتصفح الموقع، وتطلع فقاعة ترجّعك للغرفة */
 let minimizedRoom=null;
 export function socialMinimized(){return !!(minimizedRoom&&live&&live.uid===minimizedRoom.uid);}
@@ -1139,7 +1168,7 @@ export function mount(root,ctx={}) {
     if(forwardGift(event))return;
     if(!event.target.closest?.('[data-so-action]')&&!dialogBusy&&c.snapshot?.room&&!c.ctx.gameRoom){
       const mEl=event.target.closest?.('.so-seat .so-member[data-so-member-id], .so-chat-message [data-so-member-id]');
-      if(mEl&&page.contains(mEl)){const mid=mEl.dataset.soMemberId,m=arr(c.snapshot.room.members).find(x=>String(x.id)===mid)||arr(currentCouncil(c)?.members).find(x=>String(x.id)===mid);if(m){event.preventDefault();event.stopPropagation();openDialog(m.name||'عضو',memberCardHTML(c,m),null);return;}}
+      if(mEl&&page.contains(mEl)){const mid=mEl.dataset.soMemberId,m=arr(c.snapshot.room.members).find(x=>String(x.id)===mid)||arr(currentCouncil(c)?.members).find(x=>String(x.id)===mid);if(m){event.preventDefault();event.stopPropagation();openDialog(m.name||'عضو',memberCardHTML(c,m),null);fillMemberCard117();return;}}
     }
     const target=event.target.closest?.('[data-so-action]');if(!target||!page.contains(target))return;
     event.preventDefault();event.stopPropagation();const action=target.dataset.soAction,id=target.dataset.id,enabled=target.dataset.enabled==='true';
@@ -1287,6 +1316,11 @@ export function mount(root,ctx={}) {
       if(action==='report-anonymous') return openDialog('الإبلاغ عن رسالة مجهولة',textField('reason','سبب البلاغ',200),async f=>command(c,'mode:action',{mode:'anonymous',action:{type:'report',messageId:id,reason:f.elements.reason.value.trim()}}),'إرسال البلاغ');
       if(action.startsWith('report-')) return openDialog('إرسال بلاغ',textField('text','وصف المخالفة',500),async f=>command(c,'report:send',{targetType:action==='report-member'?'member':'chat',targetId:id,text:f.elements.text.value.trim()}),'إرسال البلاغ');
       if(action==='mute') return command(c,'member:mute',{roomId:c.routeRoom,targetId:id,muted:enabled});
+      /* R117: أدوات بطاقة العضو */
+      if(action==='mc-mention'){const n=String(target.dataset.name||'').trim();closeDialog(false);const inp=host.querySelector('form[data-so-form="chat"] [name=text]');if(inp){inp.value=(inp.value?inp.value.replace(/\s*$/,' '):'')+'@'+n+' ';inp.focus();}return;}
+      if(action==='mc-role'){if(target.getAttribute('aria-disabled')==='true')return;const v=await choiceSheet('تعيين دور',[['moderator','مشرف'],['member','عضو عادي']],enabled?'member':'moderator');if(!v)return;closeDialog(false);await command(c,'room:moderator',{roomId:c.routeRoom,targetId:id,enabled:v==='moderator'});toast67('تم الضبط بنجاح');return;}
+      if(action==='mc-unseat'){if(target.getAttribute('aria-disabled')==='true')throw Error('العضو مو على مقعد.');closeDialog(false);await command(c,'member:unseat',{roomId:c.routeRoom,targetId:id});toast67('نزل من المقعد');return;}
+      if(action==='mc-mic'){if(target.getAttribute('aria-disabled')==='true')throw Error('العضو مو على مقعد.');closeDialog(false);if(target.dataset.muted==='true'){await command(c,'member:mute',{roomId:c.routeRoom,targetId:id,muted:false});toast67('انفتح له المايك');return;}const req=arr(c.snapshot?.room?.micRequests).some(x=>String(x?.id??x)===String(id));if(req){await command(c,'mic:approve',{roomId:c.routeRoom,targetId:id,approve:true});toast67('انفتح له المايك');return;}toast67('المايك مفتوح له، يشغّله من عنده');return;}
       if(action==='moderator') return openDialog(enabled?'تعيين مشرف':'إزالة الإشراف',`<p>${esc(nameOf(c,id))} · يتحقق الخادم من ملكية الغرفة والصلاحيات.</p>`,async()=>command(c,'room:moderator',{roomId:c.routeRoom,targetId:id,enabled}));
       if(action==='kick'||action==='ban') return openDialog(action==='kick'?'تأكيد الطرد':'تأكيد الحظر',`<p>هل تريد ${action==='kick'?'طرد':'حظر'} ${esc(nameOf(c,id))} من الغرفة؟ سيُفصل اتصاله بالمجلس.</p>`+textField('reason','سبب الإجراء',200),async f=>command(c,`member:${action}`,{roomId:c.routeRoom,targetId:id,reason:f.elements.reason.value.trim()}),action==='kick'?'طرد العضو':'حظر العضو');
       if(action==='close-council') return openDialog('إغلاق المجلس','<p>سيغادر جميع الأعضاء وتتوقف قناة المجلس. هل تؤكد الإغلاق؟</p>',async()=>command(c,'council:close',scope()),'إغلاق المجلس');

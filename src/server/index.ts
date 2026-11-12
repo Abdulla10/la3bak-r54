@@ -1226,6 +1226,7 @@ export async function createApp(
     animTier: (id) => profileAnimTier(id),
     phoneOk: (id) => phoneVerify.verified(id),
     privacyOf: (id) => { const st = accountTools.settings(id); const pv = progression.view(id); return { gender: st.hideGender === true ? null : accounts.genderOf(id), hideLists: st.hideLists === true, gifts: privacyOn(id, 'hideGiftLog') ? null : wallet.giftCounts(id), noFollow: privacyOn(id, 'noFollow'), hideWealth: privacyOn(id, 'hideWealth'), vip: privacyOn(id, 'hideVipId') || !pv.vip.enabled || !pv.vip.value ? 0 : Number(pv.vip.value.slice(1)) || 0 }; },
+    displayIdOf: (id) => accounts.displayPlayerId(id) ?? null,
     adminIdOf: (id) => { const v = accounts.displayPlayerId(id); return v && /^[1-9]\d{2}$/.test(v) ? v : null; },
     profileBg: (id) => { const iid = wallet.equipped(id).bg; const it = iid ? shopcat.get(iid) : undefined; if (!it || it.slot !== 'bg') return null; const pv = progression.view(id); const vip = pv.vip.value && /^V(\d+)$/.test(pv.vip.value) ? Number(pv.vip.value.slice(1)) : 0; const full = accountTools.settings(id).flatProfileBg !== true && (it.rarity === 'legendary' || it.rarity === 'ultra' || vip >= siteFlags.get().profileBgVip); return { id: it.id, ...(it.css ? { css: it.css } : {}), ...(it.art ? { art: it.art } : {}), ...(it.rarity ? { rarity: it.rarity } : {}), full }; },
   }, Date.now, storage, opts.communityLimits);
