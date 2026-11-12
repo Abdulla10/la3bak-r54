@@ -4,9 +4,9 @@ import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r93';
-import * as UNIFIED from '../unified/shell.js?v=r91';
-import * as REF from '../unified/home.js?v=r85';
-import * as SOCIAL from '../unified/social.js?v=r91';
+import * as UNIFIED from '../unified/shell.js?v=r95';
+import * as REF from '../unified/home.js?v=r95';
+import * as SOCIAL from '../unified/social.js?v=r95';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r91';
@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r91';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r93';
+import * as PWA from '../pwa.js?v=r95';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r93';
@@ -457,7 +457,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r93');
+  const M = await import('../settings-r60.js?v=r95');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -515,7 +515,11 @@ function unifiedPage(view, page, content='', contentOnly=false) {
  ctx.contentOnly=contentOnly;
  const html=responsiveRoyalScenery(UNIFIED.pageHTML(ctx));
  const sig=html.replace(/\sid="[^"]*"/g,'').replace(/url\(#[^)]*\)/g,'url()'); const first=view.firstElementChild;
- if (sig === lastUnified.html && first && first === lastUnified.el && first.isConnected && Date.now() - lastUnified.at < 3000 && !content) return;
+ if (sig === lastUnified.html && first && first === lastUnified.el && first.isConnected && Date.now() - lastUnified.at < 3000 && !content) {
+   /* R94: render() يفك ربط الصفحة قبل ما يوصل هنا — لازم نرجع نربطها (الأزرار والقائمة والتحميل) بدون ما نعيد بناءها */
+   if (!unifiedMount) unifiedMount = UNIFIED.mount(view, ctx);
+   return;
+ }
  unifiedMount?.destroy?.();
  view.innerHTML=html;
  unifiedMount=UNIFIED.mount(view,ctx);

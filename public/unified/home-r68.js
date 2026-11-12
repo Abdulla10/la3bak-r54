@@ -61,7 +61,7 @@ function gamesHTML(ctx) {
   return `<section class="h68-card h68-games"><header><h2>${SVG.pad}<span>الألعاب المتاحة</span></h2><a class="h68-all" href="#/games">عرض الكل ${SVG.chev}</a></header>${games.length ? `<div class="h68-grid">${EXTRA68.map((x) => `<a class="h68-tile is-img is-xtra" href="${x[0]}" aria-label="${x[2]}"><img src="/assets/art69/${x[1]}.webp?v=r69z8" alt="" loading="lazy" decoding="async"></a>`).join('')}${games.map((g, i) => TILE[g.id] ? `<a class="h68-tile is-img" href="${url(g)}" aria-label="العب ${esc(g.name)}"><img src="${TILE[g.id]}" alt="" loading="lazy" decoding="async"></a>` : `<a class="h68-tile t${i % 4}" href="${url(g)}" aria-label="العب ${esc(g.name)}"><span class="h68-tart">${ART[g.id] ? `<img src="${ART[g.id]}" alt="" loading="lazy" decoding="async">` : SVG.pad}</span><b>${esc(g.name)}</b></a>`).join('')}</div>` : '<p class="h68-empty">جاري تحميل الألعاب…</p>'}</section>`;
 }
 export function render68(ctx = {}) {
-  return `<div class="h68" dir="rtl">${headerHTML(ctx)}<div data-h68-banner-host>${bannersHTML(bannerCache)}</div>${shortcutsHTML(ctx)}${gamesHTML(ctx)}${ctx.user && !ctx.noCommunity ? `<div class="h68-row"><section class="h68-card h68-live" data-h68-live><header><h2><span>غرف مباشرة</span>${SVG.live}</h2><a class="h68-all" href="#/social-rooms" aria-label="كل الغرف">${SVG.chev}</a></header><div class="h68-rooms"><p class="h68-empty">جاري التحميل…</p></div></section><section class="h68-card h68-now" data-h68-now><header><h2><i class="h68-on" aria-hidden="true"></i><span>الآن في اللعب</span></h2></header><div class="h68-people"><p class="h68-empty">جاري التحميل…</p></div></section></div>` : ''}${moreHTML(ctx)}</div>`;
+  return `<div class="h68" dir="rtl">${headerHTML(ctx)}<div data-h68-banner-host>${bannersHTML(bannerCache)}</div>${shortcutsHTML(ctx)}${gamesHTML(ctx)}${ctx.noCommunity ? '' : roomsSectionHTML(ctx)}${ctx.user && !ctx.noCommunity ? `<section class="h68-card h68-now h95-now" data-h68-now><header><h2><i class="h68-on" aria-hidden="true"></i><span>أصدقاؤك الحين</span></h2><a class="h68-all" href="#/friends" aria-label="كل الأصدقاء">${SVG.chev}</a></header><div class="h68-people"><p class="h68-empty">جاري التحميل…</p></div></section>` : ''}${moreHTML(ctx)}</div>`;
 }
 /* R81: تحت الغرف: أبطال لعبك + آخر المنشورات + روابط الموقع (بدل الفراغ) */
 function moreHTML(ctx) {
@@ -80,13 +80,20 @@ function postsHTML(list) {
   return ps.map((p) => `<a class="h81-post" href="#/post/${p.id}"><span class="h81-av">${p.author?.av && /^\/[A-Za-z0-9_./?=&-]+$/.test(p.author.av) ? `<img src="${esc(p.author.av)}" alt="" loading="lazy">` : `<i>${esc([...String(p.author?.name || '؟')][0])}</i>`}</span><span class="h81-ptext"><b>${esc(p.author?.name || '')}</b><small>${esc(String(p.text || (p.media ? '📷 صورة' : '')).slice(0, 90))}</small></span><span class="h81-meta">❤️ ${nf(p.likes || 0)} · 💬 ${nf(p.comments || 0)}</span></a>`).join('');
 }
 const getJSON = (u) => fetch(u, { credentials: 'same-origin', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+/* R95: قسم الغرف مرتب بالرئيسية — قائمة واضحة (صورة، اسم، صاحبها، العدد، زر ادخل) + أنشئ غرفتك. للضيف: دعوة للدخول */
+function roomsSectionHTML(ctx) {
+  const head = `<header><h2><span>🎙️ الغرف المباشرة</span>${SVG.live}</h2><a class="h68-all" href="#/social-rooms" aria-label="كل الغرف">كل الغرف ${SVG.chev}</a></header>`;
+  if (!ctx.user) return `<section class="h68-card h95-rooms">${head}<div class="h95-guest"><b>🎧 سولف مع الناس بالصوت</b><small>مجالس وغرف شغالة طول اليوم — سجّل دخولك وادخل أي غرفة.</small><a class="btn block" href="#/profile">سجّل دخولك</a></div></section>`;
+  return `<section class="h68-card h95-rooms" data-h68-live>${head}<div class="h68-rooms h95-list"><p class="h68-empty">جاري التحميل…</p></div><div class="h95-acts"><a class="btn" href="#/social-rooms">➕ أنشئ غرفتك</a><a class="btn ghost" href="#/majalis">🏛️ المجالس</a></div></section>`;
+}
 function roomsHTML(rooms) {
-  const live = arr(rooms).filter((r) => r && typeof r.id === 'string' && !r.hasPassword).sort((a, b) => (b.count || 0) - (a.count || 0) || (b.level || 1) - (a.level || 1)).slice(0, 3);
+  const live = arr(rooms).filter((r) => r && typeof r.id === 'string' && !r.hasPassword).sort((a, b) => (b.count || 0) - (a.count || 0) || (b.level || 1) - (a.level || 1)).slice(0, 6);
   if (!live.length) return '<p class="h68-empty">ما في غرف شغالة الحين.</p>';
   return live.map((r, i) => {
     const photo = typeof r.photo === 'string' && /^\/(api\/social\/room-photo\?|[A-Za-z0-9_./-]+$)/.test(r.photo) ? r.photo : '';
     const cap = Number.isSafeInteger(r.capacity) ? r.capacity : r.maxMembers;
-    return `<a class="h68-room r${i}" href="#/social-room/${encodeURIComponent(r.id)}" aria-label="ادخل ${esc(r.name)}"><b>${esc(r.name)}</b><span class="h68-rpic">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : `<i>${esc([...String(r.name || 'غ')][0])}</i>`}</span><small dir="ltr">${SVG.user}${nf(r.count || 0)}/${nf(cap)}</small></a>`;
+    const n = Number(r.count) || 0;
+    return `<a class="h95-room r${i}" href="#/social-room/${encodeURIComponent(r.id)}" aria-label="ادخل ${esc(r.name)}"><span class="h95-pic">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : `<i>${esc([...String(r.name || 'غ')][0])}</i>`}${n ? '<em class="h95-dot" aria-hidden="true"></em>' : ''}</span><span class="h95-txt"><b>${esc(r.name)}</b><small>${r.owner?.name ? `${esc(r.owner.name)} · ` : ''}<span dir="ltr">${SVG.user} ${nf(n)}/${nf(cap)}</span></small></span><span class="h95-go">ادخل</span></a>`;
   }).join('');
 }
 function peopleHTML(list) {
