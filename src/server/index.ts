@@ -2335,6 +2335,21 @@ export async function createApp(
       try { sessions.revokeHashes(id, null); } catch { /* */ }
       deletion.markDone(id); log('account_deleted', {});
     };
+    /* R114: حذف اللاعب نهائياً من الإدارة (المالك بس) — يمسح بياناته فوراً، ولو حاول يدخل بنفس Google يطلع له «تم الحذف نهائياً» */
+    functionalHttp.add('POST', '/api/admin/players/:id/purge', async ({ actor, body, params }) => {
+      const id = String(params.id ?? ''); adminNeed(/^[0-9a-f-]{36}$/.test(id) && accounts.has(id), 'لاعب غير موجود.');
+      adminNeed(id !== actor!.id, 'ما تقدر تحذف نفسك.'); adminNeed(!platform.roleOf(id), 'هذا حساب إداري. شيل دوره الإداري أول.');
+      adminNeed(String(body.confirm ?? '').trim() === 'حذف نهائي', 'اكتب «حذف نهائي» للتأكيد.');
+      const reason = String(body.reason ?? '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 160); adminNeed(reason.length >= 3, 'اكتب السبب.');
+      adminNeed(!deletion.deleted(id), 'الحساب محذوف من قبل.');
+      const name = nm(id);
+      deletion.adminPurge(id, identities.subOf(id), reason);
+      for (const ws of sockets.get(id) ?? []) { try { send(ws, { t: 'account:purged', msg: 'تم حذف حسابك نهائياً من قبل الإدارة.' }); ws.close(4403, 'purged'); } catch { /* */ } }
+      await executeDeletion(id);
+      admin.audit(actor!, 'player.purge', id, `${name} — ${reason}`);
+      log('account_purged', {});
+      return { ok: true };
+    }, 'owner');
     const deletionSweep = async () => { for (const id of deletion.due()) { try { await executeDeletion(id); } catch (e) { log('account_deletion_failed', { error: String((e as Error).message).slice(0, 100) }); } } };
     const deletionTimer = setInterval(() => { void deletionSweep(); }, 60 * 60_000); deletionTimer.unref?.();
     setTimeout(() => { void deletionSweep(); }, 30_000).unref?.();
@@ -2861,6 +2876,7 @@ export async function createApp(
           if (code === 'certs_unavailable' || (e as Error).name === 'TimeoutError' || (e as Error).name === 'TypeError') return json(res, 503, { error: 'ما قدرنا نتواصل مع Google للتحقق. جرّب بعد شوي.' });
           return json(res, 401, { error: code === 'expired' ? 'انتهت صلاحية تسجيل الدخول، جرّب مرة ثانية.' : 'تعذّر التحقق من حساب Google.' });
         }
+        if (deletion.purgedSub(g.sub)) { log('google_login_purged', {}); return json(res, 403, { purged: true, error: 'تم حذف حسابك نهائياً من قبل الإدارة.' }); }
         let name = '';
         let r;
         try { r = identities.resolve(g.sub, user?.id, newUserId, (proposed) => {

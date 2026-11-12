@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r107';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r113c';
+import * as PWA from '../pwa.js?v=r114b';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r107';
@@ -215,6 +215,11 @@ function connect() {
       if (S.user && S.ws === ws && m.delta) setTimeout(() => { if (!RES.rating(m)) toast(`${m.icon} تصنيفك ${m.delta > 0 ? '+' + m.delta : m.delta} ← ${m.rating} (${m.tier})`, m.delta < 0); }, 1500);
     } else if (m.t === 'spy') {
       if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:spy', { detail: m }));
+    } else if (m.t === 'account:purged') {
+      /* R114: الإدارة حذفت الحساب نهائياً */
+      const n = document.createElement('div'); n.setAttribute('role', 'alertdialog'); n.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:#0b0218f2;color:#fff;direction:rtl;padding:24px;text-align:center;font:700 17px/1.8 system-ui,sans-serif';
+      n.innerHTML = '<div><div style="font-size:54px">🗑️</div><p style="margin:10px 0 18px">تم حذف حسابك نهائياً من قبل الإدارة.</p><button type="button" style="border:0;border-radius:14px;padding:12px 22px;font:800 15px system-ui;background:#f5c542;color:#2a1600">حسناً</button></div>';
+      n.querySelector('button').onclick = () => location.replace('/'); document.body.append(n);
     } else if (m.t === 'rg') {
       /* R111: ذئب الليل / أسرع جواب / من سيربح المليون */
       if (S.user && S.ws === ws) window.dispatchEvent(new CustomEvent('la3bak:rg', { detail: m }));
@@ -460,7 +465,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r113c');
+  const M = await import('../settings-r60.js?v=r114b');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
