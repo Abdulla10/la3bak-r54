@@ -77,3 +77,9 @@ html body .m88-acts button{border:0;background:rgba(255,255,255,.12);border-radi
 html body .m88-pin{margin:6px 0;border:1px solid #ffd66b66;background:rgba(255,214,107,.08);color:#ffd66b;border-radius:12px;padding:5px 10px;font-weight:700;cursor:pointer}
 html body .m88-pin.on{background:#ffd66b;color:#2a1500}
 html:not(.lb-dark) body .m88-pin{color:#8a641f}
+/* R89: أزرار الإجراء (حفظ، احجز، تأكيد، إرسال…) ذهبية متناسقة مع الموقع بدل البنفسجي الوردي */
+html body .btn:not(.ghost):not(.danger):not(.secondary):not(.link),
+html body #view button[type=submit].btn,
+html body :is(.gold-btn,.play-now,.m68-claim,.lb-gs-submit):not(#_){background:linear-gradient(135deg,#ffd66b,#f0b429)!important;color:#2a1500!important;border:0!important;box-shadow:0 4px 14px rgba(240,180,41,.28)!important;text-shadow:none!important}
+html body #view .btn:not(.ghost):not(.danger):not(.secondary):disabled,html body #view .btn[aria-disabled=true]{background:linear-gradient(135deg,#8c7a4e,#6e5d36)!important;color:#2a1a00!important;box-shadow:none!important;opacity:.7}
+html body #view .btn:not(.ghost):not(.danger) svg{color:#2a1500}
