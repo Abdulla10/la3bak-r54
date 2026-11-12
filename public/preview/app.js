@@ -3,7 +3,7 @@ let PKLOADED = false;
 import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
-import * as PR from './profile.js?v=r91';
+import * as PR from './profile.js?v=r93';
 import * as UNIFIED from '../unified/shell.js?v=r91';
 import * as REF from '../unified/home.js?v=r85';
 import * as SOCIAL from '../unified/social.js?v=r91';
@@ -26,7 +26,7 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r91';
+import * as PF from '../profile.js?v=r93';
 import * as SHOP from '../shop.js?v=r91';
 import * as GIFT from '../gifts.js?v=r91';
 import * as GFX from '../giftfx.js?v=r68i';
@@ -47,10 +47,10 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r91';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r92c';
+import * as PWA from '../pwa.js?v=r93';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r91';
+import * as MIS from '../missions.js?v=r93';
 import * as SP from '../social-plus-r73.js?v=r92';
 import '../mute-r88.js?v=r88';
 import * as CHAT from '../chat.js?v=r91';
@@ -165,6 +165,8 @@ function connect() {
       S.pending.delete(m.r);
     } else if (typeof m.t === 'string' && /^(group|friend|lfg|vibe|broadcast|gift:pop)(:|$)/.test(m.t) && SP.onEvent(m)) {
       /* R73: أحداث التواصل */
+      /* R93: اللي وصل من الإدارة ينطبق على طول — نحدّث بيانات الحساب والصفحة بدون ما يعيد الدخول */
+      if (m.t === 'gift:pop') { void loadAcct(true).then(() => { try { render(); } catch { /* */ } }).catch(() => {}); }
     } else if (m.t === 'persona:beaten') {
       /* R72: هزمت شخصية لأول مرة */
       toast(`🏆 هزمت ${m.emoji} ${m.name} لأول مرة! +🪙 ${nf(m.reward)}`);
@@ -455,7 +457,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r92c');
+  const M = await import('../settings-r60.js?v=r93');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
