@@ -3,7 +3,7 @@
 import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r67t';
 import { mini } from '../avatars.js?v=r107';
 import * as R from './rank-vip-shared.js?v=r101';
-import * as V from './vip-noble-r52.js?v=r107';
+import * as V from './vip-noble-r52.js?v=r123';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 
 export function catalogueOf(data) {

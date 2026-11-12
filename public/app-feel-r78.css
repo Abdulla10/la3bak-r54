@@ -401,3 +401,5 @@ html body .so-chat-message .r120-pic img{display:block;max-width:min(220px,62vw)
 html body dialog.so-dialog:not(#_) .mc117 .mc117-send span:not(.so-sr){color:#fff!important}
 html body :is(dialog.so-dialog,#view):not(#_) .mn121-1,html body :is(dialog.so-dialog,#view):not(#_) .mn121-2{color:#fff!important}
 html body :is(dialog.so-dialog,#view):not(#_) .mn121-3{color:#3a1600!important}
+/* R123: علامة «بالمشحون بس» */
+.r123-tag{font-style:normal;margin-inline-end:3px;font-size:.95em}

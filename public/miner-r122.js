@@ -23,20 +23,20 @@ export async function openMiner() {
   const sh = root.querySelector('.mi122-s'); const S = { d: null, err: '', ok: '', busy: false };
   const paint = () => {
     const d = S.d; if (!d) return;
-    sh.innerHTML = `<button type="button" class="x" data-mi="x" aria-label="إغلاق">✕</button><h2>⛏️ المنجم</h2><p class="sub">اشتراك شهري (30 يوم). يخلص الشهر وترجع تشترك.</p>
+    sh.innerHTML = `<button type="button" class="x" data-mi="x" aria-label="إغلاق">✕</button><h2>⛏️ المنجم</h2><p class="sub">اشتراك شهري (30 يوم) بالعملات المشحونة 💳. يخلص الشهر وترجع تشترك.</p>
       ${d.level ? `<p class="now" style="color:${COL[d.level]}">عندك منجم ${d.level} — يخلص ${esc(day(d.until))}</p>` : ''}
       ${S.err ? `<p class="err">${esc(S.err)}</p>` : ''}${S.ok ? `<p class="ok">${esc(S.ok)}</p>` : ''}
       ${[1, 2, 3].map((l) => { const t = d.tiers[l]; const mine = d.level === l; const locked = d.level > l; return `<div class="card" style="--c:${COL[l]}">${l === 3 ? '<span class="tag">الأقوى</span>' : ''}<h3>⛏️ ${esc(t.name)}</h3><ul><li>تعدين يومي: ${nf(t.daily)} عملة (مع المكافأة اليومية)</li>${t.perks.slice(1).map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
-        <div class="row"><span>${nf(t.price)} 🪙 / شهر</span><button type="button" class="buy" data-mi="buy" data-l="${l}"${S.busy || locked ? ' disabled' : ''}>${mine ? 'جدّد شهر' : locked ? 'عندك أعلى' : 'اشترك'}</button></div></div>`; }).join('')}
+        <div class="row"><span>${nf(t.price)} 💳 / شهر</span><button type="button" class="buy" data-mi="buy" data-l="${l}"${S.busy || locked ? ' disabled' : ''}>${mine ? 'جدّد شهر' : locked ? 'عندك أعلى' : 'اشترك'}</button></div></div>`; }).join('')}
       <p class="sub">رصيدك: ${nf(d.coins)} 🪙</p>`;
   };
   const close = () => root.remove();
   root.addEventListener('click', async (e) => {
     if (e.target === root || e.target.closest('[data-mi=x]')) return close();
     const b = e.target.closest('[data-mi=buy]'); if (!b || S.busy) return;
-    const l = Number(b.dataset.l), t = S.d.tiers[l]; if (!confirm(`تشترك في ${t.name} بـ ${nf(t.price)} عملة لمدة شهر؟`)) return;
+    const l = Number(b.dataset.l), t = S.d.tiers[l]; if (!confirm(`تشترك في ${t.name} بـ ${nf(t.price)} عملة مشحونة لمدة شهر؟`)) return;
     S.busy = true; S.err = ''; S.ok = ''; paint();
-    try { await api('/api/miner/subscribe', { level: l, key: crypto.randomUUID() }); S.ok = `تم ✅ صرت ${t.name}!`; S.d = await api('/api/miner'); } catch (er) { S.err = er.message; }
+    try { await api('/api/miner/subscribe', { level: l, key: crypto.randomUUID() }); S.ok = `تم ✅ صرت ${t.name}!`; S.d = await api('/api/miner'); } catch (er) { S.err = er.message; if (/مشحونة/.test(er.message)) import('/recharge-r123.js?v=r123').then((m) => m.openRecharge()).catch(() => {}); }
     S.busy = false; paint();
   });
   try { S.d = await api('/api/miner'); paint(); } catch (e) { sh.innerHTML = `<p class="err">${esc(e.message)}</p><button type="button" class="x" data-mi="x">✕</button>`; }

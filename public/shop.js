@@ -80,8 +80,8 @@ function thumb(i) {
   if (i.slot === 'bball') return safeArt(i.art) ? `<span class="bb68-thumb"><img src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async"></span>` : renderProfileIcon('image');
   if (i.slot === 'cue') return safeArt(i.art) ? `<span class="cue68-thumb"><img src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async"></span>` : renderProfileIcon('image');
   if (i.slot === 'room-bg') return safeArt(i.art) ? `<img class="rbg67-thumb" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : renderProfileIcon('image');
-  if (i.slot === 'room-id') return `<span class="lux-thumb"><span class="lux-sid lux-rid art-idp idp-${idPlate(i.price)} r-${esc(i.rarity || 'rare')}"><small>ROOM ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
-  if (i.slot === 'special-id') return `<span class="lux-thumb"><span class="lux-sid art-idp idp-${idPlate(i.price)} r-${esc(i.rarity || 'rare')}"><small>ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
+  if (i.slot === 'room-id') return `<span class="lux-thumb"><span class="lux-sid lux-rid art-idp idp-${idPlate(i.paidOnly ? i.price * (SH.data?.paidDivisor || 10) : i.price)} r-${esc(i.rarity || 'rare')}"><small>ROOM ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
+  if (i.slot === 'special-id') return `<span class="lux-thumb"><span class="lux-sid art-idp idp-${idPlate(i.paidOnly ? i.price * (SH.data?.paidDivisor || 10) : i.price)} r-${esc(i.rarity || 'rare')}"><small>ID</small><b dir="ltr">${esc(i.css || '')}</b></span></span>`;
   if (i.slot === 'entrance') return safeArt(i.art) ? `<img class="r23-entrance-art" src="${esc(safeArt(i.art))}" alt="" loading="lazy" decoding="async">` : `<span class="r23-art-missing">${renderProfileIcon('image')}<small>صورة المركبة غير متاحة</small></span>`;
   // R58r: إطار المايك فوق دائرة تمثّل صورة المتحدث
   if (i.slot === 'mic-frame') return /^mf\d\d$/.test(i.css || '') ? `<span class="mf-thumb"><i aria-hidden="true">🎙️</i><img src="/assets/art58/mic/m${esc(i.css.slice(2))}.webp?v=r58r" alt="" loading="lazy" decoding="async"></span>` : renderProfileIcon('star');
@@ -117,7 +117,7 @@ function priceHTML(i) {
   if (!approvedPrice(i)) return '<span class="r23-price-note">بانتظار اعتماد السعر</span>';
   if (i.offer?.live) return `<span class="of62"><span class="of62-tag">🔥${i.offer.discount > 0 ? ` -${nf(i.offer.discount)}%` : ' عرض'} · <time data-of62-end="${esc(i.offer.endsAt)}">${offerLeft(i.offer.endsAt)}</time></span>${i.offer.discount > 0 ? `<s>${nf(i.offer.was)}</s>` : ''}<span class="r23-price-value">${CUR[i.currency]}<b>${nf(i.price)}</b></span></span>`;
   if (i.offer?.exclusive && !i.offer.live && i.offer.startsAt > Date.now()) return `<span class="r23-price-note">حصري — يبدأ بعد <time data-of62-end="${esc(i.offer.startsAt)}">${offerLeft(i.offer.startsAt)}</time></span>`;
-  return `<span class="r23-price-value">${CUR[i.currency]}<b>${nf(i.price)}</b></span>`;
+  return `<span class="r23-price-value${i.paidOnly ? ' r123-paid' : ''}">${i.paidOnly ? '<i class="r123-tag" title="بالعملات المشحونة بس">💳</i>' : ''}${CUR[i.currency]}<b>${nf(i.price)}</b></span>`;
 }
 /* R62: عداد عروض المتجر محدودة الوقت */
 function offerLeft(end) { const ms = Math.max(0, Number(end) - Date.now()); const d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000), m = Math.floor(ms % 3600000 / 60000), sec = Math.floor(ms % 60000 / 1000); const p2 = (n) => String(n).padStart(2, '0'); return d ? `${d}ي ${p2(h)}:${p2(m)}` : `${p2(h)}:${p2(m)}:${p2(sec)}`; }

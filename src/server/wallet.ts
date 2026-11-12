@@ -362,6 +362,8 @@ export class Wallet {
   private bulkTail: Promise<void> = Promise.resolve();
   /** يُنادى بعد كل تغيير رصيد عشان نكتب سجل الحركات (بعد نجاح الحفظ فقط) */
   onTx?: TxHook;
+  /** R123: كل نقص بالعملات — رصيد «المشحون» ما يزيد عن الرصيد الكلي (الخصم العادي ياكل من المجاني أول) */
+  onCoinsDown?: (id: string, after: number) => void;
   onCampaignTxBatch?: (rows: { id: string; delta: number; balance: number; ref: string }[]) => void;
   /** Server balance/event bridge, AFTER commit only; never replayed or called for failed persistence. */
   onBenefitsChange?: (ids: string[]) => void;
@@ -425,6 +427,7 @@ export class Wallet {
   private restore(m: Map<string, Acc>) { for (const [id, a] of m) this.d.acc[id] = a; }
   private rec(id: string, cur: Cur, kind: LedgerEntry['kind'], delta: number, after: number, reason: string, ref = '', giftTx?: string, ts = this.now()) {
     const a = this.a(id);
+    if (cur === 'coins' && delta < 0) { try { this.onCoinsDown?.(id, after); } catch { /* */ } }
     (a.ledger ??= []).push({ id: randomUUID(), ts, cur, kind, delta, before: after - delta, after, reason, ref, ...(giftTx ? { giftTx } : {}) });
   }
   private a(id: string): Acc { return (this.d.acc[id] ??= { coins: START_COINS, daily: '' }); }

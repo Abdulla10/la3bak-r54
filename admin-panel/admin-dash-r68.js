@@ -12,7 +12,7 @@ export const GROUPS68 = [
   ['overview', 'لوحة التحكم', '🏠', ['overview']],
   ['stats', 'إحصائيات المنصة', '📊', ['watch', 'health']],
   ['players', 'إدارة اللاعبين', '👥', ['players', 'miners', 'player-log', 'ids3', 'owner-tools', 'verification', 'bulk']],
-  ['economy', 'المحفظة والعملات', '🪙', ['economy', 'pricing', 'payments', 'tuning']],
+  ['economy', 'المحفظة والعملات', '🪙', ['economy', 'recharge', 'pricing', 'payments', 'tuning']],
   ['shop', 'المتجر والمنتجات', '🛒', ['shop', 'gifts', 'auction', 'home-banners']],
   ['games', 'إدارة الألعاب', '🎮', ['games-control', 'luck', 'achievements']],
   ['rooms', 'الغرف والمباريات', '🗂️', ['rooms', 'social', 'room-boost', 'site-ops']],

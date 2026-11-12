@@ -32,6 +32,7 @@ import { AccountDeletion, DELETION_GRACE_MS } from './account-deletion-r67.js';
 import { HomeBanners, HomeBannerError } from './home-banners-r68.js';
 import { RoomChatImages, CHAT_IMG_MAX } from './room-chat-img-r120.js';
 import { Miners, MINER_TIERS } from './miners-r121.js';
+import { PaidCoins } from './paid-coins-r123.js';
 import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
@@ -578,8 +579,10 @@ export async function createApp(
     const allItems = shopcat.all().map((i) => ({ id: i.id, slot: i.slot, name: i.name, icon: i.icon, desc: i.desc, price: i.price, currency: i.currency, permanent: i.permanent, css: i.css, art: i.art, active: i.active, retired: !i.active, status: i.status, minLevel: i.minLevel, minVip: i.minVip, minNoble: i.minNoble, ...(i.offer ? { offer: i.offer } : {}), eligibility: shopEligibility(i, ranks), rarity: i.rarity ?? 'common', set: i.set ?? null, season: i.season ?? null, kids: !!i.kids, ...(i.backgroundCategory ? {backgroundCategory:i.backgroundCategory,priceApproved:i.priceApproved} : {}), ...(i.slot === 'entrance' ? { proposalOnly:i.proposalOnly, priceApproved:i.priceApproved } : {}) }));
     // R63: عملة وحدة — أسعار الجواهر تنعرض عملات (×20)، والشراء يقبل السعر المعروض
     if (SINGLE_CUR) for (const x of allItems as any[]) if (x.currency === 'gems') { x.currency = 'coins'; x.price = x.price * 20; if (x.offer) x.offer = { ...x.offer, was: x.offer.was * 20 }; }
+    /* R123: الأشياء الغالية: بالعملات المشحونة بس، وسعرها مقسوم */
+    for (const x of allItems as any[]) { const shown = x.currency === 'gems' ? x.price * 20 : x.price; if (paidCoins.isPaidOnly(shown)) { x.currency = 'coins'; x.price = paidCoins.price(shown); x.paidOnly = true; if (x.offer) x.offer = { ...x.offer, was: paidCoins.price(x.currency === 'gems' ? x.offer.was * 20 : x.offer.was) }; } }
     return {
-      ok: true, vipDiscount: perks.discountPct(id), canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), exp: wallet.expiries(id), durations: DURATIONS, timedSlots: [...TIMED_SLOTS], equipped: wallet.equipped(id), equippedView: equippedView(id),
+      ok: true, vipDiscount: perks.discountPct(id), canDaily: wallet.canClaim(id), coins: wallet.balance(id), paidCoins: paidCoins.of(id, wallet.balance(id)), paidThreshold: paidCoins.cfg().threshold, paidDivisor: paidCoins.cfg().divisor, gems: wallet.gems(id), owned: wallet.owned(id), exp: wallet.expiries(id), durations: DURATIONS, timedSlots: [...TIMED_SLOTS], equipped: wallet.equipped(id), equippedView: equippedView(id),
       // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
       items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance' && i.set !== 'ent3d') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && (specialTaken(id, String(i.css ?? '')) || String(i.css ?? '').length <= 3)) && !(i.slot === 'souvenir' && !owned.has(i.id) && !SOUVENIR_R67.has(i.id)) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
       collectionItems: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance' && i.set !== 'ent3d') && i.set && (i.status !== 'hidden' || owned.has(i.id))),
@@ -592,6 +595,7 @@ export async function createApp(
   /* R60: رتبة VIP/النبلاء الفعلية + خيارات الخصوصية المقفولة بالرتبة (قرار المالك) */
   /** R68z: الملف المتحرك: VIP 5+ أو نبيل 3+ = لمعة، VIP 10+ أو نبيل 6+ = كامل */
   const profileAnimTier = (id: string) => { const t = tierOf(id); return t.vip >= 10 || t.noble >= 6 ? 2 : t.vip >= 5 || t.noble >= 3 ? 1 : 0; };
+  const paidCoins = new PaidCoins(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'paid-coins123.json') : '', Date.now, storage);
   const miners = new Miners(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'miners121.json') : '', Date.now, storage);
   const tierOfReal = (id: string) => { const p = progression.view(id); return { vip: p.vip.enabled && p.vip.value ? Number(p.vip.value.slice(1)) || 0 : 0, noble: p.noble.enabled && p.noble.value ? Number(p.noble.value.slice(1)) || 0 : 0 }; };
   /* R121: المنجم يرفع مزايا الحساب لمستوى رتبته */
@@ -654,7 +658,8 @@ export async function createApp(
       if (it.slot === 'souvenir' && !SOUVENIR_R67.has(it.id)) return { ok: false, code: 'unavailable', error: 'التذكارات الجديدة قريبًا.' };
       // السعر دائماً من الخادم. لو العميل أرسل السعر اللي شافه وتغيّر، نرفض ونرجّع المتجر محدّثاً (ما نخصم سعراً ما شافه).
       const shownPrice = SINGLE_CUR && it.currency === 'gems' ? it.price * 20 : it.price, shownCur = SINGLE_CUR && it.currency === 'gems' ? 'coins' : it.currency;
-      if ((m.seen !== undefined && m.seen !== it.price && m.seen !== shownPrice && !(Number(m.days) > 0 && (m.seen === durPrice(it.price, Number(m.days)) || m.seen === durPrice(shownPrice, Number(m.days))))) || (m.seenCur !== undefined && m.seenCur !== it.currency && m.seenCur !== shownCur)) return { ...shopView(id), ok: false, error: 'تغيّر سعر العنصر أو نوع عملته. راجع العرض الجديد.', code: 'price' };
+      /* R123 */ const coinEq = it.currency === 'gems' ? it.price * 20 : it.price, paidOnly = paidCoins.isPaidOnly(coinEq), paidBase = paidCoins.price(coinEq);
+      if ((m.seen !== undefined && !(paidOnly && (m.seen === paidBase || (Number(m.days) > 0 && m.seen === durPrice(paidBase, Number(m.days))))) && m.seen !== it.price && m.seen !== shownPrice && !(Number(m.days) > 0 && (m.seen === durPrice(it.price, Number(m.days)) || m.seen === durPrice(shownPrice, Number(m.days))))) || (m.seenCur !== undefined && m.seenCur !== it.currency && m.seenCur !== shownCur)) return { ...shopView(id), ok: false, error: 'تغيّر سعر العنصر أو نوع عملته. راجع العرض الجديد.', code: 'price' };
       if (!it.active) return { ok: false, error: wallet.owned(id).includes(it.id) ? 'تملك هذا العنصر من قبل.' : 'هذا العنصر غير متاح للشراء حالياً.', code: 'inactive' };
       if (!eligibleItem(id, it)) return { ok: false, code: 'rank_required', error: 'رتبتك الحالية ما تستوفي شرط فتح العنصر.' };
       // R57: الأيدي المميز: محجوز؟ نرفض. نثبّته قبل الخصم ونرجّعه لو الخصم فشل (كل هذا متزامن بدون انتظار)
@@ -669,9 +674,14 @@ export async function createApp(
       const days = m.days === undefined ? 0 : Number(m.days);
       if (!DURATIONS.some((x) => x.days === days) || (days > 0 && !TIMED_SLOTS.has(it.slot))) return { ok: false, code: 'bad', error: 'مدة غير صالحة.' };
       // R88: خصم VIP الدائم — السعر النهائي من الخادم
-      const disc = perks.discountPct(id), base = days > 0 ? durPrice(it.price, days) : it.price;
+      const unitP = paidOnly ? paidBase : it.price;
+      const disc = perks.discountPct(id), base = days > 0 ? durPrice(unitP, days) : unitP;
       const finalPrice = disc > 0 ? Math.max(1, Math.ceil(base * (100 - disc) / 100)) : base;
-      const r = wallet.buy(id, finalPrice !== it.price ? { ...it, price: finalPrice } : it, String(m.key ?? ''), days);
+      /* R123: الغالي من المشحون بس */
+      let tookPaid = false;
+      if (paidOnly) { if (!paidCoins.take(id, wallet.balance(id), finalPrice)) { if (prevSpecial !== undefined) { try { accounts.setSpecialPlayerId(id, prevSpecial); } catch { /* */ } } return { ...shopView(id), ok: false, code: 'paid_required', error: `هذا من الأشياء الغالية 💳 ينشرى بالعملات المشحونة بس. تحتاج ${finalPrice.toLocaleString('en-US')} مشحونة.` }; } tookPaid = true; }
+      const r = wallet.buy(id, paidOnly ? { ...it, currency: 'coins', price: finalPrice } : finalPrice !== it.price ? { ...it, price: finalPrice } : it, String(m.key ?? ''), days);
+      if ((!r.ok || r.dup) && tookPaid) paidCoins.refund(id, finalPrice);
       if (!r.ok && prevSpecial !== undefined) { try { accounts.setSpecialPlayerId(id, prevSpecial); } catch { /* يبقى كما هو؛ ما فيه خصم */ } }
       if (!r.ok) return { ok: false, error: r.code === 'owned' ? (days > 0 ? 'تملك هذا العنصر دائم، ما يحتاج مدة.' : 'تملك هذا العنصر من قبل.') : r.code === 'poor' ? 'عملاتك ما تكفي.' : 'طلب غير صالح.', code: r.code };
       if (!r.dup && it.currency === 'gems') { try { treasure.shopSpend(id, Number(it.price) || 0); } catch { /* وقود القبيلة بس */ } }
@@ -802,6 +812,7 @@ export async function createApp(
       ...(r.rewardPolicy?{rewardPolicy:r.rewardPolicy,senderBonus:r.senderBonus}: {})};
   };
   wallet.onTx = (id, kind, delta, balance, ref) => accounts.tx(id, kind, delta, balance, ref);
+  wallet.onCoinsDown = (id, after) => paidCoins.clamp(id, after);
   wallet.onCampaignTxBatch = (rows) => accounts.txCampaignBatch(rows);
   wallet.onBeforeGift = (from, to, ref, ts) => {
     const socialSupport=socialRooms.reserveGiftSupport(from,to,ts);
@@ -1599,7 +1610,7 @@ export async function createApp(
       dmPush(to, { t: 'dm:typing', from: community.pub(user.id), on: body.on !== false }); return { ok: true };
     });
     /* R122: المناجم — اشتراك شهري بالعملات + المالك يعطيه ويغيّر الأسعار */
-    const minerFind = (q: string) => { const v = String(q || '').trim().replace(/^#/, ''); if (!v) return null; if (/^[0-9a-f-]{36}$/.test(v) && accounts.has(v)) return v; const byId = (accounts as any).findByDisplayPlayerId?.(v); if (byId) return byId as string; const byName = accounts.all().find((a) => accounts.nameOf(a.id) === v); return byName?.id ?? null; };
+    const minerFind = (q: string) => { const v = String(q || '').trim().replace(/^#/, ''); if (!v) return null; if (/^[0-9a-f-]{36}$/.test(v) && accounts.has(v)) return v; const byId = (accounts as any).findByDisplayPlayerId?.(v); if (byId) return byId as string; const byPub = accounts.all().find((a) => accounts.publicPlayerId(a.id) === v || accounts.displayPlayerId(a.id) === v); if (byPub) return byPub.id; const byName = accounts.all().find((a) => accounts.nameOf(a.id) === v); return byName?.id ?? null; };
     const minerRow = (id: string) => ({ id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', level: miners.level(id), until: miners.until(id) });
     functionalHttp.add('GET', '/api/admin/miners', ({ url }) => { const q = String(url.searchParams.get('q') ?? ''); const found = q ? minerFind(q) : null; return { ok: true, tiers: miners.tiers(), found: found ? minerRow(found) : null, notFound: !!q && !found, list: miners.list().map((r) => ({ ...minerRow(r.id), at: r.at, by: r.by })) }; }, 'owner');
     functionalHttp.add('POST', '/api/admin/miners', ({ actor, body }) => { const id = minerFind(String(body.player ?? '')); adminNeed(!!id, 'ما لقيت اللاعب. اكتب الآيدي أو الاسم بالضبط.'); const lvl = Number(body.level); adminNeed([0, 1, 2, 3].includes(lvl), 'المنجم من 0 إلى 3.'); miners.grant(id!, lvl, actor!.name, Number(body.months) || 1); admin.audit(actor!, 'player.miner', id!, lvl ? `منجم ${lvl} (شهر)` : 'إزالة المنجم'); return { ok: true, row: minerRow(id!) }; }, 'owner');
@@ -1610,12 +1621,29 @@ export async function createApp(
       const l = Number(body.level); if (![1, 2, 3].includes(l)) throw new FunctionalHttpError(400, 'اختر منجم 1 أو 2 أو 3.');
       const cur = miners.level(user.id); if (cur && cur > l) throw new FunctionalHttpError(409, `عندك منجم ${cur} شغال. تقدر تجدده أو تنتظر لين يخلص.`);
       const key = String(body.key ?? ''); if (!/^[A-Za-z0-9-]{8,64}$/.test(key)) throw new FunctionalHttpError(400, 'مفتاح الطلب ناقص.');
-      const t = miners.tier(l as 1 | 2 | 3); const pay = wallet.spendService(user.id, t.price, `اشتراك ${t.name} (شهر) ⛏️`, `miner122:${user.id}:${key}`);
+      const t = miners.tier(l as 1 | 2 | 3);
+      if (!paidCoins.take(user.id, wallet.balance(user.id), t.price)) throw new FunctionalHttpError(402, `المنجم 💳 بالعملات المشحونة بس. تحتاج ${t.price.toLocaleString('en-US')} مشحونة.`);
+      const pay = wallet.spendService(user.id, t.price, `اشتراك ${t.name} (شهر) ⛏️`, `miner122:${user.id}:${key}`);
+      if (!pay.ok || pay.dup) paidCoins.refund(user.id, t.price);
       if (!pay.ok) throw new FunctionalHttpError(400, pay.code === 'poor' ? `رصيدك ما يكفي. تحتاج ${t.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
       if (!pay.dup) miners.grant(user.id, l, 'اشتراك');
       sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id) });
       return { ok: true, level: miners.level(user.id), until: miners.until(user.id), coins: pay.coins };
     });
+    /* R123: الشحن — المالك يشحن عملات مشحونة بعد ما اللاعب يدفع له (روابط Ziina / تحويل) */
+    const rcRow = (id: string) => ({ id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', coins: wallet.balance(id), paid: paidCoins.of(id, wallet.balance(id)) });
+    functionalHttp.add('GET', '/api/admin/recharge', ({ url }) => { const q = String(url.searchParams.get('q') ?? ''); const f = q ? minerFind(q) : null; return { ok: true, cfg: paidCoins.cfg(), found: f ? rcRow(f) : null, notFound: !!q && !f, log: paidCoins.recent(60).map((l) => ({ ...l, name: nm(l.to), displayId: accounts.displayPlayerId(l.to) ?? '' })) }; }, 'owner');
+    functionalHttp.add('POST', '/api/admin/recharge/credit', ({ actor, body }) => {
+      const id = minerFind(String(body.player ?? '')); adminNeed(!!id, 'ما لقيت اللاعب.');
+      const coins = Number(body.coins); adminNeed(Number.isSafeInteger(coins) && coins >= 1000 && coins <= 1_000_000_000, 'المبلغ من 1,000 عملة وفوق.');
+      const note = String(body.note ?? '').trim().slice(0, 120); const key = String(body.key ?? ''); adminNeed(/^[A-Za-z0-9-]{8,64}$/.test(key), 'مفتاح الطلب ناقص.');
+      const ok = wallet.grant(id!, 'coins', coins, 'شحن رصيد 💳', `paid123:${key}`); adminNeed(ok !== false, 'هذا الشحن انضاف من قبل.');
+      paidCoins.add(id!, coins); paidCoins.log({ to: id!, coins, by: actor!.name, note }); admin.audit(actor!, 'player.recharge', id!, `${coins} ${note}`);
+      sendToUser(id!, { t: 'wallet', coins: wallet.balance(id!), gems: wallet.gems(id!), won: 0 }); sendToUser(id!, { t: 'notify', title: 'تم شحن رصيدك 💳', body: `انضافت ${coins.toLocaleString('en-US')} عملة مشحونة.` });
+      return { ok: true, row: rcRow(id!) };
+    }, 'owner');
+    functionalHttp.add('POST', '/api/admin/recharge/config', ({ actor, body }) => { try { const c = paidCoins.setCfg({ ...(body.threshold !== undefined ? { threshold: Number(body.threshold) } : {}), ...(body.divisor !== undefined ? { divisor: Number(body.divisor) } : {}), ...(Array.isArray(body.packs) ? { packs: body.packs } : {}), ...(typeof body.whatsapp === 'string' ? { whatsapp: body.whatsapp.trim() } : {}), ...(typeof body.enabled === 'boolean' ? { enabled: body.enabled } : {}) }); admin.audit(actor!, 'recharge.config', '', JSON.stringify({ t: c.threshold, d: c.divisor })); return { ok: true, cfg: c }; } catch (e) { throw new FunctionalHttpError(400, (e as Error).message); } }, 'owner');
+    functionalHttp.add('GET', '/api/recharge', ({ user }) => { const c = paidCoins.cfg(); return { ok: true, packs: c.packs, whatsapp: c.whatsapp, threshold: c.threshold, coins: wallet.balance(user.id), paid: paidCoins.of(user.id, wallet.balance(user.id)), displayId: accounts.displayPlayerId(user.id) ?? '', name: accounts.nameOf(user.id) }; });
     functionalHttp.add('GET', '/api/admin/live', () => { let online = 0; for (const set of sockets.values()) if (set.size) online++; const rooms = socialRooms.liveRooms(); return { ok: true, online, inRooms: rooms.reduce((n, r) => n + r.members, 0), rooms: rooms.slice(0, 50) }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/player-360', ({ url }) => {
       const q = String(url.searchParams.get('q') ?? '').trim(); adminNeed(q.length >= 2, 'اكتب اسم أو رقم لاعب (حرفين على الأقل).');
@@ -1809,7 +1837,8 @@ export async function createApp(
       const owned = new Set(wallet.owned(uid)); const items = b.items.map((id) => shopcat.get(id)).filter((x): x is NonNullable<typeof x> => !!x);
       const worth = items.reduce((n, i) => n + coinsOf(i), 0), missing = items.filter((i) => !owned.has(i.id)), missWorth = missing.reduce((n, i) => n + coinsOf(i), 0);
       const price = !missing.length ? 0 : missing.length === items.length ? b.price : Math.max(1000, Math.round(b.price * missWorth / Math.max(1, worth) / 1000) * 1000);
-      return { id: b.id, name: b.name, sub: b.sub, icon: b.icon, price, fullPrice: b.price, worth, items: items.map((i) => ({ id: i.id, name: i.name, slot: i.slot, owned: owned.has(i.id) })), done: !missing.length };
+      const paidOnly = paidCoins.isPaidOnly(b.price), dv = paidCoins.cfg().divisor;
+      return { id: b.id, name: b.name, sub: b.sub, icon: b.icon, price: paidOnly && price ? Math.max(1, Math.round(price / dv)) : price, fullPrice: paidOnly ? Math.round(b.price / dv) : b.price, paidOnly, worth: paidOnly ? Math.round(worth / dv) : worth, items: items.map((i) => ({ id: i.id, name: i.name, slot: i.slot, owned: owned.has(i.id) })), done: !missing.length };
     };
     functionalHttp.add('GET', '/api/shop/bundles', ({ user }) => ({ ok: true, list: BUNDLES_R68.map((b) => bundleView(user.id, b)) }));
     functionalHttp.add('POST', '/api/shop/bundles/buy', async ({ user, body }) => {
@@ -1818,11 +1847,13 @@ export async function createApp(
       if (body.seen !== v.price) throw new FunctionalHttpError(409, 'تغير سعر الحزمة. حدّث الصفحة.');
       const missing = v.items.filter((i) => !i.owned).map((i) => i.id);
       const ref = `bundle:${b.id}:${missing.join(',')}`.slice(0, 120);
+      if (v.paidOnly && !paidCoins.take(user.id, wallet.balance(user.id), v.price)) throw new FunctionalHttpError(402, `هذي الحزمة 💳 بالعملات المشحونة بس. تحتاج ${v.price.toLocaleString('en-US')} مشحونة.`);
       const pay = wallet.spendService(user.id, v.price, `شراء ${b.name}`, ref);
+      if (v.paidOnly && (!pay.ok || pay.dup)) paidCoins.refund(user.id, v.price);
       if (!pay.ok) throw new FunctionalHttpError(pay.code === 'poor' ? 402 : 400, pay.code === 'poor' ? `رصيدك ما يكفي. الحزمة بـ ${v.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
       const op = ('bnd' + createHash('sha256').update(user.id + ref).digest('hex')).slice(0, 40);
       try { const g = await wallet.grantBulk(op, [user.id], missing.map((itemId) => ({ type: 'item', itemId, mode: 'grant' } as const)), `${b.name}`); if (!missing.every((id) => wallet.owned(user.id).includes(id)) && !pay.dup) throw new Error('grant_incomplete:' + JSON.stringify(g).slice(0, 80)); }
-      catch (e) { if (!pay.dup) wallet.grant(user.id, 'coins', v.price, `استرجاع ${b.name}`, 'refund:' + ref); log('bundle_grant_failed', { bundle: b.id, err: String(e).slice(0, 120) }); throw new FunctionalHttpError(500, 'تعذّر تسليم الحزمة ورجعنا لك عملاتك.'); }
+      catch (e) { if (!pay.dup) { wallet.grant(user.id, 'coins', v.price, `استرجاع ${b.name}`, 'refund:' + ref); if (v.paidOnly) paidCoins.refund(user.id, v.price); } log('bundle_grant_failed', { bundle: b.id, err: String(e).slice(0, 120) }); throw new FunctionalHttpError(500, 'تعذّر تسليم الحزمة ورجعنا لك عملاتك.'); }
       sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id), gems: wallet.gems(user.id), won: 0 });
       return { ok: true, coins: wallet.balance(user.id), bundle: bundleView(user.id, b) };
     });
