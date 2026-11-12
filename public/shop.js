@@ -1,8 +1,8 @@
 /* المتجر الموحّد: كل الأرقام والتحقق من الخادم؛ العميل يعرض ويرسل معرّف العنصر ومفتاح طلب فريد فقط. لا دفع حقيقي حالياً. */
-import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r91';
-import { avatarArt } from './avatars.js?v=r91';
+import { RARITY, RARITY_ORDER, rarityLv, frameArt, isFrame2, bgArt, isBg2 } from './cosmetics.js?v=r107';
+import { avatarArt } from './avatars.js?v=r107';
 import { packHTML, conversionHTML } from './economy-view.js?v=reference-r15';
-import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r68z31';
+import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from './reference-assets.js?v=r107';
 import { renderProfileIcon } from './preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from './giftart.js?v=r68i-r14';
 import {backgroundVisual,isSuppliedBackground} from './background-art.js?v=r58p';
@@ -213,7 +213,9 @@ const featuredFrames = [...Array.from({ length: 10 }, (_, i) => `art-f4-${String
 const featuredOrder = (i) => { const n = featuredFrames.indexOf(i.id); return n < 0 ? featuredFrames.length : n; };
 function gridFor(d, tab) {
   const f = SH.f;
-  const all = tab === 'owned' ? ownedItems(d) : d.items.filter((i) => i.slot === tab);
+  /* R107: ما نعرض بالمتجر الأغراض اللي ما لها سعر معتمد (عرض فقط) ولا خلفيات الرسم البسيط القديمة — إلا لو تملكها */
+  const PLAIN_BG = /^(lux-b-(snowcastle|falls|crystal|royalgalaxy|chandelier|yacht|skyline|dunes)|art-f2-0[2-9])$/; /* + إطارات قديمة بجودة ضعيفة (مقصوصة ومشرشرة) */
+  const all = tab === 'owned' ? ownedItems(d) : d.items.filter((i) => i.slot === tab && (ownsItem(i, d) || (approvedPrice(i) && !PLAIN_BG.test(i.id))));
   let list = all;
   if (f.rar !== 'all') list = list.filter((i) => i.rarity === f.rar);
   if (f.set !== 'all') list = list.filter((i) => i.set === f.set);

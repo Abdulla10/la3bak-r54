@@ -90,7 +90,7 @@ export function render(view, r, ctx = {}) {
   if (r.name === 'majalis') return majPage(view);
   if (r.name === 'vibe') return vibePage(view);
   if (r.name === 'perks') return perksPage(view);
-  if (r.name === 'studio') return import('./studio-r90.js?v=r91').then((m) => m.page(view, { toast })).catch(() => { view.innerHTML = shell('🎨 استوديو التصميم', '', '<p class="sp73-empty">تعذّر التحميل، حدّث الصفحة.</p>', '#/perks'); });
+  if (r.name === 'studio') return import('./studio-r90.js?v=r107').then((m) => m.page(view, { toast })).catch(() => { view.innerHTML = shell('🎨 استوديو التصميم', '', '<p class="sp73-empty">تعذّر التحميل، حدّث الصفحة.</p>', '#/perks'); });
 }
 let RENDER = () => {};
 const rerender = () => RENDER();
@@ -226,7 +226,7 @@ function settings88(d) {
 async function giftPop(m) {
   document.getElementById('gp92')?.remove();
   let art = '';
-  if (m.item && (m.item.slot === 'frame' || m.item.slot === 'bg') && m.item.css) { try { const c = await import('./cosmetics.js?v=r91'); art = m.item.slot === 'frame' ? `<span class="gp92-av"><span>🙂</span>${c.frameArt(m.item.css)}</span>` : `<span class="gp92-bg">${c.bgArt(m.item.css)}</span>`; } catch { /* نكتفي بالأيقونة */ } }
+  if (m.item && (m.item.slot === 'frame' || m.item.slot === 'bg') && m.item.css) { try { const c = await import('./cosmetics.js?v=r107'); art = m.item.slot === 'frame' ? `<span class="gp92-av"><span>🙂</span>${c.frameArt(m.item.css)}</span>` : `<span class="gp92-bg">${c.bgArt(m.item.css)}</span>`; } catch { /* نكتفي بالأيقونة */ } }
   const el = document.createElement('div'); el.id = 'gp92'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'وصلتك هدية');
   el.innerHTML = `<div class="gp92-box"><div class="gp92-burst" aria-hidden="true"></div>${art || `<div class="gp92-ic">${esc(m.icon || '🎁')}</div>`}<h2>${esc(m.title)}</h2><p>${esc(m.body)}</p>${m.from ? `<small>من: ${esc(m.from)}</small>` : ''}<div class="gp92-acts"><button type="button" class="btn" data-gp="ok">تمام 🤍</button><a class="btn ghost" href="#/notifications" data-gp="go">إشعاراتي</a></div></div>`;
   el.addEventListener('click', (e) => { if (e.target === el || e.target.closest('[data-gp]')) el.remove(); });

@@ -2,7 +2,7 @@
  * تصميم «البار»: طاولة حمرا بإطار ذهبي، اللاعبين حولها بصورهم، يدك تحت، والقنبلة بالعداد والأسلاك والكماشة.
  * كل الرسومات أصلية (SVG/CSS) بدون أي أصول منسوخة. */
 import { faceHtml } from './characters.js?v=shell-r6';
-import { avatarArt } from './avatars.js?v=r91';
+import { avatarArt } from './avatars.js?v=r107';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const LR = { room: '', sel: [], busy: false, evSeq: -1, tip: 0, seenRound: 0 };

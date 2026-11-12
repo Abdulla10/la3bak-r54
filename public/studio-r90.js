@@ -1,6 +1,6 @@
 /* R90: صفحة «استوديو التصميم» (#/studio) — نوبل 5 وفوق يصمم إطار أو خلفية، يلبسها، أو يبيعها بالعملات.
  * الرسم كله من cosmetics.js (studioArt) بنفس مفتاح st~ اللي يرجعه الخادم. */
-import { studioArt } from './cosmetics.js?v=r91';
+import { studioArt } from './cosmetics.js?v=r107';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const nf = (n) => Number(n || 0).toLocaleString('en');

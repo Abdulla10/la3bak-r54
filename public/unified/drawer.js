@@ -3,7 +3,7 @@
  * avatarHTML and renderProfileIcon are trusted existing application renderers.
  */
 import { renderProfileIcon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
-import { mini as equippedAvatarHTML } from '../avatars.js?v=r91';
+import { mini as equippedAvatarHTML } from '../avatars.js?v=r107';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'

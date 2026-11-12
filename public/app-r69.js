@@ -1,6 +1,6 @@
 // R69za: تحسينات «التطبيق» — رقم الجهاز (لكشف الحسابات الوهمية)، شاشة «ما فيه نت» مع لعبة XO تشتغل بدون نت،
 // بانر «ثبّت لعبك على جوالك»، وعداد الإشعارات على أيقونة التطبيق.
-import * as PWA from './pwa.js?v=r106';
+import * as PWA from './pwa.js?v=r107b';
 const KEY_DID = 'la3_did', KEY_DISMISS = 'la3_install_x';
 const CSS = `
 .ap69-off{position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 30px) 18px 24px;background:radial-gradient(circle at 50% 20%,#4a1680,#160530 70%);color:#fff;direction:rtl;font-family:inherit;text-align:center;overflow:auto}
@@ -172,6 +172,14 @@ export function startApp69() {
   });
   /* اهتزاز خفيف مع الضغط (أندرويد) مثل التطبيقات */
   addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && e.target.closest?.('button,[role=button],.btn,a.game-card') && navigator.vibrate) { try { navigator.vibrate(6); } catch { /* */ } } }, { passive: true });
+})();
+/* R107: لوحات الاسم العريضة بالمتجر كانت تنقص من الجنبين داخل الدائرة — نصغّرها لين تركب */
+(() => {
+  let q = 0;
+  const fit = () => { q = 0; document.querySelectorAll('#view .lux-thumb .lux-board').forEach((b) => { const t = b.parentElement; if (b.dataset.fit) return; const bw = b.offsetWidth, tw = t.clientWidth; if (bw && tw && bw > tw * 0.92) { b.style.zoom = (tw * 0.92 / bw).toFixed(3); b.style.flex = 'none'; } b.dataset.fit = '1'; }); };
+  const go = () => { if (!q) q = requestAnimationFrame(fit); };
+  const start = () => { const v = document.getElementById('view'); if (!v) return setTimeout(start, 500); new MutationObserver(go).observe(v, { childList: true, subtree: true }); go(); };
+  start();
 })();
 startApp69();
 
