@@ -1,4 +1,4 @@
-// R69v: «لعبة الجاسوس» داخل الغرفة الصوتية. الخادم يوزع الأدوار سراً، وكل لاعب يشوف دوره بس.
+// R69v: «من برا السالفة» داخل الغرفة الصوتية. الخادم يوزع الأدوار سراً، وكل لاعب يشوف دوره بس.
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const first = (s) => esc([...String(s || '؟')][0]);
 const ART = '/assets/art69/';
@@ -115,7 +115,7 @@ export function startRoomSpy() {
   if (!document.querySelector('style[data-sp69]')) { const s = document.createElement('style'); s.dataset.sp69 = '1'; s.textContent = CSS; document.head.append(s); }
   const api = (u, body) => fetch(u, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin', cache: 'no-store' })
     .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) throw new Error(j.error || 'تعذّر الطلب.'); return j; });
-  const ov = document.createElement('div'); ov.className = 'sp69-ov'; ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'لعبة الجاسوس');
+  const ov = document.createElement('div'); ov.className = 'sp69-ov'; ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'من برا السالفة');
   const fl = document.createElement('button'); fl.type = 'button'; fl.className = 'sp69-float'; fl.hidden = true;
   document.body.append(ov, fl);
   const S = { room: '', d: null, at: 0, open: false, err: '', busy: false, key: '', show: false, poll: 0, lastPhase: '' };
@@ -159,7 +159,7 @@ export function startRoomSpy() {
   }
   function role() {
     const r = S.d.role; if (!r) return '';
-    return r.spy ? `<div class="sp69-role is-spy${S.show ? '' : ' is-hidden'}" data-sp="peek"><span class="ic">🕵️</span><div><small>دورك السري · اضغط عشان تشوف</small><b>${S.show ? 'أنت الجاسوس!' : '••••••'}</b><em>${S.show ? `الفئة: ${esc(r.cat)}${r.partners?.length ? ` · شريكك: ${esc(r.partners.join('، '))}` : ''} — حاول تفهم الكلمة بدون ما تنكشف` : 'خلك حذر، لا أحد يشوف شاشتك'}</em></div></div>`
+    return r.spy ? `<div class="sp69-role is-spy${S.show ? '' : ' is-hidden'}" data-sp="peek"><span class="ic">🕵️</span><div><small>دورك السري · اضغط عشان تشوف</small><b>${S.show ? 'أنت برا السالفة!' : '••••••'}</b><em>${S.show ? `الفئة: ${esc(r.cat)}${r.partners?.length ? ` · شريكك: ${esc(r.partners.join('، '))}` : ''} — حاول تفهم الكلمة بدون ما تنكشف` : 'خلك حذر، لا أحد يشوف شاشتك'}</em></div></div>`
       : `<div class="sp69-role${S.show ? '' : ' is-hidden'}" data-sp="peek"><span class="ic">🔑</span><div><small>الكلمة السرية · اضغط عشان تشوف</small><b>${S.show ? esc(r.word) : '••••••'}</b><em>الفئة: ${esc(r.cat)} — لا تقولها صريحة!</em></div></div>`;
   }
   function playing(x) {
@@ -185,12 +185,12 @@ export function startRoomSpy() {
   function paint() {
     const x = g(), r = S.room;
     fl.hidden = !(r && x && !S.open && x.phase !== 'done');
-    if (!fl.hidden) fl.textContent = x.phase === 'lobby' ? `🕵️ لعبة الجاسوس تنتظر لاعبين · ${S.d.me.joined ? 'افتح' : 'انضم'}` : `🕵️ لعبة الجاسوس شغالة · ${S.d.me.joined ? 'ارجع' : 'تفرّج'}`;
+    if (!fl.hidden) fl.textContent = x.phase === 'lobby' ? `🕵️ من برا السالفة تنتظر لاعبين · ${S.d.me.joined ? 'افتح' : 'انضم'}` : `🕵️ من برا السالفة شغالة · ${S.d.me.joined ? 'ارجع' : 'تفرّج'}`;
     if (!S.open || !r) { ov.hidden = true; return; }
     ov.hidden = false;
-    const head = `<header class="sp69-top"><button type="button" class="sp69-ic" data-sp="close" aria-label="رجوع للغرفة">✕</button><h2>${x && x.phase !== 'lobby' && x.phase !== 'done' ? `<span class="sp69-pill">الجولة ${x.round} / ${x.rounds}</span>` : 'لعبة الجاسوس'}</h2><span class="sp69-ic" aria-hidden="true">🕵️</span></header>`;
+    const head = `<header class="sp69-top"><button type="button" class="sp69-ic" data-sp="close" aria-label="رجوع للغرفة">✕</button><h2>${x && x.phase !== 'lobby' && x.phase !== 'done' ? `<span class="sp69-pill">الجولة ${x.round} / ${x.rounds}</span>` : 'من برا السالفة'}</h2><span class="sp69-ic" aria-hidden="true">🕵️</span></header>`;
     let body;
-    if (!x) body = `<div class="sp69-hero"><img src="${ART}spy-hero.webp?v=r69z5" alt=""></div><section class="sp69-card"><h3>🕵️ لعبة الجاسوس</h3><p class="sp69-txt">الكل يعرف الكلمة السرية إلا الجاسوس. تناقشوا بالصوت، وصوتوا سراً، واكشفوه قبل لا يكشف الكلمة!</p></section>${S.err ? `<p class="sp69-err">${esc(S.err)}</p>` : ''}${S.d?.can?.create ? `<button type="button" class="sp69-btn" data-sp="create" ${S.busy ? 'disabled' : ''}>سوّ لعبة جديدة</button>` : '<p class="sp69-wait">لعبة الجاسوس يسويها صاحب الغرفة أو المشرفين، وأنت تقدر تنضم لها.</p>'}`;
+    if (!x) body = `<div class="sp69-hero"><img src="${ART}spy-hero.webp?v=r69z5" alt=""></div><section class="sp69-card"><h3>🕵️ من برا السالفة</h3><p class="sp69-txt">الكل يعرف الكلمة السرية إلا الجاسوس. تناقشوا بالصوت، وصوتوا سراً، واكشفوه قبل لا يكشف الكلمة!</p></section>${S.err ? `<p class="sp69-err">${esc(S.err)}</p>` : ''}${S.d?.can?.create ? `<button type="button" class="sp69-btn" data-sp="create" ${S.busy ? 'disabled' : ''}>سوّ لعبة جديدة</button>` : '<p class="sp69-wait">من برا السالفة يسويها صاحب الغرفة أو المشرفين، وأنت تقدر تنضم لها.</p>'}`;
     else if (x.phase === 'lobby') body = lobby(x);
     else if (x.phase === 'done') body = done(x);
     else body = playing(x);
@@ -201,7 +201,7 @@ export function startRoomSpy() {
   function dossier(r, ms) {
     document.querySelector('.sp69-file')?.remove();
     const n = document.createElement('div'); n.className = 'sp69-file' + (r.spy ? ' is-spy' : ''); n.setAttribute('role', 'status');
-    n.innerHTML = `<div class="doc"><span class="stamp">سري للغاية</span><small>${r.spy ? 'ملف الجاسوس' : 'الكلمة السرية'}</small><div class="who">${r.spy ? '🕵️' : '🔑'}</div><b>${r.spy ? 'أنت الجاسوس!' : esc(r.word)}</b><p>${r.spy ? `الفئة: ${esc(r.cat)}${r.partners?.length ? ` · شريكك: ${esc(r.partners.join('، '))}` : ''}<br>اسمع كلامهم وحاول تفهم الكلمة بدون ما تنكشف` : `الفئة: ${esc(r.cat)}<br>لا تقولها صريحة، وانتبه للجاسوس!`}</p></div>`;
+    n.innerHTML = `<div class="doc"><span class="stamp">سري للغاية</span><small>${r.spy ? 'ملف الجاسوس' : 'الكلمة السرية'}</small><div class="who">${r.spy ? '🕵️' : '🔑'}</div><b>${r.spy ? 'أنت برا السالفة!' : esc(r.word)}</b><p>${r.spy ? `الفئة: ${esc(r.cat)}${r.partners?.length ? ` · شريكك: ${esc(r.partners.join('، '))}` : ''}<br>اسمع كلامهم وحاول تفهم الكلمة بدون ما تنكشف` : `الفئة: ${esc(r.cat)}<br>لا تقولها صريحة، وانتبه للجاسوس!`}</p></div>`;
     n.addEventListener('click', () => n.remove()); document.body.append(n); setTimeout(() => n.remove(), Math.max(2500, ms));
   }
   function confetti() {
@@ -238,7 +238,7 @@ export function startRoomSpy() {
     if (a === 'set') { const k = b.dataset.k, v = b.dataset.v; return run('settings', { [k]: k === 'guess' ? v === 'true' : k === 'rounds' || k === 'discussMs' ? Number(v) : v }); }
     if (a === 'vote') return run('vote', { target: b.dataset.id });
     if (a === 'guess') return run('guess', { word: b.dataset.w });
-    if (a === 'cancel') { if (!confirm('توقف لعبة الجاسوس؟')) return; return run('cancel'); }
+    if (a === 'cancel') { if (!confirm('توقف من برا السالفة؟')) return; return run('cancel'); }
     if (['create', 'join', 'leave', 'start', 'skip', 'again'].includes(a)) return run(a);
   });
   fl.addEventListener('click', () => { S.open = true; S.err = ''; S.key = ''; paint(); poll(); });

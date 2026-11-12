@@ -99,6 +99,7 @@ import { AiMod } from './ai-mod-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
 import { BombGames, BombError, BOMB_PRIZE, BOMB_PRIZE_MIN_PLAYERS } from './bomb-r69.js';
 import { SpyGames, SpyError, SPY_PRIZE } from './spy-r69.js';
+import { WolfGames, FastGames, MillionGames, RoomGameError } from './room-games-r111.js';
 import { GoldChests, ChestError } from './gold-chest-r69.js';
 import { DeviceGuard } from './device-guard-r69.js';
 import { ImageGuard, compressImage } from './image-guard-r69.js';
@@ -1867,6 +1868,47 @@ export async function createApp(
       });
       for (const id of acc.members) if (id !== user.id) sendToUser(id, { t: 'bomb', room });
       return { ok: true, now: Date.now(), ...bomb.view(room, user.id, acc.mod) };
+    });
+    /* R111: ذئب الليل / أسرع جواب / من سيربح المليون */
+    const rgDay = () => new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10);
+    const rgWins = new Map<string, { day: string; n: number; mil: number }>();
+    const rgPrize = (kind: 'wolf' | 'fast' | 'mil') => (winner: string, amount: number, gameId: string, why: string) => {
+      if (isGuest(winner) || amount <= 0 || rewardBlock(winner)) return 0;
+      const day = rgDay(), k = winner + ':' + kind, w = rgWins.get(k); const cur = w && w.day === day ? w : { day, n: 0, mil: 0 };
+      if (kind === 'mil') { const room = Math.max(0, 1_000_000 - cur.mil); amount = Math.min(amount, room); if (amount <= 0) return 0; } else if (cur.n >= 5) return 0;
+      if (!wallet.grant(winner, 'coins', amount, why, `rg:${kind}:${gameId}:${winner}`)) return 0;
+      rgWins.set(k, { day, n: cur.n + 1, mil: cur.mil + (kind === 'mil' ? amount : 0) });
+      sendToUser(winner, { t: 'wallet', coins: wallet.balance(winner), gems: wallet.gems(winner), won: 0 });
+      return amount;
+    };
+    const rgAvatar = (id: string) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); };
+    const rgNotify = (game: string) => (ids: string[], room: string) => { const acc = socialRooms.quizAccess(ids[0] ?? '', room); const all = new Set([...ids, ...(acc?.members ?? [])]); for (const id of all) sendToUser(id, { t: 'rg', game, room }); };
+    const rgName = (id: string) => accounts.nameOf(id) || 'لاعب';
+    const RG = { wolf: new WolfGames({ prize: rgPrize('wolf'), name: rgName, avatar: rgAvatar, notify: rgNotify('wolf') }), fast: new FastGames({ prize: rgPrize('fast'), name: rgName, avatar: rgAvatar, notify: rgNotify('fast') }), mil: new MillionGames({ prize: rgPrize('mil'), name: rgName, avatar: rgAvatar, notify: rgNotify('mil') }) };
+    { const rt = setInterval(() => { for (const g of Object.values(RG)) { try { g.tick(); } catch (e) { log('rg_tick_failed', { error: String(e).slice(0, 100) }); } } }, 400); rt.unref?.(); }
+    functionalHttp.add('GET', '/api/room-games/:kind', ({ user, url, params }) => {
+      const kind = String(params.kind) as keyof typeof RG; if (!RG[kind]) throw new FunctionalHttpError(404, 'لعبة غير معروفة.');
+      const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false, game: null, can: {} };
+      return { ok: true, member: true, now: Date.now(), ...RG[kind].view(room, user.id, acc.mod) };
+    });
+    functionalHttp.add('POST', '/api/room-games/:kind/:act', ({ user, body, params }) => {
+      noGuest(user.id); const kind = String(params.kind) as keyof typeof RG; const g = RG[kind]; if (!g) throw new FunctionalHttpError(404, 'لعبة غير معروفة.');
+      const room = String(body.room ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) throw new FunctionalHttpError(403, 'لازم تكون داخل الغرفة.');
+      const a = String(params.act); const x = g as any;
+      try {
+        if (a === 'create') x.create(room, user.id, acc.members, acc.mod);
+        else if (a === 'cancel') x.cancel(room, user.id, acc.mod);
+        else if (a === 'again') x.again(room, user.id, acc.mod, acc.members);
+        else if (a === 'start') x.start(room, user.id, acc.members);
+        else if (a === 'skip' && kind === 'wolf') x.skip(room, user.id, acc.mod);
+        else if (['join', 'leave', 'volunteer', 'unseat', 'walk', 'fifty', 'audience', 'swap'].includes(a) && typeof x[a] === 'function') x[a](room, user.id);
+        else if (a === 'settings') x.settings(room, user.id, body);
+        else if (a === 'act' && kind === 'wolf') x.act(room, user.id, body.target);
+        else if (a === 'vote') x.vote(room, user.id, kind === 'wolf' ? body.target : body.pick);
+        else if (a === 'answer') x.answer(room, user.id, body.pick);
+        else throw new RoomGameError('إجراء غير معروف.', 404);
+      } catch (e) { if (e instanceof RoomGameError) throw new FunctionalHttpError(e.status, e.message); throw e; }
+      return { ok: true, now: Date.now(), ...g.view(room, user.id, acc.mod) };
     });
     /* R69v: لعبة الجاسوس داخل الغرفة */
     const spyWins = new Map<string, { day: string; n: number }>();
