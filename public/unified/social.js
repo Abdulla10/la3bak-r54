@@ -580,11 +580,16 @@ function settingsMicHTML(c) {
 /* R68d: شريط تحت المقاعد: عدد الأعضاء + صور الحضور + اختيار المجلس */
 /* R69j: شريط الدخول — لما أحد يدخل الغرفة يطلع اسمه بالشريط، والعداد = الموجودين الحين غيرك */
 const entry68={room:'',ids:null,name:'',at:0};
+const entries96=[];
+const entries96HTML=(c)=>{const id=c.snapshot?.room?.id;return entries96.filter(e=>e.room===id).map(e=>`<article class="so-chat-system r96-sys r96-enter" data-so-local-notice><i class="r96-ic" aria-hidden="true">👋</i><p>${e.role?`${esc(e.role)} `:''}<b class="r96-at">@${esc(e.name)}</b> دخل الغرفة</p></article>`).join('');};
 function entryBanner68(c,room){
   const me=String(selfId(c)),ids=new Set(arr(room?.members).map(m=>String(m.id)));
   if(entry68.room!==room?.id){entry68.room=room?.id||'';entry68.ids=ids;entry68.at=0;return '';}
   const fresh=arr(room?.members).find(m=>!entry68.ids.has(String(m.id))&&String(m.id)!==me);
-  entry68.ids=ids;if(fresh){entry68.name=fresh.name||'عضو';entry68.at=Date.now();setTimeout(()=>{try{c.notify?.();}catch{}},4300);}
+  entry68.ids=ids;if(fresh){entry68.name=fresh.name||'عضو';entry68.at=Date.now();setTimeout(()=>{try{c.notify?.();}catch{}},4300);
+    /* R96: رسالة دخول بالمحادثة (مثل: مالك الغرفة @فلان دخل الغرفة) */
+    const own=room?.owner?.id&&String(room.owner.id)===String(fresh.id),mod=fresh.role==='moderator'||fresh.role==='admin';
+    entries96.push({room:room?.id,name:fresh.name||'عضو',role:own?'مالك الغرفة':mod?'المشرف':'',at:Date.now()});if(entries96.length>12)entries96.splice(0,entries96.length-12);}
   const age=Date.now()-entry68.at;if(!entry68.at||age>4200)return '';
   return `<div class="r69-entry" role="status" style="animation-delay:-${age}ms"><span aria-hidden="true">👋</span><b>${esc(entry68.name)}</b><small>دخل الغرفة</small></div>`;
 }
@@ -650,7 +655,7 @@ function chatHTML(c,council,ui) {
   const joined=c.snapshot?.current?.roomId===c.snapshot?.room?.id;
   const giftEvents=council&&typeof c.ctx.socialGifts?.events==='function'?c.ctx.socialGifts.events(c.snapshot,{compact:!c.ctx.gameRoom&&c.challengeModel?.challenge?.status==='active'}):'';
   const notice=council?'أنت عضو في هذا المجلس. شارك باحترام؛ المقعد لا يعني أن المايك يعمل.':joined?'أنت عضو في الغرفة، ولم تأخذ مقعدًا بعد. اختر مجلسًا لبدء الحديث.':'أنت تشاهد الغرفة فقط، ولست عضوًا فيها. التخطيط معاينة؛ الدخول والمقعد باختيارك.';
-  return `<section class="so-chat" data-so-chat-region aria-labelledby="so-chat-title"><h2 id="so-chat-title" class="so-sr">محادثة المجلس</h2><div class="so-chat-messages" role="log" aria-live="polite" aria-label="رسائل المجلس"><article class="so-chat-system r68-welcome-msg" data-so-local-notice><p>مرحباً بكم في ${esc(c.snapshot?.room?.name||'الغرفة')} 💜</p></article><article class="so-chat-system r69-rules-msg" data-so-local-notice><p>⚠️ ممنوع السب والإساءة والكلام الخادش. الغرفة مراقبة، والمخالف ينكتم وينحظر.</p></article>${council?arr(council.chat).filter(m=>{const cut=Number(storage.get(`la3bak:social:cleared:${c.snapshot?.room?.id}:${council.id}`));return (!Number.isFinite(cut)||!(Number(m.at)<=cut))&&!chatBase69(c,council).has(m.id);}).map(m=>chatMessageHTML(c,m)).join(''):''}${giftEvents}</div></section>`;
+  return `<section class="so-chat" data-so-chat-region aria-labelledby="so-chat-title"><h2 id="so-chat-title" class="so-sr">محادثة المجلس</h2><div class="so-chat-messages" role="log" aria-live="polite" aria-label="رسائل المجلس"><article class="so-chat-system r68-welcome-msg r96-sys" data-so-local-notice><i class="r96-ic" aria-hidden="true">🔔</i><p>مرحباً بكم في ${esc(c.snapshot?.room?.name||'الغرفة')}. يرجى احترام بعضنا البعض والدردشة باحترام 💜</p></article><article class="so-chat-system r69-rules-msg r96-sys" data-so-local-notice><i class="r96-ic" aria-hidden="true">🛡️</i><p>ممنوع السب والإساءة والكلام الخادش. الغرفة مراقبة، والمخالف ينكتم وينحظر.</p></article>${entries96HTML(c)}${council?arr(council.chat).filter(m=>{const cut=Number(storage.get(`la3bak:social:cleared:${c.snapshot?.room?.id}:${council.id}`));return (!Number.isFinite(cut)||!(Number(m.at)<=cut))&&!chatBase69(c,council).has(m.id);}).map(m=>chatMessageHTML(c,m)).join(''):''}${giftEvents}</div></section>`;
 }
 function roomDockExtras(c) {
   if(c.ctx.gameRoom)return '';

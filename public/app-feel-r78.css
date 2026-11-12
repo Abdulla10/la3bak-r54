@@ -161,3 +161,13 @@ html:not(.lb-dark) body .h95-txt small{color:#5a4a70}
 html:not(.lb-dark) body .h95-guest b{color:#8a641f}
 html body .h95-txt small span{display:inline-flex!important;align-items:center;gap:3px}
 html body .h95-txt small span svg{display:inline-block!important;flex:none}
+/* R96: رسائل النظام بالغرف — فقاعة داكنة شفافة مع أيقونة دائرية (مثل التطبيقات) */
+html body #view .so-chat .so-chat-messages article.so-chat-system.r96-sys:not(#_){opacity:1!important;outline:0!important;display:flex!important;align-items:flex-start;gap:8px;padding:0!important;margin:0 0 8px!important;background:none!important;border:0!important;box-shadow:none!important;max-width:100%!important;direction:rtl}
+html body .so-chat-system.r96-sys .r96-ic{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:17px;background:rgba(255,255,255,.14);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+html body #view .so-chat .so-chat-messages article.so-chat-system.r96-sys:not(#_) p{opacity:1!important;margin:0!important;padding:9px 13px!important;border-radius:16px!important;background:rgba(8,4,16,.58)!important;color:#fff!important;font-size:14px!important;line-height:1.55!important;text-align:start!important;border:0!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);max-width:calc(100% - 44px)}
+html body .so-chat-system.r96-sys .r96-at{color:#5ee3c9!important;font-weight:800;unicode-bidi:isolate}
+html body .so-chat-system.r96-enter{animation:r96in .35s ease-out}
+@keyframes r96in{from{opacity:0;transform:translateY(6px)}}
+html body #view .so-chat .so-chat-messages article.so-chat-system.r96-sys:not(#_)::before,html body #view .so-chat .so-chat-messages article.so-chat-system.r96-sys:not(#_)::after{display:none!important}
+/* الحقوق ما تطلع داخل الغرف والألعاب */
+html body #view [data-lb-page="social"] .lb-copy79,html body #view [data-lb-page="room"] .lb-copy79,html body #view .lb-content[data-lb-page="social"] .lb-copy79{display:none!important}
