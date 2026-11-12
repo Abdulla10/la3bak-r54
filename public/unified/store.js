@@ -184,7 +184,9 @@ export function render(ctx = {}) {
   if(modernSource.includes('r23-store')&&typeof document!=='undefined'){
     const transformed=transformHTML(modernSource);
     const connection=ctx.connected===false?'<p class="lb-store-connection" role="status">الاتصال مقطوع؛ انتظر الاتصال قبل الشراء.</p>':'';
-    return `<div data-lb-page="store" class="lb-store lb-store-r23" dir="rtl">${connection}${transformed.html}</div>`;
+    /* R88: خصم VIP الدائم */
+    const disc=Number(SHOP.SH.data?.vipDiscount)||0, discHTML=disc>0?`<p class="lb-store-vipdisc" role="status">👑 خصم VIP ${disc}% — ينخصم تلقائي من أي سعر وقت الشراء</p>`:'';
+    return `<div data-lb-page="store" class="lb-store lb-store-r23" dir="rtl">${connection}${discHTML}${transformed.html}</div>`;
   }
   if (SHOP.SH.tab === 'bg') return `<div data-lb-page="store" class="lb-store" dir="rtl"><nav class="tabs" aria-label="أقسام المتجر">${categories.map(([slot,name])=>`<button type="button" data-act="shop-tab" data-v="${slot}" class="${slot==='bg'?'active':''}" aria-pressed="${slot==='bg'}">${name}</button>`).join('')}</nav>${BACKGROUNDS.render(ctx)}</div>`;
   let source = typeof ctx.content === 'string' ? ctx.content.trim() : '';
@@ -197,7 +199,8 @@ export function render(ctx = {}) {
   else if (typeof ctx.req === 'function') body = stateHTML('loading', 'يالس نحمّل المظاهر والأسعار والمقتنيات من حسابك.');
   else body = stateHTML('unsupported', 'محتوى المتجر الحالي أو اتصال الطلبات مب متوفر. ما بنعرض منتجات أو رصيد تجريبي.');
   const connection = ctx.connected === false ? '<p class="lb-store-connection" role="status">الاتصال بالخادم مقطوع الحين. المعروض قد يكون آخر بيانات محفوظة؛ انتظر الاتصال قبل أي عملية.</p>' : '';
-  return `<div data-lb-page="store" class="lb-store" dir="rtl">${hero()}<a class="btn gold-btn lb-pack-entry" href="#/shop/packs">باقات العملات · AED</a>${connection}${body}</div>`;
+  const disc2=Number(SHOP.SH.data?.vipDiscount)||0;
+  return `<div data-lb-page="store" class="lb-store" dir="rtl">${hero()}${disc2>0?`<p class="lb-store-vipdisc" role="status">👑 خصم VIP ${disc2}% — ينخصم تلقائي من أي سعر وقت الشراء</p>`:''}<a class="btn gold-btn lb-pack-entry" href="#/shop/packs">باقات العملات · AED</a>${connection}${body}</div>`;
 }
 
 export function mount(root, ctx = {}) {

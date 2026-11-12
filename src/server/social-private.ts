@@ -39,7 +39,8 @@ const fingerprint = (to: string, body: string) => createHash('sha256').update(JS
 type LinkState = 'pending' | 'accepted' | 'rejected' | 'removed';
 interface Link { id: number; from: string; to: string; state: LinkState; at: number; decidedAt: number | null }
 export const HIDDEN_BODY = '🚫 انحذفت هذي الرسالة من المشرف.';
-interface Message { id: number; from: string; to: string; body: string; ref: string; fingerprint: string; at: number; readAt: number | null }
+interface Message { id: number; from: string; to: string; body: string; ref: string; fingerprint: string; at: number; readAt: number | null; editedAt?: number; deleted?: boolean }
+export const DELETED_BODY = '🗑️ انحذفت هذي الرسالة.';
 interface Preference { id: string; dmEnabled: boolean }
 interface Data { v: 1; seq: number; links: Link[]; messages: Message[]; preferences: Preference[]; familyR47?: FamilyState }
 export interface PrivatePage { before?: unknown; limit?: unknown }
@@ -141,7 +142,7 @@ export class SocialPrivate {
     return { list, more, nextBefore: more ? list.at(-1)!.id : null };
   }
   private linkView(l: Link, me: string) { return { id: l.id, user: this.who(l.from === me ? l.to : l.from), direction: l.to === me ? 'incoming' : 'outgoing', state: l.state, at: l.at, decidedAt: l.decidedAt }; }
-  private messageView(m: Message, me: string) { return { id: m.id, body: m.body, mine: m.from === me, at: m.at, read: m.readAt !== null, readAt: m.readAt }; }
+  private messageView(m: Message, me: string) { return { id: m.id, body: m.body, mine: m.from === me, at: m.at, read: m.readAt !== null, readAt: m.readAt, editedAt: m.editedAt ?? null, deleted: m.deleted === true }; }
 
   settings(me: string) { this.actor(me); this.rate('read', me); return { dmEnabled: this.dmEnabled(me), audience: 'accepted-friends' as const }; }
   setDMEnabled(me: string, enabled: unknown) {
@@ -216,6 +217,27 @@ export class SocialPrivate {
     if (!this.dmEnabled(me) || !this.dmEnabled(other)) return error(403, 'dm_disabled', 'الرسائل الخاصة موقوفة.');
     this.rate('send', me);
     return this.tx(() => { const m: Message = { id: this.nextId(), from: me, to: other, body, ref: input.ref as string, fingerprint: fp, at: this.tick(), readAt: null }; this.d.messages.push(m); const hk = this.callbacks.onMessage; if (hk) queueMicrotask(() => { try { hk(m.id, me, body); } catch { /* */ } }); return { message: this.messageView(m, me), duplicate: false }; });
+  }
+  /** R88: تعديل/حذف رسالتي خلال مهلة (الميزة نفسها يتحقق منها المتصل). يرجع المستلم عشان ينبَّه. */
+  editOwn(me: string, id: unknown, text: unknown, windowMs: number): { message: ReturnType<SocialPrivate['messageView']>; to: string } {
+    this.actor(me); const m = positive(id) ? this.d.messages.find(x => x.id === id && x.from === me) : undefined;
+    if (!m) return error(404, 'not_found', 'الرسالة غير موجودة.');
+    if (m.deleted || m.body === HIDDEN_BODY) return error(409, 'locked', 'ما تقدر تعدّل هذي الرسالة.');
+    if (this.now() - m.at > windowMs) return error(409, 'late', 'انتهت مهلة التعديل (10 دقايق).');
+    const enc = typeof text === 'string' && text.startsWith('e2e1.');
+    if (typeof text !== 'string' || text.length > (enc ? PRIVATE_E2E_MAX : PRIVATE_BODY_MAX) || (enc && !/^e2e1\.[A-Za-z0-9_-]+$/.test(text))) return error(400, 'body', 'الرسالة طويلة أو غير صالحة.');
+    const body = text.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').trim();
+    if (!body) return error(400, 'body', 'اكتب رسالة نصية.');
+    this.rate('send', me);
+    return this.tx(() => { m.body = body; m.editedAt = this.tick(); const hk = this.callbacks.onMessage; if (hk) queueMicrotask(() => { try { hk(m.id, me, body); } catch { /* */ } }); return { message: this.messageView(m, me), to: m.to }; });
+  }
+  deleteOwn(me: string, id: unknown, windowMs: number): { message: ReturnType<SocialPrivate['messageView']>; to: string } {
+    this.actor(me); const m = positive(id) ? this.d.messages.find(x => x.id === id && x.from === me) : undefined;
+    if (!m) return error(404, 'not_found', 'الرسالة غير موجودة.');
+    if (m.deleted) return { message: this.messageView(m, me), to: m.to };
+    if (this.now() - m.at > windowMs) return error(409, 'late', 'انتهت مهلة الحذف (10 دقايق).');
+    this.rate('change', me);
+    return this.tx(() => { m.body = DELETED_BODY; m.deleted = true; m.editedAt = this.tick(); return { message: this.messageView(m, me), to: m.to }; });
   }
   /** R69i: المشرف الذكي يخفي نص رسالة خاصة مخالفة. يرجع المرسل أو null. */
   systemHide(id: number): string | null { const m = this.d.messages.find(x => x.id === id); if (!m || m.body === HIDDEN_BODY) return null; return this.tx(() => { m.body = HIDDEN_BODY; return m.from; }); }

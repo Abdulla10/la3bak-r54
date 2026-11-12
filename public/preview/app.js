@@ -4,7 +4,7 @@ import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r69zj-search-r17';
 import * as PR from './profile.js?v=r79';
-import * as UNIFIED from '../unified/shell.js?v=r85';
+import * as UNIFIED from '../unified/shell.js?v=r88';
 import * as REF from '../unified/home.js?v=r85';
 import * as SOCIAL from '../unified/social.js?v=r85';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -47,11 +47,12 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r68z41';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r86';
+import * as PWA from '../pwa.js?v=r88';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r79';
-import * as SP from '../social-plus-r73.js?v=r74';
+import * as SP from '../social-plus-r73.js?v=r88';
+import '../mute-r88.js?v=r88';
 import * as CHAT from '../chat.js?v=r72';
 import { accountToolsView } from '../account-tools.js?v=shell-r6';
 
@@ -454,7 +455,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r86');
+  const M = await import('../settings-r60.js?v=r88');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;

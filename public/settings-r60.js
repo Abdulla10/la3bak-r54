@@ -90,7 +90,7 @@ export function settingsHTML(ctx) {
 const PRIV = [
   { key: 'showPresence', title: 'إخفاء حالة الاتصال', desc: 'بعد التشغيل، أصدقاؤك ما يشوفون إذا كنت متصل، وما يقدرون يتبعونك للغرف.', invert: true },
   { key: 'hideEntrances', title: 'إخفاء الدخولية', desc: 'بعد التشغيل، ما يطلع ترحيب ولا دخولية لما تدخل الغرفة.' },
-  { key: 'hideVisits', title: 'التخفي في زيارة الملف', desc: 'بعد التشغيل، تطلع «زائر مخفي» لما تزور ملف أحد، حتى لأصحاب VIP 11.' },
+  { key: 'hideVisits', title: 'التخفي في زيارة الملف', desc: 'بعد التشغيل، تطلع «زائر مخفي» لما تزور ملف أحد، حتى لأصحاب VIP.' },
   { key: 'showActivity', title: 'إظهار نشاطي', desc: 'السماح بعرض إحصائيات نشاطك العامة.' },
   { key: 'hideChatEffects', title: 'إخفاء مؤثرات الصوت والمحادثة', desc: 'إخفاء مؤثرات الهدايا والمحادثة في الغرف عندك.' },
   // R68z41
@@ -101,6 +101,8 @@ const PRIV = [
   { key: 'noFollow', title: 'لا يمكن متابعتك', desc: 'ما أحد يقدر يتابعك (اللي يتابعونك من قبل يبقون).' },
   { key: 'unsearchable', title: 'عدم إمكانية العثور عليك', desc: 'ما تطلع بالبحث، لا بالاسم ولا بالـID.' },
   { key: 'hideWealth', title: 'إخفاء مستوى الثروة', desc: 'مستواك ما يطلع للناس بالغرف والملف.' },
+  // R88
+  { key: 'hideRead', title: 'إخفاء «قرأ رسالتك»', desc: 'اللي يراسلونك ما يشوفون إذا قريت رسايلهم.' },
 ];
 const SOON_PRIV = [['أدخل الغرفة متخفي', 'ما أحد يشوفك وأنت داخل الغرفة.'], ['حظر تعليقات وإعجابات الغرباء', 'ما تستقبل تعليقات وإعجابات من غير الأصدقاء.'], ['غير مسموح بإرسال طلب صداقة', 'ما أحد يقدر يرسلك طلب صداقة.'], ['إخفاء أيقونة النبلاء', 'ما تطلع شارة النبلاء حقتك.'], ['إخفاء عدد أيام تسجيل الدخول', 'ما أحد يشوف كم يوم دخلت.'], ['حالتك داخل الغرفة', 'تحدد مين يشوف إنك بغرفة صوت.'], ['حفظ سجل الدردشة', 'تحتفظ بسجل دردشتك مع أصدقائك.']];
 const chip = (g) => g ? `${g.vip ? `<em class="s60-chip is-vip">VIP${g.vip}</em>` : ''}${g.noble ? `<em class="s60-chip is-noble">N${g.noble}</em>` : ''}${g.level ? `<em class="s60-chip is-vip">Lv.${g.level}</em>` : ''}` : '';
@@ -196,7 +198,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r86'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r88'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;

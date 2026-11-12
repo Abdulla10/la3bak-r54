@@ -444,6 +444,8 @@ export class Accounts {
    * نتيجة لعبة منتهية. مرة وحدة لكل مفتاح.
    * players: كل البشر المشاركين. نقاط التصنيف فقط إذا فيه بشران فأكثر.
    */
+  /** R88: نسبة الخبرة الإضافية (مضاعف VIP) — يركّبها الخادم */
+  xpBoostOf?: (id: string) => number;
   record(key: string, game: string, players: { id: string; name: string }[], winners: string[], stake = 0, coinsWon: Record<string, number> = {}): boolean {
     if (!players.length || this.d.recorded.includes(key)) return false;
     const ts = this.now();
@@ -455,7 +457,8 @@ export class Accounts {
         const win = winners.includes(pl.id);
         const g = (p.games[game] ??= blank());
         const pts = ranked ? POINTS.played + (win ? POINTS.won : 0) : 0;
-        const xp = XP.played + (win ? XP.won : 0);
+        const base = XP.played + (win ? XP.won : 0), boost = this.xpBoostOf?.(pl.id) ?? 0; // R88: مضاعف الخبرة لـ VIP
+        const xp = boost > 0 ? Math.round(base * (1 + Math.min(100, boost) / 100)) : base;
         g.played++; p.played++;
         if (win) { g.won++; p.wins++; }
         if (ranked) { g.ranked++; g.points += pts; p.points += pts; }

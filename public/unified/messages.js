@@ -38,8 +38,11 @@ export function mount(root, ctx = {}) {
     settings: null, friends: pageEmpty(), inbox: pageEmpty(), conversation: pageEmpty(),
     loaded: { friends: false, inbox: false, conversation: false },
     errors: { friends: '', inbox: '', conversation: '', settings: '' },
-    peer: '', peerName: '', canSend: false, draft: '', draftKey: null
+    peer: '', peerName: '', canSend: false, draft: '', draftKey: null,
+    pk: { dmEdit: false, pinChats: false, pins: [] }
   };
+  /* R88: مزايا VIP بالرسائل (تعديل/حذف، تثبيت) */
+  ctx.api('/api/perks', 'GET').then((d) => { if (!d || !Array.isArray(d.list)) return; const on = (k) => d.list.some((x) => x.key === k && x.open); state.pk = { dmEdit: on('dmEdit'), pinChats: on('pinChats'), pins: Array.isArray(d.prefs?.pins) ? d.prefs.pins : [] }; if (active()) paint(); }).catch(() => {});
   let destroyed = false;
   const active = () => !destroyed;
   const call = async (path, method = 'GET', body) => {
@@ -61,20 +64,21 @@ export function mount(root, ctx = {}) {
   const listHTML = () => {
     const kind = state.tab;
     if (!state.loaded[kind]) return `<p class="lb-message-empty" ${state.errors[kind] ? 'role="alert"' : 'role="status"'}>${esc(state.errors[kind] || 'جاري تحميل القائمة…')}</p>`;
-    const rows = filtered(state[kind].list);
+    const rows = filtered(state[kind].list); if (kind === 'inbox' && state.pk.pins.length) rows.sort((a, b) => (state.pk.pins.includes(b.user.pub) ? 1 : 0) - (state.pk.pins.includes(a.user.pub) ? 1 : 0));
     const html = rows.map(item => {
       const user = item.user, selected = state.peer === user.pub;
       const unread = typeof item.unread === 'number' && Number.isSafeInteger(item.unread) && item.unread > 0 ? `<span class="lb-message-unread" aria-label="${esc(item.unread)} رسالة غير مقروءة">${esc(item.unread)}</span>` : '';
-      return `<button type="button" class="list-row lb-message-row${selected ? ' active' : ''}" data-lb-msg-action="open" data-peer="${esc(user.pub)}" ${selected ? 'aria-current="true"' : ''} ${disabled()}><span class="avatar lb-message-avatar">${icon('user')}</span><span class="grow"><b>${esc(user.name || 'لاعب')}</b><small class="lb-message-preview">${kind === 'inbox' ? esc(item.last?.body || '') : 'صديق مقبول · افتح المحادثة'}</small></span><span class="lb-message-row-end">${unread}${kind === 'inbox' ? `<small>${esc(stamp(item.last?.at))}</small>` : ''}</span></button>`;
+      return `<button type="button" class="list-row lb-message-row${selected ? ' active' : ''}" data-lb-msg-action="open" data-peer="${esc(user.pub)}" ${selected ? 'aria-current="true"' : ''} ${disabled()}><span class="avatar lb-message-avatar">${icon('user')}</span><span class="grow"><b>${kind === 'inbox' && state.pk.pins.includes(user.pub) ? '📌 ' : ''}${esc(user.name || 'لاعب')}</b><small class="lb-message-preview">${kind === 'inbox' ? esc(item.last?.body || '') : 'صديق مقبول · افتح المحادثة'}</small></span><span class="lb-message-row-end">${unread}${kind === 'inbox' ? `<small>${esc(stamp(item.last?.at))}</small>` : ''}</span></button>`;
     }).join('');
     return `${state.errors[kind] ? `<p role="alert" class="lb-message-error">${esc(state.errors[kind])} القائمة المعروضة هي آخر بيانات تم تحميلها.</p>` : ''}${html || `${kind === 'inbox' && !state.query.trim() ? '<img class="m68-empty-art" src="/assets/art68/msg-empty.webp" alt="" decoding="async">' : ''}<p class="lb-message-empty">${state.query.trim() ? 'ما لقينا نتيجة في القائمة المحمّلة.' : kind === 'inbox' ? 'ما عندك محادثات للحين. اختَر صديق من تبويب الأصدقاء.' : 'ما عندك أصدقاء مقبولين ظاهرين للحين.'}</p>`}${moreButton(kind)}`;
   };
   const conversationHTML = () => {
     if (!state.peer) return '<div class="lb-message-empty lb-message-pick"><span class="lb-message-empty-icon">' + icon('chat') + '</span><h2>اختَر محادثة</h2><p>اختَر محادثة من القائمة، أو صديق مقبول عشان تبدأ السوالف.</p></div>';
     const failure = state.errors.conversation ? `<p class="lb-message-error" role="alert">${esc(state.errors.conversation)}</p>` : '';
-    const messages = [...state.conversation.list].reverse().map(message => `<article class="chat-bubble${message.mine === true ? ' mine' : ''}"><b>${message.mine === true ? 'أنت' : esc(state.peerName || 'صديق')}</b><p>${esc(message.body)}</p><small>${message.e2e === 'ok' ? '🔒 ' : ''}${esc(stamp(message.at))}${message.mine === true ? (message.read === true ? ' · مقروءة' : ' · مرسلة') : ''}</small></article>`).join('');
+    const canEdit = (m) => state.pk.dmEdit && m.mine === true && m.deleted !== true && Date.now() - m.at < 10 * 60_000 && m.e2e !== 'lock';
+    const messages = [...state.conversation.list].reverse().map(message => `<article class="chat-bubble${message.mine === true ? ' mine' : ''}${message.deleted === true ? ' is-deleted' : ''}"><b>${message.mine === true ? 'أنت' : esc(state.peerName || 'صديق')}</b><p>${esc(message.body)}</p><small>${message.e2e === 'ok' ? '🔒 ' : ''}${esc(stamp(message.at))}${message.editedAt && message.deleted !== true ? ' · معدّلة' : ''}${message.mine === true && message.deleted !== true ? (message.read === true ? ' · مقروءة' : ' · مرسلة') : ''}</small>${canEdit(message) ? `<span class="m88-acts"><button type="button" data-lb-msg-action="edit" data-id="${esc(message.id)}" aria-label="تعديل">✏️</button><button type="button" data-lb-msg-action="del" data-id="${esc(message.id)}" aria-label="حذف">🗑️</button></span>` : ''}</article>`).join('');
     const canSend = state.canSend && state.loaded.conversation && !state.busy;
-    return `<h2 class="panel-title">المحادثة ويا ${esc(state.peerName || 'صديق')}</h2><a class="lb-message-profile" href="#/u/${esc(state.peer)}">الملف الشخصي</a>${failure}<p class="lb-e2e-note">🔒 رسايلكم مشفّرة من طرف لطرف. محد يقدر يقراها غيركم، حتى إدارة لعبك.</p><div class="lb-message-history">${moreButton('conversation')}<div class="lb-message-stream" aria-label="رسائل المحادثة">${state.loaded.conversation ? (messages || '<p class="lb-message-empty">ما بينكم رسائل للحين.</p>') : (!failure ? '<p role="status" class="lb-message-empty">جاري تحميل المحادثة…</p>' : '')}</div></div><form class="chat-compose" data-lb-msg-form="message"><label class="lb-message-draft-label">رسالتك<textarea name="text" rows="3" maxlength="2000" placeholder="اكتب رسالة…" required ${canSend ? '' : 'disabled'}>${esc(state.draft)}</textarea></label><button type="submit" class="gold-btn" ${canSend ? '' : 'disabled'}>إرسال</button></form>${state.loaded.conversation && !state.canSend ? '<p class="lb-message-limit">الإرسال موقوف حسب إعداد الخصوصية عندك أو عند صديقك.</p>' : ''}`;
+    return `<h2 class="panel-title">المحادثة ويا ${esc(state.peerName || 'صديق')}</h2><a class="lb-message-profile" href="#/u/${esc(state.peer)}">الملف الشخصي</a>${state.pk.pinChats ? `<button type="button" class="m88-pin${state.pk.pins.includes(state.peer) ? ' on' : ''}" data-lb-msg-action="pin">${state.pk.pins.includes(state.peer) ? '📌 مثبّتة — إلغاء' : '📌 تثبيت المحادثة'}</button>` : ''}${failure}<p class="lb-e2e-note">🔒 رسايلكم مشفّرة من طرف لطرف. محد يقدر يقراها غيركم، حتى إدارة لعبك.</p><div class="lb-message-history">${moreButton('conversation')}<div class="lb-message-stream" aria-label="رسائل المحادثة">${state.loaded.conversation ? (messages || '<p class="lb-message-empty">ما بينكم رسائل للحين.</p>') : (!failure ? '<p role="status" class="lb-message-empty">جاري تحميل المحادثة…</p>' : '')}</div></div><form class="chat-compose" data-lb-msg-form="message"><label class="lb-message-draft-label">رسالتك<textarea name="text" rows="3" maxlength="2000" placeholder="اكتب رسالة…" required ${canSend ? '' : 'disabled'}>${esc(state.draft)}</textarea></label><button type="submit" class="gold-btn" ${canSend ? '' : 'disabled'}>إرسال</button></form>${state.loaded.conversation && !state.canSend ? '<p class="lb-message-limit">الإرسال موقوف حسب إعداد الخصوصية عندك أو عند صديقك.</p>' : ''}`;
   };
   const paint = () => {
     if (!active()) return;
@@ -146,6 +150,13 @@ export function mount(root, ctx = {}) {
       state.tab = target.dataset.tab; state.query = ''; paint(); return;
     }
     if (actionName === 'refresh') { void run(reload); return; }
+    if (actionName === 'pin') { void run(async () => { const r = await ctx.api('/api/perks/pin', 'POST', { pub: state.peer }); if (r && Array.isArray(r.pins)) state.pk.pins = r.pins; state.notice = r?.pinned ? 'انثبتت المحادثة فوق 📌' : 'انشال التثبيت'; }); return; }
+    if (actionName === 'edit' || actionName === 'del') {
+      const id = Number(target.dataset.id), m = state.conversation.list.find((x) => x.id === id); if (!m) return;
+      if (actionName === 'del') { if (!confirm('تحذف الرسالة عند الطرفين؟')) return; void run(async () => { await call(`messages/${id}/delete`, 'POST', {}); await loadSafe('conversation'); }); return; }
+      const text = prompt('عدّل رسالتك:', m.body); if (text === null || !text.trim() || text === m.body) return;
+      void run(async () => { const body = await sealText(text); await call(`messages/${id}/edit`, 'POST', { text: body }); await loadSafe('conversation'); }); return;
+    }
     if (actionName === 'more') {
       const kind = target.dataset.kind;
       if (!['friends', 'inbox', 'conversation'].includes(kind) || !state[kind].more || !positive(state[kind].nextBefore)) return;
@@ -182,6 +193,16 @@ export function mount(root, ctx = {}) {
       state.settings = result; state.notice = 'تم حفظ إعداد الخصوصية.';
       if (state.peer) await loadSafe('conversation');
     });
+  };
+  /* R88: نفس تشفير الإرسال للتعديل */
+  const sealText = async (text) => {
+    if (!E2E.supported()) return text;
+    await E2E.register(ctx.api).catch(() => false);
+    const keys = await ctx.api('/api/e2e/keys?peer=' + encodeURIComponent(state.peer), 'GET').catch(() => null);
+    const me = await E2E.deviceKey().catch(() => null);
+    if (!keys || !Array.isArray(keys.peer) || !keys.peer.length) return text;
+    const all = [...keys.peer, ...(keys.mine || [])]; if (me && !all.some((d) => d.dev === me.dev)) all.push({ dev: me.dev, x: me.x, y: me.y });
+    return E2E.seal(text, all);
   };
   const submit = event => {
     const form = event.target;

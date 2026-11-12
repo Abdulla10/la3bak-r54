@@ -59,3 +59,21 @@ html body .ct86{display:grid;gap:8px;text-align:center}
 html body .ct86 h2{margin:0;font-size:17px}
 html body .ct86 p{margin:0}
 html body .ct86-mail{display:inline-block;justify-self:center;padding:10px 18px;border-radius:14px;background:linear-gradient(135deg,#ffd66b,#f0b429);color:#2a1500!important;font-weight:800;font-size:16px;text-decoration:none}
+/* R88: مزايا VIP الجديدة */
+html body .lb-store-vipdisc{margin:8px 0;padding:9px 12px;border-radius:14px;background:linear-gradient(135deg,#ffd66b,#f0b429);color:#2a1500!important;font-weight:800;font-size:13px;text-align:center}
+html body .sp88-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:10px}
+html body .sp88-n{display:grid;gap:2px;padding:10px;border-radius:14px;background:rgba(255,214,107,.1);border:1px solid #ffd66b55;text-align:center}
+html body .sp88-n b{font-size:18px;color:#ffd66b}
+html body .sp88-n small{font-size:11px;color:#e6d6fa}
+html:not(.lb-dark) body .sp88-n{background:#fff8e6}
+html:not(.lb-dark) body .sp88-n b{color:#8a641f}
+html:not(.lb-dark) body .sp88-n small{color:#5a4a70}
+html body .sp88-link{display:grid;text-decoration:none;color:inherit}
+html body [data-sp73f="mute88"] textarea{width:100%;box-sizing:border-box;border-radius:12px;padding:8px;margin:6px 0;font:inherit}
+html body .chat-bubble{position:relative}
+html body .chat-bubble.is-deleted p{opacity:.65;font-style:italic}
+html body .m88-acts{display:inline-flex;gap:4px;margin-inline-start:6px;vertical-align:middle}
+html body .m88-acts button{border:0;background:rgba(255,255,255,.12);border-radius:8px;padding:2px 6px;font-size:13px;cursor:pointer}
+html body .m88-pin{margin:6px 0;border:1px solid #ffd66b66;background:rgba(255,214,107,.08);color:#ffd66b;border-radius:12px;padding:5px 10px;font-weight:700;cursor:pointer}
+html body .m88-pin.on{background:#ffd66b;color:#2a1500}
+html:not(.lb-dark) body .m88-pin{color:#8a641f}

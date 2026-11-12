@@ -122,7 +122,7 @@ import { AvifCache } from './avif-r71.js';
 import { createSeo } from './seo-r71.js';
 import { PERSONAS, personaOf } from './personas-r72.js';
 import { Social73 } from './social-r73.js';
-import { Perks } from './perks-r74.js';
+import { Perks, PERK_DEFS, EDIT_WINDOW } from './perks-r74.js';
 
 /** Compatibility wrapper: old generic intents remain valid; optional social payloads fail closed. */
 export function validSocialGiftOutbox(d: Record<string, unknown>): boolean {
@@ -572,7 +572,7 @@ export async function createApp(
     // R63: عملة وحدة — أسعار الجواهر تنعرض عملات (×20)، والشراء يقبل السعر المعروض
     if (SINGLE_CUR) for (const x of allItems as any[]) if (x.currency === 'gems') { x.currency = 'coins'; x.price = x.price * 20; if (x.offer) x.offer = { ...x.offer, was: x.offer.was * 20 }; }
     return {
-      ok: true, canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), exp: wallet.expiries(id), durations: DURATIONS, timedSlots: [...TIMED_SLOTS], equipped: wallet.equipped(id), equippedView: equippedView(id),
+      ok: true, vipDiscount: perks.discountPct(id), canDaily: wallet.canClaim(id), coins: wallet.balance(id), gems: wallet.gems(id), owned: wallet.owned(id), exp: wallet.expiries(id), durations: DURATIONS, timedSlots: [...TIMED_SLOTS], equipped: wallet.equipped(id), equippedView: equippedView(id),
       // R57: الأيدي المميز المحجوز لحساب ثاني ما ينعرض
       items: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance' && i.set !== 'ent3d') && (i.status !== 'hidden' || owned.has(i.id)) && !(i.slot === 'special-id' && !owned.has(i.id) && (specialTaken(id, String(i.css ?? '')) || String(i.css ?? '').length <= 3)) && !(i.slot === 'souvenir' && !owned.has(i.id) && !SOUVENIR_R67.has(i.id)) && !(i.slot === 'room-id' && !owned.has(i.id) && wallet.anyOwner(i.id, id))),
       collectionItems: allItems.filter((i) => !(CARS_REMOVED && i.slot === 'entrance' && i.set !== 'ent3d') && i.set && (i.status !== 'hidden' || owned.has(i.id))),
@@ -598,12 +598,13 @@ export async function createApp(
     noFollow: { on: true, vip: 14, noble: 7, msg: '«لا يمكن متابعتك» يحتاج VIP 14 أو نبيل 7 (الإمبراطور).' },
     unsearchable: { on: true, vip: 15, noble: 8, msg: '«عدم إمكانية العثور عليك» يحتاج VIP 15 أو نبيل 8 (الأسطورة).' },
     hideWealth: { on: true, vip: 99, noble: null, level: 55, msg: 'إخفاء مستوى الثروة يحتاج المستوى 55.' },
+    // R88
+    hideRead: { on: true, vip: 4, noble: 3, msg: 'إخفاء «قرأ رسالتك» يحتاج VIP 4 أو نبيل 3.' },
   };
-  const VISITORS_VIP = 11;
   accountTools.gate = (id, key, value) => { const g = PRIVACY_GATES[key]; return g && value === g.on && !privacyAllowed(id, key) ? g.msg : null; };
   const privacyAllowed = (id: string, key: string) => { const g = PRIVACY_GATES[key]; if (!g) return true; if (['hideVisits', 'hideEntrances', 'showPresence'].includes(key) && perks.has(id, 'stealth')) return true; const t = tierOf(id); if (g.level && (progression.view(id).level.value ?? 0) >= g.level) return true; return t.vip >= g.vip || (g.noble !== null && t.noble >= g.noble); };
   /** الخيار مفعّل فعليًا (اختاره اللاعب + رتبته تسمح الحين) */
-  const privacyOn = (id: string, key: 'showPresence' | 'hideEntrances' | 'hideVisits' | 'hideGiftLog' | 'hideVipId' | 'noFollow' | 'unsearchable' | 'hideWealth') => { const g = PRIVACY_GATES[key]; const v = accountTools.explicitSetting(id, key as any); return v === g.on && privacyAllowed(id, key); };
+  const privacyOn = (id: string, key: 'showPresence' | 'hideEntrances' | 'hideVisits' | 'hideGiftLog' | 'hideVipId' | 'noFollow' | 'unsearchable' | 'hideWealth' | 'hideRead') => { const g = PRIVACY_GATES[key]; const v = accountTools.explicitSetting(id, key as any); return v === g.on && privacyAllowed(id, key); };
   const eligibleItem = (id: string, it: ReturnType<ShopCatalog['get']>) => {
     if (!it) return false; const p = progression.view(id);
     const vip = p.vip.enabled && p.vip.value ? Number(p.vip.value.slice(1)) : 0;
@@ -654,7 +655,10 @@ export async function createApp(
       if (it.slot === 'room-id' && wallet.anyOwner(it.id, id)) return { ...shopView(id), ok: false, code: 'taken', error: 'أيدي الغرفة هذا انباع لحساب ثاني.' };
       const days = m.days === undefined ? 0 : Number(m.days);
       if (!DURATIONS.some((x) => x.days === days) || (days > 0 && !TIMED_SLOTS.has(it.slot))) return { ok: false, code: 'bad', error: 'مدة غير صالحة.' };
-      const r = wallet.buy(id, days > 0 ? { ...it, price: durPrice(it.price, days) } : it, String(m.key ?? ''), days);
+      // R88: خصم VIP الدائم — السعر النهائي من الخادم
+      const disc = perks.discountPct(id), base = days > 0 ? durPrice(it.price, days) : it.price;
+      const finalPrice = disc > 0 ? Math.max(1, Math.ceil(base * (100 - disc) / 100)) : base;
+      const r = wallet.buy(id, finalPrice !== it.price ? { ...it, price: finalPrice } : it, String(m.key ?? ''), days);
       if (!r.ok && prevSpecial !== undefined) { try { accounts.setSpecialPlayerId(id, prevSpecial); } catch { /* يبقى كما هو؛ ما فيه خصم */ } }
       if (!r.ok) return { ok: false, error: r.code === 'owned' ? (days > 0 ? 'تملك هذا العنصر دائم، ما يحتاج مدة.' : 'تملك هذا العنصر من قبل.') : r.code === 'poor' ? 'عملاتك ما تكفي.' : 'طلب غير صالح.', code: r.code };
       if (!r.dup && it.currency === 'gems') { try { treasure.shopSpend(id, Number(it.price) || 0); } catch { /* وقود القبيلة بس */ } }
@@ -1215,6 +1219,10 @@ export async function createApp(
   });
   /* R62: رسالة خاصة جديدة → إشعار جوال للمستلم لو مب فاتح الموقع */
   { const orig = social.send.bind(social); (social as any).send = (me: string, other: string, input: { body?: unknown; ref?: unknown }) => { const out = orig(me, other, input) as any; try { if (out && !out.error && !out.duplicate && typeof input?.body === 'string') pushTo([other], { title: `رسالة من ${accounts.nameOf(me) || 'صديق'}`, body: input.body.startsWith('e2e1.') ? '🔒 رسالة مشفّرة — افتحها' : input.body.slice(0, 90), url: '#/messages', tag: 'dm-' + me.slice(0, 8) }); } catch { /* */ } return out; }; }
+  /* R88: «إخفاء قرأ رسالتك» — المرسل ما يشوف إن رسالته انقرت لو المستلم مشغّل الخيار */
+  { const conv = social.conversation.bind(social); (social as any).conversation = (me: string, other: string, opts?: any) => { const r = conv(me, other, opts) as any; if (r && Array.isArray(r.list) && privacyOn(other, 'hideRead')) r.list = r.list.map((m: any) => m.mine ? { ...m, read: false, readAt: null } : m); return r; };
+    const inbox = social.inbox.bind(social); (social as any).inbox = (me: string, opts?: any) => { const r = inbox(me, opts) as any; if (r && Array.isArray(r.list)) r.list = r.list.map((it: any) => { const o = it?.user?.pub ? community.resolvePublicId(it.user.pub) : null; return o && it.last?.mine && privacyOn(o, 'hideRead') ? { ...it, last: { ...it.last, read: false, readAt: null } } : it; }); return r; }; }
+  accounts.xpBoostOf = (id) => perks.xpPct(id);
   const cpPoints = new CpPoints(cpFile, Date.now, storage);
   const bonds = new Bonds(bondsFile, Date.now, storage);
   const tribes = new Tribes(process.env.TRIBES_FILE ?? besideSocial('tribes.json'), Date.now, storage);
@@ -1225,7 +1233,7 @@ export async function createApp(
   const profileSocial = new ProfileSocial(profileSocialFile, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
     hidesActivity: (id) => accountTools.settings(id).showActivity === false, sinceOf: (id) => accounts.sinceOf(id),
-    viewerVip: (id) => tierOf(id).vip, needVip: VISITORS_VIP, stealthVisit: (id) => privacyOn(id, 'hideVisits'), inviteRewards: (me) => inviteRewardsView(me),
+    viewerVip: (id) => tierOf(id).vip, get needVip() { return perks.level('visitors'); }, stealthVisit: (id) => privacyOn(id, 'hideVisits'), inviteRewards: (me) => inviteRewardsView(me),
     resolvePublicId: (pub) => community.resolvePublicId(pub),
     who: (id) => { const photo = avatars.version(id); const lv = accounts.publicStats(id)?.level; return { publicId: community.pub(id), name: accounts.nameOf(id) || 'لاعب', avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), level: typeof lv === 'number' ? lv : null }; },
     log,
@@ -1436,7 +1444,7 @@ export async function createApp(
   const tribeEligible = (id: string) => { const lv = socialRooms.ownerMaxRoomLevel(id); return { roomLevel: lv, need: TRIBE_ROOM_LEVEL, canCreate: socialEligible(id) && lv >= TRIBE_ROOM_LEVEL && !tribes.of(id) }; };
   /* R60: صفحة «إعدادات الخصوصية» — القيم + الرتبة + شرط كل خيار (القفل نفسه بالخادم) */
   functionalHttp.add('GET', '/api/privacy', ({ user }) => { const t = tierOf(user.id), st = accountTools.settings(user.id);
-    return { ok: true, vip: t.vip, noble: t.noble, settings: st, visitorsVip: VISITORS_VIP, visitorsOpen: t.vip >= VISITORS_VIP,
+    return { ok: true, vip: t.vip, noble: t.noble, settings: st, visitorsVip: perks.level('visitors'), visitorsOpen: t.vip >= perks.level('visitors'),
       gates: Object.fromEntries(Object.entries(PRIVACY_GATES).map(([k, g]) => [k, { vip: g.vip < 99 ? g.vip : 0, noble: g.noble, level: g.level ?? 0, allowed: privacyAllowed(user.id, k) }])) }; });
   const tribePush = (ids: string[]) => { for (const id of ids) sendToUser(id, { t: 'tribe:update' }); };
   /* R59: كنز القبيلة — صاروخ القبيلة (كل 3 مليون هيبة أسبوعية)، المهام، المكافأة، والمتجر */
@@ -1958,6 +1966,32 @@ export async function createApp(
     /* R74: مزايا VIP والنوبل */
     functionalHttp.add('GET', '/api/perks', ({ user }) => ({ ok: true, ...perks.view(user.id), broadcastLeft: perks.broadcastLeft(user.id) }));
     functionalHttp.add('GET', '/api/admin/perks', () => ({ ok: true, ...perks.adminList() }), 'owner');
+    /* R88: إعدادات مزاياي — كتم كلمات، تثبيت محادثات، آيدي مختار، تعديل/حذف الرسائل */
+    functionalHttp.add('POST', '/api/perks/mute-words', ({ user, body }) => perks.setMuteWords(user.id, body.words));
+    functionalHttp.add('POST', '/api/perks/pin', ({ user, body }) => perks.togglePin(user.id, body.pub));
+    functionalHttp.add('GET', '/api/perks/pick-id', ({ user, url }) => {
+      const v = String(url.searchParams.get('v') ?? '');
+      if (!/^[1-9]\d{3}$/.test(v)) throw new FunctionalHttpError(400, 'الآيدي لازم 4 أرقام (1000–9999).');
+      return { ok: true, value: v, free: !specialTaken(user.id, v), mine: accounts.displayPlayerId(user.id) === v };
+    });
+    functionalHttp.add('POST', '/api/perks/pick-id', ({ user, body }) => {
+      const v = String(body.value ?? '');
+      if (!/^[1-9]\d{3}$/.test(v)) throw new FunctionalHttpError(400, 'الآيدي لازم 4 أرقام (1000–9999).');
+      perks.pickIdCheck(user.id);
+      if (specialTaken(user.id, v)) throw new FunctionalHttpError(409, 'هذا الآيدي مأخوذ، جرّب غيره.');
+      try { accounts.setSpecialPlayerId(user.id, v); } catch { throw new FunctionalHttpError(409, 'هذا الآيدي مأخوذ، جرّب غيره.'); }
+      perks.markPick(user.id);
+      return { ok: true, value: v, nextIdAt: perks.prefs(user.id).nextIdAt };
+    });
+    const dmGate = (id: string) => { if (!perks.has(id, 'dmEdit')) { const d = PERK_DEFS.find((x) => x.key === 'dmEdit')!; throw new FunctionalHttpError(403, `تعديل وحذف الرسائل يحتاج VIP ${perks.level('dmEdit')} أو نوبل ${d.alt}.`); } };
+    functionalHttp.add('POST', '/api/social-private/messages/:id/edit', ({ user, params, body }) => {
+      dmGate(user.id); const r = social.editOwn(user.id, Number(params.id), body.text, EDIT_WINDOW);
+      sendToUser(r.to, { t: 'dm:changed', from: community.pub(user.id) }); return { ok: true, message: r.message };
+    });
+    functionalHttp.add('POST', '/api/social-private/messages/:id/delete', ({ user, params }) => {
+      dmGate(user.id); const r = social.deleteOwn(user.id, Number(params.id), EDIT_WINDOW);
+      sendToUser(r.to, { t: 'dm:changed', from: community.pub(user.id) }); return { ok: true, message: r.message };
+    });
     functionalHttp.add('POST', '/api/admin/perks', ({ body }) => perks.setLevel(body.key, body.level), 'owner');
     functionalHttp.add('POST', '/api/broadcast', ({ user, body }) => {
       if (!perks.has(user.id, 'broadcast')) throw Object.assign(new Error(`الإعلان العام لرتبة N${perks.level('broadcast')} وفوق.`), { status: 403 });
@@ -2913,7 +2947,9 @@ export async function createApp(
         if (siteFlags.get().streak) try { const st = streak.claim(user.id); day = st.day; if (st.bonus.coins > 0 && wallet.grant(user.id, 'coins', st.bonus.coins, `هدية الدخول اليومي — اليوم ${st.day}`, `streak:${st.today}:c`)) extra = st.bonus.coins; if (st.bonus.gems > 0 && wallet.grant(user.id, 'gems', st.bonus.gems, `هدية اليوم السابع`, `streak:${st.today}:g`)) gemsGot = st.bonus.gems; } catch (e) { log('streak_failed', { error: String((e as Error).message).slice(0, 100) }); }
         // R67ae: فعالية «ضعف اليومية» من اللوحة (مفتاح ثابت لليوم — ما تتكرر)
         { const ev = siteFlags.activeEvents().find((e) => e.kind === 'daily2x'); if (ev) { const dk = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10); try { if (wallet.grant(user.id, 'coins', n, 'فعالية: ضعف المكافأة اليومية 🎉', `daily2x:${ev.id}:${dk}`)) extra += n; } catch { /* المكافأة الأساسية انصرفت */ } } }
-        return { ok: true, got: n + extra, base: n, bonus: extra, gems: gemsGot, streakDay: day, coins: wallet.balance(user.id), gemBalance: wallet.gems(user.id) };
+        // R88: راتب VIP/نوبل اليومي (مفتاح ثابت لليوم — ما يتكرر)
+        let salary = 0; { const amt = perks.salaryOf(user.id); if (amt > 0) { const dk = new Date(Date.now() + 4 * 3_600_000).toISOString().slice(0, 10); try { if (wallet.grant(user.id, 'coins', amt, 'راتب VIP اليومي 👑', `salary88:${dk}`)) { salary = amt; extra += amt; } } catch { /* الراتب يتأجل؛ ما يوقف المكافأة */ } } }
+        return { ok: true, got: n + extra, base: n, bonus: extra, salary, gems: gemsGot, streakDay: day, coins: wallet.balance(user.id), gemBalance: wallet.gems(user.id) };
       }
       case 'mm:leave':
         return { ok: true, left: mm.leave(user.id) };

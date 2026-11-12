@@ -203,9 +203,22 @@ async function perksPage(view) {
       <h2 class="sp73-sec">💎 مزايا VIP</h2><div class="sp73-list">${d.list.filter((p) => p.system === 'vip').map(row).join('')}</div>
       <h2 class="sp73-sec">👑 مزايا النوبل</h2><div class="sp73-list">${d.list.filter((p) => p.system === 'noble').map(row).join('')}</div>
       ${bc?.open ? `<form class="sp73-card" data-sp73f="bcast"><b>📣 إعلان على كل الموقع</b><small class="sp73-t">${d.broadcastLeft ? `تقدر ترسل الإعلان الجاي بعد ${Math.ceil(d.broadcastLeft / 86400000)} يوم` : 'يطلع لكل المتصلين الحين — مرة بالأسبوع'}</small><input name="text" maxlength="120" placeholder="مثلاً: مجلسي مفتوح الحين، حياكم 🎙️" ${d.broadcastLeft ? 'disabled' : ''}><button class="btn block" type="submit" ${d.broadcastLeft ? 'disabled' : ''}>📣 أرسل الإعلان</button></form>` : ''}
+      ${settings88(d)}
       <a class="btn block ghost" href="#/vip">💎 صفحة VIP</a>`, '#/vip');
   };
   paint(); await myPerks(true); if (curHash() === '#/perks') paint();
+}
+/* R88: أرقام مزاياك + إعداداتها */
+function settings88(d) {
+  const has = (k) => d.list.find((p) => p.key === k)?.open, a = d.amounts || {}, pf = d.prefs || {};
+  const nums = [has('salary') ? `<div class="sp88-n"><b>${a.salary} 🪙</b><small>راتبك اليومي (ينضاف مع المكافأة اليومية)</small></div>` : '',
+    has('shopDiscount') ? `<div class="sp88-n"><b>${a.discount}%</b><small>خصمك بالمتجر</small></div>` : '',
+    has('xpBoost') ? `<div class="sp88-n"><b>+${a.xp}%</b><small>خبرة إضافية بكل مباراة</small></div>` : ''].join('');
+  const mute = has('muteWords') ? `<form class="sp73-card" data-sp73f="mute88"><b>🔇 الكلمات المكتومة</b><small class="sp73-t">كل كلمة بسطر (لين 30). تختفي عندك بالدردشة والرسائل والتعليقات.</small><textarea name="w" rows="4" maxlength="800" placeholder="كلمة\nكلمة ثانية">${esc((pf.muteWords || []).join('\n'))}</textarea><button class="btn block" type="submit">حفظ</button></form>` : '';
+  const left = pf.nextIdAt && pf.nextIdAt > Date.now() ? Math.ceil((pf.nextIdAt - Date.now()) / 86400000) : 0;
+  const pick = has('pickId') ? `<form class="sp73-card" data-sp73f="pick88"><b>🆔 اختر آيديك المميز</b><small class="sp73-t">${left ? `تقدر تغيّره بعد ${left} يوم` : '4 أرقام من 1000 لين 9999 — لو فاضي يصير لك على طول'}</small><input name="v" inputmode="numeric" pattern="[1-9][0-9]{3}" maxlength="4" placeholder="مثلاً 7777" dir="ltr" ${left ? 'disabled' : ''}><button class="btn block" type="submit" ${left ? 'disabled' : ''}>احجزه</button></form>` : '';
+  const priv = d.list.find((p) => p.key === 'dmEdit')?.open || d.vip >= 4 || d.noble >= 3 ? `<a class="sp73-card sp88-link" href="#/privacy-settings"><b>👁️ إخفاء «قرأ رسالتك» وآخر ظهور</b><small class="sp73-t">من إعدادات الخصوصية</small></a>` : '';
+  return nums || mute || pick || priv ? `<h2 class="sp73-sec">⚙️ مزاياك الحين</h2>${nums ? `<div class="sp88-nums">${nums}</div>` : ''}${mute}${pick}${priv}` : '';
 }
 function banner(m) {
   let el = document.getElementById('sp74-bc'); if (el) el.remove();
@@ -255,6 +268,8 @@ document.addEventListener('submit', async (e) => {
   try {
     if (k === 'gnew') { const g = await api('/api/groups', 'POST', { name: f.name.value, members: [...f.querySelectorAll('input[name=m]:checked')].map((x) => x.value) }); S.addOpen = false; S.groups = null; go('#/group/' + g.id); }
     else if (k === 'gmsg') { const t = f.text.value.trim(); if (!t) return; await api(`/api/groups/${encodeURIComponent(S.gid)}/msg`, 'POST', { text: t }); f.text.value = ''; await reloadGroup(); }
+    else if (k === 'mute88') { const words = String(f.w.value || '').split(/\n|،|,/).map((x) => x.trim()).filter(Boolean); const r = await api('/api/perks/mute-words', 'POST', { words }); window.dispatchEvent(new CustomEvent('la3:mute', { detail: r.muteWords })); toast(`🔇 انحفظت ${r.muteWords.length} كلمة`); await myPerks(true); rerender(); }
+    else if (k === 'pick88') { const v = String(f.v.value || '').trim(); const r = await api('/api/perks/pick-id', 'POST', { value: v }); toast(`🆔 صار آيديك ${r.value}`); await myPerks(true); rerender(); }
     else if (k === 'bcast') { const r = await api('/api/broadcast', 'POST', { text: f.text.value }); toast(`📣 وصل إعلانك لـ ${r.sent} متصل`); await myPerks(true); rerender(); }
     else if (k === 'gadd') { S.group = await api(`/api/groups/${encodeURIComponent(S.gid)}/add`, 'POST', { pub: f.p.value }); rerender(); }
   } catch (err) { toast(err.message || 'صار خطأ.'); } finally { if (btn) btn.disabled = false; }

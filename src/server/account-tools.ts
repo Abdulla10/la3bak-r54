@@ -17,13 +17,13 @@ export interface AccountSettings {
   hideNameColor: boolean;
   flatProfileBg: boolean;
   /** R68z41: خصوصية إضافية */
-  hideGender: boolean; hideLists: boolean; hideGiftLog: boolean; hideVipId: boolean; noFollow: boolean; unsearchable: boolean; hideWealth: boolean;
+  hideGender: boolean; hideLists: boolean; hideGiftLog: boolean; hideVipId: boolean; noFollow: boolean; unsearchable: boolean; hideWealth: boolean; hideRead: boolean;
 }
 export const ACCOUNT_SETTINGS_DEFAULTS: Readonly<AccountSettings> = Object.freeze({
   sound: false, notifications: false, showActivity: false, showPresence: false,
   // R55: مؤثرات الهدايا ثلاثية الأبعاد والدخوليات تظهر افتراضيًا (مثل باقي المنصات)، واللاعب يقدر يخفيها من الإعدادات
   hideEntrances: false, hideChatEffects: false, hideVisits: false, hidePosts: false, hideNameColor: false, flatProfileBg: false,
-  hideGender: false, hideLists: false, hideGiftLog: false, hideVipId: false, noFollow: false, unsearchable: false, hideWealth: false,
+  hideGender: false, hideLists: false, hideGiftLog: false, hideVipId: false, noFollow: false, unsearchable: false, hideWealth: false, hideRead: false,
 });
 export const ACCOUNT_REASON_MAX = 500;
 export type VerificationStatus = 'pending' | 'accepted' | 'rejected' | 'revoked';
