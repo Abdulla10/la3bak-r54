@@ -301,3 +301,14 @@ a{-webkit-touch-callout:none;text-decoration:none}
 html body .install-fab{display:none!important}
 /* R106: شريط خصم VIP بالمتجر — الكلام كان ذهبي على ذهبي */
 html body .lb-store-vipdisc:not(#_){color:#2a1600!important;font-weight:800}
+/* ===== R109: لودو بشكل اللعبة الكلاسيكية اللامعة (أزرق + خشب) ===== */
+html body .jk-screen.v2.ld2,html body .gv-game-surface:has(.ld2) {background:#1f7ae6!important}
+html body .ld2 .ld2-sq{border-radius:50%!important;background:radial-gradient(circle at 35% 30%,#7fdcff,#1e9bf0 55%,#0f6fd0)!important;border:2px solid #e6f8ff!important;box-shadow:0 3px 0 #0b56a8,0 6px 12px rgba(0,0,0,.25)!important;color:#fff!important}
+html body .ld2 .ld2-sq svg *{stroke:#fff!important}
+html body .ld2 .ld2-btns button{background:linear-gradient(#2f8ff0,#1764cf)!important;color:#fff!important;border:2px solid #9fdcff!important;border-radius:999px!important;box-shadow:0 3px 0 #0b4fa0!important}
+html body .ld2 .ld2-dice{background:linear-gradient(#ffffff,#dfeeff)!important;border:3px solid #9fd2ff!important;border-radius:18%!important;box-shadow:0 4px 0 #6aa8e8,0 8px 16px rgba(0,0,0,.25)!important}
+html body .ld2 .ld2-dice.can{animation:ld109 1s ease-in-out infinite}
+@keyframes ld109{50%{transform:translateY(-4px) scale(1.05)}}
+html body .ld2 .ld2-seat .ld2-av{box-shadow:0 0 0 3px #fff,0 6px 14px rgba(0,0,0,.3)}
+html body .ld2 [class*="ld2-name"],html body .ld2 .ld2-seat b,html body .ld2 .ld2-seat small{background:rgba(10,60,140,.55)!important;color:#fff!important}
+html body .ld2 .jk-bar .notice{background:rgba(10,60,140,.7)!important;color:#fff!important;border-color:#9fdcff!important}

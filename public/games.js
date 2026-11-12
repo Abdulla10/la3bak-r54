@@ -362,9 +362,10 @@ function ludoPos(g, pi, prog, t) {
   const [fx, fy] = LUDO_FIN[seat]; return [fx + (t % 2 ? 0.22 : -0.22) * (seat % 2 ? 1 : 0.0), fy + (t > 1 ? 0.22 : -0.22) * (seat % 2 ? 0 : 1)];
 }
 /* ألوان لودو ستار حسب مكان اللاعب على الشاشة: 0 فوق يسار، 1 فوق يمين، 2 تحت يمين، 3 تحت يسار (أنت دايماً تحت يسار) */
-const LD_COL = ['#22c55e', '#ffc21f', '#1e90ff', '#ee4a38'];
-const LD_DK = ['#169a47', '#c99a14', '#1569c4', '#c43a2b'];
-const LD_DD = ['#0f7a35', '#9c7608', '#0f4f98', '#962a1e'];
+/* R109: ألوان مثل لودو الكلاسيكي اللامع — فوق يسار أحمر، فوق يمين أخضر، تحت يمين أصفر، تحت يسار أزرق */
+const LD_COL = ['#f1262c', '#12c43a', '#ffd30a', '#1e7bff'];
+const LD_DK = ['#d01b22', '#0fa531', '#efb400', '#1563e0'];
+const LD_DD = ['#a8121a', '#0b7f25', '#cf8a00', '#0d4cb8'];
 const CROWN = 'M-.15 .08L-.17 -.1L-.07 -.02L0 -.14L.07 -.02L.17 -.1L.15 .08Z';
 /* R108: رسوم الأغراض (رسم أصلي بسيط) */
 const LD_ITEM = {
@@ -380,7 +381,7 @@ function ldToken(seat, mode, x, y, rot, col, dk) {
   let face;
   if (mode === 'arrow') face = `<circle r=".4" fill="#a8740e"/><circle cy="-.04" r=".4" fill="#ffd45a" stroke="#fff3b8" stroke-width=".04"/><path d="M0 .22C-.34 -.02 -.3 -.26 -.14 -.26C-.06 -.26 0 -.2 0 -.14C0 -.2 .06 -.26 .14 -.26C.3 -.26 .34 -.02 0 .22Z" fill="${col}" stroke="${dk}" stroke-width=".04"/><path d="M-.12 -.17q.05 -.06 .1 -.02" stroke="#fff" stroke-width=".05" fill="none" stroke-linecap="round"/>`;
   else if (mode === 'raids') face = `<circle r=".4" fill="${dk}"/><circle cy="-.04" r=".4" fill="${col}" stroke="#fff3d8" stroke-width=".04"/><path d="M-.17 -.18H.17L.12 .22H-.12Z" fill="#fff" opacity=".92"/><path d="M-.15 -.04H.15L.12 .22H-.12Z" fill="#ff7a3a"/><path d="M.05 -.18L.12 -.3" stroke="#fff" stroke-width=".05" stroke-linecap="round"/><circle cx="-.06" cy="-.12" r=".05" fill="#ffd166"/>`;
-  else face = `<circle r=".4" fill="#b8791a"/><circle cy="-.04" r=".4" fill="#ffc43a" stroke="#fff0b0" stroke-width=".04"/><circle cy="-.04" r=".29" fill="${col}"/><path d="${CROWN}" transform="translate(0 -.03)" fill="#fff"/>`;
+  else face = `<circle r=".4" fill="${dk}"/><circle cy="-.05" r=".4" fill="${col}" stroke="#fff" stroke-opacity=".85" stroke-width=".05"/><circle cy="-.05" r=".3" fill="#000" opacity=".14"/><circle cy="-.07" r=".27" fill="${col}"/><ellipse cx="-.1" cy="-.22" rx=".16" ry=".08" fill="#fff" opacity=".45"/><path d="${CROWN}" transform="translate(0 -.05) scale(1.15)" fill="#fff" stroke="${dk}" stroke-width=".02"/>`; /* R109: قطعة لامعة */
   return `<g transform="rotate(${-rot} ${x} ${y})"><ellipse cx="${x}" cy="${y + 0.33}" rx=".4" ry=".14" fill="#000" opacity=".3"/><g transform="translate(${x} ${y}) scale(1.22)">${face}</g></g>`;
 }
 function ludo(room) {
@@ -395,34 +396,32 @@ function ludo(room) {
   const posOf = (seat) => (seat + shift) % 4;
   const col = (seat) => LD_COL[posOf(seat)], dk = (seat) => LD_DK[posOf(seat)], dd = (seat) => LD_DD[posOf(seat)];
   const movable = new Set((g.moves || []).map((m) => m.token));
-  let b = `<defs><clipPath id="ldClip"><rect x="0" y="0" width="15" height="15" rx=".5"/></clipPath></defs><g transform="rotate(${rot} 7.5 7.5)"><g clip-path="url(#ldClip)"><rect width="15" height="15" fill="#fff"/>`;
+  /* R109: لوحة لامعة بإطار خشبي مثل لودو الكلاسيكي (رسم أصلي) */
+  const grads = [0, 1, 2, 3].map((i) => `<linearGradient id="ldY${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col(i)}"/><stop offset="1" stop-color="${dk(i)}"/></linearGradient>`).join('');
+  let b = `<defs>${grads}<linearGradient id="ldWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf73"/><stop offset=".5" stop-color="#f2a845"/><stop offset="1" stop-color="#d9822a"/></linearGradient><clipPath id="ldClip"><rect x="0" y="0" width="15" height="15" rx=".25"/></clipPath></defs>`;
+  b += `<rect x="-.42" y="-.42" width="15.84" height="15.84" rx=".55" fill="#b8641c"/><rect x="-.36" y="-.4" width="15.72" height="15.7" rx=".5" fill="url(#ldWood)"/><rect x="-.1" y="-.1" width="15.2" height="15.2" rx=".3" fill="#a85a1e" opacity=".55"/>`;
+  b += `<g transform="rotate(${rot} 7.5 7.5)"><g clip-path="url(#ldClip)"><rect width="15" height="15" fill="#fdeccb"/>`;
   LUDO_YARD.forEach(([cx, cy], i) => {
-    const used = g.seats.includes(i);
-    b += `<rect x="${cx - 3}" y="${cy - 3}" width="6" height="6" fill="${col(i)}" fill-opacity="${used ? 1 : 0.4}"/><rect x="${cx - 2.35}" y="${cy - 2.35}" width="4.7" height="4.7" rx=".55" fill="${dk(i)}" fill-opacity="${used ? 1 : 0.45}"/>`;
-    for (const [dx, dy] of [[-.79, -.79], [.79, -.79], [-.79, .79], [.79, .79]]) b += `<circle cx="${cx + dx}" cy="${cy + dy}" r=".52" fill="${dd(i)}" fill-opacity="${used ? 0.9 : 0.4}"/>`;
+    const used = g.seats.includes(i), op = used ? 1 : 0.55;
+    b += `<g opacity="${op}"><rect x="${cx - 3}" y="${cy - 3}" width="6" height="6" fill="${dd(i)}"/><rect x="${cx - 2.9}" y="${cy - 2.9}" width="5.8" height="5.8" rx=".3" fill="url(#ldY${i})" stroke="${dd(i)}" stroke-width=".1"/><rect x="${cx - 2.2}" y="${cy - 2.2}" width="4.4" height="4.4" rx=".45" fill="${dk(i)}"/><rect x="${cx - 2.2}" y="${cy - 2.2}" width="4.4" height="4.4" rx=".45" fill="none" stroke="#000" stroke-opacity=".18" stroke-width=".1"/>`;
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b += `<circle cx="${cx + dx}" cy="${cy + dy}" r=".56" fill="${dd(i)}"/><circle cx="${cx + dx}" cy="${cy + dy + .06}" r=".5" fill="#000" opacity=".12"/>`;
+    b += '</g>';
   });
-  const cell = (x, y, fill) => `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}" stroke="#2b2b2b" stroke-width=".035"/>`;
-  const globe = (x, y, c) => `<g transform="translate(${x + .5} ${y + .5}) rotate(${-rot})"><circle r=".28" fill="${c}"/><path d="M-.14 -.1q.1 -.14 .2 -.02q-.02 .1 -.12 .12q-.1 .06 -.08 -.1zM.04 .08q.12 -.02 .16 .06q-.1 .1 -.16 -.06z" fill="#fff" opacity=".35"/></g>`;
-  const star = (x, y) => `<g transform="translate(${x + .5} ${y + .5}) rotate(${-rot})"><path d="M0 -.3l.09 .21.23 .02-.17 .15.05 .22L0 .13l-.2 .12.05 -.22-.17 -.15.23 -.02z" fill="#6f6f6f"/></g>`;
+  const cell = (x, y, fill) => `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}" stroke="#e7c48a" stroke-width=".05"/>`;
+  const globe = (x, y, c) => `<g transform="translate(${x + .5} ${y + .5}) rotate(${-rot})"><circle r=".34" fill="${c}"/><circle r=".34" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".04"/><path d="M-.2 -.12q.12 -.16 .26 -.04q-.02 .12 -.15 .14q-.12 .08 -.11 -.1zM.04 .1q.15 -.02 .2 .08q-.12 .12 -.2 -.08zM-.24 .1q.06 .1 .14 .12" fill="#000" opacity=".28"/></g>`;
+  const star = (x, y) => `<rect x="${x + .04}" y="${y + .04}" width=".92" height=".92" rx=".08" fill="#f6c27a"/><g transform="translate(${x + .5} ${y + .5}) rotate(${-rot})"><path d="M0 -.32l.1 .21.23 .03-.17 .16.04 .23L0 .14l-.2 .11.04 -.23-.17 -.16.23 -.03z" fill="#fff" stroke="#f0b35c" stroke-width=".02"/></g>`;
   LUDO_PATH.forEach(([x, y], i) => {
     const sSeat = i % 13 === 0 ? i / 13 : -1;
     const isStar = i % 13 === 8;
-    b += cell(x, y, sSeat >= 0 ? col(sSeat) : isStar ? '#bdbdbd' : '#fff');
+    b += cell(x, y, sSeat >= 0 ? col(sSeat) : '#fdf0d4');
     if (sSeat >= 0) b += globe(x, y, dd(sSeat)); else if (isStar) b += star(x, y);
   });
-  LUDO_LANE.forEach((l, i) => l.forEach(([x, y]) => (b += cell(x, y, col(i)))));
-  if (mode === 'arrow' || mode === 'raids') LUDO_LANE.forEach((l, i) => {
-    const [x, y] = l[0];
-    const mark = mode === 'arrow'
-      ? `<path d="M-.24 -.1H.04V-.22L.28 0L.04 .22V.1H-.24Z" fill="${dd(i)}"/>`
-      : `<circle r=".26" fill="none" stroke="${dd(i)}" stroke-width=".07"/><path d="M-.18 -.18L.18 .18" stroke="${dd(i)}" stroke-width=".07"/>`;
-    b += `<g transform="translate(${x + .5} ${y + .5}) rotate(${i * 90})" opacity=".85">${mark}</g>`;
-  });
+  LUDO_LANE.forEach((l, i) => l.forEach(([x, y]) => (b += `<rect x="${x}" y="${y}" width="1" height="1" fill="${col(i)}" stroke="${dk(i)}" stroke-width=".05"/>`)));
   /* R108: أغراض الوضع السحري + أقفال طريق النهاية بالسريع */
   if (Array.isArray(g.items)) for (const it of g.items) { const c = LUDO_PATH[it.abs]; if (!c) continue; b += `<g class="ld-item ld-it-${it.kind}" transform="translate(${c[0] + .5} ${c[1] + .5}) rotate(${-rot}) scale(1.35)">${LD_ITEM[it.kind] || ''}</g>`; }
   if (mode === 'quick' && Array.isArray(g.unlocked)) g.seats.forEach((seat, p) => { if (g.unlocked[p]) return; const [x, y] = LUDO_LANE[seat][0]; b += `<g transform="translate(${x + .5} ${y + .5}) rotate(${-rot}) scale(1.4)">${LD_LOCK}</g>`; });
   const T = [`6,6 6,9 7.5,7.5`, `6,6 9,6 7.5,7.5`, `9,6 9,9 7.5,7.5`, `6,9 9,9 7.5,7.5`]; // يسار(0) فوق(1) يمين(2) تحت(3)
-  T.forEach((pts, i) => (b += `<polygon points="${pts}" fill="${col(i)}" stroke="#2b2b2b" stroke-width=".035"/>`));
+  T.forEach((pts, i) => (b += `<polygon points="${pts}" fill="${col(i)}"/>`));
   b += '</g></g>';
   // القطع (خارج المجموعة المقصوصة لكن بنفس التدوير)
   const stack = new Map();
@@ -471,7 +470,7 @@ function ludo(room) {
   const info = JK.modeInfo ? `<div class="ld2-pop-back" data-act="ld-info"></div><section class="ld2-pop" role="dialog" aria-label="وضع اللعب"><h3><i>${modeDef.icon}</i><span>${modeDef.name}</span></h3><div class="strip">${modeDef.real ? 'القواعد الكاملة مطبّقة' : 'شكل فقط — القواعد كلاسيكية'}</div><p>${esc(modeDef.note)}</p><small>تغيير الوضع من صفحة لودو قبل بدء اللعبة. يظهر الوضع عندك أنت فقط.</small></section>` : '';
   return `<div class="stack jk-screen v2 ld2 ld-${mode}">
     <div class="bl2-stage ld2-stage" style="--ver:${g.ver}">
-      <svg class="ld2-bg" viewBox="0 0 921 2000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><defs><pattern id="ldDia" width="92" height="92" patternUnits="userSpaceOnUse"><path d="M46 4L88 46L46 88L4 46z" fill="none" stroke="#ad55e8" stroke-width="3" opacity=".5"/></pattern><linearGradient id="ldFr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#edc66c"/><stop offset="1" stop-color="#ad55e8"/></linearGradient></defs><rect width="921" height="2000" fill="#1b0932"/><rect width="921" height="2000" fill="url(#ldDia)"/><rect width="921" height="258" fill="#10051e"/><rect y="256" width="921" height="5" fill="#edc66c"/><rect x="10" y="659" width="900" height="902" rx="36" fill="#261044"/><rect x="10" y="637" width="900" height="906" rx="38" fill="url(#ldFr)"/></svg>
+      <svg class="ld2-bg" viewBox="0 0 921 2000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><defs><linearGradient id="ldSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f8ff0"/><stop offset=".5" stop-color="#1f7ae6"/><stop offset="1" stop-color="#1867d4"/></linearGradient><pattern id="ldGrid" width="160" height="160" patternUnits="userSpaceOnUse" patternTransform="rotate(-12)"><path d="M0 0H160M0 0V160" stroke="#ffffff" stroke-opacity=".07" stroke-width="3"/></pattern><radialGradient id="ldGlow" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#8fd6ff" stop-opacity=".55"/><stop offset="1" stop-color="#8fd6ff" stop-opacity="0"/></radialGradient></defs><rect width="921" height="2000" fill="url(#ldSky)"/><rect width="921" height="2000" fill="url(#ldGrid)"/><ellipse cx="460" cy="1100" rx="560" ry="560" fill="url(#ldGlow)"/><rect x="0" y="630" width="921" height="940" rx="60" fill="#8fe0ff" opacity=".25"/></svg>
       <div class="ld2-board-wrap">${board}</div>
       ${seats}
       <button type="button" class="ld2-sq" style="left:calc(62*var(--u))" data-act="jk-menu" aria-label="القائمة" aria-expanded="${JK.menu}"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 9h22M5 16h22M5 23h22" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/></svg></button>
