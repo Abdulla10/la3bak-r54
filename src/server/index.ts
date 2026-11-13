@@ -33,6 +33,7 @@ import { HomeBanners, HomeBannerError } from './home-banners-r68.js';
 import { RoomChatImages, CHAT_IMG_MAX } from './room-chat-img-r120.js';
 import { Miners, MINER_TIERS } from './miners-r121.js';
 import { PaidCoins } from './paid-coins-r123.js';
+import { Ziina, ZIINA_IPS } from './ziina-r124.js';
 import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
@@ -595,6 +596,8 @@ export async function createApp(
   /* R60: رتبة VIP/النبلاء الفعلية + خيارات الخصوصية المقفولة بالرتبة (قرار المالك) */
   /** R68z: الملف المتحرك: VIP 5+ أو نبيل 3+ = لمعة، VIP 10+ أو نبيل 6+ = كامل */
   const profileAnimTier = (id: string) => { const t = tierOf(id); return t.vip >= 10 || t.noble >= 6 ? 2 : t.vip >= 5 || t.noble >= 3 ? 1 : 0; };
+  let ziinaWebhook: (raw: string, sig: string) => boolean = () => false;
+  let ziinaReturn: (pid: string) => Promise<string> = async () => 'error';
   const paidCoins = new PaidCoins(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'paid-coins123.json') : '', Date.now, storage);
   const miners = new Miners(cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'miners121.json') : '', Date.now, storage);
   const tierOfReal = (id: string) => { const p = progression.view(id); return { vip: p.vip.enabled && p.vip.value ? Number(p.vip.value.slice(1)) || 0 : 0, noble: p.noble.enabled && p.noble.value ? Number(p.noble.value.slice(1)) || 0 : 0 }; };
@@ -1630,9 +1633,43 @@ export async function createApp(
       sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id) });
       return { ok: true, level: miners.level(user.id), until: miners.until(user.id), coins: pay.coins };
     });
+    /* R124: Ziina تلقائي — المفتاح والإعدادات من متغيرات السيرفر (ماينوس) */
+    const ziina = new Ziina(process.env.ZIINA_TOKEN ?? '', process.env.ZIINA_TEST === '1', process.env.ZIINA_WEBHOOK_SECRET ?? '');
+    const ziinaOrigin = () => process.env.ZIINA_RETURN_ORIGIN || cfg.allowedOrigins.find((o) => o.startsWith('https://')) || 'https://la3bak.com';
+    const ziinaBusy = new Set<string>();
+    ziinaWebhook = (raw: string, sig: string) => { if (!ziina.enabled || !ziina.verify(raw, sig)) return false; try { const j = JSON.parse(raw); const pid = String(j?.data?.id ?? ''); if (j?.event === 'payment_intent.status.updated' && pid && paidCoins.zGet(pid)) void creditZiina(pid); } catch { /* */ } return true; };
+    const creditZiina = async (pid: string) => {
+      const z = paidCoins.zGet(pid); if (!z || z.done || ziinaBusy.has(pid)) return z?.done ? 'completed' : 'pending'; ziinaBusy.add(pid);
+      try {
+        const it = await ziina.get(pid);
+        if (it.status === 'completed' && it.currency_code === 'AED' && Number(it.amount) === Math.round(z.aed * 100) && paidCoins.zDone(pid)) {
+          wallet.grant(z.to, 'coins', z.coins, 'شحن رصيد عن طريق Ziina 💳', `ziina:${pid}`); paidCoins.add(z.to, z.coins); paidCoins.log({ to: z.to, coins: z.coins, by: 'Ziina تلقائي', note: `${z.aed} درهم` });
+          sendToUser(z.to, { t: 'wallet', coins: wallet.balance(z.to), gems: wallet.gems(z.to), won: 0 }); sendToUser(z.to, { t: 'paid:credited', coins: z.coins }); log('ziina_credit', { coins: z.coins });
+        }
+        return it.status;
+      } catch (e) { log('ziina_check_fail', { m: String((e as Error).message).slice(0, 80) }); return 'error'; } finally { ziinaBusy.delete(pid); }
+    };
+    ziinaReturn = creditZiina;
+    setInterval(() => { if (!ziina.enabled) return; for (const pid of paidCoins.zPending(3 * 3_600_000)) void creditZiina(pid); }, 60_000).unref?.();
+    functionalHttp.add('POST', '/api/recharge/ziina', async ({ user, body }) => {
+      if (!ziina.enabled) throw new FunctionalHttpError(503, 'الدفع التلقائي مو مفعّل للحين.');
+      if (isGuest(user.id)) throw new FunctionalHttpError(403, 'سجّل دخولك أول.');
+      const pack = paidCoins.cfg().packs.find((p) => p.id === String(body.pack ?? '')); if (!pack) throw new FunctionalHttpError(400, 'الباقة غير موجودة.');
+      const o = ziinaOrigin();
+      try {
+        const it = await ziina.create(pack.aed, `لعبك — ${pack.coins.toLocaleString('en-US')} عملة`, `${o}/api/ziina/return?zp={PAYMENT_INTENT_ID}`, `${o}/api/ziina/return?zc=1`);
+        if (!it?.id || !it.redirect_url) throw new Error('no_redirect');
+        paidCoins.zAdd(it.id, { to: user.id, coins: pack.coins, aed: pack.aed }); return { ok: true, url: it.redirect_url };
+      } catch (e) { log('ziina_create_fail', { m: String((e as Error).message).slice(0, 80) }); throw new FunctionalHttpError(502, 'تعذّر فتح صفحة الدفع، جرّب بعد شوي.'); }
+    });
+    functionalHttp.add('POST', '/api/admin/recharge/ziina-webhook', async ({ actor }) => { if (!ziina.enabled) throw new FunctionalHttpError(400, 'حط ZIINA_TOKEN بالسيرفر أول.'); try { await ziina.registerWebhook(`${ziinaOrigin()}/api/ziina/webhook`); } catch (e) { throw new FunctionalHttpError(502, 'Ziina رفضت: ' + String((e as Error).message).slice(0, 120)); } admin.audit(actor!, 'ziina.webhook', '', ziinaOrigin()); return { ok: true }; }, 'owner');
+    functionalHttp.add('POST', '/api/recharge/ziina/check', async ({ user, body }) => {
+      const pid = String(body.id ?? ''); const z = paidCoins.zGet(pid); if (!z || z.to !== user.id) throw new FunctionalHttpError(404, 'الطلب غير موجود.');
+      const st = await creditZiina(pid); return { ok: true, status: st, done: !!paidCoins.zGet(pid)?.done, coins: z.coins };
+    });
     /* R123: الشحن — المالك يشحن عملات مشحونة بعد ما اللاعب يدفع له (روابط Ziina / تحويل) */
     const rcRow = (id: string) => ({ id, name: nm(id), displayId: accounts.displayPlayerId(id) ?? '', coins: wallet.balance(id), paid: paidCoins.of(id, wallet.balance(id)) });
-    functionalHttp.add('GET', '/api/admin/recharge', ({ url }) => { const q = String(url.searchParams.get('q') ?? ''); const f = q ? minerFind(q) : null; return { ok: true, cfg: paidCoins.cfg(), found: f ? rcRow(f) : null, notFound: !!q && !f, log: paidCoins.recent(60).map((l) => ({ ...l, name: nm(l.to), displayId: accounts.displayPlayerId(l.to) ?? '' })) }; }, 'owner');
+    functionalHttp.add('GET', '/api/admin/recharge', ({ url }) => { const q = String(url.searchParams.get('q') ?? ''); const f = q ? minerFind(q) : null; return { ok: true, ziina: { on: ziina.enabled, test: ziina.test }, cfg: paidCoins.cfg(), found: f ? rcRow(f) : null, notFound: !!q && !f, log: paidCoins.recent(60).map((l) => ({ ...l, name: nm(l.to), displayId: accounts.displayPlayerId(l.to) ?? '' })) }; }, 'owner');
     functionalHttp.add('POST', '/api/admin/recharge/credit', ({ actor, body }) => {
       const id = minerFind(String(body.player ?? '')); adminNeed(!!id, 'ما لقيت اللاعب.');
       const coins = Number(body.coins); adminNeed(Number.isSafeInteger(coins) && coins >= 1000 && coins <= 1_000_000_000, 'المبلغ من 1,000 عملة وفوق.');
@@ -1643,7 +1680,7 @@ export async function createApp(
       return { ok: true, row: rcRow(id!) };
     }, 'owner');
     functionalHttp.add('POST', '/api/admin/recharge/config', ({ actor, body }) => { try { const c = paidCoins.setCfg({ ...(body.threshold !== undefined ? { threshold: Number(body.threshold) } : {}), ...(body.divisor !== undefined ? { divisor: Number(body.divisor) } : {}), ...(Array.isArray(body.packs) ? { packs: body.packs } : {}), ...(typeof body.whatsapp === 'string' ? { whatsapp: body.whatsapp.trim() } : {}), ...(typeof body.enabled === 'boolean' ? { enabled: body.enabled } : {}) }); admin.audit(actor!, 'recharge.config', '', JSON.stringify({ t: c.threshold, d: c.divisor })); return { ok: true, cfg: c }; } catch (e) { throw new FunctionalHttpError(400, (e as Error).message); } }, 'owner');
-    functionalHttp.add('GET', '/api/recharge', ({ user }) => { const c = paidCoins.cfg(); return { ok: true, packs: c.packs, whatsapp: c.whatsapp, threshold: c.threshold, coins: wallet.balance(user.id), paid: paidCoins.of(user.id, wallet.balance(user.id)), displayId: accounts.displayPlayerId(user.id) ?? '', name: accounts.nameOf(user.id) }; });
+    functionalHttp.add('GET', '/api/recharge', ({ user }) => { const c = paidCoins.cfg(); return { ok: true, ziina: ziina.enabled, packs: c.packs, whatsapp: c.whatsapp, threshold: c.threshold, coins: wallet.balance(user.id), paid: paidCoins.of(user.id, wallet.balance(user.id)), displayId: accounts.displayPlayerId(user.id) ?? '', name: accounts.nameOf(user.id) }; });
     functionalHttp.add('GET', '/api/admin/live', () => { let online = 0; for (const set of sockets.values()) if (set.size) online++; const rooms = socialRooms.liveRooms(); return { ok: true, online, inRooms: rooms.reduce((n, r) => n + r.members, 0), rooms: rooms.slice(0, 50) }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/player-360', ({ url }) => {
       const q = String(url.searchParams.get('q') ?? '').trim(); adminNeed(q.length >= 2, 'اكتب اسم أو رقم لاعب (حرفين على الأقل).');
@@ -2638,6 +2675,22 @@ export async function createApp(
         if (mb) return json(res, 503, { error: mb, maintenance: true });
         const bb = admin.banBlock(user);
         if (bb) return json(res, 403, { error: bb, banned: true });
+      }
+      /* R124: رجوع اللاعب من صفحة Ziina — نتأكد ونشحن، ونرجعه للموقع مع كوكي للرسالة */
+      if (url.pathname === '/api/ziina/return' && req.method === 'GET') {
+        const pid = String(url.searchParams.get('zp') ?? ''); let val = 'cancel';
+        if (pid && /^[A-Za-z0-9_-]{6,80}$/.test(pid)) { const z = paidCoins.zGet(pid); if (z) { const st = await ziinaReturn(pid); val = paidCoins.zGet(pid)?.done ? `done.${z.coins}` : st === 'failed' ? 'failed' : `pending.${pid}`; } else val = 'failed'; }
+        res.writeHead(303, { ...securityHeaders, Location: '/#/', 'Set-Cookie': `zp_res=${encodeURIComponent(val)}; Path=/; Max-Age=600; SameSite=Lax${cfg.cookieSecure ? '; Secure' : ''}`, 'Cache-Control': 'no-store' });
+        return res.end();
+      }
+      /* R124: ويبهوك Ziina — نتأكد من التوقيع ونرجع نجيب الحالة من Ziina نفسها */
+      if (url.pathname === '/api/ziina/webhook') {
+        if (req.method !== 'POST') return json(res, 405, { error: 'POST' });
+        const ip = String(req.headers['cf-connecting-ip'] ?? req.headers['x-real-ip'] ?? String(req.headers['x-forwarded-for'] ?? '').split(',')[0] ?? '').trim() || String(req.socket.remoteAddress ?? '').replace(/^::ffff:/, '');
+        if (process.env.ZIINA_CHECK_IP !== '0' && !ZIINA_IPS.includes(ip)) { log('ziina_webhook_ip', {}); return json(res, 403, { error: 'ip' }); }
+        let raw = ''; try { raw = await readBody(req, 65_536); } catch { return json(res, 413, { error: 'big' }); }
+        if (!ziinaWebhook(raw, String(req.headers['x-hmac-signature'] ?? ''))) return json(res, 401, { error: 'sig' });
+        return json(res, 200, { ok: true });
       }
       /* R120: صور دردشة الغرفة */
       const chatImgGet = /^\/api\/social\/chat-img\/([a-f0-9]{24})\.webp$/.exec(url.pathname);

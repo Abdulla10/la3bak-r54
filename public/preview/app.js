@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r107';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r123';
+import * as PWA from '../pwa.js?v=r124';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r123';
@@ -474,7 +474,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r123');
+  const M = await import('../settings-r60.js?v=r124');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -1995,7 +1995,7 @@ const ACTIONS = {
     SHOP.SH.busy = false;
     if(res.net){toast(res.error,true);render();return;}
     SHOP.SH.confirm = null;
-    if (!res.ok) { SHOP.apply(res); toast(res.error, true); if (res.code === 'paid_required') import('../recharge-r123.js?v=r123').then((m) => m.openRecharge()).catch(() => {}); } else { SHOP.apply(res); S.coins = res.coins; toast('تم الشراء ✅ تقدر تجهّزه الحين.'); }
+    if (!res.ok) { SHOP.apply(res); toast(res.error, true); if (res.code === 'paid_required') import('../recharge-r123.js?v=r124').then((m) => m.openRecharge()).catch(() => {}); } else { SHOP.apply(res); S.coins = res.coins; toast('تم الشراء ✅ تقدر تجهّزه الحين.'); }
     ACCT.me = null; render();
   },
   async 'shop-equip'(el) {

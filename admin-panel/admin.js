@@ -379,7 +379,7 @@ export function mountAdmin(root) {
     const tnRoot=root.querySelector('[data-tuning-admin]');
     if(tnRoot && S.me?.role==='owner') import('./tuning-admin-r67.js?v=r67av').then(({mountTuningAdmin})=>{if(tnRoot.isConnected)mountTuningAdmin(tnRoot,{call});}).catch(()=>{if(tnRoot.isConnected)tnRoot.textContent='تعذّر تحميل القسم. أعد فتحه.';});
     const rcRoot=root.querySelector('[data-recharge-admin]');
-    if(rcRoot && S.me?.role==='owner') import('./recharge-admin-r123.js?v=r123').then(({mountRecharge})=>{if(rcRoot.isConnected)mountRecharge(rcRoot,{call});}).catch(()=>{if(rcRoot.isConnected)rcRoot.textContent='تعذّر تحميل القسم.';});
+    if(rcRoot && S.me?.role==='owner') import('./recharge-admin-r123.js?v=r124').then(({mountRecharge})=>{if(rcRoot.isConnected)mountRecharge(rcRoot,{call});}).catch(()=>{if(rcRoot.isConnected)rcRoot.textContent='تعذّر تحميل القسم.';});
     const mnRoot=root.querySelector('[data-miners-admin]');
     if(mnRoot && S.me?.role==='owner') import('./miners-r121.js?v=r123').then(({mountMiners})=>{if(mnRoot.isConnected)mountMiners(mnRoot,{call});}).catch(()=>{if(mnRoot.isConnected)mnRoot.textContent='تعذّر تحميل القسم.';});
     const rbRoot=root.querySelector('[data-room-boost-admin]');

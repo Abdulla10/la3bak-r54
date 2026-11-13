@@ -24,8 +24,31 @@ export async function openRecharge() {
   const wa = d.whatsapp ? `https://wa.me/${d.whatsapp.replace(/^\+/, '')}?text=${encodeURIComponent(`هلا، دفعت لشحن رصيدي في لعبك 💳\nالآيدي: ${d.displayId}\nالاسم: ${d.name}\n(مرفق الإيصال)`)}` : '';
   sh.innerHTML = `<button type="button" class="x" data-rc="x" aria-label="إغلاق">✕</button><h2>💳 اشحن رصيدك</h2><p class="sub">العملات المشحونة تشتري فيها الأشياء الغالية (الآيدي المميز، الدخوليات، القطع الأسطورية، المناجم).</p>
     <div class="bal"><div><small>رصيدك</small><b>${nf(d.coins)} 🪙</b></div><div><small>منها مشحونة</small><b>${nf(d.paid)} 💳</b></div></div>
-    ${d.packs.map((p) => `<div class="pk"><div><b>${nf(p.coins)} 🪙</b><small>${nf(p.aed)} درهم</small></div><a class="pay" ${p.link ? `href="${esc(p.link)}" target="_blank" rel="noopener"` : 'aria-disabled="true"'}>${p.link ? 'ادفع' : 'قريبًا'}</a></div>`).join('')}
-    <div class="steps"><b style="display:block">طريقة الشحن:</b>1) اضغط «ادفع» وادفع ببطاقتك أو Apple Pay.<br>2) أرسل صورة الإيصال مع الآيدي حقك <bdi class="rc123-id">${esc(d.displayId)}</bdi> بالواتساب.<br>3) نشحن لك خلال وقت قصير وتوصلك رسالة ✅</div>
-    ${wa ? `<a class="wa" href="${esc(wa)}" target="_blank" rel="noopener">أرسل الإيصال بالواتساب</a>` : ''}`;
+    ${d.packs.map((p) => `<div class="pk"><div><b>${nf(p.coins)} 🪙</b><small>${nf(p.aed)} درهم</small></div>${d.ziina ? `<button type="button" class="pay" data-zpack="${esc(p.id)}">ادفع</button>` : `<a class="pay" ${p.link ? `href="${esc(p.link)}" target="_blank" rel="noopener"` : 'aria-disabled="true"'}>${p.link ? 'ادفع' : 'قريبًا'}</a>`}</div>`).join('')}
+    ${d.ziina ? `<div class="steps"><b style="display:block">طريقة الشحن:</b>اضغط «ادفع» وادفع ببطاقتك أو Apple Pay، وترجع للموقع والعملات تنضاف لك تلقائياً ✅</div>` : `<div class="steps"><b style="display:block">طريقة الشحن:</b>1) اضغط «ادفع» وادفع ببطاقتك أو Apple Pay.<br>2) أرسل صورة الإيصال مع الآيدي حقك <bdi class="rc123-id">${esc(d.displayId)}</bdi> بالواتساب.<br>3) نشحن لك خلال وقت قصير وتوصلك رسالة ✅</div>
+    ${wa ? `<a class="wa" href="${esc(wa)}" target="_blank" rel="noopener">أرسل الإيصال بالواتساب</a>` : ''}`}`;
+  sh.addEventListener('click', async (e) => { const b = e.target.closest('[data-zpack]'); if (!b || b.disabled) return; b.disabled = true; b.textContent = '…';
+    try { const r = await fetch('/api/recharge/ziina', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pack: b.dataset.zpack }) }); const j = await r.json().catch(() => ({})); if (!r.ok || !j.url) throw new Error(j.error || 'تعذّر فتح صفحة الدفع.'); location.href = j.url; }
+    catch (er) { b.disabled = false; b.textContent = 'ادفع'; alert(er.message); } });
 }
 document.addEventListener('click', (e) => { const a = e.target.closest?.('a[href^="#/shop/packs"], [data-recharge123]'); if (!a) return; e.preventDefault(); e.stopPropagation(); openRecharge(); }, true);
+
+/* R124: رجع من صفحة Ziina — نتأكد من الدفع ونشحن */
+(async () => {
+  const m = /(?:^|;\s*)zp_res=([^;]+)/.exec(document.cookie); if (!m) return;
+  const val = decodeURIComponent(m[1]); const clean = () => { document.cookie = 'zp_res=; Path=/; Max-Age=0; SameSite=Lax'; };
+  const cancel = val === 'cancel', failed = val === 'failed', doneC = val.startsWith('done.') ? Number(val.slice(5)) : 0, pid = val.startsWith('pending.') ? val.slice(8) : '';
+  await new Promise((r) => setTimeout(r, 800));
+  const note = (t, ok) => { if (!document.querySelector('style[data-rc124]')) { const s = document.createElement('style'); s.dataset.rc124 = '1'; s.textContent = '.rc124{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translateX(-50%);z-index:99999;max-width:92vw;padding:14px 18px;border-radius:16px;font:800 15px system-ui,sans-serif;direction:rtl;text-align:center;box-shadow:0 10px 30px #000a;color:#fff}'; document.head.append(s); } document.querySelector('.rc124')?.remove(); const n = document.createElement('div'); n.className = 'rc124'; n.style.background = ok === true ? 'linear-gradient(180deg,#22c55e,#15803d)' : ok === false ? 'linear-gradient(180deg,#ef4444,#991b1b)' : 'linear-gradient(180deg,#7c3aed,#4c1d95)'; n.textContent = t; document.body.append(n); if (ok !== undefined) setTimeout(() => n.remove(), 6000); };
+  clean();
+  if (cancel) { note('ما تم الدفع.', false); return; }
+  if (failed) { note('الدفع ما نجح.', false); return; }
+  if (doneC) { note(`تم ✅ انضافت ${doneC.toLocaleString('en-US')} عملة مشحونة 💳`, true); return; }
+  if (!pid) return;
+  note('جاري التأكد من الدفع…');
+  for (let i = 0; i < 15; i++) {
+    try { const r = await fetch('/api/recharge/ziina/check', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: pid }) }); const j = await r.json().catch(() => ({})); if (j.done) { note(`تم ✅ انضافت ${Number(j.coins || 0).toLocaleString('en-US')} عملة مشحونة 💳`, true); return; } if (j.status === 'failed') { note('الدفع ما نجح.', false); return; } if (r.status === 404) { note('الطلب غير موجود.', false); return; } } catch { /* */ }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  note('الدفع قيد المراجعة، بتنضاف العملات أول ما يتأكد ✅', true);
+})();

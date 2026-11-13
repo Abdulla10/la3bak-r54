@@ -4,7 +4,8 @@ import { isObj, loadJsonFile, Persister, StorageMonitor } from './datafile.js';
 export type RechargePack = { id: string; coins: number; aed: number; link: string };
 type Credit = { id: string; to: string; coins: number; by: string; at: number; note: string };
 type Cfg = { threshold: number; divisor: number; packs: RechargePack[]; whatsapp: string; enabled: boolean };
-type Data = { v: 1; paid: Record<string, number>; log: Credit[]; cfg?: Partial<Cfg> };
+type ZPend = { to: string; coins: number; aed: number; at: number; done?: number };
+type Data = { v: 1; paid: Record<string, number>; log: Credit[]; cfg?: Partial<Cfg>; zi?: Record<string, ZPend> };
 export const DEFAULT_PACKS: RechargePack[] = [
   { id: 'p100k', coins: 100_000, aed: 35, link: '' },
   { id: 'p300k', coins: 300_000, aed: 99, link: '' },
@@ -36,6 +37,11 @@ export class PaidCoins {
   refund(id: string, price: number) { this.d.paid[id] = (this.d.paid[id] ?? 0) + price; this.disk.save(); }
   log(entry: Omit<Credit, 'id' | 'at'>) { this.d.log.push({ ...entry, id: Math.random().toString(36).slice(2, 10), at: this.now() }); if (this.d.log.length > 2000) this.d.log.splice(0, this.d.log.length - 2000); this.disk.save(); }
   recent(n = 100) { return this.d.log.slice(-n).reverse(); }
+  /** R124: طلبات Ziina المعلّقة */
+  zAdd(id: string, p: Omit<ZPend, 'at'>) { (this.d.zi ??= {})[id] = { ...p, at: this.now() }; const old = this.now() - 7 * 86_400_000; for (const [k, v] of Object.entries(this.d.zi)) if (v.at < old) delete this.d.zi[k]; this.disk.save(); }
+  zGet(id: string) { return this.d.zi?.[id] ?? null; }
+  zDone(id: string) { const z = this.d.zi?.[id]; if (!z || z.done) return false; z.done = this.now(); this.disk.save(); return true; }
+  zPending(maxAgeMs: number) { const t = this.now() - maxAgeMs; return Object.entries(this.d.zi ?? {}).filter(([, v]) => !v.done && v.at > t).map(([k]) => k); }
   isPaidOnly(origPrice: number) { const c = this.cfg(); return c.enabled && origPrice >= c.threshold; }
   price(origPrice: number) { return this.isPaidOnly(origPrice) ? Math.max(1, Math.round(origPrice / this.cfg().divisor)) : origPrice; }
 }

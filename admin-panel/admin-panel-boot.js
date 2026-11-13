@@ -1,5 +1,5 @@
 /* R70: تشغيل لوحة التحكم كموقع منفصل (بدون ملفات الموقع). */
-import { mountAdmin } from './admin.js?v=r123';
+import { mountAdmin } from './admin.js?v=r124';
 
 /** رابط الموقع: لو اللوحة على admin.la3bak.com يصير la3bak.com، ولو على la3bak.com/admin يصير نفس الموقع */
 const SITE = location.hostname.startsWith('admin.') ? `${location.protocol}//${location.hostname.slice(6)}${location.port ? ':' + location.port : ''}` : location.origin;

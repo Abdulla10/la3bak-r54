@@ -18,6 +18,7 @@ export function mountRecharge(root, { call }) {
       ${f ? `<div class="who"><b>${esc(f.name)} <small dir="ltr">#${esc(f.displayId)}</small></b><small>الرصيد: ${nf(f.coins)} 🪙 — منها مشحونة: ${nf(f.paid)} 💳</small>
         <div class="quick">${c.packs.map((p) => `<button type="button" class="ad-btn" data-rc-amt="${p.coins}"${S.busy ? ' disabled' : ''}>+${nf(p.coins)} (${nf(p.aed)} د)</button>`).join('')}</div>
         <form data-rc="credit" class="row"><input class="ad-in" name="coins" type="number" min="1000" placeholder="مبلغ ثاني" dir="ltr"><input class="ad-in" name="note" placeholder="ملاحظة (مثل رقم الإيصال)" maxlength="120"><button class="ad-btn" type="submit" style="flex:0 0 auto"${S.busy ? ' disabled' : ''}>اشحن</button></form></div>` : ''}</section>
+      <section class="ad-card"><h2>⚡ Ziina التلقائي</h2>${d.ziina?.on ? `<p class="ok">مفعّل ✅${d.ziina.test ? ' (وضع تجربة — ما ينخصم فلوس)' : ''} — اللاعب يدفع والعملات تنضاف تلقائياً.</p><button type="button" class="ad-btn" data-rc-wh>تسجيل الويبهوك عند Ziina (مرة وحدة)</button>` : '<p class="ad-muted">مو مفعّل. ماينوس يحط ZIINA_TOKEN بإعدادات السيرفر ويعيد التشغيل. لين ذاك تشتغل الروابط اليدوية تحت.</p>'}</section>
       <section class="ad-card"><h2>⚙️ إعدادات الشحن</h2><form data-rc="cfg" class="ad-form col">
         <label>الأشياء اللي سعرها من كذا وفوق (بالسعر الأصلي) تصير بالمشحون بس<input class="ad-in" name="threshold" type="number" value="${c.threshold}" dir="ltr"></label>
         <label>سعرها يتقسم على<input class="ad-in" name="divisor" type="number" min="1" max="100" value="${c.divisor}" dir="ltr"></label>
@@ -33,7 +34,7 @@ export function mountRecharge(root, { call }) {
     try { await call('recharge/credit', { method: 'POST', body: { player: S.d.found.id, coins, note, key: crypto.randomUUID() } }); S.msg = `تم ✅ انشحن ${nf(coins)} 💳`; } catch (e) { S.err = e.message; }
     S.busy = false; await load();
   };
-  root.addEventListener('click', (e) => { const b = e.target.closest('[data-rc-amt]'); if (b) credit(Number(b.dataset.rcAmt), ''); });
+  root.addEventListener('click', async (e) => { const b = e.target.closest('[data-rc-amt]'); if (b) credit(Number(b.dataset.rcAmt), ''); if (e.target.closest('[data-rc-wh]')) { try { await call('recharge/ziina-webhook', { method: 'POST', body: {} }); S.msg = 'تم ✅ تسجّل الويبهوك.'; S.err = ''; } catch (er) { S.err = er.message; } paint(); } });
   root.addEventListener('submit', async (e) => {
     const f = e.target.closest('[data-rc]'); if (!f) return; e.preventDefault();
     if (f.dataset.rc === 'find') { S.q = f.q.value.trim(); S.err = ''; S.msg = ''; return load(); }
