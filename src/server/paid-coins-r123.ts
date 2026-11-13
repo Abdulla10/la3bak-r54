@@ -6,10 +6,16 @@ type Credit = { id: string; to: string; coins: number; by: string; at: number; n
 type Cfg = { threshold: number; divisor: number; packs: RechargePack[]; whatsapp: string; enabled: boolean };
 type ZPend = { to: string; coins: number; aed: number; at: number; done?: number };
 type Data = { v: 1; paid: Record<string, number>; log: Credit[]; cfg?: Partial<Cfg>; zi?: Record<string, ZPend> };
+/** R125: نفس باقات العملات اللي بالمتجر (أقل دفع بـZiina 2 درهم) */
 export const DEFAULT_PACKS: RechargePack[] = [
+  { id: 'c1k', coins: 1_000, aed: 2, link: '' },
+  { id: 'c5k', coins: 5_000, aed: 3, link: '' },
+  { id: 'c15k', coins: 15_000, aed: 6, link: '' },
+  { id: 'c50k', coins: 50_000, aed: 19, link: '' },
   { id: 'p100k', coins: 100_000, aed: 35, link: '' },
-  { id: 'p300k', coins: 300_000, aed: 99, link: '' },
+  { id: 'c250k', coins: 250_000, aed: 85, link: '' },
   { id: 'p1m', coins: 1_000_000, aed: 349, link: '' },
+  { id: 'c5m', coins: 5_000_000, aed: 1599, link: '' },
 ];
 export class PaidCoins {
   private d: Data; private disk: Persister;
@@ -23,7 +29,7 @@ export class PaidCoins {
     const c = { ...this.cfg(), ...p };
     if (!Number.isSafeInteger(c.threshold) || c.threshold < 1000) throw new Error('الحد غير صحيح.');
     if (!Number.isSafeInteger(c.divisor) || c.divisor < 1 || c.divisor > 100) throw new Error('القسمة من 1 إلى 100.');
-    if (!Array.isArray(c.packs) || c.packs.length < 1 || c.packs.length > 8 || c.packs.some((k) => !Number.isSafeInteger(k.coins) || k.coins < 1000 || !(Number(k.aed) > 0) || typeof k.link !== 'string' || (k.link && !/^https:\/\/[^\s"'<>]{4,300}$/.test(k.link)))) throw new Error('الباقات غير صحيحة (الرابط لازم يبدأ بـ https://).');
+    if (!Array.isArray(c.packs) || c.packs.length < 1 || c.packs.length > 12 || c.packs.some((k) => !Number.isSafeInteger(k.coins) || k.coins < 1000 || !(Number(k.aed) > 0) || typeof k.link !== 'string' || (k.link && !/^https:\/\/[^\s"'<>]{4,300}$/.test(k.link)))) throw new Error('الباقات غير صحيحة (الرابط لازم يبدأ بـ https://).');
     if (typeof c.whatsapp !== 'string' || (c.whatsapp && !/^\+?[0-9]{8,15}$/.test(c.whatsapp))) throw new Error('رقم الواتساب غير صحيح.');
     c.packs = c.packs.map((k, i) => ({ id: String(k.id || 'p' + i).replace(/[^a-z0-9-]/gi, '').slice(0, 20) || 'p' + i, coins: k.coins, aed: Math.round(Number(k.aed) * 100) / 100, link: k.link }));
     this.d.cfg = c; this.disk.save(); return this.cfg();

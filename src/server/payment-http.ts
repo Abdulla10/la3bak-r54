@@ -37,7 +37,9 @@ export function wirePaymentRoutes(httpRoutes: FunctionalHttp, payments: Payments
     catch { return false; } // the immutable payment audit is already durable; never resubmit a refund because of a secondary audit.
   };
   httpRoutes.add('GET', '/api/payments/packs', wrap(ctx => payments.packs(ctx.user.id)));
-  httpRoutes.add('POST', '/api/payments/claims', wrap(async ctx => {
+  /* R125: الباقات المجانية انقفلت — الشحن صار من صفحة «اشحن» بالعملات المشحونة */
+  httpRoutes.add('POST', '/api/payments/claims', wrap(async () => { throw new FunctionalHttpError(410, 'الباقات المجانية انقفلت. اشحن رصيدك من زر «+» جنب العملات.'); }));
+  httpRoutes.add('POST', '/api/payments/claims-r68-disabled', wrap(async ctx => {
     fields(ctx, ['packId', 'key']);
     if (Object.keys(ctx.body).length !== 2 || !bounded(ctx.body.packId, 80) || !bounded(ctx.body.key, 80)) throw new FunctionalHttpError(400, 'معرّف الباقة ومفتاح العملية مطلوبين.');
     if (process.env.SINGLE_CURRENCY !== '0' && String(ctx.body.packId).startsWith('gems-')) throw new FunctionalHttpError(410, 'باقات الجواهر انشالت — الموقع صار بالعملات بس.');

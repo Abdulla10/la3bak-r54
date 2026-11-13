@@ -6,9 +6,11 @@ export function mountRecharge(root, { call }) {
   if (!document.querySelector('style[data-rc123a]')) { const st = document.createElement('style'); st.dataset.rc123a = '1'; st.textContent = `.rc123a{display:grid;gap:12px}.rc123a .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.rc123a .row>*{flex:1 1 120px;min-width:0}
 .rc123a .who{padding:12px;border-radius:14px;background:#ffffff0d;border:1px solid #f5c54266;display:grid;gap:8px}.rc123a .quick{display:flex;gap:6px;flex-wrap:wrap}.rc123a .quick button{flex:1 1 90px}
 .rc123a .ok{color:#5be08f;font-weight:800}.rc123a .err{color:#ff7d8c;font-weight:800}.rc123a .li{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:#ffffff08;font-size:13px}
-.rc123a .pk{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px}`; document.head.append(st); }
-  const S = { d: null, q: '', err: '', msg: '', busy: false };
-  const load = async () => { try { S.d = await call('recharge' + (S.q ? '?q=' + encodeURIComponent(S.q) : '')); if (S.d.notFound) S.err = 'ما لقيت اللاعب.'; } catch (e) { S.err = e.message; } paint(); };
+.rc123a .pk{display:grid;grid-template-columns:1fr .8fr 2fr auto;gap:6px}`; document.head.append(st); }
+  const S = { d: null, q: '', err: '', msg: '', busy: false, packs: [] };
+  const STORE = [[1000, 2], [5000, 3], [15000, 6], [50000, 19], [100000, 35], [250000, 85], [1000000, 349], [5000000, 1599]];
+  const readPacks = (f) => S.packs.map((p, i) => ({ id: p.id, coins: Number(f['c' + i]?.value ?? p.coins), aed: Number(f['a' + i]?.value ?? p.aed), link: String(f['l' + i]?.value ?? p.link).trim() }));
+  const load = async () => { try { S.d = await call('recharge' + (S.q ? '?q=' + encodeURIComponent(S.q) : '')); if (S.d.notFound) S.err = 'ما لقيت اللاعب.'; S.packs = S.d.cfg.packs.map((p) => ({ ...p })); } catch (e) { S.err = e.message; } paint(); };
   const paint = () => {
     const d = S.d; if (!d) { root.innerHTML = '<p class="ad-muted">جاري التحميل…</p>'; return; }
     const f = d.found, c = d.cfg;
@@ -24,7 +26,10 @@ export function mountRecharge(root, { call }) {
         <label>سعرها يتقسم على<input class="ad-in" name="divisor" type="number" min="1" max="100" value="${c.divisor}" dir="ltr"></label>
         <label>رقم الواتساب لاستلام الإيصالات (مع رمز الدولة)<input class="ad-in" name="whatsapp" placeholder="9715xxxxxxxx" value="${esc(c.whatsapp)}" dir="ltr"></label>
         <b>الباقات (العملات — السعر بالدرهم — رابط Ziina)</b>
-        ${c.packs.map((p, i) => `<div class="pk"><input class="ad-in" name="c${i}" type="number" value="${p.coins}" dir="ltr"><input class="ad-in" name="a${i}" type="number" step="0.01" value="${p.aed}" dir="ltr"><input class="ad-in" name="l${i}" placeholder="https://pay.ziina.com/..." value="${esc(p.link)}" dir="ltr"></div>`).join('')}
+        <p class="ad-muted">سوّ رابط Ziina لكل باقة بنفس السعر، والصقه جنبها. الباقة اللي بدون رابط تطلع للاعب «قريبًا».</p>
+        <button type="button" class="ad-btn" data-rc-store>⬇️ حط كل باقات المتجر (8 باقات) — الروابط اللي حطيتها تبقى</button>
+        ${S.packs.map((p, i) => `<div class="pk"><input class="ad-in" name="c${i}" type="number" value="${p.coins}" dir="ltr" title="العملات"><input class="ad-in" name="a${i}" type="number" step="0.01" value="${p.aed}" dir="ltr" title="السعر بالدرهم"><input class="ad-in" name="l${i}" placeholder="https://pay.ziina.com/..." value="${esc(p.link)}" dir="ltr"><button type="button" class="ad-btn" data-rc-del="${i}" title="حذف" style="padding:6px 10px">✕</button></div>`).join('')}
+        <button type="button" class="ad-btn" data-rc-add>+ باقة</button>
         <button class="ad-btn" type="submit">حفظ الإعدادات</button></form></section>
       <section class="ad-card"><h2>آخر الشحنات</h2>${d.log.length ? d.log.map((l) => `<div class="li"><span>${esc(l.name)} <small dir="ltr">#${esc(l.displayId)}</small>${l.note ? ` — ${esc(l.note)}` : ''}</span><b>+${nf(l.coins)} 💳</b><small>${esc(dt(l.at))} · ${esc(l.by)}</small></div>`).join('') : '<p class="ad-muted">ما فيه شحنات للحين.</p>'}</section></div>`;
   };
@@ -34,13 +39,17 @@ export function mountRecharge(root, { call }) {
     try { await call('recharge/credit', { method: 'POST', body: { player: S.d.found.id, coins, note, key: crypto.randomUUID() } }); S.msg = `تم ✅ انشحن ${nf(coins)} 💳`; } catch (e) { S.err = e.message; }
     S.busy = false; await load();
   };
-  root.addEventListener('click', async (e) => { const b = e.target.closest('[data-rc-amt]'); if (b) credit(Number(b.dataset.rcAmt), ''); if (e.target.closest('[data-rc-wh]')) { try { await call('recharge/ziina-webhook', { method: 'POST', body: {} }); S.msg = 'تم ✅ تسجّل الويبهوك.'; S.err = ''; } catch (er) { S.err = er.message; } paint(); } });
+  root.addEventListener('click', async (e) => { const b = e.target.closest('[data-rc-amt]'); if (b) credit(Number(b.dataset.rcAmt), ''); const f = root.querySelector('[data-rc=cfg]');
+    if (e.target.closest('[data-rc-store]')) { const cur = f ? readPacks(f) : S.packs; S.packs = STORE.map(([coins, aed]) => { const old = cur.find((p) => p.coins === coins); return { id: 'c' + coins, coins, aed: old?.aed ?? aed, link: old?.link ?? '' }; }); S.msg = 'تمت تعبئة باقات المتجر — حط الروابط واضغط «حفظ الإعدادات».'; paint(); return; }
+    if (e.target.closest('[data-rc-add]')) { if (f) S.packs = readPacks(f); if (S.packs.length < 12) S.packs.push({ id: 'x' + Date.now().toString(36).slice(-5), coins: 0, aed: 0, link: '' }); paint(); return; }
+    const del = e.target.closest('[data-rc-del]'); if (del) { if (f) S.packs = readPacks(f); S.packs.splice(Number(del.dataset.rcDel), 1); paint(); return; }
+    if (e.target.closest('[data-rc-wh]')) { try { await call('recharge/ziina-webhook', { method: 'POST', body: {} }); S.msg = 'تم ✅ تسجّل الويبهوك.'; S.err = ''; } catch (er) { S.err = er.message; } paint(); } });
   root.addEventListener('submit', async (e) => {
     const f = e.target.closest('[data-rc]'); if (!f) return; e.preventDefault();
     if (f.dataset.rc === 'find') { S.q = f.q.value.trim(); S.err = ''; S.msg = ''; return load(); }
     if (f.dataset.rc === 'credit') return credit(Number(f.coins.value), f.note.value.trim());
     if (f.dataset.rc === 'cfg') {
-      const packs = S.d.cfg.packs.map((p, i) => ({ id: p.id, coins: Number(f['c' + i].value), aed: Number(f['a' + i].value), link: f['l' + i].value.trim() }));
+      const packs = readPacks(f).filter((p) => p.coins > 0);
       try { await call('recharge/config', { method: 'POST', body: { threshold: Number(f.threshold.value), divisor: Number(f.divisor.value), whatsapp: f.whatsapp.value.trim(), packs } }); S.msg = 'تم ✅ انحفظت الإعدادات.'; S.err = ''; } catch (er) { S.err = er.message; }
       return load();
     }
