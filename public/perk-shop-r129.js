@@ -46,7 +46,7 @@ export async function openPerkShop() {
   const load = async () => { try { d = await api('/api/perk-shop'); paint(); } catch (e) { sh.innerHTML = `<button type="button" class="x" data-x>✕</button><p class="sub">${esc(e.message)}</p>`; } };
   sh.addEventListener('click', async (e) => {
     if (e.target.closest('[data-x]')) { close(); return; }
-    if (e.target.closest('[data-rc]')) { close(); import('/recharge-r123.js?v=r128h').then((m) => m.openRecharge()).catch(() => {}); return; }
+    if (e.target.closest('[data-rc]')) { close(); import('/recharge-r123.js?v=r132').then((m) => m.openRecharge()).catch(() => {}); return; }
     if (e.target.closest('[data-bc]')) { close(); import('/broadcast-r67.js?v=r67ao').then((m) => m.openComposer?.()).catch(() => {}); return; }
     const b = e.target.closest('[data-buy]'); if (!b || busy) return;
     const p = d.passes.find((x) => x.key === b.dataset.buy); if (!p) return;

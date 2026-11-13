@@ -2738,6 +2738,12 @@ export async function createApp(
         const sec = Math.round(Number(url.searchParams.get('sec') ?? 0)); if (!(sec >= 1 && sec <= 60)) return json(res, 400, { error: 'التسجيل من ثانية إلى 60 ثانية.' }, ph);
         try { const id = voiceNotes.save(user.id, input); return json(res, 200, { ok: true, id, token: `[vn:${id}:${sec}]` }, ph); } catch { return json(res, 400, { error: 'الصوت ما ينقرى.' }, ph); }
       }
+      /* R132: ربط تطبيق جوجل بلاي (TWA) بالموقع — Digital Asset Links. القيم من البيئة: TWA_PACKAGE و TWA_SHA256 (بصمات مفصولة بفاصلة) */
+      if (url.pathname === '/.well-known/assetlinks.json' && req.method === 'GET') {
+        const pkg = String(process.env.TWA_PACKAGE ?? '').trim(); const fps = String(process.env.TWA_SHA256 ?? '').split(',').map((x) => x.trim().toUpperCase()).filter((x) => /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(x));
+        const body = pkg && /^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$/.test(pkg) && fps.length ? [{ relation: ['delegate_permission/common.handle_all_urls'], target: { namespace: 'android_app', package_name: pkg, sha256_cert_fingerprints: fps } }] : [];
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify(body)); return;
+      }
       /* R124: رجوع اللاعب من صفحة Ziina — نتأكد ونشحن، ونرجعه للموقع مع كوكي للرسالة */
       if (url.pathname === '/api/ziina/return' && req.method === 'GET') {
         const pid = String(url.searchParams.get('zp') ?? ''); let val = 'cancel';

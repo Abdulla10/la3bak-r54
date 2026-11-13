@@ -60,17 +60,6 @@
       ]
     },
     {
-      "name": "جاكبوت لعبك",
-      "short_name": "جاكبوت",
-      "url": "/#/slot",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
       "name": "الرسائل",
       "short_name": "الرسائل",
       "url": "/#/messages",
@@ -81,5 +70,9 @@
         }
       ]
     }
+  ],
+  "prefer_related_applications": false,
+  "display_override": [
+    "standalone"
   ]
 }

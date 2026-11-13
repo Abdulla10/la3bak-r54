@@ -4,7 +4,7 @@ import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r103-search-r17';
 import * as PR from './profile.js?v=r129';
-import * as UNIFIED from '../unified/shell.js?v=r131';
+import * as UNIFIED from '../unified/shell.js?v=r132';
 import * as REF from '../unified/home.js?v=r129';
 import * as SOCIAL from '../unified/social.js?v=r131';
 const { leaveSocial, refreshSocial } = SOCIAL;
@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r107';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r131';
+import * as PWA from '../pwa.js?v=r132';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r129';
@@ -474,7 +474,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r131');
+  const M = await import('../settings-r60.js?v=r132');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -832,8 +832,8 @@ async function render() {
     case 'shop':
       if (needUser('#/shop/'+r.a)) return;
       /* R125: الباقات القديمة (المجانية) انشالت — صفحة «اشحن» الجديدة بداله */
-      if (r.a === 'perks') { import('../perk-shop-r129.js?v=r129').then((m) => m.openPerkShop()).catch(() => {}); (globalThis.__LA3BAK_NAV__ || location).hash = '#/shop'; return; }
-      if (r.a === 'packs') { import('../recharge-r123.js?v=r128h').then((m) => m.openRecharge()).catch(() => {}); (globalThis.__LA3BAK_NAV__ || location).hash = '#/shop'; return; }
+      if (r.a === 'perks') { import('../perk-shop-r129.js?v=r132').then((m) => m.openPerkShop()).catch(() => {}); (globalThis.__LA3BAK_NAV__ || location).hash = '#/shop'; return; }
+      if (r.a === 'packs') { import('../recharge-r123.js?v=r132').then((m) => m.openRecharge()).catch(() => {}); (globalThis.__LA3BAK_NAV__ || location).hash = '#/shop'; return; }
       if (changed && r.a === 'bg') SHOP.SH.tab = 'bg';
       if (changed && SHOP.SH.tab === 'gift') GIFT.loadList(req).then(() => { if (parseRoute().name === 'shop') render(); });
       if (changed) { SHOP.SH.confirm = null; SHOP.SH.want = true; }
@@ -1180,14 +1180,17 @@ function agreementView() {
     </ul></section><a class="btn ghost block" href="#/settings">رجوع للإعدادات</a></div>`;
 }
 function privacyView() {
+  /* R132: سياسة خصوصية محدّثة (نفس الصفحة الكاملة /privacy.html اللي ينحط رابطها في جوجل بلاي) */
+  const li = (x) => `<li><span>${x}</span></li>`;
   return `<div class="stack"><h1 class="section-title" style="margin-top:0">سياسة الخصوصية</h1>
-    <section class="card"><ul class="steps"><li><span>ما نطلب بريد ولا رقم جوال ولا كلمة سر. نحفظ اسمك في ملف تعريف (cookie) عشان تكمل لعبك.</span></li>
-    <li><span>شخصيتك وإحصائياتك وإنجازاتك ومظهرك وإعداداتك محفوظة على جهازك فقط.</span></li>
-    <li><span>تسجيل الدخول بـ Google اختياري: نتحقق من هويتك عند Google ونحفظ معرّفاً داخلياً ثابتاً لربط حسابك فقط، وما نحفظ بريدك ولا صورتك من Google. صورتك التي ترفعها تنحفظ على خادمنا مربوطة بحسابك.</span></li>
-    <li><span>الغرف تنحذف تلقائياً إذا خملت. اسمك يشوفه أعضاء غرفتك.</span></li>
-    <li><span>المجتمع عام: منشوراتك وتعليقاتك واسمك وأفاتارك المجهّز ومستواك وعدد مبارياتك يشوفها الكل. صورتك الشخصية المرفوعة ما تظهر بالمجتمع، ورصيدك ما يظهر لأحد. الصور اللي تنشرها تتصغّر بجهازك قبل الرفع (فتنشال منها بيانات الموقع والكاميرا). تقدر تحذف منشوراتك وتعليقاتك بأي وقت، وتنحذف معها الصورة.</span></li>
-    <li><span>الصدارة الأسبوعية تحفظ اسمك ونقاطك للأسبوع الحالي وتنحذف بعد عدة أسابيع.</span></li>
-    </ul></section></div>`;
+    <section class="card"><ul class="steps">
+    ${li('تسجيل الدخول بـ Google: نحفظ معرّف داخلي يربط حسابك فقط، وما نحفظ كلمة سرّك.')}
+    ${li('ملفك (الصورة، النبذة، الدولة، الجنس، تاريخ الميلاد) اختياري، وتاريخ ميلادك ورصيدك ما يشوفهم أحد.')}
+    ${li('رسائل الغرف والرسائل الخاصة والرسائل الصوتية والصور تنحفظ على خوادمنا عشان توصل، وتقدر تحذفها.')}
+    ${li('صوتك في الغرف ينبث مباشرة وما نسجّله. المايك يشتغل بس لما تصعد أو تسجّل.')}
+    ${li('نحفظ IP ونوع الجهاز لحماية حسابك ومنع الإساءة. ما نبيع بياناتك ولا نستخدمها للإعلانات.')}
+    ${li('تقدر تحذف حسابك من الإعدادات، وينحذف نهائياً بعد 30 يوم.')}
+    </ul><p style="margin:10px 0 0"><a href="/privacy.html" target="_blank" rel="noopener">اقرأ السياسة كاملة</a> · <a href="/delete-account.html" target="_blank" rel="noopener">طريقة حذف الحساب</a></p></section></div>`;
 }
 
 /* تصنيف صفحة الألعاب (عرض فقط): تعيين يدوي لكل لعبة موجودة، وللألعاب الجديدة نستنتج من تصنيف المحرك */
@@ -1997,7 +2000,7 @@ const ACTIONS = {
     SHOP.SH.busy = false;
     if(res.net){toast(res.error,true);render();return;}
     SHOP.SH.confirm = null;
-    if (!res.ok) { SHOP.apply(res); toast(res.error, true); if (res.code === 'paid_required') import('../recharge-r123.js?v=r128h').then((m) => m.openRecharge()).catch(() => {}); } else { SHOP.apply(res); S.coins = res.coins; toast('تم الشراء ✅ تقدر تجهّزه الحين.'); }
+    if (!res.ok) { SHOP.apply(res); toast(res.error, true); if (res.code === 'paid_required') import('../recharge-r123.js?v=r132').then((m) => m.openRecharge()).catch(() => {}); } else { SHOP.apply(res); S.coins = res.coins; toast('تم الشراء ✅ تقدر تجهّزه الحين.'); }
     ACCT.me = null; render();
   },
   async 'shop-equip'(el) {

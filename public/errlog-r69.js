@@ -1,3 +1,5 @@
+/* R132: تطبيق جوجل بلاي (TWA): نلقط ?app=android قبل ما ينشال من الرابط */
+try { if (/[?&]app=android\b/.test(location.search) || String(document.referrer).startsWith('android-app://')) localStorage.setItem('la3_app', 'android'); if (localStorage.getItem('la3_app') === 'android') document.documentElement.dataset.app = 'android'; } catch { /* */ }
 /* R69zu: أي خطأ يصير بالموقع عند اللاعب يوصل للسيرفر (بدون بيانات شخصية) عشان نصلّحه بسرعة */
 (() => {
   if (globalThis.__la3ErrLog) return; globalThis.__la3ErrLog = true;

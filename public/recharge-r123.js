@@ -22,6 +22,8 @@ export async function openRecharge() {
   root.addEventListener('click', (e) => { if (e.target === root || e.target.closest('[data-rc=x]')) root.remove(); });
   let d; try { const r = await fetch('/api/recharge', { credentials: 'same-origin', cache: 'no-store' }); d = await r.json(); if (!r.ok || !d.ok) throw new Error(d.error || 'سجّل دخولك أول.'); }
   catch (e) { sh.innerHTML = `<button type="button" class="x" data-rc="x">✕</button><p class="sub">${esc(e.message)}</p>`; return; }
+  /* R132: داخل تطبيق جوجل بلاي ما نعرض روابط دفع خارجية (سياسة المتجر) — الشحن «قريباً» لين نربط Google Play Billing */
+  if (document.documentElement.dataset.app === 'android' && !d.closed) d = { ...d, closed: true, closedMsg: 'قريباً' };
   if (d.closed) { sh.innerHTML = `<button type="button" class="x" data-rc="x" aria-label="إغلاق">✕</button><h2>💳 اشحن رصيدك</h2>
     <div class="bal"><div><small>رصيدك</small><b style="white-space:nowrap;display:flex;justify-content:center;align-items:center;gap:4px">${nf(d.coins)}${COIN}</b></div><div><small>منها مشحونة</small><b>${nf(d.paid)} 💳</b></div></div>
     ${(d.packs || []).map((p) => `<div class="pk"><div><b style="white-space:nowrap;display:inline-flex;align-items:center;gap:4px">${nf(p.coins)}${COIN}</b><small>${nf(p.aed)} درهم</small></div><span class="pay" aria-disabled="true" style="opacity:.8;white-space:nowrap;max-width:55%;overflow:hidden;text-overflow:ellipsis">${esc(d.closedMsg)}</span></div>`).join('')}`; return; }
