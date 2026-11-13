@@ -654,3 +654,16 @@ html body .so-page .so-room-detail.r68 .r68-row:has(input[name=text]:focus)>.r68
 @keyframes rw69f{from{opacity:0}}
 /* R69zs: شريط «ارجع للعبة» داخل الغرف الصوتية يطلع فوق (ما يغطي الدردشة) */
 html.lb-social-viewport-r27 .rs69,html.has-game-voice .rs69{bottom:auto!important;top:calc(70px + env(safe-area-inset-top))!important}
+/* R126: سينما الهدايا */
+.gc126{position:fixed;inset:0;z-index:2147482100;overflow:hidden;cursor:pointer;animation:gc126in .35s ease both}
+.gc126.is-out{animation:gc126out .42s ease both}
+@keyframes gc126in{from{opacity:0}}@keyframes gc126out{to{opacity:0}}
+.gc126 canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.gc126-stage{position:absolute;inset:0;perspective:1100px;perspective-origin:50% 45%;pointer-events:none}
+.gc126-hero{position:absolute;left:0;top:0;transform-style:preserve-3d;will-change:transform,opacity;filter:drop-shadow(0 30px 40px #000c) drop-shadow(0 0 30px #ffd16655)}
+.gc126-hero .gb67-art,.gc126-hero .gift-art,.gc126-hero .gift-art.g3d{width:100%!important;height:100%!important;display:grid;place-items:center}
+.gc126-hero img,.gc126-hero svg{width:100%!important;height:100%!important;object-fit:contain;animation:none!important}
+.gc126-refl{position:absolute;left:10%;right:10%;bottom:-14%;height:16%;border-radius:50%;background:radial-gradient(closest-side,#0009,transparent);transform:rotateX(70deg)}
+.gc126-bar{position:absolute!important;top:auto!important;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 9vh);transform:translateX(-50%);z-index:3;animation:gc126bar .6s .3s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes gc126bar{from{transform:translateX(-50%) translateY(40px) scale(.8);opacity:0}}
+.gc126-snd{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;z-index:4;width:40px;height:40px;border-radius:50%;border:1.5px solid #ffffff3a;background:#00000055;color:#fff;font-size:18px}
