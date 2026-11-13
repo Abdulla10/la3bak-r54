@@ -1,4 +1,4 @@
-import * as PACKS from './payments.js?v=r68i';
+import * as PACKS from './payments.js?v=r128f';
 import { renderProfileIcon as icon } from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import { giftArt } from '../giftart.js?v=r68i-r14';
 

@@ -173,9 +173,21 @@ function html(ctx, state) {
   return `<div class="lbp-page" data-lb-page="payments" data-lbp-owner="${esc(state.owner)}" dir="rtl">${hero}<nav class="lbp-links" aria-label="التنقل بين المتجر والمحفظة"><a class="btn" href="#/shop">${icon('back')} المتجر</a><a class="btn" href="#/wallet">${icon('file')} المحفظة</a>${action('حدّث الباقات والسجل', 'reload', !apiReady(ctx) || state.busy || state.loadingPacks || state.loadingHistory)}</nav>${banner(state)}${unavailable}${state.error ? note(state.error, true) : ''}${state.notice ? note(state.notice) : ''}${!complimentary(state) && state.request?.orderId && !state.order ? note('عندك طلب محفوظ. بنجيب حالته من الخادم قبل أي طلب يديد.') : ''}<div class="lbp-content" aria-busy="${state.busy || state.loadingPacks || state.loadingHistory}">${claimView(state, ctx)}${resultView(state, ctx)}${confirmation(state, ctx)}${catalogueView(state, ctx)}${historyView(state, ctx)}</div></div>`;
 }
 
-export function render(ctx = {}) { return html(ctx, stateFor(ctx)); }
+/* R128f: الباقات المجانية انقفلت — الصفحة صارت بوابة «اشحن رصيدك» (نفس شاشة الشحن) */
+const COIN128 = '<svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true"><defs><radialGradient id="c128g" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff3b0"/><stop offset=".45" stop-color="#f7c948"/><stop offset="1" stop-color="#b7791f"/></radialGradient></defs><circle cx="24" cy="24" r="22" fill="url(#c128g)" stroke="#8a5a12" stroke-width="2"/><circle cx="24" cy="24" r="16" fill="none" stroke="#fde68a" stroke-width="1.6" opacity=".8"/><path d="M24 13l3.1 6.6 7.2.8-5.4 4.9 1.5 7.1L24 28.8l-6.4 3.6 1.5-7.1-5.4-4.9 7.2-.8z" fill="#8a5a12" opacity=".85"/></svg>';
+function gate128() { return `<section class="card lbp-r128" style="margin:14px;padding:22px 16px;border-radius:22px;text-align:center;background:linear-gradient(180deg,#2a1650,#170c2e);border:1px solid rgba(250,204,21,.35);color:#f4efff">${COIN128}<h2 style="margin:10px 0 6px;font-size:20px">اشحن رصيدك</h2><p style="margin:0 0 14px;color:#c4b5fd;font-size:14px">باقات العملات وأسعارها كلها هني.</p><button type="button" data-r128-open style="border:0;border-radius:999px;padding:12px 30px;font:inherit;font-weight:800;font-size:16px;color:#2a1650;background:linear-gradient(180deg,#fde68a,#e5a91c)">افتح الباقات</button></section>`; }
+const open128 = () => import('../recharge-r123.js?v=r128f').then((m) => m.openRecharge()).catch(() => {});
+export function render() { return gate128(); }
 
 export function mount(root, ctx = {}) {
+  root.innerHTML = gate128();
+  const onClick = (e) => { if (e.target.closest('[data-r128-open]')) open128(); };
+  root.addEventListener('click', onClick);
+  if (!ctx.embeddedWallet) open128();
+  return { destroy() { root.removeEventListener('click', onClick); } };
+}
+
+export function mountOld128(root, ctx = {}) {
   const state = stateFor(ctx);
   let live = true;
   let pointerHeld = false;
