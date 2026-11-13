@@ -27,7 +27,8 @@ const BAD_WORDS = ['شرموطه', 'شرموطة', 'قحبه', 'قحبة', 'من
 const norm = (s: string) => s.replace(/[ً-ْـ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').toLowerCase();
 
 /** يرجع رسالة الخطأ لو الاسم مرفوض (HTML/سكربت/روابط/كلمات مسيئة)، أو null لو سليم */
-export function nameProblem(name: string): string | null {
+/** allowStaff: حسابات الإدارة (من لوحة التحكم) تقدر تسمّي نفسها «الإدارة» أو «الدعم» */
+export function nameProblem(name: string, opts: { allowStaff?: boolean } = {}): string | null {
   if (/[<>&"'`{}\\]/.test(name)) return 'الاسم فيه رموز غير مسموحة. استخدم حروف وأرقام فقط.';
   if (/(javascript|data|vbscript)\s*:|:\/\/|www\.|\.(com|net|org)\b/i.test(name)) return 'ما نقبل روابط أو أكواد داخل الاسم.';
   const n = norm(name);
@@ -37,7 +38,7 @@ export function nameProblem(name: string): string | null {
   }
   // R58: المراجعة التلقائية الموحّدة (روابط، أرقام تواصل، انتحال صفة الإدارة، كلمات مسيئة إضافية)
   const m = moderateText(name, 'profile-name');
-  return m.ok ? null : m.message;
+  return m.ok || (opts.allowStaff && m.code === 'moderation_impersonation') ? null : m.message;
 }
 
 /** الأوقات بالملّي ثانية؛ كل إصدار له معرّف مستقل حتى لو الحساب نفسه. */

@@ -13,3 +13,9 @@ test('R128: ملخص «شو فاتك»', () => {
   assert.equal(r.summary('R', now + 1, name).gifts.length, 0);
   now += 4 * 3600_000; r.sweep(); assert.equal(r.summary('R', 0, name).messages, 0);
 });
+import { nameProblem } from '../src/server/session.ts';
+test('R128b: اسم «الإدارة» للمشرفين بس', () => {
+  assert.ok(nameProblem('الاداره'));
+  assert.equal(nameProblem('الاداره', { allowStaff: true }), null);
+  assert.ok(nameProblem('www.x.com', { allowStaff: true }));
+});

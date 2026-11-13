@@ -3101,7 +3101,7 @@ export async function createApp(
         /* R69zk: حساب جديد يحتاج إثبات عمل (يحسبه الجوال بروحه) + فخ للبوتات */
         if (!user) { const sk = shield.key(shieldIp(req) ?? 'shared'); if (hp) return json(res, 400, { error: 'الطلب غير صالح.' }); if (!shield.verify(sk, powIn?.c, powIn?.n)) return json(res, 428, { error: 'حدّث الصفحة وجرّب مرة ثانية.', pow: true }); shield.noteSignup(sk); }
         if (name.length < 2) return json(res, 400, { error: 'اكتب اسم من حرفين على الأقل.' });
-        const problem = nameProblem(name);
+        const problem = nameProblem(name, { allowStaff: !!user && platform.staff().some((x) => x.id === user.id) });
         if (problem) return json(res, 400, { error: problem });
         const next: User = { id: user?.id ?? newUserId(), name };
         accounts.touch(next.id, name);
