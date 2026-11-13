@@ -1,7 +1,7 @@
 /* R67: الرسائل الخاصة من داخل الغرفة — لوحة تطلع من تحت والغرفة شغالة وراها.
  * نفس خدمة /api/social-private (أصدقاء مقبولين فقط، نص فقط). ما نطلعك من الغرفة ولا نوقف الصوت. */
 import * as E2E from '../e2e-r69.js?v=r69zj';
-import { voiceNoteHTML, recordVoiceNote, MIC_ICON, isVoiceNote } from '../voice-note-r127.js?v=r127';
+import { voiceNoteHTML, recordVoiceNote, MIC_ICON, isVoiceNote } from '../voice-note-r127.js?v=r127b';
 const BASE = '/api/social-private/';
 const PUB = /^[A-Za-z0-9_-]{16}$/;
 const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
