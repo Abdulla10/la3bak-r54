@@ -37,12 +37,12 @@ type Data = { v: 1; levels: Partial<Record<PerkKey, number>>; used: Record<strin
 export type PassKey = 'boost' | 'visitors' | 'stealth' | 'xpBoost' | 'nfx' | 'seat';
 export type PassDef = { key: PassKey; icon: string; name: string; desc: string; days: number; price: number };
 export const PASS_DEFS: PassDef[] = [
-  { key: 'boost', icon: '🚀', name: 'رفع الغرفة', desc: 'غرفتك تثبت أول القائمة بالرئيسية وقسم الغرف، مع شارة «مميزة».', days: 1, price: 30_000 },
-  { key: 'visitors', icon: '👁️', name: 'مين زار ملفي', desc: 'تشوف أسماء وصور اللي زاروا ملفك ومتى.', days: 30, price: 20_000 },
-  { key: 'stealth', icon: '🥷', name: 'وضع التخفي', desc: 'تخفي زياراتك للملفات ودخوليتك وحالة «متصل الآن» (من إعدادات الخصوصية).', days: 30, price: 40_000 },
-  { key: 'xpBoost', icon: '⚡', name: 'مضاعف الليفل ×2', desc: 'ضعف الخبرة من كل مباراة، وترفع ليفلك بسرعة.', days: 7, price: 15_000 },
-  { key: 'nfx', icon: '🌈', name: 'اسم متحرك', desc: 'اسمك يلمع ويتحرك بألوان ذهبية بالدردشة والمقاعد.', days: 30, price: 25_000 },
-  { key: 'seat', icon: '🪑', name: 'المقعد الذهبي', desc: 'تقعد على مقاعد المايك المقفولة (المحجوزة) بأي غرفة.', days: 30, price: 35_000 },
+  { key: 'boost', icon: '🚀', name: 'رفع الغرفة', desc: 'غرفتك تثبت أول القائمة بالرئيسية وقسم الغرف، مع شارة «مميزة».', days: 1, price: 150_000 },
+  { key: 'visitors', icon: '👁️', name: 'مين زار ملفي', desc: 'تشوف أسماء وصور اللي زاروا ملفك ومتى.', days: 30, price: 120_000 },
+  { key: 'stealth', icon: '🥷', name: 'وضع التخفي', desc: 'تخفي زياراتك للملفات ودخوليتك وحالة «متصل الآن» (من إعدادات الخصوصية).', days: 30, price: 250_000 },
+  { key: 'xpBoost', icon: '⚡', name: 'مضاعف الليفل ×2', desc: 'ضعف الخبرة من كل مباراة، وترفع ليفلك بسرعة.', days: 7, price: 120_000 },
+  { key: 'nfx', icon: '🌈', name: 'اسم متحرك', desc: 'اسمك يلمع ويتحرك بألوان ذهبية بالدردشة والمقاعد.', days: 30, price: 200_000 },
+  { key: 'seat', icon: '🪑', name: 'المقعد الذهبي', desc: 'تقعد على مقاعد المايك المقفولة (المحجوزة) بأي غرفة.', days: 30, price: 200_000 },
 ];
 const day = (t: number) => new Date(t + 4 * 3600_000).toISOString().slice(0, 10);
 
