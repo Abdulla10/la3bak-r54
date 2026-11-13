@@ -406,3 +406,7 @@ html body :is(dialog.so-dialog,#view):not(#_) .mn121-3{color:#3a1600!important}
 /* R126: أسماء الاختصارات بالرئيسية ما تطلع برا البطاقة */
 html body .h68-short a:not(#_){min-width:0;overflow:hidden}
 html body .h68-short b:not(#_){max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+/* R128c: رسالة «تم الحفظ في حسابك» بالملف — داكنة بدل الأبيض */
+.pvp-page .lpu-status:not(:empty),.pf68>.lpu-status:not(:empty){background:linear-gradient(180deg,rgba(34,197,94,.16),rgba(34,197,94,.08))!important;border:1px solid rgba(74,222,128,.45)!important;color:#bbf7d0!important;border-radius:14px!important;padding:10px 14px!important;margin:8px 14px!important;font-weight:700;justify-content:center}
+.pvp-page .lpu-status[role="alert"]:not(:empty),.pf68>.lpu-status[role="alert"]:not(:empty){background:rgba(239,68,68,.14)!important;border-color:rgba(248,113,113,.5)!important;color:#fecaca!important}
+.pvp-page .lpu-status:not(:empty) *{color:inherit!important}

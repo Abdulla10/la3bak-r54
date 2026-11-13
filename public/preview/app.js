@@ -47,7 +47,7 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r107';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r128';
+import * as PWA from '../pwa.js?v=r128c';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
 import * as MIS from '../missions.js?v=r123';
@@ -474,7 +474,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r128');
+  const M = await import('../settings-r60.js?v=r128c');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
