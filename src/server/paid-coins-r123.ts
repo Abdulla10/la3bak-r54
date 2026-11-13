@@ -32,7 +32,7 @@ export class PaidCoins {
     if (!Array.isArray(c.packs) || c.packs.length < 1 || c.packs.length > 12 || c.packs.some((k) => !Number.isSafeInteger(k.coins) || k.coins < 1000 || !(Number(k.aed) > 0) || typeof k.link !== 'string' || (k.link && !/^https:\/\/[^\s"'<>]{4,300}$/.test(k.link)))) throw new Error('الباقات غير صحيحة (الرابط لازم يبدأ بـ https://).');
     if (typeof c.whatsapp !== 'string' || (c.whatsapp && !/^\+?[0-9]{8,15}$/.test(c.whatsapp))) throw new Error('رقم الواتساب غير صحيح.');
     if (typeof c.closed !== 'boolean') throw new Error('بيانات غير صحيحة.');
-    c.closedMsg = String(c.closedMsg ?? '').replace(/[<>]/g, '').trim().slice(0, 140);
+    c.closedMsg = String(c.closedMsg ?? '').replace(/[<>]/g, '').trim().slice(0, 20);
     c.packs = c.packs.map((k, i) => ({ id: String(k.id || 'p' + i).replace(/[^a-z0-9-]/gi, '').slice(0, 20) || 'p' + i, coins: k.coins, aed: Math.round(Number(k.aed) * 100) / 100, link: k.link }));
     this.d.cfg = c; this.disk.save(); return this.cfg();
   }

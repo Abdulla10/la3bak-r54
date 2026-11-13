@@ -23,8 +23,8 @@ export function mountRecharge(root, { call }) {
         <form data-rc="credit" class="row"><input class="ad-in" name="coins" type="number" min="1000" placeholder="مبلغ ثاني" dir="ltr"><input class="ad-in" name="note" placeholder="ملاحظة (مثل رقم الإيصال)" maxlength="120"><button class="ad-btn" type="submit" style="flex:0 0 auto"${S.busy ? ' disabled' : ''}>اشحن</button></form></div>` : ''}</section>
       <section class="ad-card"><h2>⚡ Ziina التلقائي</h2>${d.ziina?.on ? `<p class="ok">مفعّل ✅${d.ziina.test ? ' (وضع تجربة — ما ينخصم فلوس)' : ''} — اللاعب يدفع والعملات تنضاف تلقائياً.</p><button type="button" class="ad-btn" data-rc-wh>تسجيل الويبهوك عند Ziina (مرة وحدة)</button>` : '<p class="ad-muted">مو مفعّل. ماينوس يحط ZIINA_TOKEN بإعدادات السيرفر ويعيد التشغيل. لين ذاك تشتغل الروابط اليدوية تحت.</p>'}</section>
       <section class="ad-card" style="border:1px solid ${c.closed ? 'rgba(248,113,113,.6)' : 'rgba(74,222,128,.45)'}"><h2>${c.closed ? '🔒 الشحن مقفل' : '🟢 الشحن مفتوح'}</h2>
-        <p class="ad-muted">${c.closed ? 'اللاعبين ما يقدرون يشحنون الحين — يطلع لهم الكلام اللي تحت.' : 'اللاعبين يقدرون يشحنون عادي.'} (الشحن اليدوي من هني يشتغل دايماً)</p>
-        <input class="ad-in" data-rc-cmsg maxlength="140" placeholder="الكلام اللي يطلع للاعب (اختياري): مثل الشحن مقفل لين الأحد" value="${esc(c.closedMsg || '')}">
+        <p class="ad-muted">${c.closed ? 'اللاعبين يشوفون الباقات بس بدل زر «ادفع» تطلع الكلمة اللي تحت.' : 'اللاعبين يقدرون يشحنون عادي.'} (الشحن اليدوي من هني يشتغل دايماً)</p>
+        <input class="ad-in" data-rc-cmsg maxlength="20" placeholder="الكلمة بدل «ادفع» (مثل: قريباً)" value="${esc(c.closedMsg || 'قريباً')}">
         <button type="button" class="ad-btn" data-rc-close style="margin-top:8px;${c.closed ? 'background:#16a34a' : 'background:#dc2626'};color:#fff">${c.closed ? '🔓 افتح الشحن' : '🔒 اقفل الشحن'}</button></section>
       <section class="ad-card"><h2>⚙️ إعدادات الشحن</h2><form data-rc="cfg" class="ad-form col">
         <label>الأشياء اللي سعرها من كذا وفوق (بالسعر الأصلي) تصير بالمشحون بس<input class="ad-in" name="threshold" type="number" value="${c.threshold}" dir="ltr"></label>
