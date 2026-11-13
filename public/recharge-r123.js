@@ -1,4 +1,4 @@
-const COIN = '<svg class="rc-coin" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true" style="display:inline-block;vertical-align:-3px;margin-inline-start:4px"><circle cx="24" cy="24" r="22" fill="#f7c948" stroke="#8a5a12" stroke-width="3"/><circle cx="24" cy="24" r="15" fill="#fbd75e" stroke="#fde68a" stroke-width="1.5"/><path d="M24 13l3.1 6.6 7.2.8-5.4 4.9 1.5 7.1L24 28.8l-6.4 3.6 1.5-7.1-5.4-4.9 7.2-.8z" fill="#8a5a12"/></svg>';
+const COIN = '<img class="rc-coin" src="/coin-r128.svg?v=r128h" width="20" height="20" alt="" aria-hidden="true" style="display:inline-block;vertical-align:-4px">';
 // R123: «اشحن» — باقات العملات المشحونة 💳. اللاعب يدفع برابط Ziina، ويرسل الإيصال مع الآيدي بالواتساب، والإدارة تشحن له.
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nf = (n) => Number(n || 0).toLocaleString('en-US');
