@@ -5,7 +5,7 @@ export type RechargePack = { id: string; coins: number; aed: number; link: strin
 type Credit = { id: string; to: string; coins: number; by: string; at: number; note: string };
 type Cfg = { threshold: number; divisor: number; packs: RechargePack[]; whatsapp: string; enabled: boolean; closed: boolean; closedMsg: string };
 type ZPend = { to: string; coins: number; aed: number; at: number; done?: number };
-type Data = { v: 1; paid: Record<string, number>; log: Credit[]; cfg?: Partial<Cfg>; zi?: Record<string, ZPend> };
+type Data = { v: 1; paid: Record<string, number>; log: Credit[]; cfg?: Partial<Cfg> & { shut?: boolean }; zi?: Record<string, ZPend> };
 /** R125: نفس باقات العملات اللي بالمتجر (أقل دفع بـZiina 2 درهم) */
 export const DEFAULT_PACKS: RechargePack[] = [
   { id: 'c1k', coins: 1_000, aed: 2, link: '' },
@@ -24,7 +24,7 @@ export class PaidCoins {
     this.d = (file ? loadJsonFile(file, valid) as unknown as Data : null) ?? { v: 1, paid: {}, log: [] };
     this.disk = new Persister('paid123', file, () => this.d, now, mon, valid);
   }
-  cfg(): Cfg { const c = this.d.cfg ?? {}; return { threshold: c.threshold ?? 1_000_000, divisor: c.divisor ?? 10, packs: c.packs?.length ? c.packs : DEFAULT_PACKS, whatsapp: c.whatsapp ?? '', enabled: c.enabled ?? true, closed: c.closed ?? false, closedMsg: c.closedMsg ?? '' }; }
+  cfg(): Cfg { const c = this.d.cfg ?? {}; return { threshold: c.threshold ?? 1_000_000, divisor: c.divisor ?? 10, packs: c.packs?.length ? c.packs : DEFAULT_PACKS, whatsapp: c.whatsapp ?? '', enabled: c.enabled ?? true, closed: c.shut ?? true, closedMsg: c.closedMsg || 'قريباً' }; }
   setCfg(p: Partial<Cfg>) {
     const c = { ...this.cfg(), ...p };
     if (!Number.isSafeInteger(c.threshold) || c.threshold < 1000) throw new Error('الحد غير صحيح.');
@@ -34,7 +34,7 @@ export class PaidCoins {
     if (typeof c.closed !== 'boolean') throw new Error('بيانات غير صحيحة.');
     c.closedMsg = String(c.closedMsg ?? '').replace(/[<>]/g, '').trim().slice(0, 20);
     c.packs = c.packs.map((k, i) => ({ id: String(k.id || 'p' + i).replace(/[^a-z0-9-]/gi, '').slice(0, 20) || 'p' + i, coins: k.coins, aed: Math.round(Number(k.aed) * 100) / 100, link: k.link }));
-    this.d.cfg = c; this.disk.save(); return this.cfg();
+    const { closed, ...rest } = c; this.d.cfg = { ...rest, shut: closed }; this.disk.save(); return this.cfg();
   }
   of(id: string, balance: number) { return Math.max(0, Math.min(this.d.paid[id] ?? 0, balance)); }
   /** يناديها الـwallet بعد كل خصم */
