@@ -403,3 +403,6 @@ html body :is(dialog.so-dialog,#view):not(#_) .mn121-1,html body :is(dialog.so-d
 html body :is(dialog.so-dialog,#view):not(#_) .mn121-3{color:#3a1600!important}
 /* R123: علامة «بالمشحون بس» */
 .r123-tag{font-style:normal;margin-inline-end:3px;font-size:.95em}
+/* R126: أسماء الاختصارات بالرئيسية ما تطلع برا البطاقة */
+html body .h68-short a:not(#_){min-width:0;overflow:hidden}
+html body .h68-short b:not(#_){max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}

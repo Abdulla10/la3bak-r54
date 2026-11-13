@@ -1,7 +1,7 @@
 import { SEARCH_ICON } from './search-icon.js?v=global-search-r17';
 import { nav68HTML } from '../nav-r68.js?v=r79';
-import { headerHTML as head68 } from './home-r68.js?v=r116';
-import * as home from './home.js?v=r116';
+import { headerHTML as head68 } from './home-r68.js?v=r126';
+import * as home from './home.js?v=r126';
 import {renderProfileIcon as icon} from '../preview/assets/profile/ui-icons-inline.js?v=r58p';
 import {giftArt} from '../giftart.js?v=r68i-r14';
 import * as rooms from './rooms.js?v=r58p';
