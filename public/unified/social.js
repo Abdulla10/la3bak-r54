@@ -182,7 +182,7 @@ export function receiveSocialCannon3(message){const c=live;if(!c||c.ctx.gameRoom
 export function receiveSocialCannon(message){const c=live;if(!c||c.ctx.gameRoom||message?.roomId!==c.routeRoom||c.snapshot?.current?.roomId!==c.routeRoom||c.ctx.hideChatEffects)return false;return c.cannonFX?.receive(message.event,message.event?.cannon||c.snapshot?.room?.cannon)===true;}
 async function disconnectVoice(c) { c.voiceTarget=''; c.speakers.clear(); if(c.voice) await c.voice.disconnect().catch(()=>{}); c.voiceState={status:'disconnected',microphone:false}; c.notify(); }
 async function stopAmbient(c) { const audio=c.ambient;c.ambient=null;c.ambientOn=false;if(audio){audio.pause();audio.removeAttribute('src');audio.load();} }
-async function cleanup(c) { c.onPageHide();window.removeEventListener('beforeunload',c.onPageHide);window.removeEventListener('pagehide',c.onPageHide);window.removeEventListener('pageshow',c.onPageShow);c.cannonFX?.destroy();c.cannonFX=null;clearGiftRuntime(c);hideCombo();document.querySelector('.g59-slides')?.remove();destroyBenefits(c);c.entranceFX?.cancel();c.challengeUI?.destroy();c.challengeHost=null;c.challengeModel={available:false};c.epoch++;c.readSeq++;await Promise.all([disconnectVoice(c),stopAmbient(c)]);c.snapshot=null;c.list=null; }
+async function cleanup(c) { if(c.rc128){import('../room-recap-r128.js?v=r128').then(m=>m.resetRecap()).catch(()=>{});c.rc128='';} c.onPageHide();window.removeEventListener('beforeunload',c.onPageHide);window.removeEventListener('pagehide',c.onPageHide);window.removeEventListener('pageshow',c.onPageShow);c.cannonFX?.destroy();c.cannonFX=null;clearGiftRuntime(c);hideCombo();document.querySelector('.g59-slides')?.remove();destroyBenefits(c);c.entranceFX?.cancel();c.challengeUI?.destroy();c.challengeHost=null;c.challengeModel={available:false};c.epoch++;c.readSeq++;await Promise.all([disconnectVoice(c),stopAmbient(c)]);c.snapshot=null;c.list=null; }
 /** Route exit/logout only. DOM destroy intentionally does NOT invoke this. */
 export async function leaveSocial() { clearMinimized(); const c=live; if(!c) return; live=null; await cleanup(c);c.listeners.clear(); }
 async function voiceConnect(c,confirmedCurrent=null) {
@@ -703,6 +703,7 @@ function roomWarn69(c,force){
 }
 function chatHTML(c,council,ui) {
   roomWarn69(c);
+  {const rid=c.snapshot?.room?.id;if(rid&&c.rc128!==rid&&c.snapshot?.current?.roomId===rid&&!c.ctx?.gameRoom){c.rc128=rid;setTimeout(()=>import('../room-recap-r128.js?v=r128').then(m=>m.showRecap(rid)).catch(()=>{}),900);}}
   const joined=c.snapshot?.current?.roomId===c.snapshot?.room?.id;
   const giftEvents=council&&typeof c.ctx.socialGifts?.events==='function'?c.ctx.socialGifts.events(c.snapshot,{compact:!c.ctx.gameRoom&&c.challengeModel?.challenge?.status==='active'}):'';
   const notice=council?'أنت عضو في هذا المجلس. شارك باحترام؛ المقعد لا يعني أن المايك يعمل.':joined?'أنت عضو في الغرفة، ولم تأخذ مقعدًا بعد. اختر مجلسًا لبدء الحديث.':'أنت تشاهد الغرفة فقط، ولست عضوًا فيها. التخطيط معاينة؛ الدخول والمقعد باختيارك.';

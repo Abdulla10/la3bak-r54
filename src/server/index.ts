@@ -35,6 +35,7 @@ import { Miners, MINER_TIERS } from './miners-r121.js';
 import { PaidCoins } from './paid-coins-r123.js';
 import { Ziina, ZIINA_IPS } from './ziina-r124.js';
 import { VoiceNotes, VN_MAX, VN_TOKEN } from './voice-notes-r127.js';
+import { RoomRecap } from './room-recap-r128.js';
 import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
@@ -412,6 +413,7 @@ export async function createApp(
   const deletion = new AccountDeletion(functionalFile(undefined, 'account-deletion'), Date.now, storage);
   accounts.hiddenFilter = (id) => deletion.hidden(id);
   const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
+  const roomRecap = new RoomRecap(); setInterval(() => roomRecap.sweep(), 10 * 60_000).unref?.();
   const voiceNotes = new VoiceNotes(socialRoomsFile ? path.join(path.dirname(socialRoomsFile), 'voice-notes') : '');
   const roomChatImages = new RoomChatImages(socialRoomsFile ? path.join(path.dirname(socialRoomsFile), 'room-chat-img') : '');
   const homeBanners = new HomeBanners(functionalFile(undefined, 'home-banners'), Date.now, storage);
@@ -802,6 +804,7 @@ export async function createApp(
     const ev=giftEvent(r.rec,!!trustedSocial);
     if(!r.dup){
       cpGift(id,to,r.rec);
+      /* R128 */ try{const rid=trustedSocial?.room.split(':')[1];if(rid){const rc=r.rec as any,t=Number(rc.total??Number(rc.price)*Number(rc.qty??1))||0;roomRecap.gift(rid,{from:fromName,to:toName,name:String(rc.name),icon:String(rc.icon||'🎁'),qty:Number(rc.qty??1),total:rc.cur==='gems'&&SINGLE_CUR?t*20:t});}}catch{/* */}
       try{const gq=Number(r.rec.qty??1);giftNotice([to],`🎁 وصلتك هدية من ${fromName}`,`${fromName} أرسل لك ${r.rec.name}${gq>1?` ×${gq}`:''}.`,'pg:'+r.rec.id,{icon:String(r.rec.icon||'🎁')},fromName,!room&&!trustedSocial);}catch{/* */}
       sendToUser(id,{t:'wallet',coins:r.coins,gems:r.gems,won:0});sendToUser(to,{t:'wallet',coins:r.toCoins,gems:r.toGems,won:0});
       if(room){pushChat(room.code,ev);for(const p of room.players)sendToUser(p.id,{t:'roomgift',code:room.code,ev});}
@@ -2172,6 +2175,13 @@ export async function createApp(
     functionalHttp.add('POST', '/api/perks/mute-words', ({ user, body }) => perks.setMuteWords(user.id, body.words));
     // R127: الحماية والخصوصية — فلتر كلمات + عدم الإزعاج
     if (webPush) webPush.quiet = (id) => perks.dndActive(id);
+    // R128: «شو فاتك» — ملخص الغرفة من آخر زيارة (لازم تكون عضو بالغرفة)
+    functionalHttp.add('GET', '/api/room-recap', ({ user, url }) => {
+      const rid = String(url.searchParams.get('room') ?? ''); if (!/^[0-9a-f-]{36}$/.test(rid)) throw new FunctionalHttpError(400, 'غرفة غير صالحة.');
+      if (socialRooms.roomIdOf(user.id) !== rid) return { ok: true, empty: true };
+      const since = Number(url.searchParams.get('since') ?? 0);
+      return { ok: true, ...roomRecap.summary(rid, since, (id) => accounts.nameOf(id) || 'لاعب', (id) => id === user.id) };
+    });
     functionalHttp.add('GET', '/api/protect', ({ user }) => ({ ok: true, words: perks.prefs(user.id).muteWords, wordLimit: perks.muteLimit(user.id), dnd: perks.dndOf(user.id), dndNow: perks.dndActive(user.id), push: webPush ? webPush.count(user.id) : 0 }));
     functionalHttp.add('POST', '/api/protect/dnd', ({ user, body }) => perks.setDnd(user.id, body));
     functionalHttp.add('POST', '/api/perks/pin', ({ user, body }) => perks.togglePin(user.id, body.pub));
@@ -2509,7 +2519,7 @@ export async function createApp(
   });
   functionalHttp.add('GET', '/api/room-ids/mine', ({ user }) => ({ ok: true, items: wallet.owned(user.id).map((iid) => shopcat.get(iid)).filter((it): it is NonNullable<typeof it> => !!it && it.slot === 'room-id' && typeof it.css === 'string').map((it) => ({ id: it.id, code: it.css as string, name: it.name })) }));
   wireFeaturesR47(functionalHttp,{auction:auctionR47,social,items:()=>shopcat.all(),hasAccount:id=>accounts.has(id),asAdmin:(id,run)=>{const previous=auctionAdminActorR47;auctionAdminActorR47=id;try{return run();}finally{auctionAdminActorR47=previous;}},audit:(actor,action,target,detail)=>{try{platform.audit({actorId:actor.id,actor:actor.name,role:actor.role,action,target,detail});return true;}catch{return false;}}});
-  wireSocialRoutes(functionalHttp,{onRoomJoin:(uid,roomId)=>notifyFriends(uid,(f)=>{const room=socialRooms.friendRoom(f,uid);if(!room||room.id!==roomId)return null;const cpc=social.coupleOf(uid);const cpLv=cpc&&cpc.partner===f?cpLevelOf(cpPoints.get(cpKey(cpc.id,uid,f))).level:0;return {t:'friend:room',id:community.pub(uid),name:accounts.nameOf(uid),room:{id:room.id,name:room.name,locked:room.locked},...(cpLv>=3?{cp:true}:{})};},'room:'+uid+':'+roomId,5*60_000),rooms:socialRooms,voice:socialVoice,platform,eligible:socialEligible,publicId:id=>community.pub(id),presentFriends:(id,publicIds)=>social.friendsPresent(id,new Set(publicIds)),resolveTarget:value=>accounts.has(value)?value:community.resolvePublicId(value)??accounts.findByDisplayPlayerId(value)??null,
+  wireSocialRoutes(functionalHttp,{onCommand:(uid,cmd,b)=>{const rid=typeof b.roomId==='string'?b.roomId:'';if(!rid)return;if(cmd==='chat:send')roomRecap.chat(rid,uid);else if((cmd==='council:join'||cmd==='room:join')&&typeof b.seatIndex==='number')roomRecap.mic(rid,uid);},onRoomJoin:(uid,roomId)=>notifyFriends(uid,(f)=>{const room=socialRooms.friendRoom(f,uid);if(!room||room.id!==roomId)return null;const cpc=social.coupleOf(uid);const cpLv=cpc&&cpc.partner===f?cpLevelOf(cpPoints.get(cpKey(cpc.id,uid,f))).level:0;return {t:'friend:room',id:community.pub(uid),name:accounts.nameOf(uid),room:{id:room.id,name:room.name,locked:room.locked},...(cpLv>=3?{cp:true}:{})};},'room:'+uid+':'+roomId,5*60_000),rooms:socialRooms,voice:socialVoice,platform,eligible:socialEligible,publicId:id=>community.pub(id),presentFriends:(id,publicIds)=>social.friendsPresent(id,new Set(publicIds)),resolveTarget:value=>accounts.has(value)?value:community.resolvePublicId(value)??accounts.findByDisplayPlayerId(value)??null,
     resolveGiftTarget:value=>community.resolvePublicId(value),replayGiftBatch:batchReplayView,replayGift:singleGiftReplayView,quoteGift:(user,body)=>{const g=giftcat.get(body.gift);if(!g?.active)return{ok:false,error:'الهدية غير متاحة.'};if(body.seen!==g.price||body.seenPolicy!==GIFT_REWARD_POLICY.id)return{ok:false,error:'تغير عرض الهدية. حدّث الكتالوج.'};const qty=body.qty as number,q=Array.isArray(body.to)?quoteGiftBatch(g.price,qty,body.to.length):quoteGiftRewards(g.price,qty);if(!q||q.total>1_000_000)return{ok:false,error:'القيمة تتجاوز الحد الآمن.'};return{ok:true,quote:q,giftId:g.id,qty,coins:wallet.balance(user.id),gems:wallet.gems(user.id)};},sendGift:(user,body,scope)=>giftCmd(user,'gift:send',body,{room:scope})});
   wallet.onBenefitsChange = ids => { for (const id of ids) sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id),won:0}); };
   wireSocialBenefitsRoutes(functionalHttp,{rooms:socialRooms,wallet,shop:shopcat,gifts:giftcat,eligible:socialEligible,publicId:id=>community.pub(id),resolvePublic:value=>community.resolvePublicId(value),nameOf:id=>accounts.nameOf(id),
