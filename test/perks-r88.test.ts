@@ -18,7 +18,17 @@ test('كتم الكلمات والتثبيت والآيدي المختار', () 
   let now = 1_000_000;
   const tiers: Record<string, { vip: number; noble: number }> = { a: { vip: 12, noble: 0 }, b: { vip: 0, noble: 0 } };
   const p = new Perks('', (id) => tiers[id], () => now);
-  assert.throws(() => p.setMuteWords('b', ['سيء']), /VIP/);
+  // R127: فلتر مجاني لين 5 كلمات
+  assert.deepEqual(p.setMuteWords('b', ['سيء']).muteWords, ['سيء']);
+  assert.throws(() => p.setMuteWords('b', ['aa', 'bb', 'cc', 'dd', 'ee', 'ff']), /VIP/);
+  // R127: عدم الإزعاج (يلف على منتصف الليل)
+  p.setDnd('b', { on: true, from: 23 * 60, to: 8 * 60, tz: 0 });
+  assert.equal(p.dndActive('b', Date.UTC(2026, 0, 1, 23, 30)), true);
+  assert.equal(p.dndActive('b', Date.UTC(2026, 0, 1, 12, 0)), false);
+  assert.equal(p.dndActive('b', Date.UTC(2026, 0, 1, 20, 0) - 0), false);
+  p.setDnd('b', { on: true, from: 23 * 60, to: 8 * 60, tz: 240 });
+  assert.equal(p.dndActive('b', Date.UTC(2026, 0, 1, 20, 0)), true);
+  p.setDnd('b', { on: false }); assert.equal(p.dndActive('b', Date.UTC(2026, 0, 1, 23, 30)), false);
   assert.deepEqual(p.setMuteWords('a', ['  كلمة ', 'كلمة', 'x', 'ثانية']).muteWords, ['كلمة', 'ثانية']);
   const pub = 'AAAAAAAAAAAAAAAA'; assert.ok(p.togglePin('a', pub).pinned); assert.ok(!p.togglePin('a', pub).pinned);
   for (let i = 0; i < 10; i++) p.togglePin('a', 'B' + String(i).padStart(15, '0'));

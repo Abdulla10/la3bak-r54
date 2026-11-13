@@ -21,6 +21,29 @@ export class SocialVoiceClient {
       microphones[participant.identity]=[...participant.audioTrackPublications.values()].some(p=>p.source===Track.Source.Microphone&&!p.isMuted);
     }
     this.onState({ state, muted: this.muted, microphone: !!this.local, microphones, ...extra });
+    this.bg127(state);
+  }
+  // R127: الاستماع والشاشة مقفلة + أزرار التحكم في شاشة القفل
+  setMeta(title, artwork) { this.meta127 = { title: String(title || 'غرفة صوتية'), artwork: artwork || '/icon-512.png' }; this.bg127(this.state); }
+  bg127(state) {
+    try {
+      const on = state === 'connected' || state === 'reconnecting' || state === 'connecting';
+      const as = typeof navigator !== 'undefined' ? navigator.audioSession : null;
+      if (as) { try { as.type = on ? (this.local ? 'play-and-record' : 'playback') : 'auto'; } catch { /* */ } }
+      if (!this.vis127 && typeof document !== 'undefined') {
+        this.vis127 = () => { if (document.visibilityState !== 'visible' || !this.desired) return; for (const { element } of this.audio.values()) if (element.paused && !this.paused127) element.play().catch(() => {}); if (this.state === 'disconnected' || this.state === 'error') void this.refresh(); };
+        document.addEventListener('visibilitychange', this.vis127); addEventListener('pageshow', this.vis127); addEventListener('online', this.vis127);
+      }
+      const ms = typeof navigator !== 'undefined' ? navigator.mediaSession : null; if (!ms) return;
+      if (!on) { ms.metadata = null; ms.playbackState = 'none'; for (const a of ['play', 'pause', 'stop']) { try { ms.setActionHandler(a, null); } catch { /* */ } } return; }
+      const m = this.meta127 || { title: 'غرفة صوتية', artwork: '/icon-512.png' };
+      if (typeof MediaMetadata === 'function') ms.metadata = new MediaMetadata({ title: m.title, artist: this.local ? 'لعبك · المايك شغّال' : 'لعبك · بث مباشر', album: 'لعبك', artwork: [{ src: m.artwork, sizes: '512x512', type: 'image/png' }] });
+      ms.playbackState = this.paused127 ? 'paused' : 'playing';
+      const set = (a, fn) => { try { ms.setActionHandler(a, fn); } catch { /* */ } };
+      set('play', () => { this.paused127 = false; for (const { element } of this.audio.values()) { element.muted = false; element.play().catch(() => {}); } ms.playbackState = 'playing'; });
+      set('pause', () => { this.paused127 = true; for (const { element } of this.audio.values()) element.muted = true; ms.playbackState = 'paused'; });
+      set('stop', () => { this.paused127 = false; void this.disconnect(); });
+    } catch { /* المتصفح ما يدعم */ }
   }
   enqueue(fn) {
     const task = this.queue.catch(() => {}).then(fn);
@@ -57,7 +80,7 @@ export class SocialVoiceClient {
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
         if (!live() || track.kind !== Track.Kind.Audio || publication.source !== Track.Source.Microphone) return;
         const element = track.attach(); element.autoplay = true; element.controls = false; element.volume = this.output;
-        element.dataset.voiceIdentity = participant.identity;
+        element.dataset.voiceIdentity = participant.identity; element.muted = !!this.paused127; element.setAttribute('playsinline', '');
         if (!this.container) { this.container = document.createElement('div'); this.container.hidden = true; this.container.dataset.socialVoiceAudio = ''; document.body.append(this.container); }
         this.container.append(element); this.audio.set(track.sid, { track, element });
         element.play().catch(() => { if (live()) this.emit(this.state, { needsAudioUnlock: true }); });

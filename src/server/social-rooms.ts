@@ -34,6 +34,8 @@ export interface SocialRoomsOptions {
   perk?: (id: string, k: 'roomFull' | 'noKick' | 'seat') => boolean;
   /** R120: يقدر ينشر صور بالدردشة (VIP 5+ أو نوبل) */
   canChatImage?: (id: string) => boolean;
+  /** R127: الرسالة الصوتية لازم تكون من تسجيل نفس الشخص */
+  voiceNoteOk?: (uid: string, noteId: string) => boolean;
   profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null; miner?: number } } | null;
   blocked: (a: string, b: string) => boolean;
   eligible: (id: string) => boolean;
@@ -1092,6 +1094,7 @@ export class SocialRooms {
       if(!ident(body.key)||body.key.length>96)fail('idempotency_key_required');
       const input=Object.fromEntries(Object.entries(body).filter(([k])=>k!=='key'&&k!=='command'));
       /* R120: رسالة صورة بالدردشة لأصحاب الميزة فقط */
+      if(command==='chat:send'&&typeof input.text==='string'&&/\[vn:/.test(input.text)){const mv=/^\[vn:([a-f0-9]{24}):(\d{1,2})\]$/.exec(input.text);if(!mv||Number(mv[2])<1||Number(mv[2])>60||this.opts.voiceNoteOk?.(userId,mv[1])!==true)fail('voice_note_invalid',400);}
       if(command==='chat:send'&&typeof input.text==='string'&&/\[img:/.test(input.text)&&(!/^\[img:[a-f0-9]{24}\]$/.test(input.text)||this.opts.canChatImage?.(userId)!==true))fail('chat_image_not_allowed',403);
       const passwordCommand=['room:create','room:update','room:join','council:join','council:return'].includes(command);
       if(Object.hasOwn(input,'password')&&(!passwordCommand||!validPasswordInputR30(input.password)))fail('invalid_room_password');

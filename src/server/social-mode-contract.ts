@@ -15,6 +15,8 @@ export interface SocialModeModule {
 export function socialText(value:unknown,max=500):string|null {
  if(typeof value!=='string')return null;const s=value.normalize('NFKC').replace(/[\u0000-\u001f\u007f-\u009f]/g,' ').trim();
  if(!s||s.length>max)return null;
+ // R127: رموز الصور والرسائل الصوتية (آيدي hex ممكن فيه أرقام متتالية فيطيح بفلتر الأرقام)
+ if(/^\[(?:img:[a-f0-9]{24}|vn:[a-f0-9]{24}:\d{1,2})\]$/.test(s))return s;
  // Conservative guard against obvious contact/credential disclosure. User reports and moderation remain essential.
  if(/(?:https?:\/\/|www\.|[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:\+?\d[\s().-]*){8,}|\b(?:password|passwd|api[_ -]?key)\s*[:=])/i.test(s))return null;
  return s;

@@ -1,6 +1,7 @@
 /* R67: الرسائل الخاصة من داخل الغرفة — لوحة تطلع من تحت والغرفة شغالة وراها.
  * نفس خدمة /api/social-private (أصدقاء مقبولين فقط، نص فقط). ما نطلعك من الغرفة ولا نوقف الصوت. */
 import * as E2E from '../e2e-r69.js?v=r69zj';
+import { voiceNoteHTML, recordVoiceNote, MIC_ICON, isVoiceNote } from '../voice-note-r127.js?v=r127';
 const BASE = '/api/social-private/';
 const PUB = /^[A-Za-z0-9_-]{16}$/;
 const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -55,15 +56,15 @@ export function openRoomDM({ peer = '' } = {}) {
 
   const listHTML = () => {
     const seen = new Set(st.inbox.map(r => r.user.pub));
-    const rows = st.inbox.map(r => `<button type="button" class="dm67-row" data-dm="open" data-peer="${esc(r.user.pub)}" data-name="${esc(r.user.name)}">${face(r.user)}<span class="dm67-mid"><b>${esc(r.user.name || 'لاعب')}</b><small>${r.last?.mine ? 'أنت: ' : ''}${esc(r.last?.body || '')}</small></span><span class="dm67-end"><time>${esc(day(r.last?.at))}</time>${r.unread > 0 ? `<i class="dm67-badge">${r.unread > 99 ? '99+' : r.unread}</i>` : ''}</span></button>`).join('');
+    const rows = st.inbox.map(r => `<button type="button" class="dm67-row" data-dm="open" data-peer="${esc(r.user.pub)}" data-name="${esc(r.user.name)}">${face(r.user)}<span class="dm67-mid"><b>${esc(r.user.name || 'لاعب')}</b><small>${r.last?.mine ? 'أنت: ' : ''}${esc(isVoiceNote(r.last?.body) ? '🎤 رسالة صوتية' : (r.last?.body || ''))}</small></span><span class="dm67-end"><time>${esc(day(r.last?.at))}</time>${r.unread > 0 ? `<i class="dm67-badge">${r.unread > 99 ? '99+' : r.unread}</i>` : ''}</span></button>`).join('');
     const fr = st.friends.filter(f => !seen.has(f.user.pub));
     const friends = fr.length ? `<h3 class="dm67-sec">الأصدقاء</h3>${fr.map(f => `<button type="button" class="dm67-row is-friend" data-dm="open" data-peer="${esc(f.user.pub)}" data-name="${esc(f.user.name)}">${face(f.user)}<span class="dm67-mid"><b>${esc(f.user.name || 'لاعب')}</b><small>ابدأ السوالف</small></span></button>`).join('')}` : '';
     const body = !st.loaded ? '<p class="dm67-note">جاري التحميل…</p>' : (rows || friends) ? rows + friends : '<p class="dm67-note">ما عندك محادثات للحين. الرسائل الخاصة بين الأصدقاء المقبولين.</p>';
     return `<header class="dm67-head"><span></span><h2>دردشة</h2><button type="button" class="dm67-icon" data-dm="close" aria-label="إغلاق">${X}</button></header>${st.error ? `<p class="dm67-err" role="alert">${esc(st.error)}</p>` : ''}<div class="dm67-scroll">${body}</div>`;
   };
   const chatHTML = () => {
-    const msgs = [...st.msgs].reverse().map(m => `<div class="dm67-msg${m.mine ? ' is-mine' : ''}">${m.mine ? '' : face({ pub: st.peer, name: st.peerName })}<p dir="auto">${esc(m.body)}${m.mine ? `<span class="dm119-meta">${esc(day(m.at))}${TICK(m.read === true)}</span>` : ''}</p></div>`).join('');
-    return `<header class="dm67-head"><button type="button" class="dm67-icon" data-dm="back" aria-label="رجوع">${BACK}</button><h2>${esc(st.peerName || 'محادثة')}${st.typing ? '<small class="dm119-sub">جاري الكتابة…</small>' : ''}</h2><button type="button" class="dm67-icon" data-dm="close" aria-label="إغلاق">${X}</button></header>${st.error ? `<p class="dm67-err" role="alert">${esc(st.error)}</p>` : ''}<div class="dm67-scroll dm67-thread" data-dm-thread>${msgs || '<p class="dm67-note">قول هلا 👋</p>'}</div>${st.typing ? `<div class="dm119-typing">${esc(st.peerName || '')} يكتب <i><b></b><b></b><b></b></i></div>` : ''}<form class="dm67-form" data-dm-form><input name="text" maxlength="2000" autocomplete="off" placeholder="${st.canSend ? 'قل شيئًا…' : 'الرسائل موقوفة لهالمحادثة'}" ${st.canSend ? '' : 'disabled'} dir="auto" enterkeyhint="send"><button type="submit" class="dm67-send" aria-label="إرسال" ${st.canSend ? '' : 'disabled'}>${SEND}</button></form>`;
+    const msgs = [...st.msgs].reverse().map(m => `<div class="dm67-msg${m.mine ? ' is-mine' : ''}">${m.mine ? '' : face({ pub: st.peer, name: st.peerName })}<p dir="auto">${voiceNoteHTML(m.body) || esc(m.body)}${m.mine ? `<span class="dm119-meta">${esc(day(m.at))}${TICK(m.read === true)}</span>` : ''}</p></div>`).join('');
+    return `<header class="dm67-head"><button type="button" class="dm67-icon" data-dm="back" aria-label="رجوع">${BACK}</button><h2>${esc(st.peerName || 'محادثة')}${st.typing ? '<small class="dm119-sub">جاري الكتابة…</small>' : ''}</h2><button type="button" class="dm67-icon" data-dm="close" aria-label="إغلاق">${X}</button></header>${st.error ? `<p class="dm67-err" role="alert">${esc(st.error)}</p>` : ''}<div class="dm67-scroll dm67-thread" data-dm-thread>${msgs || '<p class="dm67-note">قول هلا 👋</p>'}</div>${st.typing ? `<div class="dm119-typing">${esc(st.peerName || '')} يكتب <i><b></b><b></b><b></b></i></div>` : ''}<form class="dm67-form" data-dm-form><input name="text" maxlength="2000" autocomplete="off" placeholder="${st.canSend ? 'قل شيئًا…' : 'الرسائل موقوفة لهالمحادثة'}" ${st.canSend ? '' : 'disabled'} dir="auto" enterkeyhint="send"><button type="button" class="vn127-mic" data-dm="voice" aria-label="رسالة صوتية" ${st.canSend ? '' : 'disabled'}>${MIC_ICON}</button><button type="submit" class="dm67-send" aria-label="إرسال" ${st.canSend ? '' : 'disabled'}>${SEND}</button></form>`;
   };
   const paint = (keepDraft = true) => {
     if (!alive) return;
@@ -111,6 +112,7 @@ export function openRoomDM({ peer = '' } = {}) {
     if (a === 'close') return close();
     if (a === 'back') { st.view = 'list'; st.error = ''; paint(false); await loadList(); paint(); poll(); return; }
     if (a === 'open') return openChat(t.dataset.peer, t.dataset.name);
+    if (a === 'voice') { if (!st.canSend || st.busy) return; const tok = await recordVoiceNote(); if (!tok || !alive) return; st.busy = true; try { await call('messages', 'POST', { to: st.peer, text: tok, key: crypto.randomUUID() }); await loadChat(); paint(); } catch (e2) { st.error = e2.message; paint(); } finally { st.busy = false; } return; }
   });
   root.addEventListener('submit', async e => {
     e.preventDefault(); const input = sheet.querySelector('input[name=text]'); const text = input?.value.trim() || '';

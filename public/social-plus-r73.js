@@ -316,7 +316,7 @@ function decorate(force = false) {
   const h = curHash(); const view = document.getElementById('view'); if (!view) return;
   /* الرسائل الخاصة: زر المايك + تشغيل الرسائل الصوتية */
   if (h.startsWith('#/messages')) {
-    const f = view.querySelector('form.chat-compose'); if (f && !f.querySelector('.sp73-mic') && canRecord()) { const ta = f.querySelector('textarea'); if (ta && !ta.disabled) f.insertAdjacentHTML('afterbegin', recBtn()); }
+    const f = view.querySelector('form.chat-compose'); if (f && !f.querySelector('.sp73-mic, [data-lb-msg-voice]') && canRecord()) { const ta = f.querySelector('textarea'); if (ta && !ta.disabled) f.insertAdjacentHTML('afterbegin', recBtn()); }
     /* معاينة آخر رسالة بالقائمة: نخفي رمز الملف */
     const tw = document.createTreeWalker(view, NodeFilter.SHOW_TEXT); const fix = []; for (let t = tw.nextNode(); t; t = tw.nextNode()) if (t.textContent.includes('[vn:') && !t.parentElement?.closest('.chat-bubble')) fix.push(t);
     for (const t of fix) t.textContent = t.textContent.replace(/\s*\[vn:[A-Za-z0-9_-]{8,40}\]/g, '');

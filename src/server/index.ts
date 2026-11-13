@@ -34,6 +34,7 @@ import { RoomChatImages, CHAT_IMG_MAX } from './room-chat-img-r120.js';
 import { Miners, MINER_TIERS } from './miners-r121.js';
 import { PaidCoins } from './paid-coins-r123.js';
 import { Ziina, ZIINA_IPS } from './ziina-r124.js';
+import { VoiceNotes, VN_MAX, VN_TOKEN } from './voice-notes-r127.js';
 import { Broadcasts, BroadcastError, BROADCAST_PRICES, BROADCAST_TEXT_MAX, publicBroadcast } from './broadcast-r67.js';
 import { TUNING_DEFAULT, currentTuning, validateTuning, applyTuning, isTuningError } from './tuning-r67.js';
 import { CANNON3_LEVELS } from './room-cannon-r59.js';
@@ -411,6 +412,7 @@ export async function createApp(
   const deletion = new AccountDeletion(functionalFile(undefined, 'account-deletion'), Date.now, storage);
   accounts.hiddenFilter = (id) => deletion.hidden(id);
   const broadcasts = new Broadcasts(functionalFile(undefined, 'broadcasts'), Date.now, storage);
+  const voiceNotes = new VoiceNotes(socialRoomsFile ? path.join(path.dirname(socialRoomsFile), 'voice-notes') : '');
   const roomChatImages = new RoomChatImages(socialRoomsFile ? path.join(path.dirname(socialRoomsFile), 'room-chat-img') : '');
   const homeBanners = new HomeBanners(functionalFile(undefined, 'home-banners'), Date.now, storage);
   const expTimer = setInterval(() => { try { for (const x of wallet.expireDue()) { const names = x.items.map((i) => shopcat.get(i)?.name ?? i).join('، '); try { support.announce([x.id], '⏰ انتهت مدة أغراضك', `خلصت مدة: ${names}. تقدر تجددها من المتجر.`, 'المتجر', `exp-${x.id.slice(0, 8)}-${Date.now()}`); } catch { /* التنبيه اختياري */ } sendToUser(x.id, { t: 'wallet', coins: wallet.balance(x.id), gems: wallet.gems(x.id), won: 0 }); } } catch (e) { log('expire_failed', { error: String(e).slice(0, 100) }); } }, 60_000); expTimer.unref?.();
@@ -1288,7 +1290,7 @@ export async function createApp(
   const socialEligible=(id:string)=>accounts.has(id)&&!platform.isBanned(id)&&(accounts.socialAge(id)===null||Number(accounts.socialAge(id))>=18);
   let socialVoice:SocialVoice|null=null;
   const chatImgOk=(id:string)=>{const t=tierOf(id);return t.vip>=5||t.noble>=1||!!platform.roleOf(id);};
-  const socialRooms=new SocialRooms({file:socialRoomsFile,canChatImage:chatImgOk,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
+  const socialRooms=new SocialRooms({file:socialRoomsFile,canChatImage:chatImgOk,voiceNoteOk:(uid:string,id:string)=>voiceNotes.ownerOf(id)===uid,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
     cannon:{wallet,catalog:shopcat,pendingCount:id=>outbox.pending().filter(i=>i.payload.kind==='gift'&&validCannonGiftContext(i.payload.cannonSupport)&&i.payload.cannonSupport.cannonId===id).length,
       onAward:(id,eventId)=>{sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id),won:0});support.announce([id],'مكافأة مدفع الغرفة','تمت إضافة الإطار والخلفية الدائمين إلى ملكيتك. حدّث المتجر لعرضهما.','room-cannon-r27','cannon:'+eventId);}},
     pendingChallengeGift:id=>outbox.pending().some(intent=>intent.payload.kind==='gift'&&validGiftSupportContext(intent.payload.socialSupport)&&intent.payload.socialSupport.challengeId===id),
@@ -2168,6 +2170,10 @@ export async function createApp(
     });
     functionalHttp.add('POST', '/api/admin/studio/:id/hide', ({ params }) => studio.adminHide(params.id), 'owner');
     functionalHttp.add('POST', '/api/perks/mute-words', ({ user, body }) => perks.setMuteWords(user.id, body.words));
+    // R127: الحماية والخصوصية — فلتر كلمات + عدم الإزعاج
+    if (webPush) webPush.quiet = (id) => perks.dndActive(id);
+    functionalHttp.add('GET', '/api/protect', ({ user }) => ({ ok: true, words: perks.prefs(user.id).muteWords, wordLimit: perks.muteLimit(user.id), dnd: perks.dndOf(user.id), dndNow: perks.dndActive(user.id), push: webPush ? webPush.count(user.id) : 0 }));
+    functionalHttp.add('POST', '/api/protect/dnd', ({ user, body }) => perks.setDnd(user.id, body));
     functionalHttp.add('POST', '/api/perks/pin', ({ user, body }) => perks.togglePin(user.id, body.pub));
     functionalHttp.add('GET', '/api/perks/pick-id', ({ user, url }) => {
       const v = String(url.searchParams.get('v') ?? '');
@@ -2675,6 +2681,27 @@ export async function createApp(
         if (mb) return json(res, 503, { error: mb, maintenance: true });
         const bb = admin.banBlock(user);
         if (bb) return json(res, 403, { error: bb, banned: true });
+      }
+      /* R127: الرسائل الصوتية */
+      const vnGet = /^\/api\/voice-note\/([a-f0-9]{24})$/.exec(url.pathname);
+      if (vnGet && (req.method === 'GET' || req.method === 'HEAD')) {
+        if (!user) return json(res, 401, { error: 'سجّل دخولك.' });
+        const v = voiceNotes.get(vnGet[1]); if (!v) return json(res, 404, { error: 'غير موجودة.' });
+        const total = v.b.length, range = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range ?? ''));
+        if (range) { const a = range[1] ? Number(range[1]) : Math.max(0, total - Number(range[2] || 0)); const z = range[1] && range[2] ? Math.min(total - 1, Number(range[2])) : total - 1; if (a > z || a >= total) { res.writeHead(416, { 'Content-Range': `bytes */${total}` }); return res.end(); } res.writeHead(206, { ...securityHeaders, 'Content-Type': v.type, 'Content-Length': z - a + 1, 'Content-Range': `bytes ${a}-${z}/${total}`, 'Accept-Ranges': 'bytes', 'Cache-Control': 'private, max-age=31536000, immutable' }); return res.end(req.method === 'HEAD' ? undefined : v.b.subarray(a, z + 1)); }
+        res.writeHead(200, { ...securityHeaders, 'Content-Type': v.type, 'Content-Length': total, 'Accept-Ranges': 'bytes', 'Cache-Control': 'private, max-age=31536000, immutable' }); return res.end(req.method === 'HEAD' ? undefined : v.b);
+      }
+      if (url.pathname === '/api/voice-note' && req.method === 'POST') {
+        const ph = { 'Cache-Control': 'private, no-store' };
+        if (!user) return json(res, 401, { error: 'سجّل دخولك.' }, ph);
+        if (!sameOrigin(req)) return json(res, 403, { error: 'طلب من مصدر غير مسموح.' }, ph);
+        if (isGuest(user.id)) return json(res, 403, { error: 'سجّل دخولك بحساب Google أول.' }, ph);
+        if (!avatarLimiter.allow(`vn:${user.id}`)) return json(res, 429, { error: 'شوي شوي، جرّب بعد لحظات.' }, ph);
+        if (Number(req.headers['content-length'] ?? 0) > VN_MAX) { req.resume(); return json(res, 413, { error: 'التسجيل طويل.' }, ph); }
+        const input = await new Promise<Buffer | null>((resolve, reject) => { const chunks: Buffer[] = []; let size = 0, big = false; req.on('data', (c: Buffer) => { size += c.length; if (size > VN_MAX) { big = true; chunks.length = 0; } else if (!big) chunks.push(c); }); req.once('end', () => resolve(big ? null : Buffer.concat(chunks))); req.once('error', reject); });
+        if (!input) return json(res, 413, { error: 'التسجيل طويل.' }, ph);
+        const sec = Math.round(Number(url.searchParams.get('sec') ?? 0)); if (!(sec >= 1 && sec <= 60)) return json(res, 400, { error: 'التسجيل من ثانية إلى 60 ثانية.' }, ph);
+        try { const id = voiceNotes.save(user.id, input); return json(res, 200, { ok: true, id, token: `[vn:${id}:${sec}]` }, ph); } catch { return json(res, 400, { error: 'الصوت ما ينقرى.' }, ph); }
       }
       /* R124: رجوع اللاعب من صفحة Ziina — نتأكد ونشحن، ونرجعه للموقع مع كوكي للرسالة */
       if (url.pathname === '/api/ziina/return' && req.method === 'GET') {

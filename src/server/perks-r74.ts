@@ -31,7 +31,7 @@ export const PERK_DEFS: PerkDef[] = [
 ];
 PERK_DEFS.sort((a, b) => (a.system === b.system ? 0 : a.system === 'vip' ? -1 : 1) || a.level - b.level);
 export const PICK_ID_EVERY = 30 * 86400_000, EDIT_WINDOW = 10 * 60_000;
-type Prefs = { mw?: string[]; pin?: string[]; idAt?: number };
+type Prefs = { mw?: string[]; pin?: string[]; idAt?: number; dnd?: { f: number; t: number; o: number } };
 type Data = { v: 1; levels: Partial<Record<PerkKey, number>>; used: Record<string, string>; bc: Record<string, number>; prefs?: Record<string, Prefs> };
 const day = (t: number) => new Date(t + 4 * 3600_000).toISOString().slice(0, 10);
 
@@ -50,13 +50,30 @@ export class Perks {
   salaryOf(id: string) { if (!this.has(id, 'salary')) return 0; const t = this.tier(id); return t.vip * 100 + t.noble * 300; }
   discountPct(id: string) { if (!this.has(id, 'shopDiscount')) return 0; const t = this.tier(id); return Math.max(5, Math.min(30, Math.max(t.vip * 2, t.noble * 4))); }
   xpPct(id: string) { if (!this.has(id, 'xpBoost')) return 0; const t = this.tier(id); return Math.max(24, Math.min(50, Math.max(t.vip * 3, t.noble * 6))); }
-  prefs(id: string) { const p = this.d.prefs![id] ?? {}; return { muteWords: this.has(id, 'muteWords') ? [...(p.mw ?? [])] : [], pins: this.has(id, 'pinChats') ? [...(p.pin ?? [])] : [], nextIdAt: p.idAt ? p.idAt + PICK_ID_EVERY : 0 }; }
-  private pset(id: string, fn: (p: Prefs) => void) { const p = (this.d.prefs![id] ??= {}); fn(p); if (!p.mw?.length && !p.pin?.length && !p.idAt) delete this.d.prefs![id]; this.disk.save(); }
+  /** R127: فلتر كلمات مجاني للكل (5)، و VIP لين 30 */
+  muteLimit(id: string) { return this.has(id, 'muteWords') ? 30 : 5; }
+  prefs(id: string) { const p = this.d.prefs![id] ?? {}; return { muteWords: (p.mw ?? []).slice(0, this.muteLimit(id)), pins: this.has(id, 'pinChats') ? [...(p.pin ?? [])] : [], nextIdAt: p.idAt ? p.idAt + PICK_ID_EVERY : 0 }; }
+  private pset(id: string, fn: (p: Prefs) => void) { const p = (this.d.prefs![id] ??= {}); fn(p); if (!p.mw?.length && !p.pin?.length && !p.idAt && !p.dnd) delete this.d.prefs![id]; this.disk.save(); }
   private need(id: string, k: PerkKey) { if (!this.has(id, k)) { const d = this.def(k); throw Object.assign(new Error(`هذي الميزة تحتاج VIP ${this.level(k)}${d.alt ? ` أو نوبل ${d.alt}` : ''}.`), { status: 403 }); } }
   setMuteWords(id: string, list: unknown) {
-    this.need(id, 'muteWords'); if (!Array.isArray(list) || list.length > 30) throw Object.assign(new Error('لين 30 كلمة.'), { status: 400 });
+    const lim = this.muteLimit(id); if (!Array.isArray(list) || list.length > lim) throw Object.assign(new Error(lim === 30 ? 'لين 30 كلمة.' : 'لين 5 كلمات. مع VIP توصل 30 كلمة.'), { status: 400 });
     const clean = [...new Set(list.map((w) => String(w ?? '').replace(/[\u0000-\u001f]/g, '').trim()).filter((w) => w.length >= 2 && w.length <= 24))];
     this.pset(id, (p) => { p.mw = clean; }); return { ok: true, muteWords: clean };
+  }
+  /** R127: أوقات «عدم الإزعاج» — دقائق من بداية اليوم بتوقيت اللاعب (o = فرق التوقيت بالدقائق) */
+  dndOf(id: string) { const d = this.d.prefs![id]?.dnd; return d ? { on: true, from: d.f, to: d.t, tz: d.o } : { on: false, from: 23 * 60, to: 8 * 60, tz: 0 }; }
+  setDnd(id: string, v: unknown) {
+    if (!isObj(v)) throw Object.assign(new Error('بيانات غير صالحة.'), { status: 400 });
+    if (v.on !== true) { this.pset(id, (p) => { delete p.dnd; }); return { ok: true, dnd: this.dndOf(id) }; }
+    const f = Number(v.from), t = Number(v.to), o = Number(v.tz ?? 0);
+    const okM = (x: number) => Number.isInteger(x) && x >= 0 && x < 1440;
+    if (!okM(f) || !okM(t) || f === t || !Number.isInteger(o) || Math.abs(o) > 840) throw Object.assign(new Error('الوقت غير صالح.'), { status: 400 });
+    this.pset(id, (p) => { p.dnd = { f, t, o }; }); return { ok: true, dnd: this.dndOf(id) };
+  }
+  dndActive(id: string, at = this.now()) {
+    const d = this.d.prefs![id]?.dnd; if (!d) return false;
+    const m = Math.floor(((at / 60000 + d.o) % 1440 + 1440) % 1440);
+    return d.f < d.t ? m >= d.f && m < d.t : m >= d.f || m < d.t;
   }
   togglePin(id: string, pub: unknown) {
     this.need(id, 'pinChats'); const v = String(pub ?? ''); if (!/^[A-Za-z0-9_-]{16}$/.test(v)) throw Object.assign(new Error('محادثة غير صالحة.'), { status: 400 });

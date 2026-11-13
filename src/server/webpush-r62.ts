@@ -40,6 +40,7 @@ export class WebPush {
   private disk: Persister;
   readonly publicKey: string; private priv: KeyObject; private subject: string;
   sent = 0; failed = 0; lastError: string | null = null;
+  quiet?: (user: string) => boolean;
   constructor(file: string, keyFile: string, opts: { subject?: string; now?: () => number; mon?: StorageMonitor; log?: (e: string, d?: Record<string, unknown>) => void } = {}) {
     const mon = opts.mon ?? new StorageMonitor();
     if (file) { const l = loadJsonFile(file, validData); if (l) this.d = l as unknown as Data; }
@@ -84,6 +85,8 @@ export class WebPush {
   /** يرسل لكل أجهزة اللاعب. الرسالة: { title, body, url, tag } — صغيرة (أقل من 3KB) */
   async send(user: string, msg: { title: string; body: string; url?: string; tag?: string }): Promise<number> {
     const list = this.d.subs[user]; if (!list?.length) return 0;
+    // R127: «عدم الإزعاج» — تنبيهات الأمان (دخول جديد) تطلع دايماً
+    if (msg.tag !== 'newdev' && this.quiet?.(user)) return 0;
     const payload = Buffer.from(JSON.stringify({ title: msg.title.slice(0, 80), body: msg.body.slice(0, 200), url: msg.url && /^#\/|^\//.test(msg.url) ? msg.url : '/', tag: msg.tag?.slice(0, 60) }));
     let ok = 0; const dead: string[] = [];
     await Promise.all(list.map(async (s) => {

@@ -59,6 +59,7 @@ export function settingsHTML(ctx) {
     ${link('معلومات الحساب', '#/account-info')}
     ${row('إشعارات الجوال', `<small data-s60-push-note></small><button type="button" class="s60-switch" role="switch" aria-checked="false" data-s60-push><i></i></button>`)}
     ${link('إعدادات الإشعارات', '#/notifications')}
+    ${btn('الحماية والخصوصية 🛡️', 'protect', 'جديد')}
     ${link('إعدادات الخصوصية', '#/privacy-settings')}
     ${link('القائمة السوداء', '#/friends')}
     ${row('إخفاء منشوراتي<small class="s60-sub">منشوراتك ما تطلع لأحد غيرك</small>', toggle('hidePosts', ctx.settings?.hidePosts === true, !ctx.settings))}
@@ -179,6 +180,7 @@ export function bind(root, host) {
       const r = await api(a === 'dev-out' ? '/api/devices/revoke' : '/api/devices/revoke-others', 'POST', a === 'dev-out' ? { id: b.dataset.id } : {});
       host.after?.(r?.ok ? (r.revoked ? `طلّعنا الحساب من ${r.revoked === 1 ? 'جهاز واحد' : r.revoked + ' أجهزة'}.` : 'ما فيه أجهزة ثانية.') : (r?.error || 'ما قدرنا نطلّعه.'), !r?.ok); return;
     }
+    if (a === 'protect') { const M = await import('./protect-r127.js?v=r127'); M.openProtect(); return; }
     if (a === 'password') { if (host.google) window.open('https://myaccount.google.com/security', '_blank', 'noopener'); else host.nav('#/account-info'); }
     else if (a === 'cache' || a === 'repair') {
       try { if (globalThis.caches) for (const k of await caches.keys()) await caches.delete(k); } catch {}
@@ -197,7 +199,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r126'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r127'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;
