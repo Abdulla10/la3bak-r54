@@ -413,3 +413,8 @@ html body .h68-short b:not(#_){max-width:100%;overflow:hidden;text-overflow:elli
 /* R128h: أيقونة العملة الموحّدة (عملة ذهبية بتاج لعبك) بدل الكورة والنجمة */
 .h68-coins i,.pf68-coin,.ids-coin,.cz-coin{background:url(/coin-r128.svg?v=r128h) center/contain no-repeat!important;box-shadow:none!important;border:0!important;border-radius:0!important;color:transparent!important;font-size:0!important;text-indent:-999px;overflow:hidden}
 .h68-coins i{width:26px!important;height:26px!important}.pf68-coin{width:30px!important;height:30px!important}
+/* R129: اسم متحرك (ميزة مشتراة) */
+@keyframes nfx129{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.rp-name-fx,.rp-name-fx b{background:linear-gradient(90deg,#fff6c4,#ffd84a,#ff9f1c,#ff5fa2,#c77dff,#ffd84a,#fff6c4)!important;background-size:200% 100%!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;font-weight:900!important;filter:drop-shadow(0 0 6px rgba(255,200,60,.65))!important;animation:nfx129 2.4s linear infinite!important}
+.r129-tab{background:linear-gradient(180deg,#fde68a,#e5a91c)!important;color:#2a1650!important}
+.r129-promo{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:linear-gradient(180deg,#fde68a,#e5a91c);color:#2a1650;vertical-align:middle}

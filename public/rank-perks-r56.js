@@ -85,6 +85,7 @@ export function effectStyle(ranks) {
   for (const [system, have] of [['vip', vip], ['noble', noble]]) for (const e of EFFECTS[system]) if (have >= e.rank && (LUX[e.tier] || 0) > (LUX[out[e.kind]] || 0)) out[e.kind] = e.tier;
   /* R67: لون الاسم حسب مستوى VIP (15 لون)، واللاعب يقدر يخفيه من الإعدادات */
   if (vip >= 1) out.name = 'v' + vip;
+  if (ranks?.nfx === true) out.name = 'fx'; /* R129: اسم متحرك (ميزة مشتراة) */
   if (ranks?.nameOff === true) delete out.name;
   return out;
 }

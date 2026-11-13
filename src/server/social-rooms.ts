@@ -36,7 +36,8 @@ export interface SocialRoomsOptions {
   canChatImage?: (id: string) => boolean;
   /** R127: الرسالة الصوتية لازم تكون من تسجيل نفس الشخص */
   voiceNoteOk?: (uid: string, noteId: string) => boolean;
-  profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null; miner?: number } } | null;
+  promoted?: (roomId: string) => number;
+  profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null; miner?: number; nfx?: boolean } } | null;
   blocked: (a: string, b: string) => boolean;
   eligible: (id: string) => boolean;
   /** Optional non-player platform admin identity, authenticated/authorized by parent HTTP only. */
@@ -549,7 +550,7 @@ export class SocialRooms {
   isGameRoom(id: string): boolean { return this.state.receipts.some((x) => !x.admin && x.command === 'game:bind' && x.key === id); }
   /** R115: إيجاد غرفة بالآيدي الظاهر (#) أو المعرف */
   findRoom(q: string) { const v = String(q || '').trim().replace(/^#/, ''); const r = this.state.rooms.find((r) => r.id === v || this.roomCode(r) === v || roomCodeOf(r.id) === v); if (!r) return null; const lv = roomLevelOf(r.support ?? 0), rank = roomRankView(r.month, this.clock()); return { id: r.id, name: r.name, code: this.roomCode(r), owner: this.opts.profile(r.ownerId)?.name ?? '', level: lv.level, tier: rank.tier, tierName: rank.tierName, fixedTier: r.month?.floor ? (ROOM_TIERS.find((x) => x.min === r.month!.floor)?.id ?? null) : null, vanity: r.vanity ?? null, members: r.members.length }; }
-  liveRooms() { return this.state.rooms.filter((r) => r.members.length > 0).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length, owner: this.opts.profile(r.ownerId)?.name ?? '', video: !!r.video })).sort((a, b) => b.members - a.members); }
+  liveRooms() { return this.state.rooms.filter((r) => r.members.length > 0).map((r) => ({ id: r.id, name: r.name, level: roomLevelOf(r.support ?? 0).level, members: r.members.length, owner: this.opts.profile(r.ownerId)?.name ?? '', video: !!r.video, promoted: (this.opts.promoted?.(r.id) ?? 0) > 0 })).sort((a, b) => Number(b.promoted) - Number(a.promoted) || b.members - a.members); }
   ownerMaxRoomLevel(userId: string): number { let lv = 0; for (const r of this.state.rooms) if (r.ownerId === userId) lv = Math.max(lv, roomLevelOf(r.support ?? 0).level); return lv; }
   /** R58u: يمنح جوائز إطلاقات الصاروخ المعلّقة (معرّف ثابت لكل إطلاق، فإعادة المحاولة ما تكرر). */
   private settleRocket(roomId: string): void {
@@ -1505,7 +1506,7 @@ export class SocialRooms {
   private who(id:string) {
     const p=this.opts.profile(id);if(!p)return null;
     const r=p.ranks;
-    const ranks=r?{level:num(r.level,1,100)?r.level:null,vip:num(r.vip,0,15)?r.vip:null,noble:num(r.noble,0,9)?r.noble:null,...((r as {nameOff?:boolean}).nameOff===true?{nameOff:true}:{}),...((r as {official?:boolean}).official===true?{official:true}:{}),...(num((r as {miner?:number}).miner,1,3)?{miner:(r as {miner?:number}).miner}:{})}:undefined;
+    const ranks=r?{level:num(r.level,1,100)?r.level:null,vip:num(r.vip,0,15)?r.vip:null,noble:num(r.noble,0,9)?r.noble:null,...((r as {nameOff?:boolean}).nameOff===true?{nameOff:true}:{}),...((r as {official?:boolean}).official===true?{official:true}:{}),...(num((r as {miner?:number}).miner,1,3)?{miner:(r as {miner?:number}).miner}:{}),...((r as {nfx?:boolean}).nfx===true?{nfx:true}:{})}:undefined;
     const frame=typeof p.frame==='string'&&/^[A-Za-z_][A-Za-z0-9_-]{0,79}$/.test(p.frame)?p.frame:null;
     const cosmetic=(v:unknown)=>typeof v==='string'&&/^[a-z][a-z0-9-]{0,39}$/.test(v)?v:null;
     const bubble=cosmetic(p.bubble),board=cosmetic(p.board),micFrame=cosmetic(p.micFrame),voiceFx=typeof p.voiceFx==='string'&&/^vfx\d\d$/.test(p.voiceFx)?p.voiceFx:null;
@@ -1593,7 +1594,7 @@ export class SocialRooms {
   }
   async list(userId:string):Promise<SocialResult> {
     return this.serial(()=>this.guard(()=>{
-      this.ready();this.actor(userId);const visible=this.listedRoomIds(userId);return {ok:true,rooms:this.state.rooms.filter(r=>visible.has(r.id)).sort((a,b)=>Number(roomLevelOf(b.support??0).level>=100)-Number(roomLevelOf(a.support??0).level>=100)).map(r=>({id:r.id,mine:r.ownerId===userId,name:r.name,description:r.description,photo:this.photo(r),privacy:r.privacy,memory:r.memory,maxMembers:r.maxMembers,...this.directoryRoomView(r),owner:this.who(r.ownerId),host:r.hostId&&!this.blocked(userId,r.hostId)?this.who(r.hostId):null,count:r.members.length,councils:r.councils.length,joined:r.members.some(m=>m.id===userId&&(m.deadline===null||m.deadline>this.clock())),createdAt:r.createdAt,updatedAt:r.updatedAt})),directory:this.directoryView(userId,visible),current:this.current(userId),preferences:this.prefsView(userId),config:{enabled:this.state.config.enabled,requireAdultAck:this.opts.requireAdultAck!==false,minimumAge:18,ageVerification:'parent-eligibility-hook-plus-self-acknowledgement',maxCouncilSeats:this.state.config.maxCouncilSeats,defaultCouncilSeats:this.state.config.defaultCouncilSeats,modes:structuredClone(this.state.config.content.settings),capabilities:directoryCapabilitiesR30()}};
+      this.ready();this.actor(userId);const visible=this.listedRoomIds(userId);return {ok:true,rooms:this.state.rooms.filter(r=>visible.has(r.id)).sort((a,b)=>Number((this.opts.promoted?.(b.id)??0)>0)-Number((this.opts.promoted?.(a.id)??0)>0)||Number(roomLevelOf(b.support??0).level>=100)-Number(roomLevelOf(a.support??0).level>=100)).map(r=>({id:r.id,mine:r.ownerId===userId,...((this.opts.promoted?.(r.id)??0)>0?{promoted:true}:{}),name:r.name,description:r.description,photo:this.photo(r),privacy:r.privacy,memory:r.memory,maxMembers:r.maxMembers,...this.directoryRoomView(r),owner:this.who(r.ownerId),host:r.hostId&&!this.blocked(userId,r.hostId)?this.who(r.hostId):null,count:r.members.length,councils:r.councils.length,joined:r.members.some(m=>m.id===userId&&(m.deadline===null||m.deadline>this.clock())),createdAt:r.createdAt,updatedAt:r.updatedAt})),directory:this.directoryView(userId,visible),current:this.current(userId),preferences:this.prefsView(userId),config:{enabled:this.state.config.enabled,requireAdultAck:this.opts.requireAdultAck!==false,minimumAge:18,ageVerification:'parent-eligibility-hook-plus-self-acknowledgement',maxCouncilSeats:this.state.config.maxCouncilSeats,defaultCouncilSeats:this.state.config.defaultCouncilSeats,modes:structuredClone(this.state.config.content.settings),capabilities:directoryCapabilitiesR30()}};
     }));
   }
   async detail(userId:string,roomId:string):Promise<SocialResult> {

@@ -6,10 +6,10 @@ import { SEARCH_ICON } from '../unified/search-icon.js?v=global-search-r17';
  * Trusted app renderers: avatarHTML(size), framed(face, frame, size), bgHTML(bg),
  * googleCard(). All ordinary data and bio are escaped. No localStorage writes.
  */
-import { framed as shopFramed, bgLayer } from '../shop.js?v=r123';
+import { framed as shopFramed, bgLayer } from '../shop.js?v=r129';
 import { avatarArt } from '../avatars.js?v=r107';
 import { renderProfileIcon } from './assets/profile/ui-icons-inline.js?v=r58p';
-import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r123';
+import { ensureOwnerToolsCss } from '../owner-player-tools.js?v=r129';
 import { referenceOf, referenceImage, ACHIEVEMENT_ART, ACHIEVEMENT_ART_KIDS } from '../reference-assets.js?v=r107';
 import { nav68HTML } from '../nav-r68.js?v=r79';
 import { officialBadge } from '../official-badge-r67.js?v=r67as';

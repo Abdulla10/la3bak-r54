@@ -1285,7 +1285,7 @@ export async function createApp(
   const profileSocial = new ProfileSocial(profileSocialFile, {
     hasAccount: (id) => accounts.has(id), isBanned: (id) => platform.isBanned(id), blocked: (a, b) => community.pairBlocked(a, b),
     hidesActivity: (id) => accountTools.settings(id).showActivity === false, sinceOf: (id) => accounts.sinceOf(id),
-    viewerVip: (id) => tierOf(id).vip, get needVip() { return perks.level('visitors'); }, stealthVisit: (id) => privacyOn(id, 'hideVisits'), inviteRewards: (me) => inviteRewardsView(me),
+    viewerVip: (id) => perks.passOn(id, 'visitors') ? 99 : tierOf(id).vip, get needVip() { return perks.level('visitors'); }, stealthVisit: (id) => privacyOn(id, 'hideVisits'), inviteRewards: (me) => inviteRewardsView(me),
     resolvePublicId: (pub) => community.resolvePublicId(pub),
     who: (id) => { const photo = avatars.version(id); const lv = accounts.publicStats(id)?.level; return { publicId: community.pub(id), name: accounts.nameOf(id) || 'لاعب', avatar: photo !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${photo}` : wallet.equippedAvatar(id), level: typeof lv === 'number' ? lv : null }; },
     log,
@@ -1293,7 +1293,7 @@ export async function createApp(
   const socialEligible=(id:string)=>accounts.has(id)&&!platform.isBanned(id)&&(accounts.socialAge(id)===null||Number(accounts.socialAge(id))>=18);
   let socialVoice:SocialVoice|null=null;
   const chatImgOk=(id:string)=>{const t=tierOf(id);return t.vip>=5||t.noble>=1||!!platform.roleOf(id);};
-  const socialRooms=new SocialRooms({file:socialRoomsFile,canChatImage:chatImgOk,voiceNoteOk:()=>false,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
+  const socialRooms=new SocialRooms({file:socialRoomsFile,promoted:(rid)=>perks.promotedUntil(rid),canChatImage:chatImgOk,voiceNoteOk:()=>false,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
     cannon:{wallet,catalog:shopcat,pendingCount:id=>outbox.pending().filter(i=>i.payload.kind==='gift'&&validCannonGiftContext(i.payload.cannonSupport)&&i.payload.cannonSupport.cannonId===id).length,
       onAward:(id,eventId)=>{sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id),won:0});support.announce([id],'مكافأة مدفع الغرفة','تمت إضافة الإطار والخلفية الدائمين إلى ملكيتك. حدّث المتجر لعرضهما.','room-cannon-r27','cannon:'+eventId);}},
     pendingChallengeGift:id=>outbox.pending().some(intent=>intent.payload.kind==='gift'&&validGiftSupportContext(intent.payload.socialSupport)&&intent.payload.socialSupport.challengeId===id),
@@ -1328,7 +1328,7 @@ export async function createApp(
       // R57: فقاعة الدردشة ولوحة الاسم المجهّزة (من مقتنيات المحفظة فقط)
       const eq=wallet.equipped(id),cosm=(slot:string)=>{const it=eq[slot]?shopcat.get(eq[slot]):undefined;return it&&it.slot===slot&&typeof it.css==='string'?it.css:null;};
       const bubble=cosm('chat-bubble'),board=cosm('board'),micFrame=cosm('mic-frame'),voiceFx=cosm('voice-fx');
-      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),...(voiceFx?{voiceFx}:{}),ranks:{...(accountTools.settings(id).hideNameColor===true?{nameOff:true}:{}),...(verificationView(id).verificationKind==='administration'?{official:true}:{}),level:p.level.enabled&&!privacyOn(id,'hideWealth')?p.level.value:null,vip:p.vip.enabled&&!privacyOn(id,'hideVipId')?vip:null,noble:p.noble.enabled?noble:null,...(miners.level(id)?{miner:miners.level(id)}:{})},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
+      return {id,publicId:community.pub(id),name:accounts.nameOf(id),avatar:photo!==null?`/api/social/avatar?id=${community.pub(id)}&v=${photo}`:wallet.equippedAvatar(id),...(frame?{frame}:{}),...(bubble?{bubble}:{}),...(board?{board}:{}),...(micFrame?{micFrame}:{}),...(voiceFx?{voiceFx}:{}),ranks:{...(accountTools.settings(id).hideNameColor===true?{nameOff:true}:{}),...(verificationView(id).verificationKind==='administration'?{official:true}:{}),level:p.level.enabled&&!privacyOn(id,'hideWealth')?p.level.value:null,vip:p.vip.enabled&&!privacyOn(id,'hideVipId')?vip:null,noble:p.noble.enabled?noble:null,...(miners.level(id)?{miner:miners.level(id)}:{}),...(perks.passOn(id,'nfx')?{nfx:true}:{})},...(entrance&&!privacyOn(id,'hideEntrances')?{entrance}:{}),...(privacyOn(id,'hideEntrances')?{stealth:true}:{})};
     },
     blocked:(a,b)=>community.pairBlocked(a,b),eligible:socialEligible,trustedAdmin:id=>id==='token',
     emit:(ids,event)=>{for(const id of ids)sendToUser(id,event);},
@@ -1497,7 +1497,7 @@ export async function createApp(
   const tribeEligible = (id: string) => { const lv = socialRooms.ownerMaxRoomLevel(id); return { roomLevel: lv, need: TRIBE_ROOM_LEVEL, canCreate: socialEligible(id) && lv >= TRIBE_ROOM_LEVEL && !tribes.of(id) }; };
   /* R60: صفحة «إعدادات الخصوصية» — القيم + الرتبة + شرط كل خيار (القفل نفسه بالخادم) */
   functionalHttp.add('GET', '/api/privacy', ({ user }) => { const t = tierOf(user.id), st = accountTools.settings(user.id);
-    return { ok: true, vip: t.vip, noble: t.noble, settings: st, visitorsVip: perks.level('visitors'), visitorsOpen: t.vip >= perks.level('visitors'),
+    return { ok: true, vip: t.vip, noble: t.noble, settings: st, visitorsVip: perks.level('visitors'), visitorsOpen: t.vip >= perks.level('visitors') || perks.passOn(user.id, 'visitors'),
       gates: Object.fromEntries(Object.entries(PRIVACY_GATES).map(([k, g]) => [k, { vip: g.vip < 99 ? g.vip : 0, noble: g.noble, level: g.level ?? 0, allowed: privacyAllowed(user.id, k) }])) }; });
   const tribePush = (ids: string[]) => { for (const id of ids) sendToUser(id, { t: 'tribe:update' }); };
   /* R59: كنز القبيلة — صاروخ القبيلة (كل 3 مليون هيبة أسبوعية)، المهام، المكافأة، والمتجر */
@@ -2175,6 +2175,31 @@ export async function createApp(
     functionalHttp.add('POST', '/api/perks/mute-words', ({ user, body }) => perks.setMuteWords(user.id, body.words));
     // R127: الحماية والخصوصية — فلتر كلمات + عدم الإزعاج
     if (webPush) webPush.quiet = (id) => perks.dndActive(id);
+    // R129: متجر المميزات — تنشرى بالعملات المشحونة 💳
+    const perkShopView = (id: string) => ({ ok: true, passes: perks.passDefs().map((d) => ({ ...d, until: perks.passUntil(id, d.key) > Date.now() ? perks.passUntil(id, d.key) : 0 })), rooms: socialRooms.ownedRoomsOf(id).filter((r: any) => !socialRooms.isGameRoom(r.id)).map((r: any) => ({ id: r.id, name: r.name, promoted: perks.promotedUntil(r.id) })), coins: wallet.balance(id), paid: paidCoins.of(id, wallet.balance(id)), paidOnly: paidCoins.cfg().enabled, broadcast: siteFlags.get().broadcast });
+    functionalHttp.add('GET', '/api/perk-shop', ({ user }) => perkShopView(user.id));
+    functionalHttp.add('POST', '/api/perk-shop/buy', ({ user, body }) => {
+      if (isGuest(user.id)) throw new FunctionalHttpError(403, 'سجّل دخولك أول.');
+      const d = perks.passDef(String(body.pass ?? '')); if (!d) throw new FunctionalHttpError(400, 'الميزة غير موجودة.');
+      const key = String(body.key ?? ''); if (!/^[A-Za-z0-9-]{8,64}$/.test(key)) throw new FunctionalHttpError(400, 'مفتاح الطلب ناقص.');
+      let roomId = '';
+      if (d.key === 'boost') { roomId = String(body.room ?? ''); const mine = socialRooms.ownedRoomsOf(user.id).some((r: any) => r.id === roomId && !socialRooms.isGameRoom(r.id)); if (!mine) throw new FunctionalHttpError(400, 'اختر غرفة من غرفك.'); }
+      const paidOnly = paidCoins.cfg().enabled;
+      if (paidOnly && !paidCoins.take(user.id, wallet.balance(user.id), d.price)) throw new FunctionalHttpError(402, `هذي الميزة 💳 بالعملات المشحونة بس. تحتاج ${d.price.toLocaleString('en-US')} مشحونة.`);
+      const pay = wallet.spendService(user.id, d.price, `${d.icon} ${d.name}`, `perk129:${user.id}:${key}`);
+      if (paidOnly && (!pay.ok || pay.dup)) paidCoins.refund(user.id, d.price);
+      if (!pay.ok) throw new FunctionalHttpError(400, pay.code === 'poor' ? `رصيدك ما يكفي. تحتاج ${d.price.toLocaleString('en-US')} عملة.` : 'تعذّر الدفع.');
+      if (!pay.dup) { if (d.key === 'boost') perks.promote(roomId, d.days * 24); else perks.grantPass(user.id, d.key, d.days); log('perk129', { k: d.key }); }
+      sendToUser(user.id, { t: 'wallet', coins: wallet.balance(user.id) });
+      return perkShopView(user.id);
+    });
+    functionalHttp.add('POST', '/api/admin/perk-shop/grant', ({ actor, body }) => {
+      const id = minerFind(String(body.player ?? '')); adminNeed(!!id, 'ما لقيت اللاعب.');
+      const d = perks.passDef(String(body.pass ?? '')); adminNeed(!!d && d.key !== 'boost', 'اختر ميزة.');
+      const days = Number(body.days ?? d!.days); adminNeed(Number.isInteger(days) && days >= 1 && days <= 365, 'المدة من 1 لين 365 يوم.');
+      const until = perks.grantPass(id!, d!.key, days); admin.audit(actor!, 'perk.grant', id!, `${d!.key} ${days}d`);
+      sendToUser(id!, { t: 'notify', title: `${d!.icon} وصلتك ميزة ${d!.name}`, body: `شغّالة ${days} يوم.` }); return { ok: true, until };
+    }, 'owner');
     // R128: «شو فاتك» — ملخص الغرفة من آخر زيارة (لازم تكون عضو بالغرفة)
     functionalHttp.add('GET', '/api/room-recap', ({ user, url }) => {
       const rid = String(url.searchParams.get('room') ?? ''); if (!/^[0-9a-f-]{36}$/.test(rid)) throw new FunctionalHttpError(400, 'غرفة غير صالحة.');

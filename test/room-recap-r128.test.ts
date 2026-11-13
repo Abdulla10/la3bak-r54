@@ -19,3 +19,13 @@ test('R128b: اسم «الإدارة» للمشرفين بس', () => {
   assert.equal(nameProblem('الاداره', { allowStaff: true }), null);
   assert.ok(nameProblem('www.x.com', { allowStaff: true }));
 });
+import { Perks } from '../src/server/perks-r74.ts';
+test('R129: المميزات المشتراة', () => {
+  let now = 1_000_000; const p = new Perks('', () => ({ vip: 0, noble: 0 }), () => now);
+  assert.equal(p.has('u1', 'visitors'), false);
+  const u = p.grantPass('u1', 'visitors', 30); assert.equal(u, now + 30 * 86400_000); assert.equal(p.has('u1', 'visitors'), true);
+  assert.equal(p.grantPass('u1', 'visitors', 30), now + 60 * 86400_000);
+  p.grantPass('u1', 'xpBoost', 7); assert.equal(p.xpPct('u1'), 100);
+  p.promote('room1', 24); assert.ok(p.promotedUntil('room1') > now);
+  now += 61 * 86400_000; assert.equal(p.has('u1', 'visitors'), false); assert.equal(p.promotedUntil('room1'), 0);
+});

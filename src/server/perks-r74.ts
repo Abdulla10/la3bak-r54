@@ -32,7 +32,18 @@ export const PERK_DEFS: PerkDef[] = [
 PERK_DEFS.sort((a, b) => (a.system === b.system ? 0 : a.system === 'vip' ? -1 : 1) || a.level - b.level);
 export const PICK_ID_EVERY = 30 * 86400_000, EDIT_WINDOW = 10 * 60_000;
 type Prefs = { mw?: string[]; pin?: string[]; idAt?: number; dnd?: { f: number; t: number; o: number } };
-type Data = { v: 1; levels: Partial<Record<PerkKey, number>>; used: Record<string, string>; bc: Record<string, number>; prefs?: Record<string, Prefs> };
+type Data = { v: 1; levels: Partial<Record<PerkKey, number>>; used: Record<string, string>; bc: Record<string, number>; prefs?: Record<string, Prefs>; pass?: Record<string, Partial<Record<PassKey, number>>>; promo?: Record<string, number>; passPrice?: Partial<Record<PassKey, number>> };
+/** R129: مميزات تنشرى (بالعملات المشحونة) بدون ما تكون VIP — كل وحدة لها مدة */
+export type PassKey = 'boost' | 'visitors' | 'stealth' | 'xpBoost' | 'nfx' | 'seat';
+export type PassDef = { key: PassKey; icon: string; name: string; desc: string; days: number; price: number };
+export const PASS_DEFS: PassDef[] = [
+  { key: 'boost', icon: '🚀', name: 'رفع الغرفة', desc: 'غرفتك تثبت أول القائمة بالرئيسية وقسم الغرف، مع شارة «مميزة».', days: 1, price: 30_000 },
+  { key: 'visitors', icon: '👁️', name: 'مين زار ملفي', desc: 'تشوف أسماء وصور اللي زاروا ملفك ومتى.', days: 30, price: 20_000 },
+  { key: 'stealth', icon: '🥷', name: 'وضع التخفي', desc: 'تخفي زياراتك للملفات ودخوليتك وحالة «متصل الآن» (من إعدادات الخصوصية).', days: 30, price: 40_000 },
+  { key: 'xpBoost', icon: '⚡', name: 'مضاعف الليفل ×2', desc: 'ضعف الخبرة من كل مباراة، وترفع ليفلك بسرعة.', days: 7, price: 15_000 },
+  { key: 'nfx', icon: '🌈', name: 'اسم متحرك', desc: 'اسمك يلمع ويتحرك بألوان ذهبية بالدردشة والمقاعد.', days: 30, price: 25_000 },
+  { key: 'seat', icon: '🪑', name: 'المقعد الذهبي', desc: 'تقعد على مقاعد المايك المقفولة (المحجوزة) بأي غرفة.', days: 30, price: 35_000 },
+];
 const day = (t: number) => new Date(t + 4 * 3600_000).toISOString().slice(0, 10);
 
 export class Perks {
@@ -45,11 +56,28 @@ export class Perks {
   }
   def(k: PerkKey) { return PERK_DEFS.find((p) => p.key === k)!; }
   level(k: PerkKey) { return this.d.levels[k] ?? this.def(k).level; }
-  has(id: string, k: PerkKey) { if (!id || id.startsWith('bot-')) return false; const d = this.def(k), t = this.tier(id); const v = d.system === 'vip' ? t.vip : t.noble; return (v > 0 && v >= this.level(k)) || (!!d.alt && t.noble > 0 && t.noble >= d.alt); }
+  has(id: string, k: PerkKey) { if (!id || id.startsWith('bot-')) return false; if ((k === 'visitors' || k === 'stealth' || k === 'xpBoost' || k === 'seat') && this.passOn(id, k)) return true; const d = this.def(k), t = this.tier(id); const v = d.system === 'vip' ? t.vip : t.noble; return (v > 0 && v >= this.level(k)) || (!!d.alt && t.noble > 0 && t.noble >= d.alt); }
   /** R88: الأرقام اللي تكبر مع المستوى */
   salaryOf(id: string) { if (!this.has(id, 'salary')) return 0; const t = this.tier(id); return t.vip * 100 + t.noble * 300; }
   discountPct(id: string) { if (!this.has(id, 'shopDiscount')) return 0; const t = this.tier(id); return Math.max(5, Math.min(30, Math.max(t.vip * 2, t.noble * 4))); }
-  xpPct(id: string) { if (!this.has(id, 'xpBoost')) return 0; const t = this.tier(id); return Math.max(24, Math.min(50, Math.max(t.vip * 3, t.noble * 6))); }
+  xpPct(id: string) { if (this.passOn(id, 'xpBoost')) return 100; if (!this.has(id, 'xpBoost')) return 0; const t = this.tier(id); return Math.max(24, Math.min(50, Math.max(t.vip * 3, t.noble * 6))); }
+  /** R129: المميزات المشتراة */
+  passDefs() { return PASS_DEFS.map((d) => ({ ...d, price: this.d.passPrice?.[d.key] ?? d.price })); }
+  passDef(k: string) { return this.passDefs().find((d) => d.key === k) ?? null; }
+  passUntil(id: string, k: PassKey) { return this.d.pass?.[id]?.[k] ?? 0; }
+  passOn(id: string, k: PassKey) { return this.passUntil(id, k) > this.now(); }
+  passesOf(id: string) { const o: Partial<Record<PassKey, number>> = {}; for (const d of PASS_DEFS) { const u = this.passUntil(id, d.key); if (u > this.now()) o[d.key] = u; } return o; }
+  /** يمدد من آخر وقت (لو شغّال) — يرجع وقت الانتهاء */
+  grantPass(id: string, k: PassKey, days: number) {
+    const now = this.now(); this.d.pass ??= {}; const m = (this.d.pass[id] ??= {});
+    const until = Math.max(now, m[k] ?? 0) + Math.round(days * 86400_000); m[k] = until;
+    for (const [kk, u] of Object.entries(m)) if ((u ?? 0) < now) delete m[kk as PassKey];
+    this.disk.save(); return until;
+  }
+  setPassPrice(k: PassKey, price: number) { if (!PASS_DEFS.some((d) => d.key === k) || !Number.isSafeInteger(price) || price < 1000 || price > 100_000_000) throw Object.assign(new Error('السعر غير صحيح.'), { status: 400 }); (this.d.passPrice ??= {})[k] = price; this.disk.save(); return this.passDefs(); }
+  /** رفع الغرفة (أول القائمة) */
+  promote(roomId: string, hours: number) { const now = this.now(); this.d.promo ??= {}; for (const [r, u] of Object.entries(this.d.promo)) if (u < now) delete this.d.promo[r]; const until = Math.max(now, this.d.promo[roomId] ?? 0) + Math.round(hours * 3600_000); this.d.promo[roomId] = until; this.disk.save(); return until; }
+  promotedUntil(roomId: string) { const u = this.d.promo?.[roomId] ?? 0; return u > this.now() ? u : 0; }
   /** R127: فلتر كلمات مجاني للكل (5)، و VIP لين 30 */
   muteLimit(id: string) { return this.has(id, 'muteWords') ? 30 : 5; }
   prefs(id: string) { const p = this.d.prefs![id] ?? {}; return { muteWords: (p.mw ?? []).slice(0, this.muteLimit(id)), pins: this.has(id, 'pinChats') ? [...(p.pin ?? [])] : [], nextIdAt: p.idAt ? p.idAt + PICK_ID_EVERY : 0 }; }

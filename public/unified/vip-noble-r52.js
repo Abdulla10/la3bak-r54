@@ -3,8 +3,8 @@
  * ولا يُخترع امتياز أو رقم. */
 import * as R from './rank-vip-shared.js?v=r101';
 // استيراد كمساحة أسماء: لو المتصفح عنده نسخة أقدم من shop.js بالكاش (بدون itemThumb) ما تنكسر الصفحة
-import * as SHOP from '../shop.js?v=r123';
-import { PERK_ITEMS } from '../rank-perks-r56.js?v=r67t';
+import * as SHOP from '../shop.js?v=r129';
+import { PERK_ITEMS } from '../rank-perks-r56.js?v=r129';
 const { esc, obj, list, nat } = R;
 
 /* رموز أحادية اللون داخل الشكل السداسي (رسم بسيط خاص بالموقع) */

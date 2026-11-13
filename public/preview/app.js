@@ -3,10 +3,10 @@ let PKLOADED = false;
 import * as RES from '../result-r69.js?v=r69zu';
 import * as RESUME from '../resume-r69.js?v=r69zl';
 import { createGlobalSearch } from '../unified/global-search.js?v=r103-search-r17';
-import * as PR from './profile.js?v=r123';
-import * as UNIFIED from '../unified/shell.js?v=r128h';
-import * as REF from '../unified/home.js?v=r126';
-import * as SOCIAL from '../unified/social.js?v=r128';
+import * as PR from './profile.js?v=r129';
+import * as UNIFIED from '../unified/shell.js?v=r129';
+import * as REF from '../unified/home.js?v=r129';
+import * as SOCIAL from '../unified/social.js?v=r129';
 const { leaveSocial, refreshSocial } = SOCIAL;
 import { isRetiredGame, visibleGameCatalogue, retiredGameHTML } from '../game-availability.js?v=games-royal-1';
 import { createSocialGiftStore } from '../social-gifts.js?v=r107';
@@ -26,8 +26,8 @@ import * as FS from '../fullscreen.js?v=shell-r6';
 import { mountSprite } from '../characters.js?v=shell-r6';
 mountSprite();
 import * as SEASON from '../seasons.js?v=shell-r6';
-import * as PF from '../profile.js?v=r123';
-import * as SHOP from '../shop.js?v=r123';
+import * as PF from '../profile.js?v=r129';
+import * as SHOP from '../shop.js?v=r129';
 import * as GIFT from '../gifts.js?v=r107';
 import * as GFX from '../giftfx.js?v=r68i';
 import * as AVR from '../avatars.js?v=r107';
@@ -47,10 +47,10 @@ import * as CITY from '../city.js?v=r57';
 import * as COM from '../community.js?v=r107';
 import { isCommunityRestricted } from '../community-access-r37.js';
 import * as THEME from '../theme.js?v=r64a';
-import * as PWA from '../pwa.js?v=r128h';
+import * as PWA from '../pwa.js?v=r129';
 import * as SFX from '../sfx.js?v=r69zu-r6';
 import * as OFF from '../offline.js?v=games-royal-1';
-import * as MIS from '../missions.js?v=r123';
+import * as MIS from '../missions.js?v=r129';
 import * as SP from '../social-plus-r73.js?v=r127';
 import '../mute-r88.js?v=r88';
 import * as CHAT from '../chat.js?v=r107';
@@ -443,7 +443,7 @@ function loadFunctionalModule(name) {
       : key === 'private' ? import('../social-private.js?v=r57')
       : key === 'missions' ? import('../missions-server.js?v=r68z')
       : key === 'profile-social' ? import('../profile-social-r53.js?v=r107')
-      : import('../functional-pages.js?v=r68o');
+      : import('../functional-pages.js?v=r129');
     functionalModules.set(key, promise);
     promise.catch(() => { if (functionalModules.get(key) === promise) functionalModules.delete(key); });
   }
@@ -474,7 +474,7 @@ function unifiedContext(page, content='') {
 /* R60: الإعدادات/الخصوصية/معلومات الحساب (قوائم صفوف مثل فيديو المالك) */
 let S60 = null;
 async function settingsR60(view, name) {
-  const M = await import('../settings-r60.js?v=r128h');
+  const M = await import('../settings-r60.js?v=r129');
   const st = { msg: '', bad: false, priv: null, settings: null };
   const paint = () => {
     if (parseRoute().name !== name) return;
@@ -832,6 +832,7 @@ async function render() {
     case 'shop':
       if (needUser('#/shop/'+r.a)) return;
       /* R125: الباقات القديمة (المجانية) انشالت — صفحة «اشحن» الجديدة بداله */
+      if (r.a === 'perks') { import('../perk-shop-r129.js?v=r129').then((m) => m.openPerkShop()).catch(() => {}); (globalThis.__LA3BAK_NAV__ || location).hash = '#/shop'; return; }
       if (r.a === 'packs') { import('../recharge-r123.js?v=r128h').then((m) => m.openRecharge()).catch(() => {}); (globalThis.__LA3BAK_NAV__ || location).hash = '#/shop'; return; }
       if (changed && r.a === 'bg') SHOP.SH.tab = 'bg';
       if (changed && SHOP.SH.tab === 'gift') GIFT.loadList(req).then(() => { if (parseRoute().name === 'shop') render(); });

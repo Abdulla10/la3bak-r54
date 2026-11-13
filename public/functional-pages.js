@@ -1,4 +1,4 @@
-import { PERK_ITEMS } from './rank-perks-r56.js?v=r67t';
+import { PERK_ITEMS } from './rank-perks-r56.js?v=r129';
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const date = (at) => new Date(at).toLocaleString('ar-AE-u-nu-latn');
 const error = (root, e) => { const el = root.querySelector('[data-functional-status]'); if (el) { el.textContent = e.message || 'تعذّر تنفيذ الطلب.'; el.setAttribute('role', 'alert'); } };

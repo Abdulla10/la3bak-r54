@@ -87,13 +87,13 @@ function roomsSectionHTML(ctx) {
   return `<section class="h68-card h95-rooms" data-h68-live>${head}<div class="h68-rooms h95-list"><p class="h68-empty">جاري التحميل…</p></div><div class="h95-acts"><a class="btn" href="#/social-rooms">➕ أنشئ غرفتك</a><a class="btn ghost" href="#/majalis">🏛️ المجالس</a></div></section>`;
 }
 function roomsHTML(rooms) {
-  const live = arr(rooms).filter((r) => r && typeof r.id === 'string' && !r.hasPassword).sort((a, b) => (b.count || 0) - (a.count || 0) || (b.level || 1) - (a.level || 1)).slice(0, 6);
+  const live = arr(rooms).filter((r) => r && typeof r.id === 'string' && !r.hasPassword).sort((a, b) => Number(!!b.promoted) - Number(!!a.promoted) || (b.count || 0) - (a.count || 0) || (b.level || 1) - (a.level || 1)).slice(0, 6);
   if (!live.length) return '<p class="h68-empty">ما في غرف شغالة الحين.</p>';
   return live.map((r, i) => {
     const photo = typeof r.photo === 'string' && /^\/(api\/social\/room-photo\?|[A-Za-z0-9_./-]+$)/.test(r.photo) ? r.photo : '';
     const cap = Number.isSafeInteger(r.capacity) ? r.capacity : r.maxMembers;
     const n = Number(r.count) || 0;
-    return `<a class="h95-room r${i}" href="#/social-room/${encodeURIComponent(r.id)}" aria-label="ادخل ${esc(r.name)}"><span class="h95-pic">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : `<i>${esc([...String(r.name || 'غ')][0])}</i>`}${n ? '<em class="h95-dot" aria-hidden="true"></em>' : ''}</span><span class="h95-txt"><b>${esc(r.name)}</b><small>${r.owner?.name ? `${esc(r.owner.name)} · ` : ''}<span dir="ltr">${SVG.user} ${nf(n)}/${nf(cap)}</span></small></span><span class="h95-go">ادخل</span></a>`;
+    return `<a class="h95-room r${i}" href="#/social-room/${encodeURIComponent(r.id)}" aria-label="ادخل ${esc(r.name)}"><span class="h95-pic">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : `<i>${esc([...String(r.name || 'غ')][0])}</i>`}${n ? '<em class="h95-dot" aria-hidden="true"></em>' : ''}</span><span class="h95-txt"><b>${esc(r.name)}${r.promoted ? ' <i class="r129-promo">🚀 مميزة</i>' : ''}</b><small>${r.owner?.name ? `${esc(r.owner.name)} · ` : ''}<span dir="ltr">${SVG.user} ${nf(n)}/${nf(cap)}</span></small></span><span class="h95-go">ادخل</span></a>`;
   }).join('');
 }
 function peopleHTML(list) {

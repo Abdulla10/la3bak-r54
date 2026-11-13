@@ -1,8 +1,8 @@
 /* VIP BODY only. No client crediting, balance deduction, fake perks or sample packs.
  * Only server-approved offers can proceed to preview and explicit confirmation. */
-import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r67t';
+import { EFFECTS as PERK_EFFECTS, effectArt, effectKindLabel } from '../rank-perks-r56.js?v=r129';
 import * as R from './rank-vip-shared.js?v=r101';
-import * as V from './vip-noble-r52.js?v=r123';
+import * as V from './vip-noble-r52.js?v=r129';
 const { esc, obj, list, nat, fmt, icon, artwork } = R;
 const STATUS_NAMES = Object.freeze({ active: 'عضوية نشطة', inactive: 'عضوية غير مفعّلة', expired: 'انتهت صلاحية العضوية', legacy: 'رتبة VIP سابقة · دون عضوية مؤرخة' });
 const BENEFIT_SYMBOLS = Object.freeze({ frame: 'frame', title: 'crown', badge: 'medal', bg: 'image', background: 'image', effect: 'star', social: 'users' });
