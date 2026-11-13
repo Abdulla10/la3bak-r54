@@ -104,7 +104,6 @@ import { OwnerOps, OwnerError, dayKey as gulfDay } from './owner-r69.js';
 import { AiMod } from './ai-mod-r69.js';
 import { Arena, ArenaError, ENV_AMOUNTS, ENV_COUNTS, YT_ID as ARENA_YT } from './arena-r69.js';
 import { BombGames, BombError, BOMB_PRIZE, BOMB_PRIZE_MIN_PLAYERS } from './bomb-r69.js';
-import { JawsGames, JawsError, JAWS_PRIZE, JAWS_PRIZE_MIN_HUMANS } from './jaws-r130.js';
 import { SpyGames, SpyError, SPY_PRIZE } from './spy-r69.js';
 import { WolfGames, FastGames, MillionGames, RoomGameError } from './room-games-r111.js';
 import { GoldChests, ChestError } from './gold-chest-r69.js';
@@ -1985,37 +1984,6 @@ export async function createApp(
       });
       for (const id of acc.members) if (id !== user.id) sendToUser(id, { t: 'bomb', room });
       return { ok: true, now: Date.now(), ...bomb.view(room, user.id, acc.mod) };
-    });
-    /* R130: «الفكّ» — آلة الأسنان والأزرار الملغومة */
-    const jawWins = new Map<string, { day: string; n: number }>();
-    const jaws = new JawsGames({ prize: (winner, humans, gameId) => {
-      if (humans < JAWS_PRIZE_MIN_HUMANS) return 0;
-      const day = new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10), w = jawWins.get(winner); const n = w?.day === day ? w.n : 0;
-      if (n >= 5) return 0;
-      if (!wallet.grant(winner, 'coins', JAWS_PRIZE, 'فوز بلعبة الفكّ 🦷', `jaws:${gameId}:${winner}`)) return 0;
-      jawWins.set(winner, { day, n: n + 1 }); sendToUser(winner, { t: 'wallet', coins: wallet.balance(winner) }); return JAWS_PRIZE;
-    }, name: (id) => accounts.nameOf(id) || 'لاعب', avatar: (id) => { const ph = avatars.version(id); return ph !== null ? `/api/social/avatar?id=${community.pub(id)}&v=${ph}` : wallet.equippedAvatar(id); }, notify: (ids, room) => { for (const id of new Set(ids)) sendToUser(id, { t: 'jaws', room }); } });
-    { const jt = setInterval(() => { try { jaws.tick(); } catch (e) { log('jaws_tick_failed', { error: String(e).slice(0, 100) }); } }, 250); jt.unref?.(); }
-    functionalHttp.add('GET', '/api/room-jaws', ({ user, url }) => { const room = String(url.searchParams.get('room') ?? ''); const acc = socialRooms.quizAccess(user.id, room); if (!acc) return { ok: true, member: false, game: null, can: {} }; return { ok: true, member: true, now: Date.now(), ...jaws.view(room, user.id, acc.mod) }; });
-    functionalHttp.add('POST', '/api/room-jaws/:act', ({ user, body, params }) => {
-      noGuest(user.id); const room = String(body.room ?? ''); const acc = bombAcc(user.id, room);
-      try {
-        const a = String(params.act);
-        if (a === 'create') jaws.create(room, user.id, acc.members, acc.mod);
-        else if (a === 'join') jaws.join(room, user.id);
-        else if (a === 'leave') jaws.leave(room, user.id);
-        else if (a === 'bot') jaws.addBot(room, user.id);
-        else if (a === 'kick') jaws.kick(room, user.id, String(body.who ?? ''));
-        else if (a === 'settings') jaws.settings(room, user.id, body);
-        else if (a === 'start') jaws.start(room, user.id, acc.members);
-        else if (a === 'press') jaws.press(room, user.id, body.btn, acc.members);
-        else if (a === 'card') jaws.card(room, user.id, body.card, body.btn);
-        else if (a === 'cancel') jaws.cancel(room, user.id, acc.mod);
-        else if (a === 'again') jaws.again(room, user.id, acc.mod, acc.members);
-        else throw new JawsError('إجراء غير معروف.', 404);
-      } catch (e) { if (e instanceof JawsError) throw new FunctionalHttpError(e.status, e.message); throw e; }
-      for (const id of acc.members) if (id !== user.id) sendToUser(id, { t: 'jaws', room });
-      return { ok: true, now: Date.now(), ...jaws.view(room, user.id, acc.mod) };
     });
     /* R111: ذئب الليل / أسرع جواب / من سيربح المليون */
     const rgDay = () => new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10);

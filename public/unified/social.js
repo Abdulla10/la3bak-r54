@@ -434,7 +434,6 @@ function roomMenuGridHTML(c,ui,council){
     tile('broadcast-open','bell','برقية للكل','data-bc67-open'),
     joined&&!c.ctx.gameRoom?tile('broadcast-open','volume','أغاني الغرفة','data-rl69-music'):'',
     joined&&!c.ctx.gameRoom&&(mine||can('chat'))?tile('broadcast-open','star','لعبة القنبلة 💣','data-bm69-open'):'',
-    joined&&!c.ctx.gameRoom&&(mine||can('chat'))?tile('broadcast-open','star','الفكّ 🦷','data-jw130-open'):'',
     joined&&!c.ctx.gameRoom&&(mine||can('chat'))?tile('broadcast-open','star','من برا السالفة 🕵️','data-sp69-open'):'',
     joined&&!c.ctx.gameRoom?tile('broadcast-open','star','ذئب الليل 🐺','data-rg-open="wolf"'):'',
     joined&&!c.ctx.gameRoom?tile('broadcast-open','star','أسرع جواب ⚡','data-rg-open="fast"'):'',
