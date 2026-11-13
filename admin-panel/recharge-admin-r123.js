@@ -22,6 +22,10 @@ export function mountRecharge(root, { call }) {
         <div class="quick">${c.packs.map((p) => `<button type="button" class="ad-btn" data-rc-amt="${p.coins}"${S.busy ? ' disabled' : ''}>+${nf(p.coins)} (${nf(p.aed)} د)</button>`).join('')}</div>
         <form data-rc="credit" class="row"><input class="ad-in" name="coins" type="number" min="1000" placeholder="مبلغ ثاني" dir="ltr"><input class="ad-in" name="note" placeholder="ملاحظة (مثل رقم الإيصال)" maxlength="120"><button class="ad-btn" type="submit" style="flex:0 0 auto"${S.busy ? ' disabled' : ''}>اشحن</button></form></div>` : ''}</section>
       <section class="ad-card"><h2>⚡ Ziina التلقائي</h2>${d.ziina?.on ? `<p class="ok">مفعّل ✅${d.ziina.test ? ' (وضع تجربة — ما ينخصم فلوس)' : ''} — اللاعب يدفع والعملات تنضاف تلقائياً.</p><button type="button" class="ad-btn" data-rc-wh>تسجيل الويبهوك عند Ziina (مرة وحدة)</button>` : '<p class="ad-muted">مو مفعّل. ماينوس يحط ZIINA_TOKEN بإعدادات السيرفر ويعيد التشغيل. لين ذاك تشتغل الروابط اليدوية تحت.</p>'}</section>
+      <section class="ad-card" style="border:1px solid ${c.closed ? 'rgba(248,113,113,.6)' : 'rgba(74,222,128,.45)'}"><h2>${c.closed ? '🔒 الشحن مقفل' : '🟢 الشحن مفتوح'}</h2>
+        <p class="ad-muted">${c.closed ? 'اللاعبين ما يقدرون يشحنون الحين — يطلع لهم الكلام اللي تحت.' : 'اللاعبين يقدرون يشحنون عادي.'} (الشحن اليدوي من هني يشتغل دايماً)</p>
+        <input class="ad-in" data-rc-cmsg maxlength="140" placeholder="الكلام اللي يطلع للاعب (اختياري): مثل الشحن مقفل لين الأحد" value="${esc(c.closedMsg || '')}">
+        <button type="button" class="ad-btn" data-rc-close style="margin-top:8px;${c.closed ? 'background:#16a34a' : 'background:#dc2626'};color:#fff">${c.closed ? '🔓 افتح الشحن' : '🔒 اقفل الشحن'}</button></section>
       <section class="ad-card"><h2>⚙️ إعدادات الشحن</h2><form data-rc="cfg" class="ad-form col">
         <label>الأشياء اللي سعرها من كذا وفوق (بالسعر الأصلي) تصير بالمشحون بس<input class="ad-in" name="threshold" type="number" value="${c.threshold}" dir="ltr"></label>
         <label>سعرها يتقسم على<input class="ad-in" name="divisor" type="number" min="1" max="100" value="${c.divisor}" dir="ltr"></label>
@@ -44,6 +48,7 @@ export function mountRecharge(root, { call }) {
     if (e.target.closest('[data-rc-store]')) { const cur = f ? readPacks(f) : S.packs; S.packs = STORE.map(([coins, aed]) => { const old = cur.find((p) => p.coins === coins); return { id: 'c' + coins, coins, aed: old?.aed ?? aed, link: old?.link ?? '' }; }); S.msg = 'تمت تعبئة باقات المتجر — حط الروابط واضغط «حفظ الإعدادات».'; paint(); return; }
     if (e.target.closest('[data-rc-add]')) { if (f) S.packs = readPacks(f); if (S.packs.length < 12) S.packs.push({ id: 'x' + Date.now().toString(36).slice(-5), coins: 0, aed: 0, link: '' }); paint(); return; }
     const del = e.target.closest('[data-rc-del]'); if (del) { if (f) S.packs = readPacks(f); S.packs.splice(Number(del.dataset.rcDel), 1); paint(); return; }
+    if (e.target.closest('[data-rc-close]')) { const c = S.d.cfg; const closed = !c.closed; if (closed && !confirm('أكيد تبي تقفل الشحن عن كل اللاعبين؟')) return; try { await call('recharge/config', { method: 'POST', body: { closed, closedMsg: (root.querySelector('[data-rc-cmsg]')?.value || '').trim() } }); toast(closed ? '🔒 تم قفل الشحن' : '🔓 تم فتح الشحن', true); await load(); } catch (er) { toast('❌ ' + er.message, false); } return; }
     if (e.target.closest('[data-rc-wh]')) { try { await call('recharge/ziina-webhook', { method: 'POST', body: {} }); S.msg = 'تم ✅ تسجّل الويبهوك.'; S.err = ''; } catch (er) { S.err = er.message; } paint(); } });
   root.addEventListener('submit', async (e) => {
     const f = e.target.closest('[data-rc]'); if (!f) return; e.preventDefault();

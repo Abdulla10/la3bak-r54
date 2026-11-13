@@ -21,6 +21,7 @@ export async function openRecharge() {
   root.addEventListener('click', (e) => { if (e.target === root || e.target.closest('[data-rc=x]')) root.remove(); });
   let d; try { const r = await fetch('/api/recharge', { credentials: 'same-origin', cache: 'no-store' }); d = await r.json(); if (!r.ok || !d.ok) throw new Error(d.error || 'سجّل دخولك أول.'); }
   catch (e) { sh.innerHTML = `<button type="button" class="x" data-rc="x">✕</button><p class="sub">${esc(e.message)}</p>`; return; }
+  if (d.closed) { sh.innerHTML = `<button type="button" class="x" data-rc="x" aria-label="إغلاق">✕</button><h2>🔒 الشحن مقفل</h2><p class="sub" style="font-size:15px;line-height:1.8">${esc(d.closedMsg)}</p><div class="bal"><div><small>رصيدك</small><b>${nf(d.coins)} 🪙</b></div></div>`; return; }
   const wa = d.whatsapp ? `https://wa.me/${d.whatsapp.replace(/^\+/, '')}?text=${encodeURIComponent(`هلا، دفعت لشحن رصيدي في لعبك 💳\nالآيدي: ${d.displayId}\nالاسم: ${d.name}\n(مرفق الإيصال)`)}` : '';
   sh.innerHTML = `<button type="button" class="x" data-rc="x" aria-label="إغلاق">✕</button><h2>💳 اشحن رصيدك</h2><p class="sub">العملات المشحونة تشتري فيها الأشياء الغالية (الآيدي المميز، الدخوليات، القطع الأسطورية، المناجم).</p>
     <div class="bal"><div><small>رصيدك</small><b>${nf(d.coins)} 🪙</b></div><div><small>منها مشحونة</small><b>${nf(d.paid)} 💳</b></div></div>
