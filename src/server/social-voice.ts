@@ -10,13 +10,15 @@ export type SocialVoiceOptions = {
   access: (uid: string) => MediaAccess | null;
   authenticate: (req: IncomingMessage) => { id: string } | null;
   originAllowed: (req: IncomingMessage) => boolean;
+  /** R133: تشخيص — سبب كل قطع/رفض لاتصال الصوت */
+  onEvent?: (ev: string, data: Record<string, unknown>) => void;
 };
 export type VoiceTicket = { ok: true; urlPath: '/social-rtc'; token: string; channel: string; identity: string; muted: boolean; highQuality: boolean } | { ok: false; error: string; status: number };
 export const VOICE_LIMITS = Object.freeze({ transports: 256, perUser: 1, payload: 128 * 1024, buffered: 512 * 1024, revalidateMs: 500, handshakeMs: 5000, ticketSeconds: 120 });
 const opaque = (s: unknown): s is string => typeof s === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(s);
 const domain = 'la3bak/social-voice/gateway/v1';
 type Claim = { uid: string; roomId: string; councilId: string; epoch: string | number; iat: number; exp: number; iss: string; aud: string };
-type Transport = { uid: string; access: MediaAccess; req: IncomingMessage; client?: WebSocket; upstream?: WebSocket; closed: boolean; removing?: Promise<void>; timer?: NodeJS.Timeout };
+type Transport = { uid: string; access: MediaAccess; req: IncomingMessage; client?: WebSocket; upstream?: WebSocket; closed: boolean; removing?: Promise<void>; timer?: NodeJS.Timeout; at?: number; last?: number };
 const raw = (data: RawData) => Array.isArray(data) ? Buffer.concat(data) : Buffer.from(data as ArrayBuffer);
 
 /** Numeric private addresses only: no public upstream, DNS rebinding, redirects, credentials or path injection. */
@@ -96,6 +98,10 @@ export function validVoiceRequest(data: Buffer, binary: boolean, muted: boolean)
   } catch { return false; }
 }
 
+/** R133: نوع رسالة الإشارة (للتشخيص بس) */
+function requestKind(data: Buffer, binary: boolean): string {
+  try { if (!binary) { const o = JSON.parse(data.toString('utf8')); return Object.keys(o).join(',').slice(0, 40) || 'empty'; } return 'pb:' + (data.length ? (data[0] >> 3) : -1); } catch { return 'unparsed'; }
+}
 export class SocialVoice {
   private base: URL | null;
   private reason: string;
@@ -147,15 +153,26 @@ export class SocialVoice {
       return a && !this.isRevoked(user.id, a) && a.roomId === c.roomId && a.councilId === c.councilId && String(a.epoch) === String(c.epoch) ? { uid: user.id, access: a } : null;
     } catch { return null; }
   }
+  private ev(ev: string, data: Record<string, unknown>) { try { this.opts.onEvent?.(ev, data); } catch { /* */ } }
+  /** R133: ليش الاتصال ما عاد صالح؟ (للتشخيص فقط) */
+  private why(t: Transport): string {
+    try {
+      if (this.stopped) return 'stopped'; const u = this.opts.authenticate(t.req); if (u?.id !== t.uid) return 'session-invalid';
+      const a = this.access(t.uid); if (!a) return 'no-media-access'; if (this.isRevoked(t.uid, a)) return 'revoked';
+      if (a.roomId !== t.access.roomId || a.councilId !== t.access.councilId) return 'moved-room-or-seat';
+      if (String(a.epoch) !== String(t.access.epoch)) return 'epoch-changed'; if (a.muted !== t.access.muted) return 'mute-changed';
+      return 'other';
+    } catch { return 'error'; }
+  }
   private current(t: Transport) {
     try {
       const u = this.opts.authenticate(t.req), a = this.access(t.uid);
-      return !this.stopped && u?.id === t.uid && a && !this.isRevoked(t.uid, a) && a.roomId === t.access.roomId && a.councilId === t.access.councilId && a.id === t.access.id && a.channel === t.access.channel && String(a.epoch) === String(t.access.epoch) && a.muted === t.access.muted && a.highQuality === t.access.highQuality;
+      return !this.stopped && u?.id === t.uid && a && !this.isRevoked(t.uid, a) && a.roomId === t.access.roomId && a.councilId === t.access.councilId && a.id === t.access.id && a.channel === t.access.channel && String(a.epoch) === String(t.access.epoch) && a.muted === t.access.muted; // R133: «جودة عالية» ما تغيّر الصلاحيات — كانت تقطع صوت كل الغرفة
     } catch { return false; }
   }
   private revalidate() {
     for (const [uid, epoch] of this.revoked) { const a = this.access(uid); if (!a || String(a.epoch) !== epoch) this.revoked.delete(uid); }
-    for (const t of this.records.values()) if (t.closed || !this.current(t)) void this.remove(t).catch(() => undefined);
+    for (const t of this.records.values()) if (t.closed) void this.remove(t, 'closed').catch(() => undefined); else if (!this.current(t)) void this.remove(t, 'revalidate:' + this.why(t)).catch(() => undefined);
   }
   private serverToken(a: MediaAccess, admin = false) {
     const now = Math.floor(Date.now() / 1000);
@@ -177,14 +194,31 @@ export class SocialVoice {
     const admission = this.authorize(req, u);
     if (!admission) { deny(this.reason ? 503 : 401); return true; }
     const { uid, access: a } = admission;
-    if (this.records.has(uid) || this.records.size >= VOICE_LIMITS.transports) { deny(429); return true; }
-    const t: Transport = { uid, access: a, req, closed: false }; this.records.set(t.uid, t);
+    if (this.records.size >= VOICE_LIMITS.transports && !this.records.has(uid)) { this.ev('voice-deny', { uid, reason: 'capacity' }); deny(429); return true; }
+    const prev = this.records.get(uid);
+    if (prev && !prev.closed && prev.client?.readyState === WebSocket.OPEN && Date.now() - (prev.last ?? prev.at ?? 0) < 15000) { this.ev('voice-deny', { uid, reason: 'duplicate-active' }); deny(429); return true; }
+    if (prev) {
+      // R133: كان يرفض (429) لو الاتصال القديم ما انشال للحين — فالرجوع بعد أي انقطاع يفشل والمايك يعلق.
+      // الحين: الأحدث يكسب. نشيل القديم (ونأكد إن SFU شاله) وبعدين نكمل الجديد.
+      this.ev('voice-replace', { uid, closed: prev.closed });
+      void this.remove(prev, 'replaced-by-new').catch(() => undefined).then(() => {
+        if (socket.destroyed || this.stopped) return;
+        if (this.records.has(uid)) { this.ev('voice-deny', { uid, reason: 'old-removal-failed' }); deny(409); return; }
+        this.accept(req, socket, head, u, uid, a);
+      });
+      return true;
+    }
+    this.accept(req, socket, head, u, uid, a); return true;
+  }
+  private accept(req: IncomingMessage, socket: Duplex, head: Buffer, u: URL, uid: string, a: MediaAccess) {
+    const deny = (status: number) => { socket.end(`HTTP/1.1 ${status} Rejected\r\nConnection: close\r\nCache-Control: no-store\r\nContent-Length: 0\r\n\r\n`); };
+    const t: Transport = { uid, access: a, req, closed: false, at: Date.now() }; this.records.set(t.uid, t);
     try {
       this.wss.handleUpgrade(req, socket, head, (client: WebSocket) => {
         t.client = client;
-        client.on('error', () => { void this.remove(t).catch(() => undefined); });
-        client.on('close', () => { void this.remove(t).catch(() => undefined); });
-        if (t.closed || !this.current(t)) { void this.remove(t).catch(() => undefined); return; }
+        client.on('error', () => { void this.remove(t, 'client-error').catch(() => undefined); });
+        client.on('close', (code: number) => { void this.remove(t, 'client-close:' + code).catch(() => undefined); });
+        if (t.closed || !this.current(t)) { void this.remove(t, 'upgrade:' + this.why(t)).catch(() => undefined); return; }
         const target = new URL('/rtc', this.base!); target.protocol = target.protocol === 'https:' ? 'wss:' : 'ws:';
         // All authorization and room selection are generated here, never taken from URL parameters.
         target.searchParams.set('access_token', this.serverToken(a));
@@ -192,27 +226,30 @@ export class SocialVoice {
           const v = u.searchParams.get(key); if (v && /^[A-Za-z0-9_.-]{1,40}$/.test(v)) target.searchParams.set(key, v);
         }
         const upstream = new WebSocket(target, { maxPayload: VOICE_LIMITS.payload, perMessageDeflate: false, handshakeTimeout: VOICE_LIMITS.handshakeMs, followRedirects: false }); t.upstream = upstream;
-        upstream.on('error', () => { void this.remove(t).catch(() => undefined); });
-        upstream.on('close', () => { void this.remove(t).catch(() => undefined); });
-        t.timer = setTimeout(() => { void this.remove(t).catch(() => undefined); }, VOICE_LIMITS.handshakeMs); t.timer.unref();
-        upstream.on('open', () => { clearTimeout(t.timer); if (!this.current(t) || t.closed) void this.remove(t).catch(() => undefined); });
+        upstream.on('error', () => { void this.remove(t, 'sfu-error').catch(() => undefined); });
+        upstream.on('close', (code: number) => { void this.remove(t, 'sfu-close:' + code).catch(() => undefined); });
+        t.timer = setTimeout(() => { void this.remove(t, 'sfu-handshake-timeout').catch(() => undefined); }, VOICE_LIMITS.handshakeMs); t.timer.unref();
+        upstream.on('open', () => { clearTimeout(t.timer); if (!this.current(t) || t.closed) void this.remove(t, 'open:' + this.why(t)).catch(() => undefined); });
         client.on('message', (data: RawData, binary: boolean) => {
-          if (!this.current(t) || t.closed) { void this.remove(t).catch(() => undefined); return; }
-          if (upstream.readyState !== WebSocket.OPEN || upstream.bufferedAmount > VOICE_LIMITS.buffered) { void this.remove(t).catch(() => undefined); return; }
-          if (!validVoiceRequest(raw(data), binary, a.muted)) { void this.remove(t).catch(() => undefined); return; }
-          upstream.send(data, { binary }, (e?: Error) => { if (e) void this.remove(t).catch(() => undefined); });
+          t.last = Date.now();
+          if (!this.current(t) || t.closed) { void this.remove(t, 'msg:' + this.why(t)).catch(() => undefined); return; }
+          if (upstream.readyState !== WebSocket.OPEN) { void this.remove(t, 'sfu-not-open').catch(() => undefined); return; }
+          if (upstream.bufferedAmount > VOICE_LIMITS.buffered) { void this.remove(t, 'sfu-backpressure').catch(() => undefined); return; }
+          if (!validVoiceRequest(raw(data), binary, a.muted)) { void this.remove(t, 'blocked-request:' + requestKind(raw(data), binary)).catch(() => undefined); return; }
+          upstream.send(data, { binary }, (e?: Error) => { if (e) void this.remove(t, 'sfu-send-failed').catch(() => undefined); });
         });
         upstream.on('message', (data: RawData, binary: boolean) => {
-          if (!this.current(t) || t.closed || client.readyState !== WebSocket.OPEN || client.bufferedAmount > VOICE_LIMITS.buffered) { void this.remove(t).catch(() => undefined); return; }
+          if (!this.current(t) || t.closed || client.readyState !== WebSocket.OPEN || client.bufferedAmount > VOICE_LIMITS.buffered) { void this.remove(t, !this.current(t) ? 'down:' + this.why(t) : client.bufferedAmount > VOICE_LIMITS.buffered ? 'client-backpressure' : 'client-not-open').catch(() => undefined); return; }
           try { const clean = sanitizeVoiceSignal(raw(data), binary); if (clean !== null) client.send(clean, { binary }, (e?: Error) => { if (e) void this.remove(t).catch(() => undefined); }); }
-          catch { void this.remove(t).catch(() => undefined); }
+          catch { void this.remove(t, 'sanitize-failed').catch(() => undefined); }
         });
       });
-    } catch { socket.destroy(); void this.remove(t).catch(() => undefined); }
-    return true;
+    } catch { socket.destroy(); void this.remove(t, 'upgrade-failed').catch(() => undefined); }
+    void deny;
   }
-  private async remove(t: Transport): Promise<void> {
+  private async remove(t: Transport, reason = 'unknown'): Promise<void> {
     if (t.removing) return t.removing;
+    if (!t.closed) this.ev('voice-drop', { uid: t.uid, reason, room: t.access.roomId, ms: t.at ? Date.now() - t.at : null });
     t.closed = true; clearTimeout(t.timer);
     // Close signaling first, preventing admission/reconnect races. Removing SFU media is awaited.
     const upstreamClosed = new Promise<void>(resolve => {
@@ -240,7 +277,7 @@ export class SocialVoice {
   async disconnectUser(uid: string): Promise<void> {
     const t = this.records.get(uid), a = this.access(uid);
     if (t || a) this.revoked.set(uid, String(a?.epoch ?? t!.access.epoch));
-    if (t) await this.remove(t);
+    if (t) await this.remove(t, 'server-revoke');
   }
   async close(): Promise<void> {
     this.stopped = true; clearInterval(this.sweeper);

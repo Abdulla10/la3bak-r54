@@ -1018,8 +1018,9 @@ export async function createApp(
         if (r.verdict !== 'block') return 'للمراجعة';
         const strikes = (voiceStrikes.get(it.by) ?? []).filter((t) => Date.now() - t < 86400_000); strikes.push(Date.now()); voiceStrikes.set(it.by, strikes);
         const mins = strikes.length >= 3 ? 60 : strikes.length === 2 ? 15 : 5;
+        sysMutes.set(it.by, Date.now() + mins * 60_000); saveSysMutes();
         void socialRooms.systemMute(it.by, true).then((rid) => { if (!rid) return; try { support.announce([it.by], '🔇 انكتم مايكك', `المشرف الصوتي سمع كلام مخالف (${label}). مايكك مكتوم ${mins} دقيقة. التكرار يطوّل الكتم.`, 'المشرف الذكي', 'vmute-' + it.id); } catch { /* */ } sendToUser(it.by, { t: 'social:update', roomId: rid });
-          setTimeout(() => { void socialRooms.systemMute(it.by, false).then((r2) => { if (r2) sendToUser(it.by, { t: 'social:update', roomId: r2 }); }); }, mins * 60_000).unref?.(); });
+          /* R133: فك الكتم صار من مؤقت دوري يقرأ ملف (sysMutes) — المؤقت القديم كان يضيع لو السيرفر انعاد تشغيله فيبقى اللاعب مكتوم للأبد */ });
         return `انكتم ${mins} دقيقة`;
       }
       if (it.kind === 'group' || it.kind === 'vn') {
@@ -1045,6 +1046,10 @@ export async function createApp(
     },
   });
   const voiceStrikes = new Map<string, number[]>();
+  /* R133: كتم المشرف الصوتي المؤقت — ينحفظ بملف عشان ينفك حتى لو السيرفر انعاد تشغيله */
+  const sysMuteFile = cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'voice-sysmutes.json') : '';
+  const sysMutes = new Map<string, number>((() => { try { return sysMuteFile ? Object.entries(JSON.parse(readFileSync(sysMuteFile, 'utf8')) as Record<string, number>) : []; } catch { return []; } })());
+  const saveSysMutes = () => { if (!sysMuteFile) return; try { writeFileSync(sysMuteFile, JSON.stringify(Object.fromEntries(sysMutes)), { mode: 0o600 }); } catch { /* */ } };
   const vmFile = cfg.walletFile ? path.join(path.dirname(cfg.walletFile), 'voice-mod.json') : '/dev/null';
   const vmFlags: { on: boolean; ios: boolean } = (() => { try { const j = JSON.parse(readFileSync(vmFile, 'utf8')); return { on: j.on !== false, ios: j.ios === true }; } catch { return { on: true, ios: false }; } })();
   const voiceModOn = () => vmFlags.on, voiceModIOS = () => vmFlags.ios;
@@ -1293,7 +1298,8 @@ export async function createApp(
   const socialEligible=(id:string)=>accounts.has(id)&&!platform.isBanned(id)&&(accounts.socialAge(id)===null||Number(accounts.socialAge(id))>=18);
   let socialVoice:SocialVoice|null=null;
   const chatImgOk=(id:string)=>{const t=tierOf(id);return t.vip>=5||t.noble>=1||!!platform.roleOf(id);};
-  const socialRooms=new SocialRooms({file:socialRoomsFile,promoted:(rid)=>perks.promotedUntil(rid),canChatImage:chatImgOk,voiceNoteOk:()=>false,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
+  const vdPushRef: { v?: (row: Record<string, unknown>) => void } = {};
+  const socialRooms=new SocialRooms({file:socialRoomsFile,onMute:(uid,muted,source,by)=>{try{vdPushRef.v?.({src:'server',ev:muted?'mute':'unmute',uid:uid.slice(0,8),source,by:by?by.slice(0,8):null});log(muted?'voice_mute':'voice_unmute',{uid:uid.slice(0,8),source});}catch{/* */}},promoted:(rid)=>perks.promotedUntil(rid),canChatImage:chatImgOk,voiceNoteOk:()=>false,perk:(id,k)=>perks.has(id,k),onEnter:(uid,rid,rn)=>activity.note(uid,'room',rid,rn),mon:storage,graceMs:cfg.reconnectGraceMs,gameVoiceSecret:cfg.cookieSecret,
     cannon:{wallet,catalog:shopcat,pendingCount:id=>outbox.pending().filter(i=>i.payload.kind==='gift'&&validCannonGiftContext(i.payload.cannonSupport)&&i.payload.cannonSupport.cannonId===id).length,
       onAward:(id,eventId)=>{sendToUser(id,{t:'wallet',coins:wallet.balance(id),gems:wallet.gems(id),won:0});support.announce([id],'مكافأة مدفع الغرفة','تمت إضافة الإطار والخلفية الدائمين إلى ملكيتك. حدّث المتجر لعرضهما.','room-cannon-r27','cannon:'+eventId);}},
     pendingChallengeGift:id=>outbox.pending().some(intent=>intent.payload.kind==='gift'&&validGiftSupportContext(intent.payload.socialSupport)&&intent.payload.socialSupport.challengeId===id),
@@ -1344,7 +1350,11 @@ export async function createApp(
   inviteRewardsView = (me) => inviteRewards.view(me);
   const inviteTimer = setInterval(() => { if (!siteFlags.get().invite) return; try { inviteRewards.run(); } catch (e) { log('invite_rewards_failed', { error: String((e as Error).message).slice(0, 100) }); } }, 10 * 60_000); inviteTimer.unref?.();
   setTimeout(() => { if (!siteFlags.get().invite) return; try { inviteRewards.run(); } catch { /* */ } }, 40_000).unref?.();
-  socialVoice=new SocialVoice({...cfg.socialVoice,enabled:cfg.socialVoice?.enabled??false,upstream:cfg.socialVoice?.upstream??'',apiKey:cfg.socialVoice?.apiKey??'',apiSecret:cfg.socialVoice?.apiSecret??'',cookieSecret:cfg.cookieSecret,
+  /* R133: تشخيص الصوت — آخر 600 حدث (سيرفر + أجهزة اللاعبين) */
+  const voiceDiag: Record<string, unknown>[] = [];
+  const vdPush = (row: Record<string, unknown>) => { voiceDiag.push({ t: Date.now(), ...row }); if (voiceDiag.length > 600) voiceDiag.splice(0, voiceDiag.length - 600); };
+  vdPushRef.v = vdPush;
+  socialVoice=new SocialVoice({...cfg.socialVoice,onEvent:(ev,data)=>{vdPush({src:'server',ev,...data});log(ev.replace(/-/g,'_'),{...data,uid:String(data.uid??'').slice(0,8)});},enabled:cfg.socialVoice?.enabled??false,upstream:cfg.socialVoice?.upstream??'',apiKey:cfg.socialVoice?.apiKey??'',apiSecret:cfg.socialVoice?.apiSecret??'',cookieSecret:cfg.cookieSecret,
     access:id=>{const access=socialEligible(id)?socialRooms.mediaAccess(id):null;return access?{...access,id:community.pub(id)}:null;},
     authenticate:req=>{const user=sessions.cookieUser(req.headers.cookie);return user&&!admin.maintenanceBlock(user)&&!admin.banBlock(user)&&socialEligible(user.id)?user:null;},originAllowed:sameOrigin,
   });
@@ -2112,6 +2122,7 @@ export async function createApp(
     }, 'owner');
     /* R69zq: المشرف الصوتي — جهاز المتكلم يحوّل كلامه لنص ويرسله هني */
     functionalHttp.add('POST', '/api/voice-mod', ({ user, body }) => { const text = String((body as { text?: unknown }).text ?? '').replace(/\s+/g, ' ').trim().slice(0, 400); if (!text || !aiMod.ready() || !voiceModOn()) return { ok: true }; const rid = socialRooms.onMicIn(user.id); if (!rid || !voiceLimiter.allow(user.id) || !aiWorth(text)) return { ok: true }; aiMod.enqueue({ kind: 'voice', id: randomUUID(), by: user.id, text, ref: rid }); return { ok: true }; });
+    { const st = setInterval(() => { const now = Date.now(); for (const [uid, until] of [...sysMutes]) if (until <= now) { sysMutes.delete(uid); saveSysMutes(); void socialRooms.systemMute(uid, false).then((r2) => { if (r2) sendToUser(uid, { t: 'social:update', roomId: r2 }); }).catch(() => {}); } }, 15_000); st.unref?.(); }
     functionalHttp.add('GET', '/api/voice-mod/config', () => ({ ok: true, on: voiceModOn() && aiMod.ready(), ios: voiceModIOS() }));
     functionalHttp.add('POST', '/api/admin/voice-mod', ({ actor, body }) => { const b = body as { on?: unknown; ios?: unknown }; if (typeof b.on === 'boolean') vmFlags.on = b.on; if (typeof b.ios === 'boolean') vmFlags.ios = b.ios; try { writeFileSync(vmFile, JSON.stringify(vmFlags)); } catch { /* */ } if (actor) admin.audit(actor, 'voicemod.set', 'ai-mod', JSON.stringify(vmFlags)); return { ok: true, ...vmFlags }; }, 'owner');
     functionalHttp.add('GET', '/api/admin/voice-mod', () => ({ ok: true, ...vmFlags, ready: aiMod.ready() }), 'owner');
@@ -2207,6 +2218,16 @@ export async function createApp(
       const since = Number(url.searchParams.get('since') ?? 0);
       return { ok: true, ...roomRecap.summary(rid, since, (id) => accounts.nameOf(id) || 'لاعب', (id) => id === user.id) };
     });
+    // R133: أجهزة اللاعبين ترسل أحداث الصوت (انقطاع/إعادة اتصال/كتم/أخطاء المايك) — بدون أي صوت أو محتوى
+    const vdLimit = new Map<string, number[]>();
+    functionalHttp.add('POST', '/api/voice-diag', ({ user, body }) => {
+      const now = Date.now(); const w = (vdLimit.get(user.id) ?? []).filter((x) => now - x < 60_000); if (w.length >= 20) return { ok: true }; w.push(now); vdLimit.set(user.id, w);
+      const rows = Array.isArray((body as { rows?: unknown }).rows) ? ((body as { rows: unknown[] }).rows).slice(0, 40) : [];
+      const dv = String((body as { dev?: unknown }).dev ?? ''); const dev = ['ios', 'android', 'desktop'].includes(dv) ? dv : '?';
+      for (const r of rows) { if (!r || typeof r !== 'object') continue; const o: Record<string, unknown> = {}; for (const [k, v] of Object.entries(r as Record<string, unknown>).slice(0, 12)) if (/^[a-zA-Z]{1,16}$/.test(k) && (typeof v === 'number' || typeof v === 'boolean' || v === null || (typeof v === 'string' && v.length <= 140))) o[k] = v; vdPush({ src: 'client', dev, uid: user.id.slice(0, 8), ...o }); }
+      return { ok: true };
+    });
+    functionalHttp.add('GET', '/api/admin/voice-diag', () => ({ ok: true, rows: voiceDiag.slice(-300).reverse() }), 'owner');
     functionalHttp.add('GET', '/api/protect', ({ user }) => ({ ok: true, words: perks.prefs(user.id).muteWords, wordLimit: perks.muteLimit(user.id), dnd: perks.dndOf(user.id), dndNow: perks.dndActive(user.id), push: webPush ? webPush.count(user.id) : 0 }));
     functionalHttp.add('POST', '/api/protect/dnd', ({ user, body }) => perks.setDnd(user.id, body));
     functionalHttp.add('POST', '/api/perks/pin', ({ user, body }) => perks.togglePin(user.id, body.pub));

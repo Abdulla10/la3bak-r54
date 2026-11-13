@@ -12,7 +12,8 @@ function send(text) { const t = text.trim(); if (t.length < 3) return; void fetc
 function flushSoon() { clearTimeout(flushT); flushT = setTimeout(() => { const t = buf; buf = ''; send(t); }, 2500); }
 export async function start() {
   want = true; if (!SR || rec) return;
-  const c = await config(); if (!c.on || (isIOS && !c.ios) || !want) return;
+  // R133: بالجوال (آيفون وأندرويد) التعرّف على الكلام يتسابق مع المايك على نفس الميكروفون — يقطع الصوت ويعلّق. نشغله بالجوال بس لو الإدارة فعّلته
+  const c = await config(); if (!c.on || ((isIOS || /Android/i.test(globalThis.navigator?.userAgent || '')) && !c.ios) || !want) return;
   try {
     rec = new SR(); rec.lang = 'ar-AE'; rec.continuous = true; rec.interimResults = false; rec.maxAlternatives = 1;
     rec.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) { buf += ' ' + e.results[i][0].transcript; if (buf.length > 300) { const t = buf; buf = ''; send(t); } else flushSoon(); } };

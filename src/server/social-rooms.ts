@@ -37,6 +37,8 @@ export interface SocialRoomsOptions {
   /** R127: الرسالة الصوتية لازم تكون من تسجيل نفس الشخص */
   voiceNoteOk?: (uid: string, noteId: string) => boolean;
   promoted?: (roomId: string) => number;
+  /** R133: تشخيص — كل تغيير بحالة كتم الصوت ومن سبّبه */
+  onMute?: (userId: string, muted: boolean, source: string, by: string | null) => void;
   profile: (id: string) => { id: string; name: string; avatar?: string | null; frame?: string | null; bubble?: string | null; board?: string | null; micFrame?: string | null; voiceFx?: string | null; stealth?: boolean; publicId?: string; entrance?: { id: string; name: string; art: string }; ranks?: { level: number | null; vip: number | null; noble: number | null; miner?: number; nfx?: boolean } } | null;
   blocked: (a: string, b: string) => boolean;
   eligible: (id: string) => boolean;
@@ -252,6 +254,7 @@ export class SocialRooms {
     this.monitor = opts.mon ?? new StorageMonitor();
     this.monitor.register('social-rooms', !!opts.file);
   }
+  private lightTx133 = false; private dirty133 = false; private flushT133: NodeJS.Timeout | null = null;
   private serial<T>(fn: () => Promise<T> | T): Promise<T> {
     const job = this.queue.then(fn); this.queue = job.catch(() => undefined); return job;
   }
@@ -303,7 +306,7 @@ export class SocialRooms {
   /** R69zq: المشرف الصوتي — يكتم/يفك مايك لاعب بالغرفة (بدون صلاحيات مشرف بشري) */
   systemMute(userId: string, muted: boolean): Promise<string | null> {
     let roomId: string | null = null;
-    return this.serial(() => this.guard(async () => { this.ready(); return this.tx((d, media) => { const x = this.member(d, userId); if (!x || x.member.muted === muted) return { ok: true }; x.member.muted = muted; x.member.epoch = randomUUID(); media.add(userId); roomId = x.room.id; return { ok: true }; }); })).then(() => roomId, () => null);
+    return this.serial(() => this.guard(async () => { this.ready(); return this.tx((d, media) => { const x = this.member(d, userId); if (!x || x.member.muted === muted) return { ok: true }; x.member.muted = muted; try { this.opts.onMute?.(userId, muted, 'voice-moderator', null); } catch { /* */ } x.member.epoch = randomUUID(); media.add(userId); roomId = x.room.id; return { ok: true }; }); })).then(() => roomId, () => null);
   }
   /** هل اللاعب جالس على مقعد ومايكه مفتوح بغرفة صوتية؟ */
   onMicIn(userId: string): string | null { const x = this.member(this.state, userId); return x && x.member.councilId && !x.member.muted ? x.room.id : null; }
@@ -1032,6 +1035,7 @@ export class SocialRooms {
     }
   }
   private async tx(fn:(d:State,media:Set<string>,now:number)=>SocialResult):Promise<SocialResult> {
+    const light133=this.lightTx133;this.lightTx133=false;
     const before=this.state,d=structuredClone(before),media=new Set<string>(),now=this.clock();
     const priorMemory=new Map(this.pendingMemory);
     try {
@@ -1041,7 +1045,10 @@ export class SocialRooms {
       this.advanceGamesR47(d,now);
       for(const id of media)this.transitioning.add(id);
       for(const id of media)await this.opts.disconnectMedia?.(id); // No new membership is visible until old transport is gone.
-      this.save(d,now);this.state=d;
+        // R133: رسائل الدردشة كانت تكتب ملف الغرف كامل وتنتظر القرص (fsync ~14ms) مع كل رسالة، وكل أوامر الغرف واقفة بالطابور وراها.
+      // الحين: الدردشة تنحفظ مجمّعة كل ثانية (أقصى خسارة لو طاح السيرفر: رسائل آخر ثانية). باقي الأوامر تنحفظ فوراً مثل قبل.
+      if(light133&&media.size===0&&this.opts.file){this.state=d;this.dirty133=true;if(!this.flushT133){this.flushT133=setTimeout(()=>{this.flushT133=null;void this.serial(()=>{if(!this.dirty133||this.stopped)return;try{this.save(this.state,this.clock());this.dirty133=false;}catch{/* المراقب سجّل الخطأ — الحفظ الجاي (أي أمر عادي أو رسالة) يعيده */}});},1000);this.flushT133.unref?.();}}
+      else{this.save(d,now);this.state=d;this.dirty133=false;}
       const pending=new Set(d.rooms.flatMap(r=>r.memories.filter(m=>m.text===null).map(m=>m.id)));
       for(const id of this.pendingMemory.keys())if(!pending.has(id))this.pendingMemory.delete(id);
       this.notice(before,d);await this.deliverAudit();return result;
@@ -1110,7 +1117,7 @@ export class SocialRooms {
       if(this.state.receipts.length>=this.maxReceipts)fail('idempotency_capacity',409);
       if(command!=='prefs:update'&&command!=='room:leave'&&command!=='council:leave'&&command!=='report:send')this.actor(userId,true);
       const admission=await this.prepareDirectory(userId,command,input);
-      return this.tx((d,media,now)=>{
+      this.lightTx133=command==='chat:send';return this.tx((d,media,now)=>{
         // Expired memberships cannot be revived by a late mutation or a reconnect.
         const oldMember=this.member(d,userId);if(oldMember?.member.deadline!==null&&oldMember&&oldMember.member.deadline!<=now)this.remove(d,userId,media);
         if(passwordWork)this.rate(d,userId,now);
@@ -1327,10 +1334,13 @@ export class SocialRooms {
         if(Object.hasOwn(patch,'theme')) { this.requireMod(r,id,undefined,'identity'); if(this.gameBound(d,r))fail('game_room_controls_unavailable',403); const th=String(patch.theme); if(th!==before.theme){ const need=ROOM_BG_LEVEL[th]; if(need&&roomLevelOf(r.support??0).level<need)fail('room_bg_level_locked',403); const item=ROOM_BG_STORE[th]; if(item&&!(this.opts.ownsItem?.(id,item)||this.opts.ownsItem?.(r.ownerId,item)))fail('room_bg_not_owned',403); } }
         if(['highQuality','micRequests','speak'].some(k=>Object.hasOwn(patch,k)))this.requireMod(r,id,undefined,'audio');
         if(Object.hasOwn(patch,'chat'))this.requireMod(r,id,undefined,'chat');
+        const muteBefore133=new Map(r.members.map(m=>[m.id,this.audioMuted(r,m)]));
         r.settings={...r.settings,...patch,...(patch.moderatorPermissions?{moderatorPermissions:{...r.settings?.moderatorPermissions,...patch.moderatorPermissions}}:{})};
         const after=this.settings(r);
         if(before.micRequests!==after.micRequests){r.micRequests=[];r.micApprovals=[];}
-        if(before.highQuality!==after.highQuality||before.micRequests!==after.micRequests||before.speak!==after.speak||before.moderatorPermissions.audio!==after.moderatorPermissions.audio)this.revokeAudio(r,media);
+        // R133: كان يقطع صوت كل الغرفة (ويطفّي مايكات الكل) مع أي تغيير بإعدادات الصوت — حتى «جودة عالية».
+        // الحين نقطع بس اللي تغيّرت حالة الكتم عندهم فعلاً (عشان صلاحية النشر تتحدث).
+        if(before.highQuality!==after.highQuality||before.micRequests!==after.micRequests||before.speak!==after.speak||before.moderatorPermissions.audio!==after.moderatorPermissions.audio)for(const m of r.members){const now133=this.audioMuted(r,m);if(muteBefore133.get(m.id)!==now133){this.revokeAudio(r,media,m.id);try{this.opts.onMute?.(m.id,now133,'room-settings',id);}catch{/* */}}}
       }
       this.audit(d,id,command,r.id,'room-settings',now,r.id);
     } else if(command==='room:moderator') {
@@ -1368,7 +1378,7 @@ export class SocialRooms {
       const m=r.members.find(m=>m.id===t);if(!m&&command!=='member:ban'&&command!=='member:unban')fail('member_not_found',404);
       const reason=command==='member:ban'?text(b.reason,400):text(b.reason,400,true)||'moderation';
       if(command==='member:unban'){if(!r.bans.some(b=>b.id===t))fail('ban_not_found',404);r.bans=r.bans.filter(b=>b.id!==t);}
-      else if(command==='member:mute'){m!.muted=boolean(b.muted);m!.epoch=randomUUID();media.add(t);}else{if(m)this.remove(d,t,media);if(command==='member:ban'&&!r.bans.some(b=>b.id===t)){if(r.bans.length>=500)fail('ban_capacity',409);r.bans.push({id:t,reason});}r.invites=r.invites.filter(x=>x!==t);for(const c of r.councils){c.invites=c.invites.filter(x=>x!==t);c.requests=c.requests.filter(x=>x!==t);}}
+      else if(command==='member:mute'){m!.muted=boolean(b.muted);m!.epoch=randomUUID();media.add(t);try{this.opts.onMute?.(t,m!.muted,'moderator',id);}catch{/* */}}else{if(m)this.remove(d,t,media);if(command==='member:ban'&&!r.bans.some(b=>b.id===t)){if(r.bans.length>=500)fail('ban_capacity',409);r.bans.push({id:t,reason});}r.invites=r.invites.filter(x=>x!==t);for(const c of r.councils){c.invites=c.invites.filter(x=>x!==t);c.requests=c.requests.filter(x=>x!==t);}}
       this.audit(d,id,command,t,reason,now,r.id);
     } else {
       const c=this.council(r,b.councilId);
