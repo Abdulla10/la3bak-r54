@@ -20,6 +20,8 @@ export async function openRecharge() {
   const root = document.createElement('div'); root.className = 'rc123'; root.innerHTML = '<section class="rc123-s" role="dialog" aria-label="اشحن"><p class="sub">جاري التحميل…</p></section>'; document.body.append(root);
   const sh = root.querySelector('.rc123-s');
   root.addEventListener('click', (e) => { if (e.target === root || e.target.closest('[data-rc=x]')) root.remove(); });
+  /* R134: الشاشة كانت تبقى مفتوحة فوق الصفحات لو رحت لصفحة ثانية أو ضغطت رجوع */
+  setTimeout(() => { addEventListener('hashchange', () => root.remove(), { once: true }); addEventListener('popstate', () => root.remove(), { once: true }); }, 500); /* R134: الرجوع لنفس الصفحة ما يطلق hashchange */
   let d; try { const r = await fetch('/api/recharge', { credentials: 'same-origin', cache: 'no-store' }); d = await r.json(); if (!r.ok || !d.ok) throw new Error(d.error || 'سجّل دخولك أول.'); }
   catch (e) { sh.innerHTML = `<button type="button" class="x" data-rc="x">✕</button><p class="sub">${esc(e.message)}</p>`; return; }
   /* R132: داخل تطبيق جوجل بلاي ما نعرض روابط دفع خارجية (سياسة المتجر) — الشحن «قريباً» لين نربط Google Play Billing */

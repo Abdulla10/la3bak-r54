@@ -28,6 +28,7 @@ export async function openPerkShop() {
   const root = document.createElement('div'); root.className = 'ps129'; root.innerHTML = '<section class="sh" role="dialog" aria-label="المميزات"><p class="sub">جاري التحميل…</p></section>'; document.body.append(root);
   const sh = root.querySelector('.sh'); let d = null, busy = '', msg = null;
   const close = () => root.remove();
+  setTimeout(() => { addEventListener('hashchange', close, { once: true }); addEventListener('popstate', close, { once: true }); }, 500); /* R134: الرجوع لنفس الصفحة ما يطلق hashchange */
   root.addEventListener('click', (e) => { if (e.target === root) close(); });
   const paint = () => {
     const card = (p) => { const on = p.key === 'boost' ? (d.rooms || []).some((r) => r.promoted > Date.now()) : p.until > Date.now(); const pr = p.key === 'boost' ? (d.rooms || []).find((r) => r.promoted > Date.now()) : null;
@@ -46,7 +47,7 @@ export async function openPerkShop() {
   const load = async () => { try { d = await api('/api/perk-shop'); paint(); } catch (e) { sh.innerHTML = `<button type="button" class="x" data-x>✕</button><p class="sub">${esc(e.message)}</p>`; } };
   sh.addEventListener('click', async (e) => {
     if (e.target.closest('[data-x]')) { close(); return; }
-    if (e.target.closest('[data-rc]')) { close(); import('/recharge-r123.js?v=r132').then((m) => m.openRecharge()).catch(() => {}); return; }
+    if (e.target.closest('[data-rc]')) { close(); import('/recharge-r123.js?v=r134').then((m) => m.openRecharge()).catch(() => {}); return; }
     if (e.target.closest('[data-bc]')) { close(); import('/broadcast-r67.js?v=r67ao').then((m) => m.openComposer?.()).catch(() => {}); return; }
     const b = e.target.closest('[data-buy]'); if (!b || busy) return;
     const p = d.passes.find((x) => x.key === b.dataset.buy); if (!p) return;

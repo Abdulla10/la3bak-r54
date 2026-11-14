@@ -133,6 +133,7 @@ async function groupPage(view, id) {
       <form class="sp73-compose" data-sp73f="gmsg">${recBtn()}<input name="text" maxlength="500" autocomplete="off" placeholder="اكتب رسالة…"><button class="btn" type="submit">إرسال</button></form>`, '#/groups');
     const c = view.querySelector('#sp73Chat'); if (c) c.scrollTop = c.scrollHeight;
   };
+  if (!id) { go('#/groups'); return; } /* R134: بدون آيدي كان يطلب /api/groups/ فاضي */
   if (!S.group || S.group.id !== id) S.group = null;
   paint(); void loadFriends();
   try { S.group = await api('/api/groups/' + encodeURIComponent(id)); } catch (e) { toast(e.message); go('#/groups'); return; }

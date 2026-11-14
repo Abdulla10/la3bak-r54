@@ -36,7 +36,7 @@ export async function openMiner() {
     const b = e.target.closest('[data-mi=buy]'); if (!b || S.busy) return;
     const l = Number(b.dataset.l), t = S.d.tiers[l]; if (!confirm(`تشترك في ${t.name} بـ ${nf(t.price)} عملة مشحونة لمدة شهر؟`)) return;
     S.busy = true; S.err = ''; S.ok = ''; paint();
-    try { await api('/api/miner/subscribe', { level: l, key: crypto.randomUUID() }); S.ok = `تم ✅ صرت ${t.name}!`; S.d = await api('/api/miner'); } catch (er) { S.err = er.message; if (/مشحونة/.test(er.message)) import('/recharge-r123.js?v=r132').then((m) => m.openRecharge()).catch(() => {}); }
+    try { await api('/api/miner/subscribe', { level: l, key: crypto.randomUUID() }); S.ok = `تم ✅ صرت ${t.name}!`; S.d = await api('/api/miner'); } catch (er) { S.err = er.message; if (/مشحونة/.test(er.message)) import('/recharge-r123.js?v=r134').then((m) => m.openRecharge()).catch(() => {}); }
     S.busy = false; paint();
   });
   try { S.d = await api('/api/miner'); paint(); } catch (e) { sh.innerHTML = `<p class="err">${esc(e.message)}</p><button type="button" class="x" data-mi="x">✕</button>`; }

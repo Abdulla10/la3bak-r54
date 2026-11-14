@@ -176,7 +176,7 @@ function html(ctx, state) {
 /* R128f: الباقات المجانية انقفلت — الصفحة صارت بوابة «اشحن رصيدك» (نفس شاشة الشحن) */
 const COIN128 = '<img src="/coin-r128.svg?v=r128h" width="64" height="64" alt="" aria-hidden="true">';
 function gate128() { return `<section class="card lbp-r128" style="margin:14px;padding:22px 16px;border-radius:22px;text-align:center;background:linear-gradient(180deg,#2a1650,#170c2e);border:1px solid rgba(250,204,21,.35);color:#f4efff">${COIN128}<h2 style="margin:10px 0 6px;font-size:20px">اشحن رصيدك</h2><p style="margin:0 0 14px;color:#c4b5fd;font-size:14px">باقات العملات وأسعارها كلها هني.</p><button type="button" data-r128-open style="border:0;border-radius:999px;padding:12px 30px;font:inherit;font-weight:800;font-size:16px;color:#2a1650;background:linear-gradient(180deg,#fde68a,#e5a91c)">افتح الباقات</button></section>`; }
-const open128 = () => import('../recharge-r123.js?v=r132').then((m) => m.openRecharge()).catch(() => {});
+const open128 = () => import('../recharge-r123.js?v=r134').then((m) => m.openRecharge()).catch(() => {});
 export function render() { return gate128(); }
 
 export function mount(root, ctx = {}) {

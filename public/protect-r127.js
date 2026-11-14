@@ -25,6 +25,7 @@ export async function openProtect() {
   style(); document.querySelector('.pr127-bg')?.remove();
   const bg = document.createElement('div'); bg.className = 'pr127-bg'; bg.innerHTML = '<div class="pr127" dir="rtl"><h2>🛡️ الحماية والخصوصية</h2><p class="sub">جاري التحميل…</p></div>'; document.body.append(bg);
   const close = () => bg.remove();
+  setTimeout(() => { addEventListener('hashchange', close, { once: true }); addEventListener('popstate', close, { once: true }); }, 500); /* R134: الرجوع لنفس الصفحة ما يطلق hashchange */
   bg.addEventListener('click', (e) => { if (e.target === bg) close(); });
   const [p, dm] = await Promise.all([api('/api/protect'), api('/api/social-private/settings')]);
   if (p.ok === false) { bg.querySelector('.sub').textContent = p.error || 'تعذّر التحميل.'; return; }
