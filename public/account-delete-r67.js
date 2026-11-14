@@ -12,11 +12,14 @@ function css() {
 function openConfirm() {
   css(); const sh = document.createElement('div'); sh.className = 'ad67-sheet';
   sh.innerHTML = `<div class="ad67-box" role="dialog" aria-modal="true" aria-label="حذف الحساب"><h3>⚠️ حذف الحساب</h3>
-  <p>حسابك يتعطل الحين ويختفي عن الكل، وينحذف نهائيًا بعد <b>30 يوم</b>. لو غيرت رأيك، سجل دخول قبل ما تخلص المدة واضغط «تراجع عن الحذف».</p>
+  <p>حسابك يتعطل الحين ويختفي عن الكل، وينحذف نهائيًا بعد <b>30 يوم</b>. <span data-undo>لو غيرت رأيك، سجل دخول قبل ما تخلص المدة واضغط «تراجع عن الحذف».</span></p>
   <ul><li>بعد 30 يوم: اسمك وصورتك ومنشوراتك وغرفك تنمسح.</li><li>عملاتك ومقتنياتك ورتبك تروح ومن يرجعونها.</li><li>تطلع من قبيلتك، وينفك الارتباط.</li></ul>
   <p>اكتب كلمة <b>حذف</b> للتأكيد:</p><input data-c autocomplete="off" placeholder="حذف"><div class="ad67-err" data-e></div>
   <div class="ad67-acts"><button type="button" class="ad67-no" data-x>إلغاء</button><button type="button" class="ad67-del" data-go disabled>احذف حسابي</button></div></div>`;
   document.body.appendChild(sh);
+  /* R138: الحساب اللي مو مربوط بقوقل ما يقدر يسجل دخول مرة ثانية، فما يقدر يتراجع. نقول له بوضوح قبل ما يحذف */
+  let noWay = false;
+  fetch('/api/me', { credentials: 'same-origin' }).then((r) => r.json()).then((m) => { if (m?.user && m.google === false) { noWay = true; const u = sh.querySelector('[data-undo]'); if (u) { u.style.color = '#ffb4b4'; u.innerHTML = '<b>انتبه:</b> حسابك مو مربوط بقوقل، فبعد الحذف ما تقدر ترجع له ولا تتراجع. لو تبي فرصة تتراجع، اربط حسابك بقوقل أول من الإعدادات.'; } } }).catch(() => {});
   const inp = sh.querySelector('[data-c]'), go = sh.querySelector('[data-go]'), err = sh.querySelector('[data-e]');
   inp.addEventListener('input', () => { go.disabled = inp.value.trim() !== 'حذف'; });
   sh.addEventListener('click', async (e) => {
@@ -27,7 +30,7 @@ function openConfirm() {
       const r = await fetch('/api/account-deletion/request', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: inp.value.trim() }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { err.textContent = j.error || 'تعذّر الطلب.'; go.disabled = false; go.textContent = 'احذف حسابي'; return; }
-      sh.querySelector('.ad67-box').innerHTML = `<h3>تم ✔️</h3><p>حسابك بينحذف نهائيًا يوم <b>${dateOf(j.executeAt)}</b>. سجلناك خروج من كل الأجهزة. لو غيرت رأيك، سجل دخول قبل هالتاريخ وتقدر تتراجع.</p><div class="ad67-acts"><button type="button" class="ad67-no" data-home>تمام</button></div>`;
+      sh.querySelector('.ad67-box').innerHTML = `<h3>تم ✔️</h3><p>حسابك بينحذف نهائيًا يوم <b>${dateOf(j.executeAt)}</b>. سجلناك خروج من كل الأجهزة. ${noWay ? 'حسابك مو مربوط بقوقل، فما تقدر ترجع له.' : 'لو غيرت رأيك، سجل دخول قبل هالتاريخ وتقدر تتراجع.'}</p><div class="ad67-acts"><button type="button" class="ad67-no" data-home>تمام</button></div>`;
       sh.querySelector('[data-home]').addEventListener('click', () => { location.hash = '#/'; location.reload(); });
     } catch { err.textContent = 'تعذّر الاتصال.'; go.disabled = false; go.textContent = 'احذف حسابي'; }
   });

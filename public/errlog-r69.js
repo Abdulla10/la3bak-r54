@@ -1,3 +1,5 @@
+/* R138: آيفون iOS 15.0-15.3 ما فيه هذي الدوال، فبعض الشاشات كانت تخرب. بدائل صغيرة */
+(function(){try{if(!Object.hasOwn)Object.defineProperty(Object,'hasOwn',{value:function(o,k){return Object.prototype.hasOwnProperty.call(o,k)},configurable:true,writable:true});var at=function(n){n=Math.trunc(n)||0;if(n<0)n+=this.length;return n<0||n>=this.length?undefined:this[n]};[Array,String].forEach(function(C){if(!C.prototype.at)Object.defineProperty(C.prototype,'at',{value:at,configurable:true,writable:true})});if(typeof structuredClone!=='function')window.structuredClone=function(v){return v===undefined?v:JSON.parse(JSON.stringify(v))};}catch(e){}})();
 /* R132: تطبيق جوجل بلاي (TWA): نلقط ?app=android قبل ما ينشال من الرابط */
 try { if (/[?&]app=android\b/.test(location.search) || String(document.referrer).startsWith('android-app://')) localStorage.setItem('la3_app', 'android'); if (localStorage.getItem('la3_app') === 'android') document.documentElement.dataset.app = 'android'; } catch { /* */ }
 /* R69zu: أي خطأ يصير بالموقع عند اللاعب يوصل للسيرفر (بدون بيانات شخصية) عشان نصلّحه بسرعة */
