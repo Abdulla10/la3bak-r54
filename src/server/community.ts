@@ -568,7 +568,7 @@ export function communityHttp(c: Community, h: CommunityHttpDeps) {
         });
         if (big) return h.json(res, 413, { error: 'الصورة كبيرة. الحد الأقصى 700 كيلوبايت بعد التصغير.' }), true;
         let img: { buf: Buffer; type: string } = { buf: Buffer.concat(chunks), type: ct };
-        if (c.dep.imageGate) { const g = await c.dep.imageGate(img.buf, me).catch(() => null); if (g && 'blocked' in g) return h.json(res, 400, { error: g.blocked }), true; if (g) img = g; }
+        if (c.dep.imageGate) { /* R137: الصورة الخربانة كانت تعدّي بدون فحص ولا تصغير ولا مسح بيانات الموقع (GPS). الحين ترفض */ const g = await c.dep.imageGate(img.buf, me).catch(() => null); if (!g) return h.json(res, 400, { error: 'الملف مو صورة صالحة (المسموح JPG وPNG وWebP).' }), true; if ('blocked' in g) return h.json(res, 400, { error: g.blocked }), true; img = g; }
         return h.json(res, 200, c.uploadMedia(me, img.buf, img.type)), true;
       }
       let b: Record<string, unknown> = {};
