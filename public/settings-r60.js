@@ -4,7 +4,9 @@ const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const api = (u, method = 'GET', body) => fetch(u, { method, credentials: 'same-origin', headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) }).then(async (r) => { const j = await r.json().catch(() => ({})); return r.ok ? j : { ok: false, ...j }; }).catch(() => ({ ok: false, error: 'انقطع الاتصال. جرّب مرة ثانية.' }));
 const chev = '<i class="s60-chev" aria-hidden="true">‹</i>';
 const soon = '<span class="s60-soon">قريبًا</span>';
-const row = (label, right = '', attrs = '', cls = '') => `<li class="s60-row ${cls}" ${attrs}><span class="s60-label">${label}</span><span class="s60-right">${right}</span></li>`;
+/* R136: زر التشغيل/الإيقاف كان بدون اسم، قارئ الشاشة يقول «مفتاح» بس. ناخذ الاسم من عنوان السطر */
+const a11y = (label, right) => { const n = String(label).split('<small')[0].replace(/<[^>]*>/g, '').trim(); return n && String(right).includes('role="switch"') && !String(right).includes('aria-label') ? String(right).replace('role="switch"', `role="switch" aria-label="${n.replace(/"/g, '&quot;')}"`) : right; };
+const row = (label, right = '', attrs = '', cls = '') => `<li class="s60-row ${cls}" ${attrs}><span class="s60-label">${label}</span><span class="s60-right">${a11y(label, right)}</span></li>`;
 const link = (label, href, value = '') => `<li class="s60-row"><a class="s60-link" href="${esc(href)}"><span class="s60-label">${esc(label)}</span><span class="s60-right">${value ? `<small>${value}</small>` : ''}${chev}</span></a></li>`;
 const btn = (label, act, value = '', cls = '') => `<li class="s60-row ${cls}"><button type="button" class="s60-link" data-s60="${esc(act)}"><span class="s60-label">${esc(label)}</span><span class="s60-right">${value ? `<small>${value}</small>` : ''}${chev}</span></button></li>`;
 const soonRow = (label) => row(esc(label), soon, 'aria-disabled="true"', 'is-soon');
@@ -199,7 +201,7 @@ const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in win
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const keyBytes = (b64) => { const s = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
-async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r135'); }
+async function pushReg() { return (await navigator.serviceWorker.getRegistration()) || navigator.serviceWorker.register('/sw.js?v=r136'); }
 function pushPaint(root, on, note) { const b = root.querySelector('[data-s60-push]'); const n = root.querySelector('[data-s60-push-note]'); if (b) { b.classList.toggle('is-on', !!on); b.setAttribute('aria-checked', String(!!on)); } if (n) n.textContent = note || ''; }
 export async function pushState(root) {
   if (!root.querySelector('[data-s60-push]')) return;
