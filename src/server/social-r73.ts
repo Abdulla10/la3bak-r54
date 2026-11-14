@@ -38,7 +38,7 @@ export type Social73Deps = {
   isFriend: (a: string, b: string) => boolean;
   pub: (id: string) => string; resolve: (pub: unknown) => string | null; nameOf: (id: string) => string;
   banned: (id: string) => boolean; guest: (id: string) => boolean; adult: (id: string) => boolean | null;
-  profanity: (text: string) => boolean; mod: (kind: 'group' | 'vn', id: string, by: string, text: string) => void;
+  profanity: (text: string) => boolean; /** R139: اسم القروب: انتحال الإدارة والروابط وأرقام التواصل */ groupName?: (name: string) => string | null; mod: (kind: 'group' | 'vn', id: string, by: string, text: string) => void;
   push: (id: string, msg: unknown) => void; online: () => string[];
   ownedRooms: (id: string) => { id: string; name: string }[]; liveRooms: () => { id: string; name: string; members?: number; level?: number }[];
   createRoom: (uid: string, gameId: string, seats: number) => Promise<{ ok: boolean; code?: string; error?: string }>;
@@ -138,6 +138,7 @@ export class Social73 {
   createGroup(uid: string, rawName: unknown, rawMembers: unknown) {
     this.notGuest(uid); this.limit('gnew:' + uid, 5, DAY);
     const name = this.cleanText(rawName, 30);
+    { const why = this.deps.groupName?.(name); if (why) throw ERR(400, why); }
     if (this.d.groups.filter((g) => g.members.includes(uid)).length >= 20) throw ERR(409, 'وصلت حد 20 قروب.');
     const cap = this.deps.big?.(uid) ? 100 : 50;
     const add = (Array.isArray(rawMembers) ? rawMembers : []).slice(0, cap - 1).map((p) => this.deps.resolve(p)).filter((x): x is string => !!x && x !== uid && this.deps.isFriend(uid, x));

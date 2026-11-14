@@ -2136,7 +2136,7 @@ export async function createApp(
       isFriend: (a, b) => { try { return social.friendInternalIds(a).includes(b); } catch { return false; } },
       pub: (id) => community.pub(id), resolve: (p) => (typeof p === 'string' ? community.resolvePublicId(p) : null), nameOf: (id) => accounts.nameOf(id) || 'لاعب',
       banned: (id) => platform.isBanned(id), guest: (id) => isGuest(id), adult: (id) => { const a = accounts.socialAge(id); return a === null ? null : a >= 18; },
-      profanity: (t) => !!profanityOnly(t), mod: (kind, id, by, text) => aiMod.enqueue({ kind, id, by, text }),
+      profanity: (t) => !!profanityOnly(t), groupName: (n) => { const m = moderateText(n, 'room-name'); return m.ok ? null : m.message; }, mod: (kind, id, by, text) => aiMod.enqueue({ kind, id, by, text }),
       push: (id, msg) => sendToUser(id, msg), online: () => [...sockets.keys()], perk: (id, k) => perks.has(id, k),
       ownedRooms: (id) => socialRooms.ownedRoomsOf(id).filter((r: any) => !socialRooms.isGameRoom(r.id)).map((r: any) => ({ id: r.id, name: r.name })), liveRooms: () => socialRooms.liveRooms().filter((r: any) => !socialRooms.isGameRoom(r.id)) as any,
       createRoom: async (uid, gameId, seats) => { const eng = registry.get(gameId); if (!eng) return { ok: false, error: 'اللعبة مب متاحة.' }; const n = Math.max(eng.info.minPlayers, Math.min(eng.info.maxPlayers, seats)); const r: any = await withGameVoice(s73User(uid), await service.createRoom(s73User(uid), { gameId, mode: 'friends', seats: n, key: 's73' + randomUUID().replace(/-/g, '') })); return r.ok ? { ok: true, code: r.room.code } : { ok: false, error: r.error }; },

@@ -17,12 +17,26 @@ export function normalizeForModeration(input: string): string {
     .replace(/[ً-ٰٟـ]/g, '')
     .replace(/[إأآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي')
     .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
-    .replace(/[​-‏‪-‮⁦-⁩]/g, '');
+    .replace(/[​-‏‪-‮⁦-⁩]/g, '')
+    /* R138: حروف مخفية زيادة + حروف روسية/يونانية شكلها لاتيني (Аdmin) */
+    .replace(/\p{Cf}|[\u115F\u1160\u3164\uFFA0\u2800\u034F\u0300-\u036F\u1AB0-\u1AFF\u1DC0-\u1DFF\u20D0-\u20FF\uFE20-\uFE2F]/gu, '')
+    .replace(/[аеорсухіјԁѕһкмтвнαοιкνρτυχεβ]/g, (ch) => CONFUSABLE[ch] ?? ch);
 }
+const CONFUSABLE: Record<string, string> = { 'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'у': 'y', 'х': 'x', 'і': 'i', 'ј': 'j', 'ԁ': 'd', 'ѕ': 's', 'һ': 'h', 'к': 'k', 'м': 'm', 'т': 't', 'в': 'b', 'н': 'h', 'α': 'a', 'ο': 'o', 'ι': 'i', 'ν': 'v', 'ρ': 'p', 'τ': 't', 'υ': 'u', 'χ': 'x', 'ε': 'e', 'β': 'b' };
 // قائمة مختصرة لأشهر الشتائم (عربي/إنجليزي) بعد التوحيد؛ الإدارة تقدر تحذف أي محتوى فات من سجل المراجعة
 const PROFANITY = ['كس', 'زب', 'طيز', 'شرموط', 'قحبه', 'منيوك', 'منيك', 'نيك', 'متناك', 'خول', 'عرص', 'لوطي', 'ديوث', 'كلب ابن كلب', 'ابن الكلب', 'يلعن', 'زق', 'حقير', 'fuck', 'shit', 'bitch', 'pussy', 'dick', 'whore', 'slut', 'nigger', 'porn', 'سكس', 'sex'];
 const PROFANITY_RE = new RegExp(`(?:^|[^\\p{L}])(?:${PROFANITY.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})(?:$|[^\\p{L}])`, 'u');
-const IMPERSONATION = ['الاداره', 'اداره الموقع', 'الدعم الفني', 'خدمه العملاء', 'مشرف عام', 'مالك الموقع', 'الحساب الرسمي', 'admin', 'administrator', 'support', 'official', 'moderator', 'la3bak team', 'فريق لعبك'];
+const IMPERSONATION = ['الاداره', 'اداره الموقع', 'الدعم الفني', 'خدمه العملاء', 'مشرف عام', 'مالك الموقع', 'الحساب الرسمي', 'حساب رسمي', 'admin', 'administrator', 'support', 'official', 'moderator', 'la3bak team', 'فريق لعبك'];
+/* R138: «ا ل ا د ا ر ه» بمسافات، و«مشرف»/«المالك»/«رسمي» كاسم، و adm1n بالأرقام */
+const IMPERSONATION_TOKENS = ['مشرف', 'المشرف', 'المالك', 'ادمن', 'الادمن', 'الرسمي', 'موثق', 'الموثق', 'staff', 'mod', 'owner'];
+const leet = (s: string) => s.replace(/[0]/g, 'o').replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/4|@/g, 'a').replace(/5|\$/g, 's').replace(/7/g, 't');
+function impersonates(n: string): boolean {
+  const compact = n.replace(/[^\p{L}\p{N}]+/gu, '');
+  const words = IMPERSONATION.map((w) => w.replace(/\s+/g, ''));
+  if (IMPERSONATION.some((w) => n.includes(w)) || words.some((w) => compact.includes(w) || leet(compact).includes(w))) return true;
+  const tokens = n.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  return tokens.some((t) => IMPERSONATION_TOKENS.includes(t) || IMPERSONATION_TOKENS.includes(leet(t)));
+}
 const LINK_RE = /(?:https?:\/\/|www\.|\b[a-z0-9-]{2,}\.(?:com|net|org|me|io|co|app|gg|xyz|link|ly|sa|ae|kw|qa|bh|om)\b|t\.me\/|wa\.me\/|discord\.gg)/i;
 const CONTACT_RE = /(?:\+?\d[\d\s-]{7,}\d|@[a-z0-9_.]{3,}|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(?:snap|سناب|انستا|insta|تلي|telegram|واتس|whats)\s*[:：]?\s*[a-z0-9_.]{3,})/i;
 /** R67ae: كلمات ممنوعة يضيفها المالك من لوحة التحكم (فوق القائمة الثابتة) */
@@ -49,7 +63,7 @@ export function moderateText(raw: string, kind: ModerationKind): ModerationResul
   if (LINK_RE.test(n)) return fail('moderation_link');
   if (kind !== 'room-name' && CONTACT_RE.test(n)) return fail('moderation_contact');
   if (kind === 'room-name' && /(?:\+?\d[\d\s-]{7,}\d|@[a-z0-9_.]{3,})/i.test(n)) return fail('moderation_contact');
-  if ((kind === 'profile-name' || kind === 'room-name') && IMPERSONATION.some((w) => n.includes(w))) return fail('moderation_impersonation');
+  if ((kind === 'profile-name' || kind === 'room-name') && impersonates(n)) return fail('moderation_impersonation');
   if (/(.)\1{9,}/u.test(n)) return fail('moderation_spam');
   return { ok: true, text };
 }

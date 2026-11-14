@@ -15,9 +15,11 @@ function sign(payload: string, secret: string): string {
 }
 
 export function cleanName(input: unknown): string {
+  /* R138: الحروف المخفية (فاصل الكلمات، الشرطة الناعمة، علامة الحرف العربي، الحشو الكوري، برايل الفاضي) كانت تخلي الاسم شكله «الإدارة» أو فاضي.
+     وعلامات التشكيل الغريبة المكدّسة (زالغو) تنمسح؛ التشكيل العربي يبقى. */
   return String(input ?? '')
-    .replace(/[\u0000-\u001F\u007F​-‏‪-‮⁦-⁩]/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/[\u0000-\u001F\u007F]|\p{Cf}|[\u115F\u1160\u3164\uFFA0\u2800\u034F]|[\u0300-\u036F\u1AB0-\u1AFF\u1DC0-\u1DFF\u20D0-\u20FF\uFE20-\uFE2F]/gu, '')
+    .replace(/[\s\p{Zs}]+/gu, ' ')
     .trim()
     .slice(0, 20);
 }
